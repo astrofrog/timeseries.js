@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>AAS Time Series example</title>
+	<style>
+	.timeseries { background-color: #f9f9f9; }
+	</style>
+	<script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
+	<script language="javascript" type="text/javascript" src="resources/graph.js"></script>
+	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
+	<script type="text/javascript">
+	S(document).ready(function(){
+	
+		var ts = S('.timeseries');
+		var vega = new Array();
+
+		var options = {
+			series: {
+				lines: { show: false },
+				points: { show: true },
+				shadowSize: 0
+			},
+			xaxis:{ label:'Time (HJD)' },
+			yaxis: { label: 'Delta (mag)' },
+			grid: { hoverable: true, clickable: true }
+		};
+
+		var timeseries = new Array(ts.length);
+
+		for(var i = 0; i < ts.length; i++){
+			var json = S(ts[i]).attr('data-src');
+		//	console.log(json)
+	
+			timeseries[i] = new TimeSeries();
+			timeseries[i].load(json);	
+		}
+	});
+	</script>
+	<style>
+	body { font-family: Helvetica, sans-serif; }
+	.seasonal { background-color: #396bad; }
+	.loader {
+		content: "";
+		position: absolute;
+		left: 0px;
+		right: 0px;
+		top: 0px;
+		bottom: 0px;
+		background-color: rgba(0,0,0,0.1);
+		display: block;
+	}
+	
+	.spinner {
+		margin: 150px auto;
+		width: 50px;
+		height: 50px;
+		text-align: center;
+		font-size: 10px;
+	}
+	.spinner > div {
+		height: 100%;
+		width: 6px;
+		margin-right: 1px;
+		display: inline-block;
+		-webkit-animation: sk-stretchdelay 1.2s infinite ease-in-out;
+		animation: sk-stretchdelay 1.2s infinite ease-in-out;
+	}
+	.spinner .rect2 {
+		-webkit-animation-delay: -1.1s;
+		animation-delay: -1.1s;
+	}
+
+	.spinner .rect3 {
+		-webkit-animation-delay: -1.0s;
+		animation-delay: -1.0s;
+	}
+
+	.spinner .rect4 {
+		-webkit-animation-delay: -0.9s;
+		animation-delay: -0.9s;
+	}
+
+	.spinner .rect5 {
+		-webkit-animation-delay: -0.8s;
+		animation-delay: -0.8s;
+	}
+
+	@-webkit-keyframes sk-stretchdelay {
+		0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+		20% { -webkit-transform: scaleY(1.0) }
+	}
+
+	@keyframes sk-stretchdelay {
+		0%, 40%, 100% { 
+			transform: scaleY(0.4);
+			-webkit-transform: scaleY(0.4);
+		}  20% { 
+			transform: scaleY(1.0);
+			-webkit-transform: scaleY(1.0);
+		}
+	}
+	</style>
+</head>
+<body>
+
+	<!-- HEADER -->
+	<div id="header_wrap" class="outer">
+			<header class="inner">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+
+				<h1 id="project_title">Timeseries</h1>
+				<h2 id="project_tagline">An HTML5 timeseries library</h2>
+				<p style="float:left;color:white;color:rgba(255,255,255,0.5);margin-top:-1em;">Last updated: 6 August 2018</p>
+			</header>
+	</div>
+
+	<!-- MAIN CONTENT -->
+	<div id="main_content_wrap" class="outer">
+		<section id="main_content" class="inner">
+
+			<div id="lightcurve" style="width:100%;height:350px;margin-bottom:10px;" class="timeseries" data-src="data/OB110462.json"></div>
+			<div style="text-align:center;font-size:0.8em;color:#999;padding-left:25px; padding-right:25px;">This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</div>
+
+		</section>
+	</div>
+
+	<!-- FOOTER	-->
+	<div id="footer_wrap" class="outer">
+		<footer class="inner">
+		</footer>
+	</div>
+
+	
+
+</body>
+</html>

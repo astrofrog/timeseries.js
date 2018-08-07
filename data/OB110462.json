@@ -1,0 +1,398 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 800,
+	"height": 450,
+	"padding": 10,
+	"autosize": {"type": "fit", "resize": true},
+	"data": [{
+		"name": "OGLE",
+		"url": "data/OB110462-ogle.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "MOA",
+		"url": "data/OB110462-moa.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Danish 1.54m",
+		"url": "data/OB110462-danish.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Faulkes North 2.0m",
+		"url": "data/OB110462-ftn.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Faulkes South 2.0m",
+		"url": "data/OB110462-fts.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Liverpool 2.0m",
+		"url": "data/OB110462-liv.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "MONET North 1.2m",
+		"url": "data/OB110462-monet.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "UTas 1.0m",
+		"url": "data/OB110462-utas.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "SAAO 1.0m",
+		"url": "data/OB110462-saao.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "CTIO 1.3m",
+		"url": "data/OB110462-ctio.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Auckland 0.4m",
+		"url": "data/OB110462-akl.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Farm Cove 0.35m",
+		"url": "data/OB110462-farmcove.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Kumeu Obs 0.35m",
+		"url": "data/OB110462-kumeu.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Vintage Lane 0.4m",
+		"url": "data/OB110462-vintage.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Model",
+		"url": "data/OB110462-model.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	}],
+	"marks":[{
+		"type": "symbol",
+		"from": {"data": "OGLE"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "MOA"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#7F0000"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#7F0000"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Faulkes North 2.0m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#00FFFF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#00FFFF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Faulkes South 2.0m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#007F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#007F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Liverpool 2.0m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#00A0A0"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#00A0A0"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "MONET North 1.2m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#7F007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#7F007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "UTas 1.0m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#FF00FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF00FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "SAAO 1.0m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#00FF00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#00FF00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "CTIO 1.3m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#0000FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#0000FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Auckland 0.4m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#007F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#007F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Farm Cove 0.35m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#0000FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#0000FF"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Kumeu Obs 0.35m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#00007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#00007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Vintage Lane 0.4m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fill": {"value": "#7F007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#7F007F"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "line",
+		"from": {"data": "Model"},
+		"encode": {
+			"enter": {
+				"strokeWidth": {"value": 2},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"fill": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	}]
+}
