@@ -57,29 +57,48 @@ var TimeSeries;
 		return this;
 	}
 	TimeSeries.prototype.load = function(f){
-		this.file = f;
-		S().ajax(this.file,{
-			"dataType": "json",
-			"this": this,
-			"success": function(d,attr){
-				this.json = d;
-				this.datasets = {};
-				this.dataloaded = 0;
-				console.log(d)
-				if(d.width) this.options.width = d.width;
-				if(d.height) this.options.height = d.height;
-				if(d.padding) this.options.padding = d.padding;
-				this.graph = new Graph('lightcurve', [], this.options) // Need to make this target the correct element
-				
-				this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 
-				for(var j = 0; j < d.data.length; j++){
-					this.loadDataset(j);
+		this.file = f;
+
+		// Load any necessary extra js/css for clustering
+		var files = ['resources/graph.js'];
+		var _obj = this;
+		if(!this.extraLoaded) this.extraLoaded = {};
+		for(var i = 0; i < files.length; i++){
+			loadCode(files[i],function(e){
+				_obj.extraLoaded[e.url] = true;
+				var got = 0;
+				for(var i = 0; i < files.length; i++){
+					if(_obj.extraLoaded[files[i]]) got++;
 				}
-			}
-		});
+				if(got==files.length){
+					S().ajax(_obj.file,{
+						"dataType": "json",
+						"this": _obj,
+						"success": function(d,attr){
+							this.json = d;
+							this.datasets = {};
+							this.dataloaded = 0;
+							console.log(d)
+							if(d.width) this.options.width = d.width;
+							if(d.height) this.options.height = d.height;
+							if(d.padding) this.options.padding = d.padding;
+							this.graph = new Graph('lightcurve', [], this.options) // Need to make this target the correct element
+				
+							this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+
+							for(var j = 0; j < d.data.length; j++){
+								this.loadDataset(j);
+							}
+						}
+					});
+				}
+			})
+		}
+
 		return this;
 	}
+
 	TimeSeries.prototype.loadDataset = function(j){
 		// Now grab the data
 		S().ajax(this.json.data[j].url,{
@@ -205,7 +224,24 @@ var TimeSeries;
 		return this;
 	}
 
-
+	function loadCode(url,callback){
+		var el;
+		console.log('loadCode',url,url.indexOf(".js"));
+		if(url.indexOf(".js")>= 0){
+			el = document.createElement("script");
+			el.setAttribute('type',"text/javascript");
+			el.src = url;
+		}else if(url.indexOf(".css")>= 0){
+			el = document.createElement("style");
+			el.setAttribute('rel','stylesheet');
+			el.setAttribute('type','text/css');
+			el.setAttribute('href',url);
+		}
+		if(el){
+			el.onload = function(){ callback.call(this,{'url':url}); };
+			document.getElementsByTagName('head')[0].appendChild(el);
+		}
+	}
 	/**
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,
 	 * and returns an array with the rows of data.

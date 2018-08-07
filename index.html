@@ -9,7 +9,6 @@
 	.timeseries { background-color: #f9f9f9; }
 	</style>
 	<script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
-	<script language="javascript" type="text/javascript" src="resources/graph.js"></script>
 	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
 	<script type="text/javascript">
 	S(document).ready(function(){
@@ -32,7 +31,6 @@
 
 		for(var i = 0; i < ts.length; i++){
 			var json = S(ts[i]).attr('data-src');
-		//	console.log(json)
 	
 			timeseries[i] = new TimeSeries();
 			timeseries[i].load(json);	
