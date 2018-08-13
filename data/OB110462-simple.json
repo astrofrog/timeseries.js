@@ -1,0 +1,55 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 800,
+	"height": 450,
+	"padding": 10,
+	"autosize": {"type": "fit", "resize": true},
+	"data": [{
+		"name": "Danish 1.54m",
+		"url": "data/OB110462-danish.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	}],
+	"marks":[{
+		"type": "rect",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"width": {"value": 1},
+				"fill": {"value": "black"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"size": {"value": 2.5},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	}]
+}
