@@ -65,31 +65,43 @@ var TimeSeries;
 		}
 		return this;
 	}
-	TimeSeries.prototype.load = function(f){
+	TimeSeries.prototype.renderElement = function(el,f){
 
-		this.log('load',f);
-		if(f) this.file = f;
+		if(!el) return this;
+		if(!f) f = S(el).attr('vega-src');
+		var fit = ((S(el).attr('vega-scale') || "")=="inherit");
+		this.file = f;
+		this.log('load',el,f,fit);
 		if(typeof this.file!=="string") return this;
 		
-		// Load any necessary extra js/css for clustering
+		// Load any necessary extra js/css
 		var _obj = this;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
-			this.loadResources('resources/graph.js',function(){ _obj.log('here'); _obj.load(f); });
+			this.log('loading graph.js');
+			this.loadResources('resources/graph.js',function(){ _obj.log('here'); _obj.renderElement(el); });
 		}else{
 			// Load the file
 			S().ajax(this.file,{
 				"dataType": "json",
 				"this": this,
 				"cache": true,
+				"element": el,
 				"success": function(d,attr){
 					this.json = d;
 					if(d.width) this.options.width = d.width;
 					if(d.height) this.options.height = d.height;
 					if(d.padding) this.options.padding = d.padding;
 					this.options.logging = true;
-					this.graph = new Graph(S('#lightcurve')[0], [], this.options) // Need to make this target the correct element
+					if(fit){
+						this.options.fit = true;
+						var e = S(attr.element);
+						this.options.width = parseInt(e.css('width'));
+						this.options.height = parseInt(e.css('height'));
+					}
+					
+					this.graph = new Graph(attr.element, [], this.options) // Need to make this target the correct element
 					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 					this.loadDatasets(d.data);
 					return this;
@@ -232,10 +244,10 @@ var TimeSeries;
 
 					}
 				}
-				if(mark.type == "symbol") data.push({ data: this.datasets[id], points: {show:true, radius: ((mark.encode.enter.size.value/2)||1.5)}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
-				else if(mark.type == "line") data.push({ data: this.datasets[id], points: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
+				if(mark.type == "symbol") data.push({ data: this.datasets[id], symbol: {show:true, shape: 'circle', size: ((mark.encode.enter.size.value)||4)}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
+				else if(mark.type == "line") data.push({ data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
+				//else if(mark.type == "rect") data.push({ data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
 			}
-			
 		}
 
 		if(this.datasetsused != this.olddatasetsused){

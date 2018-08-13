@@ -8,7 +8,7 @@ var eventcache = {};
 function stuQuery(els){
 	// Make our own fake, tiny, version of jQuery simulating the parts we need
 	var elements;
-	this.stuquery = "1.0.15";
+	this.stuquery = "1.0.16";
 
 	this.getBy = function(e,s){
 		var i,m,k;
@@ -354,10 +354,14 @@ stuQuery.prototype.clone = function(){
 	return span.innerHTML;
 }
 stuQuery.prototype.replaceWith = function(html){
-	var span = document.createElement("span");
-	span.innerHTML = html;
+	var tempDiv;
 	var clone = S(this.e);
-	for(var i = 0; i < this.length; i++) clone[0].parentNode.replaceChild(span, clone[0]);
+	for(var i = 0; i < this.length; i++){
+		tempDiv = document.createElement('div');
+		tempDiv.innerHTML = html;
+		clone[i] = tempDiv.cloneNode(true);
+		this[i].parentNode.replaceChild(clone[i], this[i]);
+	}
 	return clone;
 }
 stuQuery.prototype.width = function(){

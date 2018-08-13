@@ -200,11 +200,17 @@ var Graph;
 		// Construct the <canvas> container
 		this.container = S(container);
 		this.origcontainer = this.container[0].outerHTML;
+		if(this.container.nodeName!=="div"){
+			this.log('before',this.container,this.wide,this.tall);
+			this.container = this.container.replaceWith('<div></div>');
+			//this.container[0].outerHTML = '<div></div>';
+			this.log('after',this.container)
+		}
 		if(this.container.length == 0){
 			this.log('Error - no valid container provided');
 			return;
 		}
-		this.container.css({'position':'relative'});
+		this.container.css({'position':'relative','width':this.wide,'height':this.tall});
 		// We'll need to change the sizes when the window changes size
 		var _obj = this;
 		window.addEventListener('resize',function(e){ _obj.resize(); });
@@ -215,7 +221,7 @@ var Graph;
 		this.wide = this.container.width();
 		if(this.tall > 0) this.container.css({'height':this.tall+'px'});
 		this.tall = this.container.height();
-	
+
 		// Add a <canvas> to it
 		this.container.html('<canvas class="canvas" style="display:block;font:inherit;"></canvas>');
 		this.containerbg = this.container.css('background');
@@ -355,7 +361,7 @@ var Graph;
 
 
 	// Now we define the Graph class
-	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",points:{show:false,radius:1.5},lines:{show:true,width:4}}, options);
+	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false,radius:1.5},lines:{show:true,width:4}}, options);
 	// where:
 	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
@@ -385,6 +391,7 @@ var Graph;
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
 		opt.logging = this.logging;
+		
 		this.canvas = new Canvas(element,opt);
 
 		// Bind events to the canvas
@@ -710,7 +717,7 @@ var Graph;
 	}
 	
 	Graph.prototype.highlight = function(d){
-		if(this.selecting) return;	// If we are dragging we don't want to highlight points
+		if(this.selecting) return;	// If we are dragging we don't want to highlight symbols
 		if(this.lookup && d && d.length == 2){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
@@ -720,7 +727,7 @@ var Graph;
 			var i = d[1];
 			var data = this.data[t];
 			var twopi = 2*Math.PI;
-			var rad = (data.points.radius) ? data.points.radius : 1;
+			var rad = (data.symbol.size) ? data.symbol.size : 1;
 			var ii = this.getPixPos(data.data[i].x,data.data[i].y);
 			this.canvas.ctx.beginPath();
 
@@ -1096,6 +1103,7 @@ var Graph;
 		for(var sh = 0; sh < this.data.length ; sh++){
 			if(this.data[sh].show){
 				l = this.data[sh].data.length
+				this.data[sh].props = new Array(l);
 				this.data[sh].x = new Array(l);
 				this.data[sh].y = new Array(l);
 				for(var i = 0; i < l ; i++){
@@ -1103,19 +1111,92 @@ var Graph;
 					x = Math.round(ii[0]);
 					y = Math.round(ii[1]);
 					if(this.data[sh].hoverable && typeof ii[0]=="number" && typeof ii[1]=="number" && x < this.lookup.length && y < this.lookup[x].length && this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max) this.lookup[x][y] = sh+":"+i;
-					this.data[sh].x[i] = ii[0];
-					this.data[sh].y[i] = ii[1];
+					if(!this.data[sh].props[i]) this.data[sh].props[i] = {};
+					this.data[sh].props[i].x = ii[0];
+					this.data[sh].props[i].y = ii[1];
 				}
 			}
 		}
 		return this;
 	}
 
+	Graph.prototype.drawShape = function(sh,i){
+
+		var datum = this.data[sh];
+		var d = this.data[sh].props[i];
+		var x1 = d.x;
+		var y1 = d.y;
+		
+		this.canvas.ctx.moveTo(x1,y1);
+		this.canvas.ctx.beginPath();
+		var shape = datum.symbol.shape;
+
+		if(shape=="circle"){
+			this.canvas.ctx.arc(x1,y1,(datum.symbol.size/2 || 4),0,Math.PI*2,false);
+		}else if(shape=="rect"){
+			var w = datum.symbol.width || datum.symbol.size || 4;
+			var h = datum.symbol.height || w;
+			if(d.x2) w = d.x2-d.x1;
+			else if(d.width && d.x){ w = d.width; x1 = d.x - d.width/2; }
+			else if(d.width && d.xc){ w = d.width; x1 = d.xc - d.width/2; }
+			else{ x1 = d.x - w/2; }
+
+			if(d.y2) h = d.y2-d.y1;
+			else if(d.height && d.y){ h = d.height; y1 = d.y - d.height/2; }
+			else if(d.height && d.yc){ h = d.height; y1 = d.yc - d.height/2; }
+			else{ y1 = d.y - h/2; }
+
+			this.canvas.ctx.rect(x1,y1,w,h);
+		}else if(shape=="cross"){
+			var w = datum.symbol.size || 4;
+			dw = w/6;
+			this.canvas.ctx.moveTo(x1+dw,y1+dw);
+			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
+			this.canvas.ctx.lineTo(x1+dw*3,y1-dw);
+			this.canvas.ctx.lineTo(x1+dw,y1-dw);
+			this.canvas.ctx.lineTo(x1+dw,y1-dw*3);
+			this.canvas.ctx.lineTo(x1-dw,y1-dw*3);
+			this.canvas.ctx.lineTo(x1-dw,y1-dw);
+			this.canvas.ctx.lineTo(x1-dw*3,y1-dw);
+			this.canvas.ctx.lineTo(x1-dw*3,y1+dw);
+			this.canvas.ctx.lineTo(x1-dw,y1+dw);
+			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
+			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
+		}else if(shape=="diamond"){
+			var w = (datum.symbol.size || 4)*Math.sqrt(2)/2;
+			this.canvas.ctx.moveTo(x1,y1+w);
+			this.canvas.ctx.lineTo(x1+w,y1);
+			this.canvas.ctx.lineTo(x1,y1-w);
+			this.canvas.ctx.lineTo(x1-w,y1);
+		}else if(shape=="triangle-up"){
+			var w = (datum.symbol.size || 4)/3;
+			this.canvas.ctx.moveTo(x1,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
+		}else if(shape=="triangle-down"){
+			var w = (datum.symbol.size || 4)/3;
+			this.canvas.ctx.moveTo(x1,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
+		}else if(shape=="triangle-left"){
+			var w = (datum.symbol.size || 4)/3;
+			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1-w*1.5,y1);
+		}else if(shape=="triangle-right"){
+			var w = (datum.symbol.size || 4)/3;
+			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1+w*1.5,y1);
+		}
+		this.canvas.ctx.fill();
+	}
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(){
 
 		var lo,hi,x,y,ii,l;
 		var twopi = Math.PI*2;
+		var p;
 
 		for(var sh = 0; sh < this.data.length ; sh++){
 
@@ -1126,34 +1207,35 @@ var Graph;
 				if(this.data[sh].lines.show){
 					this.canvas.ctx.beginPath();
 					this.canvas.ctx.lineWidth = (this.data[sh].lines.width ? this.data[sh].lines.width : 1);
-					for(var i = 0; i < this.data[sh].x.length ; i++){
-						if(this.data[sh].x[i] && this.data[sh].y[i]){
+					for(var i = 0; i < this.data[sh].props.length ; i++){
+						p = this.data[sh].props[i];
+						if(p.x && p.y){
 							if(this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max){
-								if(i == 0) this.canvas.ctx.moveTo(this.data[sh].x[i],this.data[sh].y[i]);
-								else this.canvas.ctx.lineTo(this.data[sh].x[i],this.data[sh].y[i]);
+								if(i == 0) this.canvas.ctx.moveTo(p.x,p.y);
+								else this.canvas.ctx.lineTo(p.x,p.y);
 							}else{
-								this.canvas.ctx.moveTo(this.data[sh].x[i],this.data[sh].y[i]);
+								this.canvas.ctx.moveTo(p.x,p.y);
 							}
 						}
 					}
 					this.canvas.ctx.stroke();
 					this.canvas.ctx.closePath();
 				}
-		
-				if(typeof this.data[sh].points=="undefined") this.data[sh].points = { show: true };
-				var rad = (this.data[sh].points.radius) ? this.data[sh].points.radius : 1;
 
-				if(this.data[sh].points.show){
+				if(typeof this.data[sh].symbol=="undefined"){
+					this.data[sh].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
+				}
+				
+				if(this.data[sh].symbol.show){
 					this.canvas.ctx.fillStyle = (this.data[sh].color ? parseColour(this.data[sh].color) : '#df0000');
 					this.canvas.ctx.lineWidth = (0.8);
-					for(var i = 0; i < this.data[sh].x.length ; i++){
-						if(this.data[sh].x[i] && this.data[sh].y[i] && this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max){
-							if(this.data[sh].y[i] <= this.chart.top+this.chart.height){
+					for(var i = 0; i < this.data[sh].props.length ; i++){
+						p = this.data[sh].props[i];
+						if(p.x && p.y && this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max){
+							if(p.y <= this.chart.top+this.chart.height){
 
-								this.canvas.ctx.moveTo(this.data[sh].x[i],this.data[sh].y[i]);
-								this.canvas.ctx.beginPath();
-								this.canvas.ctx.arc(this.data[sh].x[i],this.data[sh].y[i],rad,0,twopi,false);
-								this.canvas.ctx.fill();
+								this.drawShape(sh,i);
+
 								e = (this.data[sh].data[i].err) ? (this.data[sh].data[i].err.length==2 ? 2 : 1) : 0;
 								if(e > 0){
 									if(e == 2){
@@ -1166,8 +1248,8 @@ var Graph;
 								
 									if(hi && lo){
 										this.canvas.ctx.beginPath();
-										this.canvas.ctx.moveTo(this.data[sh].x[i],lo);
-										this.canvas.ctx.lineTo(this.data[sh].x[i],hi);
+										this.canvas.ctx.moveTo(this.data[sh].props[i].x,lo);
+										this.canvas.ctx.lineTo(this.data[sh].props[i].x,hi);
 										this.canvas.ctx.stroke();
 										this.canvas.ctx.closePath();
 									}
