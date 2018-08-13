@@ -56,12 +56,44 @@ var TimeSeries;
 
 		return this;
 	}
+
 	TimeSeries.prototype.load = function(f){
 
-		this.file = f;
+		if(f) this.file = f;
 
 		// Load any necessary extra js/css for clustering
-		var files = ['resources/graph.js'];
+		var _obj = this;
+		// Do we need to load some extra Javascript?
+		if(typeof Graph!=="function"){
+			// Load the Javascript and, once done, call this function again
+			this.loadResources('resources/graph.js',function(){ console.log('here'); _obj.load(f); });
+		}else{
+			// Load the file
+			S().ajax(this.file,{
+				"dataType": "json",
+				"this": this,
+				"cache": true,
+				"success": function(d,attr){
+					this.json = d;
+					if(d.width) this.options.width = d.width;
+					if(d.height) this.options.height = d.height;
+					if(d.padding) this.options.padding = d.padding;
+					this.graph = new Graph('lightcurve', [], this.options) // Need to make this target the correct element
+					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+					this.loadDatasets(d.data);
+					return this;
+				}
+			});
+		};
+	
+		return this;
+	}
+
+	TimeSeries.prototype.loadResources = function(files,callback){
+
+		// Load any necessary extra js/css for clustering
+		if(typeof files==="string") files = [files];
+		
 		var _obj = this;
 		if(!this.extraLoaded) this.extraLoaded = {};
 		for(var i = 0; i < files.length; i++){
@@ -71,57 +103,43 @@ var TimeSeries;
 				for(var i = 0; i < files.length; i++){
 					if(_obj.extraLoaded[files[i]]) got++;
 				}
-				if(got==files.length){
-					S().ajax(_obj.file,{
-						"dataType": "json",
-						"this": _obj,
-						"success": function(d,attr){
-							this.json = d;
-							this.datasets = {};
-							this.dataloaded = 0;
-							console.log(d)
-							if(d.width) this.options.width = d.width;
-							if(d.height) this.options.height = d.height;
-							if(d.padding) this.options.padding = d.padding;
-							this.graph = new Graph('lightcurve', [], this.options) // Need to make this target the correct element
-				
-							this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
-
-							for(var j = 0; j < d.data.length; j++){
-								this.loadDataset(j);
-							}
-						}
-					});
-				}
+				if(got==files.length) callback.call(_obj);
 			})
+		}
+	
+		return this;
+	}
+
+	TimeSeries.prototype.loadDatasets = function(data){
+
+		this.datasets = {};
+		var dataloaded = 0;
+		var n = data.length;
+		
+		for(var j = 0; j < n; j++){
+
+			// Now grab the data
+			S().ajax(data[j].url,{
+				"dataType": "csv",
+				"this": this,
+				"dataset": data[j],
+				"success": function(d,attr){
+					// Remove extra newlines at the end
+					d = d.replace(/[\n\r]$/,"");
+
+					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
+					dataloaded++;
+
+					this.update();
+
+					if(dataloaded == n) this.loaded();
+				}
+			});
 		}
 
 		return this;
 	}
 
-	TimeSeries.prototype.loadDataset = function(j){
-		// Now grab the data
-		S().ajax(this.json.data[j].url,{
-			"dataType": "csv",
-			"this": this,
-			"j": j,
-			"success": function(d,attr){
-	
-				// Remove extra newlines at the end
-				d = d.replace(/[\n\r]$/,"");
-
-				//var data = CSV2JSON(d,this.json.data[attr.j].format.parse);
-				this.datasets[this.json.data[attr.j].name] = CSV2JSON(d,this.json.data[attr.j].format.parse);//{ data: data, points :{show:true, radius: 1.5}, title:(this.json.data[attr.j].name), color: '#000000', lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':'#000000'} };
-				this.dataloaded++;
-
-				this.update();
-
-				if(this.dataloaded == this.json.data.length) this.loaded();
-			}
-		});
-
-		return this;
-	}
 	TimeSeries.prototype.update = function(){
 
 		var data = new Array();

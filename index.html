@@ -15,7 +15,7 @@
 	
 		var ts = S('.timeseries');
 		var vega = new Array();
-
+/*
 		var options = {
 			series: {
 				lines: { show: false },
@@ -26,7 +26,7 @@
 			yaxis: { label: 'Delta (mag)' },
 			grid: { hoverable: true, clickable: true }
 		};
-
+*/
 		var timeseries = new Array(ts.length);
 
 		for(var i = 0; i < ts.length; i++){
@@ -119,7 +119,7 @@
 	<div id="main_content_wrap" class="outer">
 		<section id="main_content" class="inner">
 
-			<div id="lightcurve" style="width:100%;height:350px;margin-bottom:10px;" class="timeseries" data-src="data/OB110462.json"></div>
+			<div id="lightcurve" style="width:100%;height:350px;margin-bottom:10px;"><img src="" style="width:500px;height:100%;" class="timeseries" data-src="data/OB110462.json" /></div>
 			<div style="text-align:center;font-size:0.8em;color:#999;padding-left:25px; padding-right:25px;">This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</div>
 
 		</section>
