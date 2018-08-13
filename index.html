@@ -14,25 +14,12 @@
 	S(document).ready(function(){
 	
 		var ts = S('.timeseries');
-		var vega = new Array();
-/*
-		var options = {
-			series: {
-				lines: { show: false },
-				points: { show: true },
-				shadowSize: 0
-			},
-			xaxis:{ label:'Time (HJD)' },
-			yaxis: { label: 'Delta (mag)' },
-			grid: { hoverable: true, clickable: true }
-		};
-*/
 		var timeseries = new Array(ts.length);
 
 		for(var i = 0; i < ts.length; i++){
 			var json = S(ts[i]).attr('data-src');
 	
-			timeseries[i] = new TimeSeries();
+			timeseries[i] = new TimeSeries({'logging':true});
 			timeseries[i].load(json);	
 		}
 	});

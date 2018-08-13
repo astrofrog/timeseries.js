@@ -144,7 +144,7 @@ var Graph;
 	function getStyle(el, styleProp) {
 		if (typeof window === 'undefined') return;
 		var style;
-		var el = document.getElementById(el);
+		if(!el) return style;
 		if (el.currentStyle) style = el.currentStyle[styleProp];
 		else if (window.getComputedStyle) style = document.defaultView.getComputedStyle(el, null).getPropertyValue(styleProp);
 		if (style && style.length === 0) style = null;
@@ -153,11 +153,15 @@ var Graph;
 	// End of helper functions
 
 	// Define the class to deal with <canvas>.
-	function Canvas(i){
-		if(!(typeof i=="string" || (typeof i=="object" && typeof i.id=="string"))) return;
+	// i = {
+	//    'container': HTMLelement
+	// }
+	function Canvas(container,i){
+
+		if(typeof container!=="object") return;
+		if(!i) i = {};
 
 		// Define default values
-		this.id = '';
 		this.canvas = '';
 		this.c = '';
 		this.wide = 0;
@@ -168,6 +172,7 @@ var Graph;
 		this.color = "";
 		this.background = "rgb(255,255,255)";
 		this.events = {resize:""};	// Let's add some default events
+		this.logging = false;
 
 		// Add options to detect for older IE
 		this.ie = false;
@@ -182,7 +187,7 @@ var Graph;
 		var b = "boolean";
 		var o = "object";
 		var f = "function";
-		if(is(i.id,t)) this.id = i.id;
+		if(is(i.logging,b)) this.logging = i.logging;
 		if(is(i.background,t)) this.background = i.background;
 		if(is(i.color,t)) this.color = i.color;
 		if(is(i.width,n)) this.wide = i.width;
@@ -190,14 +195,14 @@ var Graph;
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
 
-		if(!this.id) return;
+		this.log('Canvas',container)
+
 		// Construct the <canvas> container
-		this.container = S('#'+this.id);
+		this.container = S(container);
 		this.origcontainer = this.container[0].outerHTML;
 		if(this.container.length == 0){
-			// No appropriate container exists. So we'll make one.
-			$('body').append('<div id="'+this.id+'"></div>');
-			this.container = $('#'+this.id);
+			this.log('Error - no valid container provided');
+			return;
 		}
 		this.container.css({'position':'relative'});
 		// We'll need to change the sizes when the window changes size
@@ -211,15 +216,12 @@ var Graph;
 		if(this.tall > 0) this.container.css({'height':this.tall+'px'});
 		this.tall = this.container.height();
 	
-		// Rename as the holder
-		this.container.attr('id',this.id+'holder');
-	
-		// Add a <canvas> to it with the original ID
-		this.container.html('<canvas id="'+this.id+'" style="display:block;font:inherit;"></canvas>');
+		// Add a <canvas> to it
+		this.container.html('<canvas class="canvas" style="display:block;font:inherit;"></canvas>');
 		this.containerbg = this.container.css('background');
-		this.canvas = S('#'+this.id);
+		this.canvas = this.container.find('canvas');
 		this.canvas.css({'position':'absolute'})
-		this.c = document.getElementById(this.id);
+		this.c = this.canvas[0];
 		// For excanvas we need to initialise the newly created <canvas>
 		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
 	
@@ -247,6 +249,13 @@ var Graph;
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
+	}
+	Canvas.prototype.log = function(){
+		if(this.logging){
+			var args = Array.prototype.slice.call(arguments, 0);
+			if(console && is(console.log,"function")) console.log('Canvas',args);
+		}
+		return this;
 	}
 	// Attach a handler to an event for the Canvas object in a style similar to that used by jQuery
 	//   .on(eventType[,eventData],handler(eventObject));
@@ -290,7 +299,7 @@ var Graph;
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
 		if(fullScreenApi.supportsFullScreen) {
-			this.elem = document.getElementById(this.id+"holder");
+			this.elem = this.container[0];
 			if(fullScreenApi.isFullScreen()){
 				fullScreenApi.cancelFullScreen(this.elem);
 				this.fullscreen = false;
@@ -298,7 +307,7 @@ var Graph;
 				fullScreenApi.requestFullScreen(this.elem);
 				this.fullscreen = true;
 			}
-			console.log('toggleFullScreen',this.fullscreen)
+			this.log('toggleFullScreen',this.fullscreen)
 		}
 	}
 	// A function to be called whenever the <canvas> needs to be resized.
@@ -340,24 +349,26 @@ var Graph;
 		this.wide = w;
 		this.tall = h;
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
-		if(this.ie && $.browser.version == 8) $('#'+this.id).find('div').css({'width':w+'px','height':h+'px'});
+		if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	}
 
 
 	// Now we define the Graph class
-	// mygraph = new Graph(id, {data:series,color: "#9944ff",points:{show:false,radius:1.5},lines:{show:true,width:4}}, options);
+	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",points:{show:false,radius:1.5},lines:{show:true,width:4}}, options);
 	// where:
-	//   id (string) is the ID of the HTML element to attach the canvas to
+	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
 	//   options (object) contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
 	Graph = function(element, data, options){
+
+		if(!options) options = {};
+		if(options.logging) this.logging = true;
+
 		// Define some variables
-		this.version = "0.2.1";
-		this.logging = false;
+		this.version = "0.2.2";
 		this.start = new Date();
-		if(typeof element!="string") return;
-		this.id = element;
+		if(typeof element!="object") return;
 		this.data = {};
 		this.chart = {};
 		this.options = {};
@@ -365,21 +376,23 @@ var Graph;
 		this.events = [];
 		this.lines = [];
 
+		this.log('init',element,typeof element);
+
 		if(this.logging) var d = new Date();
 
 		// Define the drawing canvas
-		var opt = {id:this.id};
+		var opt = {};
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
-		console.log(opt)
-		this.canvas = new Canvas(opt);
+		opt.logging = this.logging;
+		this.canvas = new Canvas(element,opt);
 
 		// Bind events to the canvas
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(ev.data.me.logging) var d = new Date();
 			ev.data.me.setOptions().calculateData().draw().trigger("resize",{event:ev.event});
-			if(ev.data.me.logging) console.log("Total until end of resize:" + (new Date() - d) + "ms");
+			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
 			var g = ev.data.me;	// The graph object
@@ -492,7 +505,14 @@ var Graph;
 		// Finally, set the data and update the display
 		this.updateData(data);
 
-		if(this.logging) console.log("Total:" + (new Date() - d) + "ms");
+		this.log("Total:" + (new Date() - d) + "ms");
+		return this;
+	}
+	Graph.prototype.log = function(){
+		if(this.logging){
+			var args = Array.prototype.slice.call(arguments, 0);
+			if(console && is(console.log,"function")) console.log('Graph',args);
+		}
 		return this;
 	}
 	// Attach a handler to an event for the Graph object in a style similar to that used by jQuery
@@ -526,8 +546,9 @@ var Graph;
 		options = options || {};
 		if(typeof this.options!="object") this.options = {};
 		// Set the width and height
-		this.options.width = parseInt(getStyle(this.id, 'width'), 10);
-		this.options.height = parseInt(getStyle(this.id, 'height'), 10);
+		this.options.width = parseInt(getStyle(this.canvas.container[0], 'width'), 10);
+		this.options.height = parseInt(getStyle(this.canvas.container[0], 'height'), 10);
+
 		// Add user-defined options
 		this.options = G.extend(this.options, options);
 
@@ -880,8 +901,9 @@ var Graph;
 
 	Graph.prototype.getChartOffset = function(){
 		if(typeof this.chart!="object") this.chart = {}
-		var fs = getStyle(this.canvas.id, 'font-size');
-		var ff = getStyle(this.canvas.id, 'font-family');
+		var fs = getStyle(this.canvas.container[0], 'font-size');
+		var ff = getStyle(this.canvas.container[0], 'font-family');
+
 		if(this.canvas.fullscreen){
 			this.chart.padding = this.canvas.wide/40;
 			this.chart.fontsize = this.canvas.wide/80;
@@ -1216,13 +1238,10 @@ var Graph;
 		this.drawOverlay();
 		return this;
 	}
+
 	Graph.prototype.drawOverlay = function(){
 		this.drawLines();
 		return this;
 	}
-
-	/*S.Timeseries = function(element, data, options) {
-		return new Timeseries(element, data, options);
-	}*/
 
 })(S);

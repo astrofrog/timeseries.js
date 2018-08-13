@@ -45,28 +45,38 @@ var TimeSeries;
 	}
 	// End of helper functions
 
-	TimeSeries = function(file){
+	TimeSeries = function(opt){
+		if(!opt) opt = {};
+		this.logging = opt.logging || false;
 		this.options = {
 			xaxis:{ label:'Time (HJD)', log: false, fit:true },
 			yaxis: { label: 'Delta (mag)', log: false },
 			grid: { hoverable: true, clickable: true }
 		}
 		this.datasets = [];
-		this.file = file;
+		if(typeof file==="string") this.file = file;
 
 		return this;
 	}
-
+	TimeSeries.prototype.log = function(){
+		if(this.logging){
+			var args = Array.prototype.slice.call(arguments, 0);
+			if(console && typeof console.log==="function") console.log('TimeSeries',args);
+		}
+		return this;
+	}
 	TimeSeries.prototype.load = function(f){
 
+		this.log('load',f);
 		if(f) this.file = f;
-
+		if(typeof this.file!=="string") return this;
+		
 		// Load any necessary extra js/css for clustering
 		var _obj = this;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
-			this.loadResources('resources/graph.js',function(){ console.log('here'); _obj.load(f); });
+			this.loadResources('resources/graph.js',function(){ _obj.log('here'); _obj.load(f); });
 		}else{
 			// Load the file
 			S().ajax(this.file,{
@@ -78,7 +88,8 @@ var TimeSeries;
 					if(d.width) this.options.width = d.width;
 					if(d.height) this.options.height = d.height;
 					if(d.padding) this.options.padding = d.padding;
-					this.graph = new Graph('lightcurve', [], this.options) // Need to make this target the correct element
+					this.options.logging = true;
+					this.graph = new Graph(S('#lightcurve')[0], [], this.options) // Need to make this target the correct element
 					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 					this.loadDatasets(d.data);
 					return this;
@@ -94,16 +105,15 @@ var TimeSeries;
 		// Load any necessary extra js/css for clustering
 		if(typeof files==="string") files = [files];
 		
-		var _obj = this;
 		if(!this.extraLoaded) this.extraLoaded = {};
 		for(var i = 0; i < files.length; i++){
-			loadCode(files[i],function(e){
-				_obj.extraLoaded[e.url] = true;
+			this.loadCode(files[i],function(e){
+				this.extraLoaded[e.url] = true;
 				var got = 0;
 				for(var i = 0; i < files.length; i++){
-					if(_obj.extraLoaded[files[i]]) got++;
+					if(this.extraLoaded[files[i]]) got++;
 				}
-				if(got==files.length) callback.call(_obj);
+				if(got==files.length) callback.call(this);
 			})
 		}
 	
@@ -177,21 +187,21 @@ var TimeSeries;
 							if(datum[update.x.field]) x = datum[update.x.field];
 							else{
 								try { x = ev.call(datum,update.x.field,datum); }
-								catch { console.log('Error'); }
+								catch { this.log('Error'); }
 							}
 						}
 						if(update.x2 && update.x2.field){
 							if(datum[update.x2.field]) x2 = datum[update.x2.field];
 							else{
 								try { x2 = ev.call(datum,update.x.field,datum); }
-								catch { console.log('Error'); }
+								catch { this.log('Error'); }
 							}
 						}
 						if(update.y && update.y.field){
 							if(datum[update.y.field]) y = datum[update.y.field];
 							else{
 								try { y = ev.call(datum,update.y.field,datum); }
-								catch { console.log('Error'); }
+								catch { this.log('Error'); }
 							}
 						}
 						if(update.y2 && update.y2.field){
@@ -199,7 +209,7 @@ var TimeSeries;
 							if(datum[update.y2.field]) y2 = datum[update.y2.field];
 							else{
 								try { y2 = ev.call(datum,update.y2.field,datum); }
-								catch { console.log('Error'); }
+								catch { this.log('Error'); }
 							}
 						}
 
@@ -229,22 +239,20 @@ var TimeSeries;
 		}
 
 		if(this.datasetsused != this.olddatasetsused){
-			console.log('updateData')
+			this.log('updateData')
 			this.graph.updateData(data);
 		}
 
 		return this;
 	}
 	TimeSeries.prototype.loaded = function(){
+		this.log('loaded');
 		this.graph.canvas.container.find('.loader').remove();;
-	//	console.log('loaded',this)
-		//this.update();
 		return this;
 	}
-
-	function loadCode(url,callback){
+	TimeSeries.prototype.loadCode = function(url,callback){
 		var el;
-		console.log('loadCode',url,url.indexOf(".js"));
+		this.log('loadCode',url);
 		if(url.indexOf(".js")>= 0){
 			el = document.createElement("script");
 			el.setAttribute('type',"text/javascript");
@@ -256,9 +264,11 @@ var TimeSeries;
 			el.setAttribute('href',url);
 		}
 		if(el){
-			el.onload = function(){ callback.call(this,{'url':url}); };
+			var _obj = this;
+			el.onload = function(){ callback.call(_obj,{'url':url}); };
 			document.getElementsByTagName('head')[0].appendChild(el);
 		}
+		return this;
 	}
 	/**
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,
@@ -365,8 +375,5 @@ var TimeSeries;
 		var object = JSON.parse(json);
 		return object;
 	}
-	/*S.Timeseries = function(element, data, options) {
-		return new Timeseries(element, data, options);
-	}*/
 
 })(S);
