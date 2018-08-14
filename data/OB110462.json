@@ -73,7 +73,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -95,7 +95,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -117,7 +117,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -139,7 +139,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -161,7 +161,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -183,7 +183,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -205,7 +205,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -227,7 +227,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -249,7 +249,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -271,7 +271,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -293,7 +293,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -315,7 +315,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -337,7 +337,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
@@ -359,7 +359,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 2.5},
+				"size": {"value": 4},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
