@@ -382,9 +382,10 @@ var Graph;
 		this.events = [];
 		this.lines = [];
 
-		this.log('init',element,typeof element);
+		this.log('init',element,typeof element,data,options);
 
 		if(this.logging) var d = new Date();
+
 
 		// Define the drawing canvas
 		var opt = {};
@@ -577,12 +578,56 @@ var Graph;
 		if(typeof this.options.xaxis.mode==="string" && this.options.xaxis.mode==="time") this.options.xaxis.isDate = true;
 		return this;
 	}
-	Graph.prototype.updateData = function(data) {
-		if(!data) return this;
-		for(var i = 0; i < data.length; i++){
-			if(typeof data[i].show!=="boolean") data[i].show = true;
+	// Only send one dataset at a time with this function
+	// If an index is provided use it otherwise add sequentially
+	// If a dataset already exists we don't over-write
+	Graph.prototype.addDataset = function(data,index){
+		this.log('addDataset',data,index);
+		if(typeof index!=="number"){
+			if(typeof index==="undefined"){
+				// Create an index
+				for(var i = 0; i < 100; i++){
+					if(typeof this.data[i]==="undefined"){
+						index = i;
+						i = 100;
+					}
+				}
+			}
 		}
-		this.data = (typeof data.length === "number") ? data : [data];
+		if(this.data[index]) this.log('addDataset error','refusing to overwrite existing dataset at '+index,this.data[index],data);
+		else {
+			this.data[index] = data;
+			// Set the default to show the dataset
+			if(typeof this.data[index].show!=="boolean") this.data[index].show = true;
+
+			l = this.data[index].data.length;
+			this.data[index].props = new Array(l);
+			this.data[index].marks = new Array(l);
+
+			if(!this.data[index].symbol) this.data[index].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
+			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
+			if(!this.data[index].symbol.size) this.data[index].symbol.size = 4;
+			for(var i = 0; i < l ; i++){
+
+				if(!this.data[index].marks[i]) this.data[index].marks[i] = {'props':{},'data':this.data[index].data[i]};
+
+				// Copy the general symbol to the datapoint.
+				if(!this.data[index].marks[i].props.symbol) this.data[index].marks[i].props.symbol = this.data[index].symbol;
+
+				// Should process all the "enter" options here
+				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i]);
+			}
+			
+			this.log('enter',this.data[index].enter,this.data[index]);
+			
+		}
+		this.log('datasets',this.data);
+
+		return this;
+	}
+	Graph.prototype.updateData = function() {
+		// Should process all the "update" options here;
+		this.log('updateData',this.data)
 		this.getGraphRange();
 		this.calculateData();
 		this.clear();
@@ -601,24 +646,24 @@ var Graph;
 		if(this.data.length <= 0) return this;
 		
 		//this.errors = (this.options.useerrorsforrange) ? this.data[0].data[0].length - 2 : 0;
-		for(var i = 0; i < this.data.length ; i++){
-			max = this.data[i].data.length
+		for(var i in this.data){
+			max = this.data[i].marks.length
 
-			if(this.data[0].data[0].err){
+			if(this.data[i].marks[0].data.err){
 				// Need to correct for different +/- errors
 				var errs = new Array();
 				for(var j = 0; j < max ; j++){
-					if(this.data[i].data[j].err) errs.push(this.data[i].data[j].err);
+					if(this.data[i].marks[j].data.err) errs.push(this.data[i].marks[j].data.err);
 				}
 				m = G.stddev(errs);
 				var err = (m) ? [m,m] : [0,0];
 			}else var err = [0,0];
 
 			for(var j = 0; j < max ; j++){
-				if(this.data[i].data[j].x < this.x.min) this.x.min = this.data[i].data[j].x;
-				if(this.data[i].data[j].x > this.x.max) this.x.max = this.data[i].data[j].x;
-				if(this.data[i].data[j].y-err[1] < this.y.min) this.y.min = this.data[i].data[j].y-err[1];
-				if(this.data[i].data[j].y+err[1] > this.y.max) this.y.max = this.data[i].data[j].y+err[1];
+				if(this.data[i].marks[j].data.x < this.x.min) this.x.min = this.data[i].marks[j].data.x;
+				if(this.data[i].marks[j].data.x > this.x.max) this.x.max = this.data[i].marks[j].data.x;
+				if(this.data[i].marks[j].data.y-err[1] < this.y.min) this.y.min = this.data[i].marks[j].data.y-err[1];
+				if(this.data[i].marks[j].data.y+err[1] > this.y.max) this.y.max = this.data[i].marks[j].data.y+err[1];
 			}
 			if(typeof this.data[i].hover!="object") this.data[i].hover = {};
 		}
@@ -1091,7 +1136,8 @@ var Graph;
 
 	// Function to calculate the x,y coordinates for each data point. 
 	// It also creates a pixel-based lookup table for mouse hover events
-	Graph.prototype.calculateData = function(){
+	Graph.prototype.calculateData = function(event){
+		this.log('calculateData')
 		this.getChartOffset();
 
 		// Define a pixel-based lookup table
@@ -1100,20 +1146,22 @@ var Graph;
 			this.lookup[i] = new Array(this.canvas.tall);
 		}
 
-		for(var sh = 0; sh < this.data.length ; sh++){
+		for(var sh in this.data){
 			if(this.data[sh].show){
-				l = this.data[sh].data.length
-				this.data[sh].props = new Array(l);
-				this.data[sh].x = new Array(l);
-				this.data[sh].y = new Array(l);
-				for(var i = 0; i < l ; i++){
-					ii = this.getPixPos(this.data[sh].data[i].x,this.data[sh].data[i].y);
+
+				this.log('calculate for',sh,this.data[sh])
+
+				for(var i = 0; i < this.data[sh].marks.length ; i++){
+
+					// Process all the series updates here
+					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i]);
+
+					ii = this.getPixPos(this.data[sh].marks[i].data.x,this.data[sh].marks[i].data.y);
 					x = Math.round(ii[0]);
 					y = Math.round(ii[1]);
-					if(this.data[sh].hoverable && typeof ii[0]=="number" && typeof ii[1]=="number" && x < this.lookup.length && y < this.lookup[x].length && this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max) this.lookup[x][y] = sh+":"+i;
-					if(!this.data[sh].props[i]) this.data[sh].props[i] = {};
-					this.data[sh].props[i].x = ii[0];
-					this.data[sh].props[i].y = ii[1];
+					if(this.data[sh].hoverable && typeof ii[0]=="number" && typeof ii[1]=="number" && x < this.lookup.length && y < this.lookup[x].length && this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max) this.lookup[x][y] = sh+":"+i;
+					this.data[sh].marks[i].props.x = ii[0];
+					this.data[sh].marks[i].props.y = ii[1];
 				}
 			}
 		}
@@ -1122,33 +1170,33 @@ var Graph;
 
 	Graph.prototype.drawShape = function(sh,i){
 
-		var datum = this.data[sh];
-		var d = this.data[sh].props[i];
-		var x1 = d.x;
-		var y1 = d.y;
+		var dataset = this.data[sh];
+		var datum = this.data[sh].marks[i];
+		var x1 = datum.props.x;
+		var y1 = datum.props.y;
 		
 		this.canvas.ctx.moveTo(x1,y1);
 		this.canvas.ctx.beginPath();
-		var shape = datum.symbol.shape;
+		var shape = datum.props.symbol.shape;
 
 		if(shape=="circle"){
-			this.canvas.ctx.arc(x1,y1,(datum.symbol.size/2 || 4),0,Math.PI*2,false);
+			this.canvas.ctx.arc(x1,y1,(datum.props.symbol.size/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
-			var w = datum.symbol.width || datum.symbol.size || 4;
-			var h = datum.symbol.height || w;
-			if(d.x2) w = d.x2-d.x1;
-			else if(d.width && d.x){ w = d.width; x1 = d.x - d.width/2; }
-			else if(d.width && d.xc){ w = d.width; x1 = d.xc - d.width/2; }
-			else{ x1 = d.x - w/2; }
+			var w = datum.props.symbol.width || datum.props.symbol.size || 4;
+			var h = datum.props.symbol.height || w;
+			if(datum.props.x2) w = datum.props.x2-datum.props.x1;
+			else if(datum.props.width && datum.props.x){ w = datum.props.width; x1 = datum.props.x - datum.props.width/2; }
+			else if(datum.props.width && datum.props.xc){ w = datum.props.width; x1 = datum.props.xc - datum.props.width/2; }
+			else{ x1 = datum.props.x - w/2; }
 
-			if(d.y2) h = d.y2-d.y1;
-			else if(d.height && d.y){ h = d.height; y1 = d.y - d.height/2; }
-			else if(d.height && d.yc){ h = d.height; y1 = d.yc - d.height/2; }
-			else{ y1 = d.y - h/2; }
+			if(datum.props.y2) h = datum.props.y2-datum.props.y1;
+			else if(datum.props.height && datum.props.y){ h = datum.props.height; y1 = datum.props.y - datum.props.height/2; }
+			else if(datum.props.height && datum.props.yc){ h = datum.props.height; y1 = datum.props.yc - datum.props.height/2; }
+			else{ y1 = datum.props.y - h/2; }
 
 			this.canvas.ctx.rect(x1,y1,w,h);
 		}else if(shape=="cross"){
-			var w = datum.symbol.size || 4;
+			var w = datum.props.symbol.size || 4;
 			dw = w/6;
 			this.canvas.ctx.moveTo(x1+dw,y1+dw);
 			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
@@ -1163,28 +1211,28 @@ var Graph;
 			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
 			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
 		}else if(shape=="diamond"){
-			var w = (datum.symbol.size || 4)*Math.sqrt(2)/2;
+			var w = (datum.props.symbol.size || 4)*Math.sqrt(2)/2;
 			this.canvas.ctx.moveTo(x1,y1+w);
 			this.canvas.ctx.lineTo(x1+w,y1);
 			this.canvas.ctx.lineTo(x1,y1-w);
 			this.canvas.ctx.lineTo(x1-w,y1);
 		}else if(shape=="triangle-up"){
-			var w = (datum.symbol.size || 4)/3;
+			var w = (datum.props.symbol.size || 4)/3;
 			this.canvas.ctx.moveTo(x1,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
 		}else if(shape=="triangle-down"){
-			var w = (datum.symbol.size || 4)/3;
+			var w = (datum.props.symbol.size || 4)/3;
 			this.canvas.ctx.moveTo(x1,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
 		}else if(shape=="triangle-left"){
-			var w = (datum.symbol.size || 4)/3;
+			var w = (datum.props.symbol.size || 4)/3;
 			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1-w*1.5,y1);
 		}else if(shape=="triangle-right"){
-			var w = (datum.symbol.size || 4)/3;
+			var w = (datum.props.symbol.size || 4)/3;
 			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1+w*1.5,y1);
@@ -1194,11 +1242,12 @@ var Graph;
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(){
 
+		this.log('drawData')
 		var lo,hi,x,y,ii,l;
 		var twopi = Math.PI*2;
 		var p;
 
-		for(var sh = 0; sh < this.data.length ; sh++){
+		for(var sh in this.data){
 
 			if(this.data[sh].show){
 				this.canvas.ctx.strokeStyle = (this.data[sh].color ? parseColour(this.data[sh].color) : '#df0000');
@@ -1207,10 +1256,10 @@ var Graph;
 				if(this.data[sh].lines.show){
 					this.canvas.ctx.beginPath();
 					this.canvas.ctx.lineWidth = (this.data[sh].lines.width ? this.data[sh].lines.width : 1);
-					for(var i = 0; i < this.data[sh].props.length ; i++){
-						p = this.data[sh].props[i];
+					for(var i = 0; i < this.data[sh].marks.length ; i++){
+						p = this.data[sh].marks[i].props;
 						if(p.x && p.y){
-							if(this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max){
+							if(this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
 								if(i == 0) this.canvas.ctx.moveTo(p.x,p.y);
 								else this.canvas.ctx.lineTo(p.x,p.y);
 							}else{
@@ -1222,34 +1271,34 @@ var Graph;
 					this.canvas.ctx.closePath();
 				}
 
-				if(typeof this.data[sh].symbol=="undefined"){
-					this.data[sh].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
-				}
+				//if(typeof this.data[sh].symbol=="undefined"){
+				//	this.data[sh].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
+				//}
 				
 				if(this.data[sh].symbol.show){
 					this.canvas.ctx.fillStyle = (this.data[sh].color ? parseColour(this.data[sh].color) : '#df0000');
 					this.canvas.ctx.lineWidth = (0.8);
-					for(var i = 0; i < this.data[sh].props.length ; i++){
-						p = this.data[sh].props[i];
-						if(p.x && p.y && this.data[sh].data[i].x >= this.x.min && this.data[sh].data[i].x <= this.x.max && this.data[sh].data[i].y >= this.y.min && this.data[sh].data[i].y <= this.y.max){
+					for(var i = 0; i < this.data[sh].marks.length ; i++){
+						p = this.data[sh].marks[i].props;
+						if(p.x && p.y && this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
 							if(p.y <= this.chart.top+this.chart.height){
 
 								this.drawShape(sh,i);
 
-								e = (this.data[sh].data[i].err) ? (this.data[sh].data[i].err.length==2 ? 2 : 1) : 0;
+								e = (this.data[sh].marks[i].data.err) ? (this.data[sh].marks[i].data.err.length==2 ? 2 : 1) : 0;
 								if(e > 0){
 									if(e == 2){
-										hi = this.getYPos(this.data[sh].data[i].y+this.data[sh].data[i].err[0]);
-										lo = this.getYPos(this.data[sh].data[i].y-this.data[sh].data[i].err[1]);
+										hi = this.getYPos(this.data[sh].marks[i].data.y+this.data[sh].marks[i].data.err[0]);
+										lo = this.getYPos(this.data[sh].marks[i].data.y-this.data[sh].marks[i].data.err[1]);
 									}else{
-										hi = this.getYPos(this.data[sh].data[i].y+this.data[sh].data[i].err);
-										lo = this.getYPos(this.data[sh].data[i].y-this.data[sh].data[i].err);
+										hi = this.getYPos(this.data[sh].marks[i].data.y+this.data[sh].marks[i].data.err);
+										lo = this.getYPos(this.data[sh].marks[i].data.y-this.data[sh].marks[i].data.err);
 									}
 								
 									if(hi && lo){
 										this.canvas.ctx.beginPath();
-										this.canvas.ctx.moveTo(this.data[sh].props[i].x,lo);
-										this.canvas.ctx.lineTo(this.data[sh].props[i].x,hi);
+										this.canvas.ctx.moveTo(this.data[sh].marks[i].props.x,lo);
+										this.canvas.ctx.lineTo(this.data[sh].marks[i].props.x,hi);
 										this.canvas.ctx.stroke();
 										this.canvas.ctx.closePath();
 									}
