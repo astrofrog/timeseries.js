@@ -74,10 +74,10 @@
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 4},
+				"fill": {"value": "#000000"},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
 			},
@@ -384,7 +384,7 @@
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"fill": {"value": "#999999"},
+				"stroke": {"value": "#999999"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
 			},

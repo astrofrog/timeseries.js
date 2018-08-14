@@ -2,11 +2,15 @@
 	"$schema": "https://vega.github.io/schema/vega/v4.json",
 	"width": 800,
 	"height": 450,
-	"padding": 10,
+	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
 	"data": [{
 		"name": "Danish 1.54m",
 		"url": "data/OB110462-danish.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Liverpool 2.0m",
+		"url": "data/OB110462-liv.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Model",
@@ -14,27 +18,6 @@
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
 	"marks":[{
-		"type": "rect",
-		"from": {"data": "Danish 1.54m"},
-		"encode": {
-			"enter": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"width": {"value": 1},
-				"fill": {"value": "black"}
-			},
-			"update": {
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
-			},
-			"hover": {
-				"fill": {"value": "#FF7F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
-			}
-		}
-	},{
 		"type": "line",
 		"from": {"data": "Model"},
 		"encode": {
@@ -45,12 +28,34 @@
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"fill": {"value": "#999999"},
+				"stroke": {"value": "#999999"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
 			},
 			"hover": {
 				"fill": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"width": {"value": 1},
+				"fill": {"value": "#000000"}
+			},
+			"update": {
+				"fillOpacity": {"value": 1},
+				"fill": {"value": "#000000"},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
@@ -62,18 +67,43 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 8},
-				"shape": {"value": "diamond"},
+				"shape": {"value": "circle"},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
 				"shape": "cross",
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
+				"shape": {"value": "circle"},
+				"size": {"value": 4},
 				"zindex": {"value": 0}
 			},
 			"hover": {
-				"fill": {"value": "#FF7F00"},
+				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 1},
+				"shape": {"value": "cross"},
+				"size": {"value": 10},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Liverpool 2.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"size": {"value": 4},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"fill": {"value": "#00A0A0"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#00A0A0"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}

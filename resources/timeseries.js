@@ -180,11 +180,13 @@ this.log('loaded',j,data[j],attr.index,data[attr.index]);
 			
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
-				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true, shape: (mark.encode.enter.shape || 'circle'), size: ((mark.encode.enter.size.value)||4)}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} };
-				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} };
+				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true, hoverable:true, hoverprops:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill ? mark.encode.hover.fill.value : '#000000')} };
+				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, lines: { show: true }, clickable: true, hoverable:true, hoverprops:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill ? mark.encode.hover.fill.value : '#000000')} };
 
 				// Add the dataset
 				if(dataset){
+
+					dataset.encode = mark.encode;
 
 					function updateCoordinates(d,event){
 						datum = d.data;
@@ -242,36 +244,38 @@ this.log('loaded',j,data[j],attr.index,data[attr.index]);
 						d.data = datum;
 						return d;
 					}
+					function updateProperties(d,event){
+						var p = ['size','shape','fill','stroke','strokeWidth'];
+						for(var i = 0; i < p.length;i++){
+							if(event[p[i]] && event[p[i]].value){
+								if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;
+								if(d.props.format) d.props.format[p[i]] = event[p[i]].value;
+							}
+						}
+						return d;
+					}
 
 					// Add callbacks
 					if(mark.encode.enter){
-						dataset.enter = function(datum){
-							//this.log('markEnter',this,datum,mark.encode.enter)
-							if(mark.encode.enter.size && mark.encode.enter.size.value) datum.props.symbol.size = mark.encode.enter.size.value;
-							if(mark.encode.enter.shape && mark.encode.enter.shape.value) datum.props.symbol.shape = mark.encode.enter.shape.value;
-							return updateCoordinates(datum,mark.encode.enter);
+						dataset.enter = function(datum,event){
+							datum = updateProperties(datum,event);
+							return updateCoordinates(datum,event);
 						}
 					}
 					if(mark.encode.update){
 						// Keep our evaluation contained
 						var ev = function(str,datum){ return eval(str); }
-						dataset.update = function(datum){
-							// We have:
-							//   * ev (from outside)
-							//   * mark (from outside)
-							//   * this (the Graph object)
-							//   * datum (the specific data point which we will update and return)
-							// 
-							// Update looks something like this:
-							//	"update": {
-							//		"x": {"scale": "xscale", "field": "HJD"},
-							//		"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-							//		"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-							//		"fill": {"value": "#0000FF"},
-							//		"fillOpacity": {"value": 1},
-							//		"zindex": {"value": 0}
-							//	},
-							return updateCoordinates(datum,mark.encode.update);
+						dataset.update = function(datum,event){
+							datum = updateProperties(datum,event);
+							return updateCoordinates(datum,event);
+						}
+					}
+					if(mark.encode.hover){
+						// Keep our evaluation contained
+						var ev = function(str,datum){ return eval(str); }
+						dataset.hover = function(datum,event){
+							datum = updateProperties(datum,event);
+							return updateCoordinates(datum,event);
 						}
 					}
 

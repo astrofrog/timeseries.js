@@ -361,7 +361,7 @@ var Graph;
 
 
 	// Now we define the Graph class
-	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false,radius:1.5},lines:{show:true,width:4}}, options);
+	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false},lines:{show:true},format:{width:4}}, options);
 	// where:
 	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
@@ -433,6 +433,7 @@ var Graph;
 			if(!g.selecting){
 				d = g.dataAtMousePosition(event.offsetX,event.offsetY);
 				g.highlight(d);
+
 				if(typeof d!="undefined"){
 					t = d[0];
 					i = d[1];
@@ -601,21 +602,29 @@ var Graph;
 			if(typeof this.data[index].show!=="boolean") this.data[index].show = true;
 
 			l = this.data[index].data.length;
-			this.data[index].props = new Array(l);
 			this.data[index].marks = new Array(l);
 
-			if(!this.data[index].symbol) this.data[index].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
+			if(!this.data[index].symbol) this.data[index].symbol = { 'show': true };
+			if(!this.data[index].line) this.data[index].line = { 'show': true };
+			if(!this.data[index].format) this.data[index].format = { };
+
 			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
-			if(!this.data[index].symbol.size) this.data[index].symbol.size = 4;
+			if(!this.data[index].format.size) this.data[index].format.size = 4;
+			if(!this.data[index].format.strokeWidth) this.data[index].format.strokeWidth = 1;
+			if(!this.data[index].format.fill) this.data[index].format.fill = '#000000';
+			if(!this.data[index].format.stroke) this.data[index].format.stroke = '#000000';
+
 			for(var i = 0; i < l ; i++){
 
 				if(!this.data[index].marks[i]) this.data[index].marks[i] = {'props':{},'data':this.data[index].data[i]};
 
 				// Copy the general symbol to the datapoint.
 				if(!this.data[index].marks[i].props.symbol) this.data[index].marks[i].props.symbol = this.data[index].symbol;
+				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
+				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
 
 				// Should process all the "enter" options here
-				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i]);
+				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
 			}
 			
 			this.log('enter',this.data[index].enter,this.data[index]);
@@ -665,7 +674,7 @@ var Graph;
 				if(this.data[i].marks[j].data.y-err[1] < this.y.min) this.y.min = this.data[i].marks[j].data.y-err[1];
 				if(this.data[i].marks[j].data.y+err[1] > this.y.max) this.y.max = this.data[i].marks[j].data.y+err[1];
 			}
-			if(typeof this.data[i].hover!="object") this.data[i].hover = {};
+			if(typeof this.data[i].hoverprops!="object") this.data[i].hoverprops = {};
 		}
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
@@ -760,7 +769,19 @@ var Graph;
 			if(dx >= 0 && dy >= 0 && dx < this.canvas.wide && dy < this.canvas.tall && is(this.lookup[dx][dy],t)) return this.lookup[dx][dy].split(':');
 		}
 	}
-	
+	// Function to clone a hash otherwise we end up using the same one
+	function clone(hash) {
+		var json = JSON.stringify(hash);
+		var object = JSON.parse(json);
+		return object;
+	}
+	Graph.prototype.setCanvasStyles = function(datum){
+		this.canvas.ctx.fillStyle = (datum.props.format.fill ? datum.props.format.fill : '#000000');
+		this.canvas.ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
+		this.canvas.ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
+		
+		return this;
+	}
 	Graph.prototype.highlight = function(d){
 		if(this.selecting) return;	// If we are dragging we don't want to highlight symbols
 		if(this.lookup && d && d.length == 2){
@@ -770,26 +791,26 @@ var Graph;
 
 			var t = d[0];
 			var i = d[1];
+
+			if(this.data[t].symbol.show){
+				// Clone the mark
+				var oldmark = clone(this.data[t].marks[i]);
+				// Update the mark
+				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
+
+				// Set the canvas colours
+				this.setCanvasStyles(mark);
+
+				// Draw the new mark
+				this.drawShape(mark);
+
+				// Put the mark object back to how it was
+				this.data[t].marks[i] = clone(oldmark);
+				this.setCanvasStyles(this.data[t].marks[i]);
+			}
+
 			var data = this.data[t];
-			var twopi = 2*Math.PI;
-			var rad = (data.symbol.size) ? data.symbol.size : 1;
-			var ii = this.getPixPos(data.data[i].x,data.data[i].y);
-			this.canvas.ctx.beginPath();
 
-			this.canvas.ctx.lineWidth = 1.5;
-			this.canvas.ctx.strokeStyle = (data.color ? parseColour(data.color) : '#df0000');
-			this.canvas.ctx.fillStyle = 'rgba(255,255,255,0.3)';
-			this.canvas.ctx.arc(ii[0],ii[1],(rad == 1 ? rad*6 : rad*3),0,twopi,false);
-			this.canvas.ctx.fill();
-			this.canvas.ctx.stroke();
-			this.canvas.ctx.closePath();
-
-			this.canvas.ctx.beginPath();
-			this.canvas.ctx.arc(ii[0],ii[1],rad,0,twopi,false);
-			this.canvas.ctx.strokeStyle = (data.color ? parseColour(data.color) : '#df0000');
-			this.canvas.ctx.stroke();
-			this.canvas.ctx.closePath();
-			
 			if(!this.coordinates){
 				this.canvas.container.append('<div class="coordinates" style="position:absolute;display:none;background-color:black;color:white;padding:8px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;box-shadow: 0px 0px 5px rgba(0,0,0,0.6);-moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.6);-webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.6);"></div>');
 				this.coordinates = this.canvas.container.find('.coordinates');
@@ -804,11 +825,11 @@ var Graph;
 				ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 				data: data.data[i]
 			}
-			txt = is(data.hover.text,"function") ? data.hover.text.call(this,val) : "";
+			txt = is(data.hoverprops.text,"function") ? data.hoverprops.text.call(this,val) : "";
 			if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: {{ y }}<br />Uncertainty: {{ err }}";
-			var html = (typeof data.hover.text=="string") ? data.hover.text : txt;
-			if(typeof data.hover.before=="string") html = data.hover.before+html;
-			if(typeof data.hover.after=="string") html = html+data.hover.after;
+			var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
+			if(typeof data.hoverprops.before=="string") html = data.hoverprops.before+html;
+			if(typeof data.hoverprops.after=="string") html = html+data.hoverprops.after;
 			html = html.replace(/{{ *x *}}/g,(this.x.isDate ? new Date(val.data.x) : val.data.x));
 			html = html.replace(/{{ *y *}}/g,val.data.y);
 			html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
@@ -831,9 +852,9 @@ var Graph;
 			
 
 			this.coordinates.html(html);
-			var x = ii[0]-this.coordinates.outerWidth()-1;
-			if(x < this.chart.padding) x = ii[0]+1;
-			this.coordinates.css({'left':Math.round(x)+'px','top':Math.round(ii[1]+1)+'px'});
+			var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1;
+			if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
+			this.coordinates.css({'left':Math.round(x)+'px','top':Math.round(this.data[t].marks[i].props.y+1)+'px'});
 
 			this.annotated = true;
 		}else{
@@ -1149,12 +1170,10 @@ var Graph;
 		for(var sh in this.data){
 			if(this.data[sh].show){
 
-				this.log('calculate for',sh,this.data[sh])
-
 				for(var i = 0; i < this.data[sh].marks.length ; i++){
 
 					// Process all the series updates here
-					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i]);
+					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i],this.data[sh].encode.update);
 
 					ii = this.getPixPos(this.data[sh].marks[i].data.x,this.data[sh].marks[i].data.y);
 					x = Math.round(ii[0]);
@@ -1168,10 +1187,8 @@ var Graph;
 		return this;
 	}
 
-	Graph.prototype.drawShape = function(sh,i){
+	Graph.prototype.drawShape = function(datum){
 
-		var dataset = this.data[sh];
-		var datum = this.data[sh].marks[i];
 		var x1 = datum.props.x;
 		var y1 = datum.props.y;
 		
@@ -1180,10 +1197,10 @@ var Graph;
 		var shape = datum.props.symbol.shape;
 
 		if(shape=="circle"){
-			this.canvas.ctx.arc(x1,y1,(datum.props.symbol.size/2 || 4),0,Math.PI*2,false);
+			this.canvas.ctx.arc(x1,y1,(datum.props.format.size/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
-			var w = datum.props.symbol.width || datum.props.symbol.size || 4;
-			var h = datum.props.symbol.height || w;
+			var w = datum.props.format.width || datum.props.format.size || 4;
+			var h = datum.props.format.height || w;
 			if(datum.props.x2) w = datum.props.x2-datum.props.x1;
 			else if(datum.props.width && datum.props.x){ w = datum.props.width; x1 = datum.props.x - datum.props.width/2; }
 			else if(datum.props.width && datum.props.xc){ w = datum.props.width; x1 = datum.props.xc - datum.props.width/2; }
@@ -1196,7 +1213,7 @@ var Graph;
 
 			this.canvas.ctx.rect(x1,y1,w,h);
 		}else if(shape=="cross"){
-			var w = datum.props.symbol.size || 4;
+			var w = datum.props.format.size || 4;
 			dw = w/6;
 			this.canvas.ctx.moveTo(x1+dw,y1+dw);
 			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
@@ -1211,28 +1228,28 @@ var Graph;
 			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
 			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
 		}else if(shape=="diamond"){
-			var w = (datum.props.symbol.size || 4)*Math.sqrt(2)/2;
+			var w = (datum.props.format.size || 4)*Math.sqrt(2)/2;
 			this.canvas.ctx.moveTo(x1,y1+w);
 			this.canvas.ctx.lineTo(x1+w,y1);
 			this.canvas.ctx.lineTo(x1,y1-w);
 			this.canvas.ctx.lineTo(x1-w,y1);
 		}else if(shape=="triangle-up"){
-			var w = (datum.props.symbol.size || 4)/3;
+			var w = (datum.props.format.size || 4)/3;
 			this.canvas.ctx.moveTo(x1,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
 		}else if(shape=="triangle-down"){
-			var w = (datum.props.symbol.size || 4)/3;
+			var w = (datum.props.format.size || 4)/3;
 			this.canvas.ctx.moveTo(x1,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
 		}else if(shape=="triangle-left"){
-			var w = (datum.props.symbol.size || 4)/3;
+			var w = (datum.props.format.size || 4)/3;
 			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1-w*1.5,y1);
 		}else if(shape=="triangle-right"){
-			var w = (datum.props.symbol.size || 4)/3;
+			var w = (datum.props.format.size || 4)/3;
 			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
 			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
 			this.canvas.ctx.lineTo(x1+w*1.5,y1);
@@ -1250,12 +1267,11 @@ var Graph;
 		for(var sh in this.data){
 
 			if(this.data[sh].show){
-				this.canvas.ctx.strokeStyle = (this.data[sh].color ? parseColour(this.data[sh].color) : '#df0000');
+				this.setCanvasStyles(this.data[sh].marks[0]);
 
 				// Draw lines
 				if(this.data[sh].lines.show){
 					this.canvas.ctx.beginPath();
-					this.canvas.ctx.lineWidth = (this.data[sh].lines.width ? this.data[sh].lines.width : 1);
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
 						p = this.data[sh].marks[i].props;
 						if(p.x && p.y){
@@ -1271,19 +1287,16 @@ var Graph;
 					this.canvas.ctx.closePath();
 				}
 
-				//if(typeof this.data[sh].symbol=="undefined"){
-				//	this.data[sh].symbol = { 'show': true, 'shape': 'circle', 'size': 4 };
-				//}
-				
 				if(this.data[sh].symbol.show){
-					this.canvas.ctx.fillStyle = (this.data[sh].color ? parseColour(this.data[sh].color) : '#df0000');
-					this.canvas.ctx.lineWidth = (0.8);
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
+						if(i == 0){
+							this.setCanvasStyles(this.data[sh].marks[0]);
+						}
 						p = this.data[sh].marks[i].props;
 						if(p.x && p.y && this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
 							if(p.y <= this.chart.top+this.chart.height){
 
-								this.drawShape(sh,i);
+								this.drawShape(this.data[sh].marks[i]);
 
 								e = (this.data[sh].marks[i].data.err) ? (this.data[sh].marks[i].data.err.length==2 ? 2 : 1) : 0;
 								if(e > 0){
@@ -1297,9 +1310,11 @@ var Graph;
 								
 									if(hi && lo){
 										this.canvas.ctx.beginPath();
-										this.canvas.ctx.moveTo(this.data[sh].marks[i].props.x,lo);
-										this.canvas.ctx.lineTo(this.data[sh].marks[i].props.x,hi);
-										this.canvas.ctx.stroke();
+										//this.canvas.ctx.moveTo(this.data[sh].marks[i].props.x,lo);
+										this.canvas.ctx.rect(this.data[sh].marks[i].props.x-this.data[sh].marks[i].props.format.strokeWidth/2,lo,this.data[sh].marks[i].props.format.strokeWidth,hi-lo);
+										//this.canvas.ctx.lineTo(this.data[sh].marks[i].props.x,hi);
+										//this.canvas.ctx.stroke();
+										this.canvas.ctx.fill();
 										this.canvas.ctx.closePath();
 									}
 								}
@@ -1326,6 +1341,7 @@ var Graph;
 	}
 
 	Graph.prototype.drawLines = function(){
+		//this.log('drawLines')
 		// Loop over each line
 		for(var l = 0; l < this.lines.length ; l++){
 			if(this.lines[l].x){
@@ -1345,8 +1361,8 @@ var Graph;
 				y2 = this.chart.top;
 			}
 			this.canvas.ctx.beginPath();
-			this.canvas.ctx.strokeStyle = (typeof this.lines[l].color=="string" ? this.lines[l].color : 'black');
-			this.canvas.ctx.lineWidth = (typeof this.lines[l].width=="number" ? this.lines[l].width : 1);
+			this.canvas.ctx.strokeStyle = (typeof this.data[l].format.stroke=="string" ? this.data[l].format.stroke : 'black');
+			this.canvas.ctx.lineWidth = (typeof this.data[l].format.strokeWidth=="number" ? this.data[l].format.strokeWidth : 1);
 			this.canvas.ctx.moveTo(x1,y1);
 			this.canvas.ctx.lineTo(x2,y2);
 			this.canvas.ctx.stroke();
