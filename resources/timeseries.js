@@ -80,7 +80,7 @@ var TimeSeries;
 		if(typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
 			this.log('loading graph.js');
-			this.loadResources('resources/graph.js',function(){ _obj.log('here'); _obj.renderElement(el); });
+			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.renderElement(el); });
 		}else{
 			// Load the file
 			S().ajax(this.file,{
@@ -137,13 +137,14 @@ var TimeSeries;
 		this.datasets = {};
 		var dataloaded = 0;
 		var n = data.length;
-		
+
 		for(var j = 0; j < n; j++){
 
 			// Now grab the data
 			S().ajax(data[j].url,{
 				"dataType": "csv",
 				"this": this,
+				"index":j,
 				"dataset": data[j],
 				"success": function(d,attr){
 					// Remove extra newlines at the end
@@ -151,8 +152,8 @@ var TimeSeries;
 
 					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
 					dataloaded++;
-
-					this.update();
+this.log('loaded',j,data[j],attr.index,data[attr.index]);
+					this.update(attr.dataset.name);
 
 					if(dataloaded == n) this.loaded();
 				}
@@ -162,32 +163,31 @@ var TimeSeries;
 		return this;
 	}
 
-	TimeSeries.prototype.update = function(){
+	TimeSeries.prototype.update = function(datasetID){
 
-		var data = new Array();
 		var id,mark;
 		this.olddatasetsused = this.datasetsused;
 		this.datasetsused = "";
+
 		for(var m = 0; m < this.json.marks.length; m++){
 			id = "";
 			mark = this.json.marks[m];
 			if(mark.from.data) id = mark.from.data;
-
-
-
+		
 			if(this.datasets[id]){
 				this.datasetsused += id;
-				var update = mark.encode.update;
-				var datum;
-				// Keep our evaluation contained
-				var ev = function(str,datum){
-					return eval(str);
-				}
-				
-				if(update){
-					for(var d = 0; d < this.datasets[id].length; d++){
-						datum = this.datasets[id][d];
+			}
+			
+			if(this.datasets[id] && id==datasetID){
+				var dataset;
+				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true, shape: (mark.encode.enter.shape || 'circle'), size: ((mark.encode.enter.size.value)||4)}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} };
+				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} };
 
+				// Add the dataset
+				if(dataset){
+
+					function updateCoordinates(d,event){
+						datum = d.data;
 						x2 = undefined;
 						y2 = undefined;
 						x = undefined;
@@ -195,33 +195,33 @@ var TimeSeries;
 						err = undefined;
 
 						// Update the data
-						if(update.x && update.x.field){
-							if(datum[update.x.field]) x = datum[update.x.field];
+						if(event.x && event.x.field){
+							if(datum[event.x.field]) x = datum[event.x.field];
 							else{
-								try { x = ev.call(datum,update.x.field,datum); }
-								catch { this.log('Error'); }
+								try { x = ev.call(datum,event.x.field,datum); }
+								catch { console.log('Error',datum,event.x); }
 							}
 						}
-						if(update.x2 && update.x2.field){
-							if(datum[update.x2.field]) x2 = datum[update.x2.field];
+						if(event.x2 && event.x2.field){
+							if(datum[event.x2.field]) x2 = datum[event.x2.field];
 							else{
-								try { x2 = ev.call(datum,update.x.field,datum); }
-								catch { this.log('Error'); }
+								try { x2 = ev.call(datum,event.x2.field,datum); }
+								catch { console.log('Error',datum,event.x2); }
 							}
 						}
-						if(update.y && update.y.field){
-							if(datum[update.y.field]) y = datum[update.y.field];
+						if(event.y && event.y.field){
+							if(datum[event.y.field]) y = datum[event.y.field];
 							else{
-								try { y = ev.call(datum,update.y.field,datum); }
-								catch { this.log('Error'); }
+								try { y = ev.call(datum,event.y.field,datum); }
+								catch { console.log('Error',datum,event.y); }
 							}
 						}
-						if(update.y2 && update.y2.field){
+						if(event.y2 && event.y2.field){
 							err = 0;
-							if(datum[update.y2.field]) y2 = datum[update.y2.field];
+							if(datum[event.y2.field]) y2 = datum[event.y2.field];
 							else{
-								try { y2 = ev.call(datum,update.y2.field,datum); }
-								catch { this.log('Error'); }
+								try { y2 = ev.call(datum,event.y2.field,datum); }
+								catch { console.log('Error',datum,event.y2); }
 							}
 						}
 
@@ -234,25 +234,61 @@ var TimeSeries;
 							y += yerr;
 							err = yerr;
 						}
+
 						if(x) datum.x = x;
 						if(y) datum.y = y;
-						if(err){
-							datum.err = err;
-						}
+						if(err) datum.err = err;
 
-						this.datasets[id][d] = datum;
-
+						d.data = datum;
+						return d;
 					}
+
+					// Add callbacks
+					if(mark.encode.enter){
+						dataset.enter = function(datum){
+							//this.log('markEnter',this,datum,mark.encode.enter)
+							if(mark.encode.enter.size && mark.encode.enter.size.value) datum.props.symbol.size = mark.encode.enter.size.value;
+							if(mark.encode.enter.shape && mark.encode.enter.shape.value) datum.props.symbol.shape = mark.encode.enter.shape.value;
+							return updateCoordinates(datum,mark.encode.enter);
+						}
+					}
+					if(mark.encode.update){
+						// Keep our evaluation contained
+						var ev = function(str,datum){ return eval(str); }
+						dataset.update = function(datum){
+							// We have:
+							//   * ev (from outside)
+							//   * mark (from outside)
+							//   * this (the Graph object)
+							//   * datum (the specific data point which we will update and return)
+							// 
+							// Update looks something like this:
+							//	"update": {
+							//		"x": {"scale": "xscale", "field": "HJD"},
+							//		"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+							//		"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+							//		"fill": {"value": "#0000FF"},
+							//		"fillOpacity": {"value": 1},
+							//		"zindex": {"value": 0}
+							//	},
+							return updateCoordinates(datum,mark.encode.update);
+						}
+					}
+
+					// Now we add this mark-based dataset
+					this.graph.addDataset(dataset,m);
+
+				}else{
+					this.log('No dataset built for '+id,mark);
 				}
-				if(mark.type == "symbol") data.push({ data: this.datasets[id], symbol: {show:true, shape: 'circle', size: ((mark.encode.enter.size.value)||4)}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: false }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
-				else if(mark.type == "line") data.push({ data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
-				//else if(mark.type == "rect") data.push({ data: this.datasets[id], symbol: {show:false}, title: id, color: mark.encode.update.fill.value||"#000000", lines: { show: true, 'width':((mark.encode.enter.strokeWidth.value)||1) }, clickable: true, hoverable:true, hover:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill.value||'#000000')} });
 			}
 		}
 
+		// If the current list of datasets used is different
+		// to what we've already processed, we will update the graph
 		if(this.datasetsused != this.olddatasetsused){
 			this.log('updateData')
-			this.graph.updateData(data);
+			this.graph.updateData();
 		}
 
 		return this;
