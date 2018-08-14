@@ -70,13 +70,13 @@
 		"from": {"data": "OGLE"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -92,13 +92,13 @@
 		"from": {"data": "MOA"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#7F0000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -114,13 +114,13 @@
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -136,13 +136,13 @@
 		"from": {"data": "Faulkes North 2.0m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#00FFFF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -158,13 +158,13 @@
 		"from": {"data": "Faulkes South 2.0m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -180,13 +180,13 @@
 		"from": {"data": "Liverpool 2.0m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#00A0A0"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -202,13 +202,13 @@
 		"from": {"data": "MONET North 1.2m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -224,13 +224,13 @@
 		"from": {"data": "UTas 1.0m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#FF00FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -246,13 +246,13 @@
 		"from": {"data": "SAAO 1.0m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#00FF00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -268,13 +268,13 @@
 		"from": {"data": "CTIO 1.3m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -290,13 +290,13 @@
 		"from": {"data": "Auckland 0.4m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -312,13 +312,13 @@
 		"from": {"data": "Farm Cove 0.35m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -334,13 +334,13 @@
 		"from": {"data": "Kumeu Obs 0.35m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#00007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -356,13 +356,13 @@
 		"from": {"data": "Vintage Lane 0.4m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 2.5},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
@@ -378,12 +378,12 @@
 		"from": {"data": "Model"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
 				"strokeWidth": {"value": 2},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "dmag"},
 				"fill": {"value": "#999999"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}

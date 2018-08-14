@@ -8,19 +8,23 @@
 		"name": "Danish 1.54m",
 		"url": "data/OB110462-danish.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Model",
+		"url": "data/OB110462-model.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
 	"marks":[{
 		"type": "rect",
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"width": {"value": 1},
 				"fill": {"value": "black"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
 			},
@@ -31,16 +35,39 @@
 			}
 		}
 	},{
+		"type": "line",
+		"from": {"data": "Model"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"strokeWidth": {"value": 2},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"fill": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
-				"size": {"value": 2.5},
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 8},
+				"shape": {"value": "diamond"},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "dmag"},
+				"shape": "cross",
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
