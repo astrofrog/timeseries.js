@@ -21,6 +21,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
 				"strokeWidth": {"value": 2},
+				"strokeDash": {"value":[8,8]},
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
