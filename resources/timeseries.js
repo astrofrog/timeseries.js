@@ -65,6 +65,10 @@ var TimeSeries;
 		}
 		return this;
 	}
+	/*
+		Render a TimeSeries from an HTML element 
+		We look for attributes vega-src and vega-scale
+	*/
 	TimeSeries.prototype.renderElement = function(el,f){
 
 		if(!el) return this;
@@ -102,7 +106,6 @@ var TimeSeries;
 						this.options.width = parseInt(e.css('width'));
 						this.options.height = parseInt(e.css('height'));
 					}
-					
 					this.graph = new Graph(attr.element, [], this.options) // Need to make this target the correct element
 					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 					this.loadDatasets(d.data);

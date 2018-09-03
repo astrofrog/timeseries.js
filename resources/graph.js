@@ -199,13 +199,14 @@ var Graph;
 
 		// Construct the <canvas> container
 		this.container = S(container);
+
 		this.origcontainer = this.container[0].outerHTML;
-		if(this.container.nodeName!=="div"){
+		if(this.container[0].nodeName!=="DIV"){
 			this.log('before',this.container,this.wide,this.tall);
 			this.container = this.container.replaceWith('<div></div>');
-			//this.container[0].outerHTML = '<div></div>';
 			this.log('after',this.container)
 		}
+
 		if(this.container.length == 0){
 			this.log('Error - no valid container provided');
 			return;
