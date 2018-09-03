@@ -15,14 +15,19 @@
 
 		for(var i = 0; i < ts.length; i++){
 	
-			timeseries[i] = new TimeSeries({'logging':true});
+			timeseries[i] = new TimeSeries({'logging':true,'showaswego':false});
+
+			// Add toload class (adds label)
 			S(ts[i]).addClass('toload');
-			// Add click event to load the interactive graph
-			S(ts[i]).on("click",{ts:timeseries[i],el:ts[i]},function(e){
-				e.data.ts.renderElement(e.data.el);
-				// Remove the click event
+			
+			function interactivate(e){
+				e.data.ts.initialize(e.data.el);
+				// Remove the click event and the toload class
 				S(e.data.el).off("click").removeClass('toload');
-			});
+			}
+			
+			// Add click event to load the interactive graph
+			S(ts[i]).on("click",{ts:timeseries[i],el:ts[i]},interactivate)
 		}
 	});
 	</script>
@@ -38,17 +43,20 @@
 		display: inline-block;
 		line-height: 1em;
 	}
-	.timeseries.toload { position: relative; }
+	.timeseries.toload { position: relative; line-height: 0em; cursor: pointer; }
+	
 	.timeseries.toload:after {
-		content: "Click to go interactive";
+		content: "Click to interact";
+		padding: 0.5em;
+		background: rgba(0,0,0,0.7);
+		line-height:1em;
+		color: white;
 		top: 50%;
 		left: 50%;
 		transform: translate3d(-50%,-50%, 0);
 		position: absolute;
 		text-align: center;
 		margin-right: -50%;
-	}
-	.timeseries img {
 	}
 	figure figcaption {
 		line-height: 1.2em;
@@ -141,12 +149,12 @@
 
 			<figure>
 				<div class="timeseries" vega-src="data/OB110462-simple.json" vega-scale="inherit">
-					<img src="" style="width:500px;height:250px;" />
+					<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
 				</div>
 			</figure>
 			<figure>
 				<div class="timeseries" vega-src="data/OB110462.json">
-					<img src="" style="width:800px;height:450px;" />
+					<img src="data/OB110462.png" style="width:800px;height:450px;" />
 				</div>
 				<figcaption style="text-align:center;font-size:0.8em;color:#999;padding-left:25px; padding-right:25px;">This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
 			</figure>

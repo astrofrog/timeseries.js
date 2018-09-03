@@ -349,6 +349,7 @@ var Graph;
 	}
 	// Internal function to update the internal variables defining the width and height.
 	Canvas.prototype.setWH = function(w,h,ctx){
+	this.log('setWH',w,h)
 		if(!w || !h) return;
 		var c = (typeof ctx=="undefined") ? this.c : ctx;
 		c.width = w;
@@ -611,9 +612,10 @@ var Graph;
 
 			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
 			if(!this.data[index].format.size) this.data[index].format.size = 4;
+			if(!this.data[index].format.stroke) this.data[index].format.stroke = '#000000';
+			if(!this.data[index].format.strokeDash) this.data[index].format.strokeDash = [1,0];
 			if(!this.data[index].format.strokeWidth) this.data[index].format.strokeWidth = 1;
 			if(!this.data[index].format.fill) this.data[index].format.fill = '#000000';
-			if(!this.data[index].format.stroke) this.data[index].format.stroke = '#000000';
 
 			for(var i = 0; i < l ; i++){
 
@@ -780,7 +782,7 @@ var Graph;
 		this.canvas.ctx.fillStyle = (datum.props.format.fill ? datum.props.format.fill : '#000000');
 		this.canvas.ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
 		this.canvas.ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
-		
+		this.canvas.ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
 		return this;
 	}
 	Graph.prototype.highlight = function(d){

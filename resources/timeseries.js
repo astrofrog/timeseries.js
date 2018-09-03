@@ -47,6 +47,7 @@ var TimeSeries;
 
 	TimeSeries = function(opt){
 		if(!opt) opt = {};
+		this.attr = opt;
 		this.logging = opt.logging || false;
 		this.options = {
 			xaxis:{ label:'Time (HJD)', log: false, fit:true },
@@ -65,26 +66,37 @@ var TimeSeries;
 		}
 		return this;
 	}
+	TimeSeries.prototype.parseJSON = function(d){
+		this.json = d;
+		if(d.width) this.options.width = d.width;
+		if(d.height) this.options.height = d.height;
+		if(d.padding) this.options.padding = d.padding;
+		this.options.logging = true;
+		return this;
+	}
 	/*
 		Render a TimeSeries from an HTML element 
 		We look for attributes vega-src and vega-scale
 	*/
-	TimeSeries.prototype.renderElement = function(el,f){
+	TimeSeries.prototype.initialize = function(e,callback){
 
-		if(!el) return this;
-		if(!f) f = S(el).attr('vega-src');
-		var fit = ((S(el).attr('vega-scale') || "")=="inherit");
-		this.file = f;
-		this.log('load',el,f,fit);
+		var el = S(e);
+		if(el.length == 0) return this;
+
+		this.options.fit = ((el.attr('vega-scale') || "")=="inherit");
+		this.log('load',e,el,this.options.fit);
+
+		this.file = el.attr('vega-src');
 		if(typeof this.file!=="string") return this;
-		
+		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
+
 		// Load any necessary extra js/css
 		var _obj = this;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
 			this.log('loading graph.js');
-			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.renderElement(el); });
+			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.initialize(e); });
 		}else{
 			// Load the file
 			var idx = this.file.lastIndexOf("/");
@@ -93,18 +105,13 @@ var TimeSeries;
 				"dataType": "json",
 				"this": this,
 				"cache": true,
-				"element": el,
+				"element": e,
 				"success": function(d,attr){
-					this.json = d;
-					if(d.width) this.options.width = d.width;
-					if(d.height) this.options.height = d.height;
-					if(d.padding) this.options.padding = d.padding;
-					this.options.logging = true;
-					if(fit){
-						this.options.fit = true;
-						var e = S(attr.element);
-						this.options.width = parseInt(e.css('width'));
-						this.options.height = parseInt(e.css('height'));
+					this.parseJSON(d);
+					// Over-ride the width/height if we are supposed to fit
+					if(this.options.fit){
+						this.options.width = this.initializedValues.w;
+						this.options.height = this.initializedValues.h;
 					}
 					this.graph = new Graph(attr.element, [], this.options) // Need to make this target the correct element
 					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
@@ -158,7 +165,6 @@ var TimeSeries;
 					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
 					dataloaded++;
 					this.update(attr.dataset.name);
-
 					if(dataloaded == n) this.loaded();
 				}
 			});
@@ -198,6 +204,7 @@ var TimeSeries;
 
 					dataset.encode = mark.encode;
 
+					var _obj = this;
 					function updateCoordinates(d,event){
 						datum = d.data;
 						x2 = undefined;
@@ -211,21 +218,21 @@ var TimeSeries;
 							if(datum[event.x.field]) x = datum[event.x.field];
 							else{
 								try { x = ev.call(datum,event.x.field,datum); }
-								catch { console.log('Error',datum,event.x); }
+								catch { _obj.log('Error',datum,event.x); }
 							}
 						}
 						if(event.x2 && event.x2.field){
 							if(datum[event.x2.field]) x2 = datum[event.x2.field];
 							else{
 								try { x2 = ev.call(datum,event.x2.field,datum); }
-								catch { console.log('Error',datum,event.x2); }
+								catch { _obj.log('Error',datum,event.x2); }
 							}
 						}
 						if(event.y && event.y.field){
 							if(datum[event.y.field]) y = datum[event.y.field];
 							else{
 								try { y = ev.call(datum,event.y.field,datum); }
-								catch { console.log('Error',datum,event.y); }
+								catch { _obj.log('Error',datum,event.y); }
 							}
 						}
 						if(event.y2 && event.y2.field){
@@ -233,7 +240,7 @@ var TimeSeries;
 							if(datum[event.y2.field]) y2 = datum[event.y2.field];
 							else{
 								try { y2 = ev.call(datum,event.y2.field,datum); }
-								catch { console.log('Error',datum,event.y2); }
+								catch { _obj.log('Error',datum,event.y2); }
 							}
 						}
 
@@ -250,7 +257,7 @@ var TimeSeries;
 						return d;
 					}
 					function updateProperties(d,event){
-						var p = ['size','shape','fill','stroke','strokeWidth'];
+						var p = ['size','shape','fill','stroke','strokeWidth','strokeDash'];
 						for(var i = 0; i < p.length;i++){
 							if(event[p[i]] && event[p[i]].value){
 								if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;
@@ -295,15 +302,14 @@ var TimeSeries;
 
 		// If the current list of datasets used is different
 		// to what we've already processed, we will update the graph
-		if(this.datasetsused != this.olddatasetsused){
-			this.log('updateData')
-			this.graph.updateData();
-		}
+		if(this.datasetsused != this.olddatasetsused && this.attr.showaswego) this.graph.updateData();
 
 		return this;
 	}
 	TimeSeries.prototype.loaded = function(){
 		this.log('loaded');
+		// If we haven't been updating the data for the graph we need to do that now
+		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();;
 		return this;
 	}
