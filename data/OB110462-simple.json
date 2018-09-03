@@ -6,15 +6,11 @@
 	"autosize": {"type": "fit", "resize": true},
 	"data": [{
 		"name": "Danish 1.54m",
-		"url": "data/OB110462-danish.csv",
-		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
-	},{
-		"name": "Liverpool 2.0m",
-		"url": "data/OB110462-liv.csv",
+		"url": "OB110462-danish.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Model",
-		"url": "data/OB110462-model.csv",
+		"url": "OB110462-model.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
 	"marks":[{
@@ -31,11 +27,6 @@
 				"stroke": {"value": "#999999"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
-			},
-			"hover": {
-				"fill": {"value": "#999999"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
 			}
 		}
 	},{
@@ -79,32 +70,10 @@
 				"zindex": {"value": 0}
 			},
 			"hover": {
-				"fill": {"value": "#000000"},
+				"fill": {"value": "#D60303"},
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "cross"},
 				"size": {"value": 10},
-				"zindex": {"value": 1}
-			}
-		}
-	},{
-		"type": "symbol",
-		"from": {"data": "Liverpool 2.0m"},
-		"encode": {
-			"enter": {
-				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
-			},
-			"update": {
-				"fill": {"value": "#00A0A0"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
-			},
-			"hover": {
-				"fill": {"value": "#00A0A0"},
-				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
 		}

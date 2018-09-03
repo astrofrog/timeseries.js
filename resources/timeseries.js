@@ -83,6 +83,8 @@ var TimeSeries;
 			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.renderElement(el); });
 		}else{
 			// Load the file
+			var idx = this.file.lastIndexOf("/");
+			this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
 			S().ajax(this.file,{
 				"dataType": "json",
 				"this": this,
@@ -141,7 +143,7 @@ var TimeSeries;
 		for(var j = 0; j < n; j++){
 
 			// Now grab the data
-			S().ajax(data[j].url,{
+			S().ajax(this.directory + data[j].url,{
 				"dataType": "csv",
 				"this": this,
 				"index":j,
@@ -152,7 +154,6 @@ var TimeSeries;
 
 					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
 					dataloaded++;
-this.log('loaded',j,data[j],attr.index,data[attr.index]);
 					this.update(attr.dataset.name);
 
 					if(dataloaded == n) this.loaded();
@@ -180,11 +181,17 @@ this.log('loaded',j,data[j],attr.index,data[attr.index]);
 			
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
-				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true, hoverable:true, hoverprops:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill ? mark.encode.hover.fill.value : '#000000')} };
-				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, lines: { show: true }, clickable: true, hoverable:true, hoverprops:{ text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}',before:'{{title}}<br />'},css:{'font-size':'0.8em','background-color':(mark.encode.hover.fill ? mark.encode.hover.fill.value : '#000000')} };
+				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, lines: { show: true }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){
+
+					if(mark.encode && mark.encode.hover){
+						dataset.hoverable = true;
+						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
+						dataset.hoverprops = { text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}', before:'{{title}}<br />' };
+					}
 
 					dataset.encode = mark.encode;
 
@@ -227,19 +234,14 @@ this.log('loaded',j,data[j],attr.index,data[attr.index]);
 							}
 						}
 
-						if(x && x2){
-							xerr = (x2-x)/2;
-							x += xerr;
-						}
+						if(x && x2) x += (x2-x)/2;
 						if(y && y2){
-							yerr = (y2-y)/2;
-							y += yerr;
-							err = yerr;
+							datum.err = (y2-y)/2;
+							y += datum.err;
 						}
 
 						if(x) datum.x = x;
 						if(y) datum.y = y;
-						if(err) datum.err = err;
 
 						d.data = datum;
 						return d;
@@ -396,7 +398,6 @@ this.log('loaded',j,data[j],attr.index,data[attr.index]);
 			if(!data[i] || data[i] == "") continue;
 			
 			datum = {};
-			//console.log(i,data[i]);
 			// Loop over each column in the line
 			for(var j=0; j < data[i].length; j++){
 				if(formats[j]!="string"){

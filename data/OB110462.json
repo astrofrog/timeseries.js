@@ -6,63 +6,63 @@
 	"autosize": {"type": "fit", "resize": true},
 	"data": [{
 		"name": "OGLE",
-		"url": "data/OB110462-ogle.csv",
+		"url": "OB110462-ogle.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "MOA",
-		"url": "data/OB110462-moa.csv",
+		"url": "OB110462-moa.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Danish 1.54m",
-		"url": "data/OB110462-danish.csv",
+		"url": "OB110462-danish.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Faulkes North 2.0m",
-		"url": "data/OB110462-ftn.csv",
+		"url": "OB110462-ftn.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Faulkes South 2.0m",
-		"url": "data/OB110462-fts.csv",
+		"url": "OB110462-fts.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Liverpool 2.0m",
-		"url": "data/OB110462-liv.csv",
+		"url": "OB110462-liv.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "MONET North 1.2m",
-		"url": "data/OB110462-monet.csv",
+		"url": "OB110462-monet.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "UTas 1.0m",
-		"url": "data/OB110462-utas.csv",
+		"url": "OB110462-utas.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "SAAO 1.0m",
-		"url": "data/OB110462-saao.csv",
+		"url": "OB110462-saao.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "CTIO 1.3m",
-		"url": "data/OB110462-ctio.csv",
+		"url": "OB110462-ctio.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Auckland 0.4m",
-		"url": "data/OB110462-akl.csv",
+		"url": "OB110462-akl.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Farm Cove 0.35m",
-		"url": "data/OB110462-farmcove.csv",
+		"url": "OB110462-farmcove.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Kumeu Obs 0.35m",
-		"url": "data/OB110462-kumeu.csv",
+		"url": "OB110462-kumeu.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Vintage Lane 0.4m",
-		"url": "data/OB110462-vintage.csv",
+		"url": "OB110462-vintage.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	},{
 		"name": "Model",
-		"url": "data/OB110462-model.csv",
+		"url": "OB110462-model.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
 	"marks":[{
