@@ -82,7 +82,7 @@
 				<ol>
 					<li>
 						<h3>Example 1</h3>
-						<p>We start with a screenshot included as an <code>img</code>. The container of the <code>img</code> is turned into a <code>TimeSeries</code> object.</p>
+						<p>We embed a screenshot as an <code>img</code> so that something exists if interactivity fails. The container of the <code>img</code> is used to initialize a <code>TimeSeries</code> object which then replaces the contents of the container with an interactive version.</p>
 						<div class="example">
 							<figure>
 								<div id="example1" style="width:100%;">
@@ -177,12 +177,8 @@
 
 							S(document).ready(function(){
 
-								var ts = new TimeSeries(json,{'logging':true,'showaswego':false,'fit':true});
-								S('#example1').addClass('toload').on("click",{ts:ts},function(e){
-									e.data.ts.initialize(e.currentTarget);
-									// Remove the click event and the toload class
-									S(e.currentTarget).off("click").removeClass('toload');
-								});
+								var ex1 = new TimeSeries(json,{'logging':true,'showaswego':false,'fit':true});
+								ex1.initialize(document.getElementById('example1'));
 
 							});
 							</script>
@@ -199,12 +195,44 @@
 							</figure>
 							<script>
 							S(document).ready(function(){
-								var ts = S('#example2');
-
-								var timeseries = new TimeSeries({},{'logging':true,'showaswego':false});
-
+								// Create a new TimeSeries object
+								var ex2 = new TimeSeries({},{'logging':true,'showaswego':false});
+								ex2.initialize(document.getElementById('example2'));
+							});
+							</script>
+						</div>
+					</li>
+					<li>
+						<h3>Example 3</h3>
+						<p>This example shows the same timeseries as the previous example but, we won't load the data (and any extra Javascript) initially. We'll add a CSS class to it and add a Javascript event so that the end-user can choose to initialize it. This should help reduce the amount of work necessary if there are multiple complicated timeseries on the page.</p>
+						<div class="example">
+							<figure style="text-align:center;">
+								<div id="example3" vega-src="data/OB110462-simple.json" vega-scale="inherit">
+									<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
+								</div>
+								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+							</figure>
+							<style>
+							.toload { position: relative; line-height: 0em; cursor: pointer; filter: grayscale(1); }
+							.toload:after {
+								content: "Click to interact";
+								padding: 1em;
+								background: rgba(0,0,0,0.7);
+								line-height:1em;
+								color: white;
+								top: 50%;
+								left: 50%;
+								transform: translate3d(-50%,-50%, 0);
+								position: absolute;
+								text-align: center;
+								margin-right: -50%;
+							}
+							</style>
+							<script>
+							S(document).ready(function(){
+								var ex3 = new TimeSeries({},{'logging':true,'showaswego':false});
 								// Add click event to load the interactive graph
-								S(ts[0]).addClass('toload').on("click",{ts:timeseries},function(e){
+								S('#example3').addClass('toload').on("click",{ts:ex3},function(e){
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
 									S(e.currentTarget).off("click").removeClass('toload');
@@ -214,22 +242,37 @@
 						</div>
 					</li>
 					<li>
-						<h3>Example 3</h3>
+						<h3>Example 4</h3>
 						<div class="example">
 							<figure style="text-align:center;">
-								<div id="example3" vega-src="data/OB110462.json">
+								<div id="example4" vega-src="data/OB110462.json">
 									<img src="data/OB110462.png" style="width:800px;height:450px;" />
 								</div>
 								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
 							</figure>
+							<style>
+							.toload { position: relative; line-height: 0em; cursor: pointer; filter: grayscale(1); }
+							.toload:after {
+								content: "Click to interact";
+								padding: 1em;
+								background: rgba(0,0,0,0.7);
+								line-height:1em;
+								color: white;
+								top: 50%;
+								left: 50%;
+								transform: translate3d(-50%,-50%, 0);
+								position: absolute;
+								text-align: center;
+								margin-right: -50%;
+							}
+							</style>
 							<script>
 							S(document).ready(function(){
-								var ts = S('#example3');
 
-								var timeseries = new TimeSeries({},{'logging':true,'showaswego':false});
+								var ex4 = new TimeSeries({},{'logging':true,'showaswego':false});
 
 								// Add click event to load the interactive graph
-								S(ts[0]).addClass('toload').on("click",{ts:timeseries},function(e){
+								S('#example4').addClass('toload').on("click",{ts:ex4},function(e){
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
 									S(e.currentTarget).off("click").removeClass('toload');
@@ -247,7 +290,7 @@
 	<!-- FOOTER	-->
 	<div class="row">
 		<footer>
-		&copy; 2018
+		&copy; 2018 Aperio Software / AAS
 		</footer>
 	</div>
 
