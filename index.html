@@ -10,113 +10,41 @@
     <link rel="stylesheet" href="resources/style.css">
     <script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
+	<script type="text/javascript" src="resources/highlight/highlight.pack.js"></script>
+	<link rel="stylesheet" href="resources/highlight/highlight.css">
 	<script type="text/javascript">
 	S(document).ready(function(){
-	
-		var json = {
-			"$schema": "https://vega.github.io/schema/vega/v4.json",
-			"width": 800,
-			"height": 450,
-			"padding": 0,
-			"autosize": {"type": "fit", "resize": true},
-			"data": [{
-				"name": "Danish 1.54m",
-				"url": "data/OB110462-danish.csv",
-				"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
-			},{
-				"name": "Model",
-				"url": "data/OB110462-model.csv",
-				"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
-			}],
-			"marks":[{
-				"type": "line",
-				"from": {"data": "Model"},
-				"encode": {
-					"enter": {
-						"x": {"scale": "xscale", "field": "HJD"},
-						"y": {"scale": "yscale", "field": "dmag"},
-						"strokeWidth": {"value": 2},
-						"strokeDash": {"value":[8,8]},
-						"tooltip": {"field": "tooltip"}
-					},
-					"update": {
-						"stroke": {"value": "#999999"},
-						"fillOpacity": {"value": 1},
-						"zindex": {"value": 0}
-					}
-				}
-			},{
-				"type": "rect",
-				"from": {"data": "Danish 1.54m"},
-				"encode": {
-					"enter": {
-						"x": {"scale": "xscale", "field": "HJD"},
-						"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-						"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-						"width": {"value": 1},
-						"fill": {"value": "#000000"}
-					},
-					"update": {
-						"fillOpacity": {"value": 1},
-						"fill": {"value": "#000000"},
-						"zindex": {"value": 0}
-					},
-					"hover": {
-						"fill": {"value": "#FF7F00"},
-						"fillOpacity": {"value": 1},
-						"zindex": {"value": 1}
-					}
-				}
-			},{
-				"type": "symbol",
-				"from": {"data": "Danish 1.54m"},
-				"encode": {
-					"enter": {
-						"x": {"scale": "xscale", "field": "HJD"},
-						"y": {"scale": "yscale", "field": "dmag"},
-						"shape": {"value": "circle"},
-						"tooltip": {"field": "tooltip"}
-					},
-					"update": {
-						"shape": "cross",
-						"fill": {"value": "#FF7F00"},
-						"fillOpacity": {"value": 1},
-						"shape": {"value": "circle"},
-						"size": {"value": 4},
-						"zindex": {"value": 0}
-					},
-					"hover": {
-						"fill": {"value": "#D60303"},
-						"fillOpacity": {"value": 1},
-						"shape": {"value": "cross"},
-						"size": {"value": 10},
-						"zindex": {"value": 1}
-					}
-				}
-			}]
-		};
 
-		var ts = S('.timeseries');
-		var timeseries = new Array(ts.length);
-
-		for(var i = 0; i < ts.length; i++){
-	
-			timeseries.push(new TimeSeries({},{'logging':true,'showaswego':false}));
-
-			function interactivate(e){
-
-				e.data.ts.initialize(e.currentTarget);
-
-				// Remove the click event and the toload class
-				S(e.currentTarget).off("click").removeClass('toload');
-			}
+		// Format examples nicely to show how they were done
+		ex = S('.example');
+		function tidy(t){ return t.replace(/===NEWLINE===/g,"\n").replace(/\n*$/,"").replace(/^\n*/,""); }
+		function sanitise(t){ return t.replace(/\</g,"&lt;").replace(/\>/g,"&gt;"); }
+		function deindent(t){ var indent = ""; t.replace(/^([\s\t]+)/,function(m,p1,p2){ indent = m; }); return t.replace(new RegExp(indent,'g'),"").replace(/[\s\t]+$/,""); }
+		for(var i = 0; i < ex.length; i++){
+			html = ex[i].innerHTML;
+			css = "";
+			js = "";
+			temp = html.replace(/\n/g,"===NEWLINE===").replace(/<!-- HTML -->/i,"");
+			temp = temp.replace(/<!-- Javascript -->/i,"").replace(/<script>(.*)<\/script>/,function(m,p1){
+				js = tidy(p1);
+				return "";
+			});
+			temp = temp.replace(/<!-- CSS -->/i,"").replace(/<style>(.*)<\/style>/,function(m,p1){
+				css = tidy(p1);
+				return "";
+			});
+		
+			code = sanitise(tidy(temp));
+			code = code.replace(/(src|href)=\"([^\"]+)\"/g,function(m,p1,p2){ return p1+'="<a href="'+p2+'">'+p2+'</a>"'; });
 			
-			// Add click event to load the interactive graph
-			S(ts[i]).addClass('toload').on("click",{ts:timeseries[timeseries.length-1]},interactivate)
+			showtitle = true;
+			if(S(ex[i]).attr('data-title')=="false") showtitle = false;
+		
+			ex[i].innerHTML = ''+html+(showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':'');
 		}
-
-		timeseries.push(new TimeSeries(json,{'logging':true,'showaswego':false,'fit':true}));
-		S('#fromjson').addClass('toload').on("click",{ts:timeseries[timeseries.length-1]},interactivate);
+	
+		var code = S('.prettyprint');
+		for(var i = 0; i < code.length; i++) hljs.highlightBlock(code[i]);
 	});
 	</script>
 </head>
@@ -154,30 +82,161 @@
 				<ol>
 					<li>
 						<h3>Example 1</h3>
-						<figure>
-							<div id="fromjson" style="width:100%;">
-								<img src="data/OB110462-simple-big.png" style="width:100%;" />
-							</div>
-							<figcaption>An example using inline JSON</figcaption>
-						</figure>
+						<p>We start with a screenshot included as an <code>img</code>. The container of the <code>img</code> is turned into a <code>TimeSeries</code> object.</p>
+						<div class="example">
+							<figure>
+								<div id="example1" style="width:100%;">
+									<img src="data/OB110462-simple-big.png" style="width:100%;" />
+								</div>
+								<figcaption>An example using inline JSON</figcaption>
+							</figure>
+							<!-- Javascript -->
+							<script>
+							var json = {
+								"$schema": "https://vega.github.io/schema/vega/v4.json",
+								"width": 800,
+								"height": 450,
+								"padding": 0,
+								"autosize": {"type": "fit", "resize": true},
+								"data": [{
+									"name": "Danish 1.54m",
+									"url": "data/OB110462-danish.csv",
+									"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+								},{
+									"name": "Model",
+									"url": "data/OB110462-model.csv",
+									"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+								}],
+								"marks":[{
+									"type": "line",
+									"from": {"data": "Model"},
+									"encode": {
+										"enter": {
+											"x": {"scale": "xscale", "field": "HJD"},
+											"y": {"scale": "yscale", "field": "dmag"},
+											"strokeWidth": {"value": 2},
+											"strokeDash": {"value":[8,8]},
+											"tooltip": {"field": "tooltip"}
+										},
+										"update": {
+											"stroke": {"value": "#999999"},
+											"fillOpacity": {"value": 1},
+											"zindex": {"value": 0}
+										}
+									}
+								},{
+									"type": "rect",
+									"from": {"data": "Danish 1.54m"},
+									"encode": {
+										"enter": {
+											"x": {"scale": "xscale", "field": "HJD"},
+											"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
+											"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+											"width": {"value": 1},
+											"fill": {"value": "#000000"}
+										},
+										"update": {
+											"fillOpacity": {"value": 1},
+											"fill": {"value": "#000000"},
+											"zindex": {"value": 0}
+										},
+										"hover": {
+											"fill": {"value": "#FF7F00"},
+											"fillOpacity": {"value": 1},
+											"zindex": {"value": 1}
+										}
+									}
+								},{
+									"type": "symbol",
+									"from": {"data": "Danish 1.54m"},
+									"encode": {
+										"enter": {
+											"x": {"scale": "xscale", "field": "HJD"},
+											"y": {"scale": "yscale", "field": "dmag"},
+											"shape": {"value": "circle"},
+											"tooltip": {"field": "tooltip"}
+										},
+										"update": {
+											"shape": "cross",
+											"fill": {"value": "#FF7F00"},
+											"fillOpacity": {"value": 1},
+											"shape": {"value": "circle"},
+											"size": {"value": 4},
+											"zindex": {"value": 0}
+										},
+										"hover": {
+											"fill": {"value": "#D60303"},
+											"fillOpacity": {"value": 1},
+											"shape": {"value": "cross"},
+											"size": {"value": 10},
+											"zindex": {"value": 1}
+										}
+									}
+								}]
+							};
+
+							S(document).ready(function(){
+
+								var ts = new TimeSeries(json,{'logging':true,'showaswego':false,'fit':true});
+								S('#example1').addClass('toload').on("click",{ts:ts},function(e){
+									e.data.ts.initialize(e.currentTarget);
+									// Remove the click event and the toload class
+									S(e.currentTarget).off("click").removeClass('toload');
+								});
+
+							});
+							</script>
+						</div>
 					</li>
 					<li>
 						<h3>Example 2</h3>
-						<figure>
-							<div class="timeseries" vega-src="data/OB110462-simple.json" vega-scale="inherit">
-								<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
-							</div>
-							<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
-						</figure>
+						<div class="example">
+							<figure>
+								<div id="example2" vega-src="data/OB110462-simple.json" vega-scale="inherit">
+									<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
+								</div>
+								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+							</figure>
+							<script>
+							S(document).ready(function(){
+								var ts = S('#example2');
+
+								var timeseries = new TimeSeries({},{'logging':true,'showaswego':false});
+
+								// Add click event to load the interactive graph
+								S(ts[0]).addClass('toload').on("click",{ts:timeseries},function(e){
+									e.data.ts.initialize(e.currentTarget);
+									// Remove the click event and the toload class
+									S(e.currentTarget).off("click").removeClass('toload');
+								});
+							});
+							</script>
+						</div>
 					</li>
 					<li>
 						<h3>Example 3</h3>
-						<figure>
-							<div class="timeseries" vega-src="data/OB110462.json">
-								<img src="data/OB110462.png" style="width:800px;height:450px;" />
-							</div>
-							<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
-						</figure>
+						<div class="example">
+							<figure>
+								<div id="example3" vega-src="data/OB110462.json">
+									<img src="data/OB110462.png" style="width:800px;height:450px;" />
+								</div>
+								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
+							</figure>
+							<script>
+							S(document).ready(function(){
+								var ts = S('#example3');
+
+								var timeseries = new TimeSeries({},{'logging':true,'showaswego':false});
+
+								// Add click event to load the interactive graph
+								S(ts[0]).addClass('toload').on("click",{ts:timeseries},function(e){
+									e.data.ts.initialize(e.currentTarget);
+									// Remove the click event and the toload class
+									S(e.currentTarget).off("click").removeClass('toload');
+								});
+							});
+							</script>
+						</div>
 					</li>
 				</ol>
 

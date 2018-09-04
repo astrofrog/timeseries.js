@@ -49,6 +49,13 @@ section {
 section > h2 {
 	margin-top: 0px;
 }
+pre.prettyprint {
+	font-size: 14px;
+	background: rgba(228, 233, 242, 0.4);
+	padding: 1em;
+	tab-size: 4;
+	-moz-tab-size: 4;
+}
 
 
 figure figcaption {
