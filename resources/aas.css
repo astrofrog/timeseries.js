@@ -18,11 +18,13 @@ body {
 	line-height: 1.5;
 	cursor: auto;
 }
+h1, h2, h3, h4 { color: #253788; }
 header {
 	background-color: #253788;
 	color: #FFF;
 	margin-bottom: 2em;
 }
+header h1, header h2 { color: inherit; }
 .row {
 	width: 100%;
 	margin-left: auto;
