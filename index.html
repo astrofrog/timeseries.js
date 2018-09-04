@@ -63,8 +63,8 @@
 						<p>First we embed a screenshot as an <code>img</code> so that a static version exists if interactivity fails. Next we create a <code>TimeSeries</code> Javascript object with some <code>Vega JSON</code> and then initialise it with the container of the <code>img</code> element. The <code>TimeSeries</code> then replaces the contents of the container with an interactive version.</p>
 						<div class="example">
 							<figure>
-								<div id="example1" style="width:100%;">
-									<img src="data/OB110462-simple-big.png" style="width:100%;" />
+								<div id="example1">
+									<img src="data/OB110462-simple-big.png" />
 								</div>
 								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Orange points show data from the Danish 1.54m telescope. The dashed line shows a model of the event. The timeseries is created from inline JSON.</figcaption>
 							</figure>
@@ -155,7 +155,7 @@
 
 							S(document).ready(function(){
 
-								var ex1 = new TimeSeries(json,{'logging':true,'showaswego':false,'fit':true});
+								var ex1 = new TimeSeries(json,{'logging':true,'showaswego':false});
 								ex1.initialize(document.getElementById('example1'));
 
 							});
