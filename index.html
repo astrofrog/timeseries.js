@@ -82,13 +82,13 @@
 				<ol>
 					<li>
 						<h3>Example 1</h3>
-						<p>We embed a screenshot as an <code>img</code> so that something exists if interactivity fails. The container of the <code>img</code> is used to initialize a <code>TimeSeries</code> object which then replaces the contents of the container with an interactive version.</p>
+						<p>First we embed a screenshot as an <code>img</code> so that a static version exists if interactivity fails. Next we create a <code>TimeSeries</code> Javascript object with some <code>Vega JSON</code> and then initialise it with the container of the <code>img</code> element. The <code>TimeSeries</code> then replaces the contents of the container with an interactive version.</p>
 						<div class="example">
 							<figure>
 								<div id="example1" style="width:100%;">
 									<img src="data/OB110462-simple-big.png" style="width:100%;" />
 								</div>
-								<figcaption>An example using inline JSON</figcaption>
+								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Orange points show data from the Danish 1.54m telescope. The dashed line shows a model of the event. The timeseries is created from inline JSON.</figcaption>
 							</figure>
 							<!-- Javascript -->
 							<script>
@@ -186,6 +186,7 @@
 					</li>
 					<li>
 						<h3>Example 2</h3>
+						<p>This example behaves in a similar way to the one above except that we load the <code>Vega JSON</code> from a separate <code>JSON</code> file. The <code>vega-scale</code> attribute tells <code>TimeSeries</code> to use the existing size of the element in the HTML; over-riding the size specified in the <code>JSON</code> file.</p>
 						<div class="example">
 							<figure style="text-align:center;">
 								<div id="example2" vega-src="data/OB110462-simple.json" vega-scale="inherit">
@@ -204,7 +205,7 @@
 					</li>
 					<li>
 						<h3>Example 3</h3>
-						<p>This example shows the same timeseries as the previous example but, we won't load the data (and any extra Javascript) initially. We'll add a CSS class to it and add a Javascript event so that the end-user can choose to initialize it. This should help reduce the amount of work necessary if there are multiple complicated timeseries on the page.</p>
+						<p>This example shows the same timeseries as the previous example but it is non-interactive by default. We add a CSS class to it and a Javascript event so that the end-user can choose to initialize it. This can help reduce the amount of processing done on page load if there are multiple timeseries on the page.</p>
 						<div class="example">
 							<figure style="text-align:center;">
 								<div id="example3" vega-src="data/OB110462-simple.json" vega-scale="inherit">
@@ -243,6 +244,7 @@
 					</li>
 					<li>
 						<h3>Example 4</h3>
+						<p>A more complicated example with multiple series all in different <code>CSV</code> files.</p>
 						<div class="example">
 							<figure style="text-align:center;">
 								<div id="example4" vega-src="data/OB110462.json">

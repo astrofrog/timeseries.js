@@ -49,6 +49,10 @@ section {
 section > h2 {
 	margin-top: 0px;
 }
+code {
+	color: #253788;
+	font-weight: 600;
+}
 pre.prettyprint {
 	font-size: 14px;
 	background: rgba(228, 233, 242, 0.4);
