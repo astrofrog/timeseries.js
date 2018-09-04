@@ -815,8 +815,8 @@ var Graph;
 			var data = this.data[t];
 
 			if(!this.coordinates){
-				this.canvas.container.append('<div class="coordinates" style="position:absolute;display:none;background-color:black;color:white;padding:8px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;box-shadow: 0px 0px 5px rgba(0,0,0,0.6);-moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.6);-webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.6);"></div>');
-				this.coordinates = this.canvas.container.find('.coordinates');
+				this.canvas.container.append('<div class="graph-popup" style="position:absolute;display:none;"></div>');
+				this.coordinates = this.canvas.container.find('.graph-popup');
 			}
 			if(this.coordinates) this.coordinates.css({'display':''});
 			if(typeof data.css=="object") this.coordinates.css(data.css);

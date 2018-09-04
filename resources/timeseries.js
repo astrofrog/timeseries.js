@@ -45,16 +45,25 @@ var TimeSeries;
 	}
 	// End of helper functions
 
-	TimeSeries = function(opt){
+	TimeSeries = function(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
 		this.logging = opt.logging || false;
+		// Set some defaults
 		this.options = {
-			xaxis:{ label:'Time (HJD)', log: false, fit:true },
-			yaxis: { label: 'Delta (mag)', log: false },
-			grid: { hoverable: true, clickable: true }
+			xaxis: { label:'Time', log: false, fit:true },
+			yaxis: { label: 'y-axis', log: false },
+			grid: { hoverable: true, clickable: true },
+			fit: false,
+			showaswego: false
 		}
 		this.datasets = [];
+		this.directory = "";
+		for(var o in opt){
+			if(o=="directory") this[o] = opt[o];
+			if(o=="fit") this.options[o] = opt[o];
+		}
+		if(json) this.parseJSON(json);
 		if(typeof file==="string") this.file = file;
 
 		return this;
@@ -74,6 +83,20 @@ var TimeSeries;
 		this.options.logging = true;
 		return this;
 	}
+	TimeSeries.prototype.postProcess = function(){
+
+		// Over-ride the width/height if we are supposed to fit
+		if(this.options.fit){
+			this.options.width = this.initializedValues.w;
+			this.options.height = this.initializedValues.h;
+		}
+
+		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
+		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+
+		this.loadDatasets(this.json.data);
+		return this;
+	}
 	/*
 		Render a TimeSeries from an HTML element 
 		We look for attributes vega-src and vega-scale
@@ -82,11 +105,13 @@ var TimeSeries;
 
 		var el = S(e);
 		if(el.length == 0) return this;
+		this.el = e;
 
-		this.options.fit = ((el.attr('vega-scale') || "")=="inherit");
+		if(el.attr('vega-scale')=="inherit") this.options.fit = true;
 		this.log('load',e,el,this.options.fit);
 
 		this.file = el.attr('vega-src');
+		if(!this.file) this.file = "";
 		if(typeof this.file!=="string") return this;
 		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
 
@@ -98,27 +123,27 @@ var TimeSeries;
 			this.log('loading graph.js');
 			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.initialize(e); });
 		}else{
-			// Load the file
-			var idx = this.file.lastIndexOf("/");
-			this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
-			S().ajax(this.file,{
-				"dataType": "json",
-				"this": this,
-				"cache": true,
-				"element": e,
-				"success": function(d,attr){
-					this.parseJSON(d);
-					// Over-ride the width/height if we are supposed to fit
-					if(this.options.fit){
-						this.options.width = this.initializedValues.w;
-						this.options.height = this.initializedValues.h;
+
+			if(this.file){
+				// Load the file
+				var idx = this.file.lastIndexOf("/");
+				this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
+				S().ajax(this.file,{
+					"dataType": "json",
+					"this": this,
+					"cache": true,
+					"element": e,
+					"success": function(d,attr){
+						this.parseJSON(d);
+						this.postProcess();
+						return this;
 					}
-					this.graph = new Graph(attr.element, [], this.options) // Need to make this target the correct element
-					this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
-					this.loadDatasets(d.data);
-					return this;
-				}
-			});
+				});
+			}else{
+				//this.parseJSON(d);
+				this.postProcess();
+				return this;
+			}
 		};
 	
 		return this;
@@ -146,6 +171,7 @@ var TimeSeries;
 
 	TimeSeries.prototype.loadDatasets = function(data){
 
+		this.log('loadDatasets',data)
 		this.datasets = {};
 		var dataloaded = 0;
 		var n = data.length;
@@ -161,7 +187,6 @@ var TimeSeries;
 				"success": function(d,attr){
 					// Remove extra newlines at the end
 					d = d.replace(/[\n\r]$/,"");
-
 					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
 					dataloaded++;
 					this.update(attr.dataset.name);
