@@ -1,0 +1,100 @@
+/* Start of AAS */
+html, body {
+	font-size: 100%;
+}
+*, ::before, ::after {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+body {
+	font-family: "PT Sans", helvetica, arial, sans-serif;
+	font-size: 18px;
+	margin: 0px;
+	padding: 0px;
+	color: #222;
+	font-weight: normal;
+	font-style: normal;
+	line-height: 1.5;
+	cursor: auto;
+}
+header {
+	background-color: #253788;
+	color: #FFF;
+	margin-bottom: 2em;
+}
+.row {
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 0;
+	margin-bottom: 2em;
+	max-width: 62.5rem;
+}
+.row:before, .row:after { content:" "; display:table }
+.row:after { clear:both }
+.column, .columns {
+	position: relative;
+	padding-left: 0.9375rem;
+	padding-right: 0.9375rem;
+	float: left;
+}
+.large-4 {
+	width: 33.33333%;
+}
+.large-8 {
+	width: 66.66667%;
+}
+[class*="column"] + [class*="column"]:last-child {
+	float: right;
+}
+.panel.callout {
+	border-style: solid;
+	border-width: 1px;
+	border-color: #b6edff;
+	padding: 1.25rem;
+	background: #ecfaff;
+	background-color: rgb(236, 250, 255);
+	color: #333;
+}
+.panel.callout {
+	background-color: #e4e9f2;
+	border: 0;
+}
+p, ul, ol {
+	font-size: 1.125rem;
+	font-size: 18px;
+	line-height: 1.5;
+}
+.panel.callout ul {
+	list-style: none;
+	margin: 0;
+	padding: 0px;
+}
+.panel.callout ul li {
+	border-top: 1px solid #ccc;
+	padding: .25em 0;
+}
+.panel.callout ul li:first-child {
+	border-top: 0px;
+	padding-top: 0;
+}
+.panel.callout ul li:last-child {
+	padding-bottom: 0;
+}
+.panel.callout li > a {
+	display: block;
+	text-decoration: none;
+}
+.panel.callout a:not(.button) {
+	color: #253788;
+}
+.panel.callout a:hover:not(.button), .panel.callout a:focus:not(.button) {
+	color: #839ac6;
+}
+footer {
+	font-size: 14px;
+}
+.bkg-tint {
+	background-color: #e4e9f2;
+}
