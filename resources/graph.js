@@ -296,7 +296,7 @@ var Graph;
 		if(o.length > 0) return o;
 	}
 	Canvas.prototype.copyToClipboard = function(){
-		this.log('copyToClipboard',this.wide,this.tall)
+		this.log('copyToClipboard',Math.min(this.wide,this.ctx.canvas.clientWidth), Math.min(this.tall,this.ctx.canvas.clientHeight))
 		this.clipboard = this.ctx.getImageData(0, 0, Math.min(this.wide,this.ctx.canvas.clientWidth), Math.min(this.tall,this.ctx.canvas.clientHeight));
 		this.clipboardData = this.clipboard.data;
 	}
