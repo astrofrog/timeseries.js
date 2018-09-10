@@ -195,10 +195,11 @@ var Graph;
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
 
-		this.log('Canvas',container)
+		this.log('Canvas',container,this.wide,this.tall)
 
 		// Construct the <canvas> container
 		this.container = S(container);
+		this.log('container width',this.container.width(),this.container[0],container)
 
 		this.origcontainer = this.container[0].outerHTML;
 		if(this.container[0].nodeName!=="DIV"){
@@ -222,7 +223,7 @@ var Graph;
 		this.wide = this.container.width();
 		if(this.tall > 0) this.container.css({'height':this.tall+'px'});
 		this.tall = this.container.height();
-
+		
 		// Add a <canvas> to it
 		this.container.html('<canvas class="canvas" style="display:block;font:inherit;"></canvas>');
 		this.containerbg = this.container.css('background');
@@ -296,9 +297,14 @@ var Graph;
 		if(o.length > 0) return o;
 	}
 	Canvas.prototype.copyToClipboard = function(){
-		this.log('copyToClipboard',Math.min(this.wide,this.ctx.canvas.clientWidth), Math.min(this.tall,this.ctx.canvas.clientHeight))
-		this.clipboard = this.ctx.getImageData(0, 0, Math.min(this.wide,this.ctx.canvas.clientWidth), Math.min(this.tall,this.ctx.canvas.clientHeight));
-		this.clipboardData = this.clipboard.data;
+		var x = Math.min(this.wide,this.ctx.canvas.clientWidth);
+		var y = Math.min(this.tall,this.ctx.canvas.clientHeight);
+		this.log('copyToClipboard',x,y,this)
+		if(x > 0 && y > 0){
+			this.clipboard = this.ctx.getImageData(0, 0, x, y);
+			this.clipboardData = this.clipboard.data;
+		}
+		return this
 	}
 	Canvas.prototype.pasteFromClipboard = function(){
 		this.clipboard.data = this.clipboardData;
@@ -395,6 +401,8 @@ var Graph;
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
 		opt.logging = this.logging;
+
+		this.log('My Graph opt',opt)
 		
 		this.canvas = new Canvas(element,opt);
 
@@ -829,6 +837,9 @@ var Graph;
 				ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 				data: data.data[i]
 			}
+			function removeRoundingErrors(e){
+				return e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*.*$/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*.*$/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
+			}
 			txt = is(data.hoverprops.text,"function") ? data.hoverprops.text.call(this,val) : "";
 			if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: {{ y }}<br />Uncertainty: {{ err }}";
 			var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
@@ -838,7 +849,7 @@ var Graph;
 			html = html.replace(/{{ *y *}}/g,val.data.y);
 			html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
 			html = html.replace(/{{ *ylabel *}}/g,val.ylabel);
-			html = html.replace(/{{ *err *}}/g,(val.data.err ? val.data.err : 0));
+			html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
 			html = html.replace(/{{ *title *}}/g,val.title);
 			while(html.match(/{{.*}}/)){
 				var a = html.indexOf("{{")+2;
