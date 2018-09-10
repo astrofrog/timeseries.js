@@ -841,36 +841,39 @@ var Graph;
 				return e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*.*$/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*.*$/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
 			}
 			txt = is(data.hoverprops.text,"function") ? data.hoverprops.text.call(this,val) : "";
-			if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: {{ y }}<br />Uncertainty: {{ err }}";
-			var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
-			if(typeof data.hoverprops.before=="string") html = data.hoverprops.before+html;
-			if(typeof data.hoverprops.after=="string") html = html+data.hoverprops.after;
-			html = html.replace(/{{ *x *}}/g,(this.x.isDate ? new Date(val.data.x) : val.data.x));
-			html = html.replace(/{{ *y *}}/g,val.data.y);
-			html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
-			html = html.replace(/{{ *ylabel *}}/g,val.ylabel);
-			html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
-			html = html.replace(/{{ *title *}}/g,val.title);
-			while(html.match(/{{.*}}/)){
-				var a = html.indexOf("{{")+2;
-				var b = html.indexOf("}}");
-				var pattern = html.substring(a,b);
-				pattern = pattern.replace(/^\s+|\s+$/g,"");	// trim
-				var reg = new RegExp("{{ *"+pattern+" *}}","g");
-				// First we try for a value for the data point
-				if(typeof val.data[pattern] === "string") html = html.replace(reg,val.data[pattern]);
-				// Next we try for a value for the data set
-				else if(typeof data[pattern] === "string") html = html.replace(reg,data[pattern]);
-				// Remove the pattern
-				else html = html.replace(reg,"");
-			}
+			//if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: {{ y }}<br />Uncertainty: {{ err }}";
+			if(txt){
+				var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
+				if(typeof data.hoverprops.before=="string") html = data.hoverprops.before+html;
+				if(typeof data.hoverprops.after=="string") html = html+data.hoverprops.after;
+				html = html.replace(/{{ *x *}}/g,(this.x.isDate ? new Date(val.data.x) : val.data.x));
+				html = html.replace(/{{ *y *}}/g,val.data.y);
+				html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
+				html = html.replace(/{{ *ylabel *}}/g,val.ylabel);
+				html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
+				html = html.replace(/{{ *title *}}/g,val.title);
+				while(html.match(/{{.*}}/)){
+					var a = html.indexOf("{{")+2;
+					var b = html.indexOf("}}");
+					var pattern = html.substring(a,b);
+					pattern = pattern.replace(/^\s+|\s+$/g,"");	// trim
+					var reg = new RegExp("{{ *"+pattern+" *}}","g");
+					// First we try for a value for the data point
+					if(typeof val.data[pattern] === "string") html = html.replace(reg,val.data[pattern]);
+					// Next we try for a value for the data set
+					else if(typeof data[pattern] === "string") html = html.replace(reg,data[pattern]);
+					// Remove the pattern
+					else html = html.replace(reg,"");
+				}
 			
 
-			this.coordinates.html(html);
-			var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1;
-			if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
-			this.coordinates.css({'left':Math.round(x)+'px','top':Math.round(this.data[t].marks[i].props.y+1)+'px'});
-
+				this.coordinates.html(html);
+				var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1;
+				if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
+				this.coordinates.css({'display':'','left':Math.round(x)+'px','top':Math.round(this.data[t].marks[i].props.y+1)+'px'});
+			}else{
+				this.coordinates.css({'display':'none'});
+			}
 			this.annotated = true;
 		}else{
 			if(this.annotated){

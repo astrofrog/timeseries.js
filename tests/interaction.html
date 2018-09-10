@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>AAS Time Series example</title>
+    <link rel="stylesheet" href="../resources/aas.css">
+    <link rel="stylesheet" href="../resources/style.css">
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<style>
+	#canvas {
+		position: relative;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		 -khtml-user-select: none;
+		   -moz-user-select: none;
+			-ms-user-select: none;
+				user-select: none;
+		overflow: hidden;
+    }
+	.box { font-weight: 700; background: #253788; width: 3em; height: 2em; line-height: 2em; font-size: 2em; color: white; text-align: center; left: 50%; top: 50%; position: absolute; transform: translate3d(-50%, -50%, 0); }
+	</style>
+	<!-- Javascript -->
+	<script>
+	S(document).ready(function(){
+
+		var el = S('#canvas');
+		var scaling = "";
+		var scale = 1;
+		S('#msg').html('test')
+		
+		el.on('touchstart',function(e){
+			console.log('touchstart',e)
+			if(e.touches.length === 2){
+				scaling = true;
+				//pinchStart(e);
+			}
+			S('#msg').html('pinchStart '+scaling);
+		}).on('touchmove',function(e){
+			//if(scaling) pinchMove(e);
+			S('#msg').html('pinchMove '+scaling);
+		}).on('touchend',function(e){
+			scaling = false;
+			S('#msg').html('pinchEnd '+scaling);
+		}).on('click',function(e){
+			S('#msg').html('click')
+		}).on('dblclick',function(e){
+			e.stopPropagation()
+			S('#msg').html('dblclick')
+		}).on('wheel',function(e){
+			e.preventDefault();
+			var o = e.originalEvent
+			var x = (o.clientX-o.originalTarget.offsetLeft);
+			var y = (o.clientY-o.originalTarget.offsetTop);
+			console.log(o,o.clientX,o.originalTarget.offsetLeft,x,y);
+			scale += o.deltaY/10;
+			S('.box').css({'transform':'translate3d(-50%, -50%, 0) scale('+Math.max(0.1,scale)+')','transform-origin':x+'px '+y+'px'});
+			S('#msg').html('wheel '+o.deltaY+' '+o.layerX+' '+o.layerY)
+		});
+
+//To get the distance between the two fingers, use the hypot function:
+
+//var dist = Math.hypot(
+  //  e.touches[0].pageX - e.touches[1].pageX,
+    //e.touches[0].pageY - e.touches[1].pageY);
+		
+		//var ex1 = TimeSeries.create(json);
+		//ex1 = ex1.initialize(document.getElementById('example1'));
+
+	});
+	</script>
+</head>
+<body>
+
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">Timeseries library: interaction tests</h1>
+				<p>Last updated: 10 September 2018</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+
+	<div class="row">
+		<section>
+			<p>A test of pinch and double click interactions.</p>
+			<div style="width: 100%;height: 400px;" class="bkg-tint" id="canvas">
+				<div class="box">AAS</div>
+			</div>
+			<div id="msg">Message</div>
+		</section>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+</body>
+</html>

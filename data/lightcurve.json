@@ -1,0 +1,60 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 800,
+	"height": 350,
+	"padding": 0,
+	"autosize": {"type": "fit", "resize": true},
+	"data": [{
+		"name": "lightcurve",
+		"url": "lightcurve.csv",
+		"format": {"type": "csv", "parse": {"x":"number", "y":"number", "err":"number", "note":"string"}}
+	}],
+	"marks":[{
+		"type": "rect",
+		"from": {"data": "lightcurve"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "x"},
+				"y": {"scale": "yscale", "field": "datum['y'] - datum['err']"},
+				"y2": {"scale": "yscale", "field": "datum['y'] + datum['err']"},
+				"width": {"value": 1},
+				"fill": {"value": "#000000"}
+			},
+			"update": {
+				"fillOpacity": {"value": 1},
+				"fill": {"value": "#000000"},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "lightcurve"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "x"},
+				"y": {"scale": "yscale", "field": "y"},
+				"shape": {"value": "circle"},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"shape": "cross",
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"shape": {"value": "circle"},
+				"size": {"value": 4},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1},
+				"shape": {"value": "diamond"},
+				"size": {"value": 20},
+				"zindex": {"value": 1}
+			}
+		}
+	}]
+}

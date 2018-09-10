@@ -5,54 +5,13 @@
 	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
 	<meta name="description" content="AAS Time Series library." />
 	<title>AAS Time Series example</title>
-	<!-- CSS -->
     <link rel="stylesheet" href="resources/aas.css">
     <link rel="stylesheet" href="resources/style.css">
+	<link rel="stylesheet" href="resources/highlight/highlight.css">
 	<script type="text/javascript" src="resources/highlight/highlight.pack.js"></script>
 	<script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
-	<link rel="stylesheet" href="resources/highlight/highlight.css">
-
-	<script type="text/javascript">
-	S(document).ready(function(){
-
-		// Format examples nicely to show how they were done
-		ex = S('.example');
-		function tidy(t){ return t.replace(/===NEWLINE===/g,"\n").replace(/\n*$/,"").replace(/^\n*/,""); }
-		function sanitise(t){ return t.replace(/\</g,"&lt;").replace(/\>/g,"&gt;"); }
-		function deindent(t){ var indent = ""; t.replace(/^([\s\t]+)/,function(m,p1,p2){ indent = m; }); return t.replace(new RegExp(indent,'g'),"").replace(/[\s\t]+$/,""); }
-		for(var i = 0; i < ex.length; i++){
-			html = ex[i].innerHTML;
-			css = "";
-			js = "";
-			temp = html.replace(/\n/g,"===NEWLINE===").replace(/<!-- HTML -->/i,"");
-			temp = temp.replace(/<!-- Javascript -->/i,"").replace(/<script>(.*)<\/script>/,function(m,p1){
-				js = js+tidy(p1);
-				return "";
-			})
-			temp = temp.replace(/<!-- CSS -->/i,"").replace(/<style>(.*)<\/style>/,function(m,p1){
-				css = tidy(p1);
-				return "";
-			});
-		
-			code = sanitise(tidy(temp));
-			code = code.replace(/(src|href)=\"([^\"]+)\"/g,function(m,p1,p2){ return p1+'="<a href="'+p2+'">'+p2+'</a>"'; });
-			
-			showtitle = true;
-			if(S(ex[i]).attr('data-title')=="false") showtitle = false;
-
-			// Append the 'How to do it' content
-			S(ex[i]).append((showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':''))
-		}
-
-		// Update anchor now that we've updated the page		
-		if(location.hash) document.location = location.hash;
-	
-		var code = S('.prettyprint');
-		for(var i = 0; i < code.length; i++) hljs.highlightBlock(code[i]);
-		
-	});
-	</script>
+	<script language="javascript" type="text/javascript" src="resources/formatexamples.js"></script>
 </head>
 <body>
 
@@ -278,6 +237,45 @@
 									S(e.currentTarget).off("click").removeClass('toload');
 								});
 							});
+							</script>
+						</div>
+					</li>
+					<li id="ex5">
+						<h3>Example 5</h3>
+						<p>This example uses a different dataset.</p>
+						<div class="example">
+							<figure style="text-align:center;">
+								<div id="example5" vega-src="data/lightcurve.json" vega-scale="inherit">
+									<img src="data/lightcurve.png" style="width:500px;height:350px;" />
+								</div>
+								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+							</figure>
+							<style>
+							.toload { position: relative; line-height: 0em; cursor: pointer; filter: grayscale(1); }
+							.toload:after {
+								content: "Click to interact";
+								padding: 1em;
+								background: rgba(0,0,0,0.7);
+								line-height:1em;
+								color: white;
+								top: 50%;
+								left: 50%;
+								transform: translate3d(-50%,-50%, 0);
+								position: absolute;
+								text-align: center;
+								margin-right: -50%;
+							}
+							</style>
+							<script>
+								var ex5 = TimeSeries.create({},{'logging':true});
+								// Add click event to load the interactive graph
+								S('#example5').addClass('toload');
+								S('#example5').on("click",{ts:ex5},function(e){
+									// Initialise the TimeSeries
+									e.data.ts.initialize(e.currentTarget);
+									// Remove the click event and the toload class
+									S(e.currentTarget).off("click").removeClass('toload');
+								});
 							</script>
 						</div>
 					</li>
