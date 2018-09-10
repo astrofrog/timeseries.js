@@ -100,7 +100,7 @@ var TimeSeries;
 							this.load.data.files[cb[i].attr.file].loaded = true;
 							this.log('DATA ',cb[i].attr.dataset.name,this.load.data.files[cb[i].attr.file])
 
-							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr.this,this.load.data.files[cb[i].attr.file].data,cb[i].attr);
+							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr['this'],this.load.data.files[cb[i].attr.file].data,cb[i].attr);
 						}
 					}
 				});
@@ -110,7 +110,7 @@ var TimeSeries;
 					this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
 				}else{
 					// Apply the callback if we've already loaded the data file
-					if(typeof fn==="function") fn.call(attr.this,this.load.data.files[f].data,attr);
+					if(typeof fn==="function") fn.call(attr['this'],this.load.data.files[f].data,attr);
 				}
 			}
 		}
@@ -133,7 +133,7 @@ var TimeSeries;
 				if(got==files.length){
 					for(var c = TimeSeries.load[t].callbacks.length-1; c >= 0; c--){
 						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks)
-						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr.this || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
+						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr['this'] || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
 						// Remove the callback
 						TimeSeries.load[t].callbacks.pop();
 					}
@@ -266,7 +266,7 @@ var TimeSeries;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources('resources/graph.js',{this:this,el:e},function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
+			TimeSeries.loadResources("resources/graph.js", {"this":this, "el":e}, function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
 		}else{
 
 			if(this.file){
@@ -367,21 +367,21 @@ var TimeSeries;
 							if(datum[event.x.field]) x = datum[event.x.field];
 							else{
 								try { x = ev.call(datum,event.x.field,datum); }
-								catch { _obj.log('Error',datum,event.x); }
+								catch(e) { _obj.log('Error',datum,event.x); }
 							}
 						}
 						if(event.x2 && event.x2.field){
 							if(datum[event.x2.field]) x2 = datum[event.x2.field];
 							else{
 								try { x2 = ev.call(datum,event.x2.field,datum); }
-								catch { _obj.log('Error',datum,event.x2); }
+								catch(e) { _obj.log('Error',datum,event.x2); }
 							}
 						}
 						if(event.y && event.y.field){
 							if(datum[event.y.field]) y = datum[event.y.field];
 							else{
 								try { y = ev.call(datum,event.y.field,datum); }
-								catch { _obj.log('Error',datum,event.y); }
+								catch(e) { _obj.log('Error',datum,event.y); }
 							}
 						}
 						if(event.y2 && event.y2.field){
@@ -389,7 +389,7 @@ var TimeSeries;
 							if(datum[event.y2.field]) y2 = datum[event.y2.field];
 							else{
 								try { y2 = ev.call(datum,event.y2.field,datum); }
-								catch { _obj.log('Error',datum,event.y2); }
+								catch(e) { _obj.log('Error',datum,event.y2); }
 							}
 						}
 
