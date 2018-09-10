@@ -187,6 +187,7 @@ var TimeSeries;
 		this.attr = opt;
 		if(json) this.json = json;
 		this.logging = opt.logging || false;
+		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 
 		this.log('TS',json)
 
@@ -196,7 +197,7 @@ var TimeSeries;
 			yaxis: { label: 'y-axis', log: false },
 			grid: { hoverable: true, clickable: true },
 			fit: false,
-			showaswego: false
+			showaswego: opt.showaswego
 		}
 		this.datasets = [];
 		this.directory = "";

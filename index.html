@@ -174,7 +174,7 @@
 
 							S(document).ready(function(){
 
-								var ex1 = TimeSeries.create(json,{'logging':false,'showaswego':false});
+								var ex1 = TimeSeries.create(json);
 								ex1 = ex1.initialize(document.getElementById('example1'));
 
 							});
@@ -194,7 +194,7 @@
 							<script>
 							S(document).ready(function(){
 								// Create a new TimeSeries object
-								var ex2 = TimeSeries.create({},{'logging':false,'showaswego':false}).initialize(document.getElementById('example2'));
+								var ex2 = TimeSeries.create({}).initialize(document.getElementById('example2'));
 							});
 							</script>
 						</div>
@@ -226,7 +226,7 @@
 							}
 							</style>
 							<script>
-								var ex3 = TimeSeries.create({},{'logging':true,'showaswego':false});
+								var ex3 = TimeSeries.create({},{'logging':true});
 								console.log('ex3',ex3,S('#example3'))
 								// Add click event to load the interactive graph
 								S('#example3').addClass('toload');
@@ -269,7 +269,7 @@
 							<script>
 							S(document).ready(function(){
 
-								var ex4 = TimeSeries.create({},{'logging':true,'showaswego':false});
+								var ex4 = TimeSeries.create({},{'logging':true});
 
 								// Add click event to load the interactive graph
 								S('#example4').addClass('toload').on("click",{ts:ex4},function(e){
