@@ -12,6 +12,47 @@
 	<script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
 	<link rel="stylesheet" href="resources/highlight/highlight.css">
+
+	<script type="text/javascript">
+	S(document).ready(function(){
+
+		// Format examples nicely to show how they were done
+		ex = S('.example');
+		function tidy(t){ return t.replace(/===NEWLINE===/g,"\n").replace(/\n*$/,"").replace(/^\n*/,""); }
+		function sanitise(t){ return t.replace(/\</g,"&lt;").replace(/\>/g,"&gt;"); }
+		function deindent(t){ var indent = ""; t.replace(/^([\s\t]+)/,function(m,p1,p2){ indent = m; }); return t.replace(new RegExp(indent,'g'),"").replace(/[\s\t]+$/,""); }
+		for(var i = 0; i < ex.length; i++){
+			html = ex[i].innerHTML;
+			css = "";
+			js = "";
+			temp = html.replace(/\n/g,"===NEWLINE===").replace(/<!-- HTML -->/i,"");
+			temp = temp.replace(/<!-- Javascript -->/i,"").replace(/<script>(.*)<\/script>/,function(m,p1){
+				js = js+tidy(p1);
+				return "";
+			})
+			temp = temp.replace(/<!-- CSS -->/i,"").replace(/<style>(.*)<\/style>/,function(m,p1){
+				css = tidy(p1);
+				return "";
+			});
+		
+			code = sanitise(tidy(temp));
+			code = code.replace(/(src|href)=\"([^\"]+)\"/g,function(m,p1,p2){ return p1+'="<a href="'+p2+'">'+p2+'</a>"'; });
+			
+			showtitle = true;
+			if(S(ex[i]).attr('data-title')=="false") showtitle = false;
+
+			// Append the 'How to do it' content
+			S(ex[i]).append((showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':''))
+		}
+
+		// Update anchor now that we've updated the page		
+		if(location.hash) document.location = location.hash;
+	
+		var code = S('.prettyprint');
+		for(var i = 0; i < code.length; i++) hljs.highlightBlock(code[i]);
+		
+	});
+	</script>
 </head>
 <body>
 
@@ -21,7 +62,7 @@
 			<div class="padded">
 				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
 				<h1 id="project_title">Timeseries library</h1>
-				<p>Last updated: 4 September 2018</p>
+				<p>Last updated: 10 September 2018</p>
 			</div>
 		</div>
 	</header>
@@ -58,13 +99,14 @@
 			<section id="examples">
 				<h2>Examples</h2>
 				<ol>
-					<li>
+					<li id="ex1">
 						<h3>Example 1</h3>
 						<p>First we embed a screenshot as an <code>img</code> so that a static version exists if interactivity fails. Next we create a <code>TimeSeries</code> Javascript object with some <code>Vega JSON</code> and then initialise it with the container of the <code>img</code> element. The <code>TimeSeries</code> then replaces the contents of the container with an interactive version.</p>
 						<div class="example">
 							<figure>
 								<div id="example1">
 									<img src="data/OB110462-simple-big.png" />
+									<div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div>
 								</div>
 								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Orange points show data from the Danish 1.54m telescope. The dashed line shows a model of the event. The timeseries is created from inline JSON.</figcaption>
 							</figure>
@@ -103,28 +145,6 @@
 										}
 									}
 								},{
-									"type": "rect",
-									"from": {"data": "Danish 1.54m"},
-									"encode": {
-										"enter": {
-											"x": {"scale": "xscale", "field": "HJD"},
-											"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-											"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-											"width": {"value": 1},
-											"fill": {"value": "#000000"}
-										},
-										"update": {
-											"fillOpacity": {"value": 1},
-											"fill": {"value": "#000000"},
-											"zindex": {"value": 0}
-										},
-										"hover": {
-											"fill": {"value": "#FF7F00"},
-											"fillOpacity": {"value": 1},
-											"zindex": {"value": 1}
-										}
-									}
-								},{
 									"type": "symbol",
 									"from": {"data": "Danish 1.54m"},
 									"encode": {
@@ -155,33 +175,32 @@
 
 							S(document).ready(function(){
 
-								var ex1 = new TimeSeries(json,{'logging':true,'showaswego':false});
-								ex1.initialize(document.getElementById('example1'));
+								var ex1 = TimeSeries.create(json,{'logging':false,'showaswego':false});
+								ex1 = ex1.initialize(document.getElementById('example1'));
 
 							});
 							</script>
 						</div>
 					</li>
-					<li>
+					<li id="ex2">
 						<h3>Example 2</h3>
 						<p>This example behaves in a similar way to the one above except that we load the <code>Vega JSON</code> from a separate <code>JSON</code> file. The <code>vega-scale</code> attribute tells <code>TimeSeries</code> to use the existing size of the element in the HTML; over-riding the size specified in the <code>JSON</code> file.</p>
 						<div class="example">
 							<figure style="text-align:center;">
 								<div id="example2" vega-src="data/OB110462-simple.json" vega-scale="inherit">
-									<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
+									<img src="data/OB110462-simple2.png" style="width:500px;height:250px;" />
 								</div>
 								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
 							</figure>
 							<script>
 							S(document).ready(function(){
 								// Create a new TimeSeries object
-								var ex2 = new TimeSeries({},{'logging':true,'showaswego':false});
-								ex2.initialize(document.getElementById('example2'));
+								var ex2 = TimeSeries.create({},{'logging':false,'showaswego':false}).initialize(document.getElementById('example2'));
 							});
 							</script>
 						</div>
 					</li>
-					<li>
+					<li id="ex3">
 						<h3>Example 3</h3>
 						<p>This example shows the same timeseries as the previous example but it is non-interactive by default. We add a CSS class to it and a Javascript event so that the end-user can choose to initialize it. This can help reduce the amount of processing done on page load if there are multiple timeseries on the page.</p>
 						<div class="example">
@@ -208,19 +227,20 @@
 							}
 							</style>
 							<script>
-							S(document).ready(function(){
-								var ex3 = new TimeSeries({},{'logging':true,'showaswego':false});
+								var ex3 = TimeSeries.create({},{'logging':true,'showaswego':false});
+								console.log('ex3',ex3,S('#example3'))
 								// Add click event to load the interactive graph
-								S('#example3').addClass('toload').on("click",{ts:ex3},function(e){
+								S('#example3').addClass('toload');
+								S('#example3').on("click",{ts:ex3},function(e){
+									// Initialise the TimeSeries
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
 									S(e.currentTarget).off("click").removeClass('toload');
 								});
-							});
 							</script>
 						</div>
 					</li>
-					<li>
+					<li id="ex4">
 						<h3>Example 4</h3>
 						<p>A more complicated example with multiple series all in different <code>CSV</code> files.</p>
 						<div class="example">
@@ -250,7 +270,7 @@
 							<script>
 							S(document).ready(function(){
 
-								var ex4 = new TimeSeries({},{'logging':true,'showaswego':false});
+								var ex4 = TimeSeries.create({},{'logging':true,'showaswego':false});
 
 								// Add click event to load the interactive graph
 								S('#example4').addClass('toload').on("click",{ts:ex4},function(e){
@@ -275,41 +295,5 @@
 		</footer>
 	</div>
 
-	
-	<script type="text/javascript">
-	S(document).ready(function(){
-
-		// Format examples nicely to show how they were done
-		ex = S('.example');
-		function tidy(t){ return t.replace(/===NEWLINE===/g,"\n").replace(/\n*$/,"").replace(/^\n*/,""); }
-		function sanitise(t){ return t.replace(/\</g,"&lt;").replace(/\>/g,"&gt;"); }
-		function deindent(t){ var indent = ""; t.replace(/^([\s\t]+)/,function(m,p1,p2){ indent = m; }); return t.replace(new RegExp(indent,'g'),"").replace(/[\s\t]+$/,""); }
-		for(var i = 0; i < ex.length; i++){
-			html = ex[i].innerHTML;
-			css = "";
-			js = "";
-			temp = html.replace(/\n/g,"===NEWLINE===").replace(/<!-- HTML -->/i,"");
-			temp = temp.replace(/<!-- Javascript -->/i,"").replace(/<script>(.*)<\/script>/,function(m,p1){
-				js = js+tidy(p1);
-				return "";
-			})
-			temp = temp.replace(/<!-- CSS -->/i,"").replace(/<style>(.*)<\/style>/,function(m,p1){
-				css = tidy(p1);
-				return "";
-			});
-		
-			code = sanitise(tidy(temp));
-			code = code.replace(/(src|href)=\"([^\"]+)\"/g,function(m,p1,p2){ return p1+'="<a href="'+p2+'">'+p2+'</a>"'; });
-			
-			showtitle = true;
-			if(S(ex[i]).attr('data-title')=="false") showtitle = false;
-		
-			ex[i].innerHTML = ''+html+(showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':'');
-		}
-	
-		var code = S('.prettyprint');
-		for(var i = 0; i < code.length; i++) hljs.highlightBlock(code[i]);
-	});
-	</script>
 </body>
 </html>

@@ -45,10 +45,151 @@ var TimeSeries;
 	}
 	// End of helper functions
 
-	TimeSeries = function(json,opt){
+
+	TimeSeries = new function(){
+		this.version = "0.0.2";
+		this.create = function(json,opt){ return new TS(json,opt); }
+		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
+		this.logging = false;
+		
+		var _obj = this;
+		
+		this.log = function(){
+			if(this.logging){
+				var args = Array.prototype.slice.call(arguments, 0);
+				if(console && typeof console.log==="function") console.log('TimeSeries',args);
+			}
+			return this;
+		}
+
+		/* Have we loaded all the data files necessary? */
+		this.filesLoaded = function(fs){
+			this.log('filesLoaded',fs,this.load.data)
+			var n = 0;
+			for(var d = 0; d < fs.length; d++){
+				if(this.load.data.files[fs[d]] && this.load.data.files[fs[d]].loaded) n++;
+			}
+			return (n==fs.length);
+		}
+
+		this.loadFromDataFile = function(f,attr,fn){
+		
+			this.log('loadFromDataFile',f,attr,fn);
+			
+			attr.file = f;
+			
+			if(!this.load.data.files[f]){
+				this.load.data.files[f] = {'loaded':false,'callbacks':[]};
+				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
+
+				this.log('loading data',f)
+				// Now grab the data
+				S().ajax(f,{
+					"dataType": "csv",
+					"this": this,
+					"file": f,
+					"success": function(d,attr){
+						// Remove extra newlines at the end
+						d = d.replace(/[\n\r]$/,"");
+
+						var cb = this.load.data.files[attr.file].callbacks;
+						this.log('CALLBACKS',attr.file,cb);
+						for(var i = 0; i < cb.length; i++){
+							// Set original context dataset data
+							this.load.data.files[cb[i].attr.file].data = d;
+							this.load.data.files[cb[i].attr.file].loaded = true;
+							this.log('DATA ',cb[i].attr.dataset.name,this.load.data.files[cb[i].attr.file])
+
+							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr.this,this.load.data.files[cb[i].attr.file].data,cb[i].attr);
+						}
+					}
+				});
+			}else{
+				if(!this.load.data.files[f].loaded){
+					// Add the callback to the queue
+					this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
+				}else{
+					// Apply the callback if we've already loaded the data file
+					if(typeof fn==="function") fn.call(attr.this,this.load.data.files[f].data,attr);
+				}
+			}
+		}
+		this.loadResources = function(files,attr,callback){
+
+			this.log('loadResources',files)
+			// Load any necessary extra js/css for clustering
+			if(typeof files==="string") files = [files];
+			
+			// Store the callback for when we've loaded everything
+			this.load.resources.callbacks.push({'callback':callback,'attr':attr});
+		
+		
+			function checkAndGo(files,t){
+				var got = 0;
+				for(var f = 0; f < files.length; f++){
+					if(TimeSeries.load[t].files[files[f]].loaded) got++;
+				}
+				_obj.log('checkAndGo',got,files.length,TimeSeries.load[t].callbacks);
+				if(got==files.length){
+					for(var c = TimeSeries.load[t].callbacks.length-1; c >= 0; c--){
+						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks)
+						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr.this || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
+						// Remove the callback
+						TimeSeries.load[t].callbacks.pop();
+					}
+				}
+			}
+
+			for(var i = 0; i < files.length; i++){
+				if(!_obj.load.resources.files[files[i]]){
+					_obj.log('loading resource',files[i])
+
+					_obj.log('start loading '+files[i]+' is ',_obj.load.resources.files[files[i]]);
+					_obj.load.resources.files[files[i]] = {'loaded':false};
+
+					_obj.loadCode(files[i],function(e){
+						_obj.load.resources.files[e.url].loaded = true;
+						_obj.log('loaded resource '+e.url);
+						checkAndGo(files,"resources");
+					})
+				}else{
+					_obj.log('current state of '+files[i]+' is ',_obj.load.resources.files[files[i]]);
+				}
+			}
+
+			return _obj;
+		}
+
+		this.loadCode = function(url,callback){
+			var el;
+			this.log('loadCode',url,callback);
+			if(url.indexOf(".js")>= 0){
+				el = document.createElement("script");
+				el.setAttribute('type',"text/javascript");
+				el.src = url;
+			}else if(url.indexOf(".css")>= 0){
+				el = document.createElement("style");
+				el.setAttribute('rel','stylesheet');
+				el.setAttribute('type','text/css');
+				el.setAttribute('href',url);
+			}
+			if(el){
+				el.onload = function(){ callback.call(_obj,{'url':url}); };
+				document.getElementsByTagName('head')[0].appendChild(el);
+			}
+			return _obj;
+		}
+		return this;
+	}
+
+	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
+		if(json) this.json = json;
 		this.logging = opt.logging || false;
+
+		this.log('TS',json)
+
 		// Set some defaults
 		this.options = {
 			xaxis: { label:'Time', log: false, fit:true },
@@ -63,33 +204,35 @@ var TimeSeries;
 			if(o=="directory") this[o] = opt[o];
 			if(o=="fit") this.options[o] = opt[o];
 		}
-		if(json) this.parseJSON(json);
+		if(json) this.processJSON(json);
 		if(typeof file==="string") this.file = file;
 
 		return this;
 	}
-	TimeSeries.prototype.log = function(){
+	TS.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function") console.log('TimeSeries',args);
+			if(console && typeof console.log==="function") console.log('TS',args);
 		}
 		return this;
 	}
-	TimeSeries.prototype.parseJSON = function(d){
+	TS.prototype.processJSON = function(d){
 		this.json = d;
+		this.log('processJSON',d,this.json)
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
 		this.options.logging = true;
 		return this;
 	}
-	TimeSeries.prototype.postProcess = function(){
+	TS.prototype.postProcess = function(){
 
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
 			this.options.width = this.initializedValues.w;
 			this.options.height = this.initializedValues.h;
 		}
+		this.options.logging = this.logging;
 
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
 		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
@@ -101,7 +244,9 @@ var TimeSeries;
 		Render a TimeSeries from an HTML element 
 		We look for attributes vega-src and vega-scale
 	*/
-	TimeSeries.prototype.initialize = function(e,callback){
+	TS.prototype.initialize = function(e,callback){
+
+		this.log('initialize',e)
 
 		var el = S(e);
 		if(el.length == 0) return this;
@@ -118,14 +263,13 @@ var TimeSeries;
 		// Load any necessary extra js/css
 		var _obj = this;
 		// Do we need to load some extra Javascript?
-		if(typeof Graph!=="function"){
+		if(typeof Graph==="undefined" && typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
-			this.log('loading graph.js');
-			this.loadResources('resources/graph.js',function(){ _obj.log('loadedResources'); _obj.initialize(e); });
+			TimeSeries.loadResources('resources/graph.js',{this:this,el:e},function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
 		}else{
 
 			if(this.file){
-				// Load the file
+				// Load the Vega-JSON file
 				var idx = this.file.lastIndexOf("/");
 				this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
 				S().ajax(this.file,{
@@ -134,13 +278,12 @@ var TimeSeries;
 					"cache": true,
 					"element": e,
 					"success": function(d,attr){
-						this.parseJSON(d);
+						this.processJSON(d);
 						this.postProcess();
 						return this;
 					}
 				});
 			}else{
-				//this.parseJSON(d);
 				this.postProcess();
 				return this;
 			}
@@ -149,61 +292,40 @@ var TimeSeries;
 		return this;
 	}
 
-	TimeSeries.prototype.loadResources = function(files,callback){
-
-		// Load any necessary extra js/css for clustering
-		if(typeof files==="string") files = [files];
-		
-		if(!this.extraLoaded) this.extraLoaded = {};
-		for(var i = 0; i < files.length; i++){
-			this.loadCode(files[i],function(e){
-				this.extraLoaded[e.url] = true;
-				var got = 0;
-				for(var i = 0; i < files.length; i++){
-					if(this.extraLoaded[files[i]]) got++;
-				}
-				if(got==files.length) callback.call(this);
-			})
-		}
-	
-		return this;
-	}
-
-	TimeSeries.prototype.loadDatasets = function(data){
-
+	TS.prototype.loadDatasets = function(data){
 		this.log('loadDatasets',data)
+		if(!data) return this;
 		this.datasets = {};
-		var dataloaded = 0;
 		var n = data.length;
+		var f = "";
+		var files = [];
+		for(var i = 0; i < n; i++) files.push(this.directory + data[i].url);
+
+		this.log('files',files,TimeSeries.filesLoaded(files))
 
 		for(var j = 0; j < n; j++){
-
-			// Now grab the data
-			S().ajax(this.directory + data[j].url,{
-				"dataType": "csv",
-				"this": this,
-				"index":j,
-				"dataset": data[j],
-				"success": function(d,attr){
-					// Remove extra newlines at the end
-					d = d.replace(/[\n\r]$/,"");
-					this.datasets[attr.dataset.name] = CSV2JSON(d,attr.dataset.format.parse);
-					dataloaded++;
-					this.update(attr.dataset.name);
-					if(dataloaded == n) this.loaded();
-				}
+			// Load data and store it in datasets.
+			// Update the graph if necessary
+			// If we've loaded all data we then call loaded()
+			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},function(csv,attr){
+				var json = CSV2JSON(csv,attr.dataset.format.parse);
+				this.datasets[attr.dataset.name] = json;
+				this.update(attr.dataset.name);
+				if(TimeSeries.filesLoaded(attr.files)) this.loaded();
 			});
 		}
 
 		return this;
 	}
 
-	TimeSeries.prototype.update = function(datasetID){
+	TS.prototype.update = function(datasetID){
 
 		var id,mark;
 		this.olddatasetsused = this.datasetsused;
 		this.datasetsused = "";
 
+		this.log('update',datasetID,this.json.marks)
+		
 		for(var m = 0; m < this.json.marks.length; m++){
 			id = "";
 			mark = this.json.marks[m];
@@ -215,7 +337,8 @@ var TimeSeries;
 			
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
-				if(mark.type == "symbol") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
+				// To do: need to fix how rect is dealt with
+				if(mark.type == "symbol" || mark.type == "rect") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
 				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, lines: { show: true }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
 
 				// Add the dataset
@@ -331,33 +454,14 @@ var TimeSeries;
 
 		return this;
 	}
-	TimeSeries.prototype.loaded = function(){
-		this.log('loaded');
+	TS.prototype.loaded = function(){
+		this.log('loaded',this.attr.showaswego,this.graph.data);
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();;
 		return this;
 	}
-	TimeSeries.prototype.loadCode = function(url,callback){
-		var el;
-		this.log('loadCode',url);
-		if(url.indexOf(".js")>= 0){
-			el = document.createElement("script");
-			el.setAttribute('type',"text/javascript");
-			el.src = url;
-		}else if(url.indexOf(".css")>= 0){
-			el = document.createElement("style");
-			el.setAttribute('rel','stylesheet');
-			el.setAttribute('type','text/css');
-			el.setAttribute('href',url);
-		}
-		if(el){
-			var _obj = this;
-			el.onload = function(){ callback.call(_obj,{'url':url}); };
-			document.getElementsByTagName('head')[0].appendChild(el);
-		}
-		return this;
-	}
+
 	/**
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,
 	 * and returns an array with the rows of data.
