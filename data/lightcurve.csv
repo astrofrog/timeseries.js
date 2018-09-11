@@ -1,7 +1,7 @@
-x,y,err,note
-1,0.999,0.022,'Note 1'
-2,1.002,0.012,'A second note'
-3,0.999,0.012,'This point has a note'
+x,value,error,note
+1,0.999,0.022,Note 1
+2,1.002,0.012,A second note
+3,0.999,0.012,This point has a note
 4,0.997,0.013,
 5,0.999,0.03,
 6,0.997,0.013,
@@ -34,7 +34,7 @@ x,y,err,note
 33,0.985,0.024,
 34,0.986,0.011,
 35,0.985,0.014,
-36,0.963,0.045,'This point is low due to an error'
+36,0.963,0.045,This point is low due to an error
 37,0.969,0.047,
 38,0.974,0.032,
 39,0.975,0.014,

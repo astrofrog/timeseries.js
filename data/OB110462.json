@@ -66,6 +66,20 @@
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
 	"marks":[{
+		"type": "rect",
+		"from": {"data": "OGLE"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#000000"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "OGLE"},
 		"encode": {
@@ -86,6 +100,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "MOA"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#7F0000"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -110,6 +138,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#FF7F00"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
@@ -130,6 +172,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Faulkes North 2.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#00FFFF"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -154,6 +210,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "Faulkes South 2.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#007F00"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "Faulkes South 2.0m"},
 		"encode": {
@@ -174,6 +244,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Liverpool 2.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#00A0A0"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -198,6 +282,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "MONET North 1.2m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#7F007F"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "MONET North 1.2m"},
 		"encode": {
@@ -218,6 +316,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "UTas 1.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#FF00FF"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -242,6 +354,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "SAAO 1.0m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#00FF00"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "SAAO 1.0m"},
 		"encode": {
@@ -262,6 +388,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "CTIO 1.3m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#0000FF"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -286,6 +426,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "Auckland 0.4m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#007F00"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "Auckland 0.4m"},
 		"encode": {
@@ -306,6 +460,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Farm Cove 0.35m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#0000FF"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",
@@ -330,6 +498,20 @@
 			}
 		}
 	},{
+		"type": "rect",
+		"from": {"data": "Kumeu Obs 0.35m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#00007F"}
+			},
+			"update": {},
+			"hover": {}
+		}
+	},{
 		"type": "symbol",
 		"from": {"data": "Kumeu Obs 0.35m"},
 		"encode": {
@@ -350,6 +532,20 @@
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1}
 			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Vintage Lane 0.4m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#7F007F"}
+			},
+			"update": {},
+			"hover": {}
 		}
 	},{
 		"type": "symbol",

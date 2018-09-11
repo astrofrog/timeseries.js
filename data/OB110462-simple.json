@@ -36,20 +36,16 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
+				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
 				"width": {"value": 1},
-				"fill": {"value": "#000000"}
+				"fill": {"value": "#FF7F00"}
 			},
 			"update": {
-				"fillOpacity": {"value": 1},
-				"fill": {"value": "#000000"},
-				"zindex": {"value": 0}
+				"fill": {"value": "#FF7F00"}
 			},
 			"hover": {
-				"fill": {"value": "#FF7F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"fill": {"value": "#D60303"}
 			}
 		}
 	},{

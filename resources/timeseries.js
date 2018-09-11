@@ -335,12 +335,13 @@ var TimeSeries;
 			if(this.datasets[id]){
 				this.datasetsused += id;
 			}
-			
+
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
-				// To do: need to fix how rect is dealt with
-				if(mark.type == "symbol" || mark.type == "rect") dataset = { data: this.datasets[id], symbol: {show:true}, title: id, lines: { show: false }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { data: this.datasets[id], symbol: {show:false}, title: id, lines: { show: true }, clickable: true,css:{'font-size':'0.8em','background-color':'#000000'} };
+
+				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
+				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){
@@ -348,7 +349,7 @@ var TimeSeries;
 					if(mark.encode && mark.encode.hover){
 						dataset.hoverable = true;
 						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
-						dataset.hoverprops = { text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}<br />Uncertainty: {{err}}', before:'{{title}}<br />' };
+						dataset.hoverprops = { text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}', before:'{{title}}<br />' };
 					}
 
 					dataset.encode = mark.encode;
@@ -360,7 +361,6 @@ var TimeSeries;
 						y2 = undefined;
 						x = undefined;
 						y = undefined;
-						err = undefined;
 
 						// Update the data
 						if(event.x && event.x.field){
@@ -385,7 +385,7 @@ var TimeSeries;
 							}
 						}
 						if(event.y2 && event.y2.field){
-							err = 0;
+							//err = 0;
 							if(datum[event.y2.field]) y2 = datum[event.y2.field];
 							else{
 								try { y2 = ev.call(datum,event.y2.field,datum); }
@@ -393,20 +393,16 @@ var TimeSeries;
 							}
 						}
 
-						if(x && x2) x += (x2-x)/2;
-						if(y && y2){
-							datum.err = (y2-y)/2;
-							y += datum.err;
-						}
-
 						if(x) datum.x = x;
 						if(y) datum.y = y;
-
+						if(x2) datum.x2 = x2;
+						if(y2) datum.y2 = y2;
 						d.data = datum;
+
 						return d;
 					}
 					function updateProperties(d,event){
-						var p = ['size','shape','fill','stroke','strokeWidth','strokeDash'];
+						var p = ['size','shape','fill','stroke','strokeWidth','strokeDash','width','height'];
 						for(var i = 0; i < p.length;i++){
 							if(event[p[i]] && event[p[i]].value){
 								if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;

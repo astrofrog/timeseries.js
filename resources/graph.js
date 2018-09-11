@@ -370,7 +370,7 @@ var Graph;
 
 
 	// Now we define the Graph class
-	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false},lines:{show:true},format:{width:4}}, options);
+	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false},rect{show:true},lines:{show:true},format:{width:4}}, options);
 	// where:
 	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
@@ -395,14 +395,11 @@ var Graph;
 
 		if(this.logging) var d = new Date();
 
-
 		// Define the drawing canvas
 		var opt = {};
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
 		opt.logging = this.logging;
-
-		this.log('My Graph opt',opt)
 		
 		this.canvas = new Canvas(element,opt);
 
@@ -449,6 +446,7 @@ var Graph;
 					t = d[0];
 					i = d[1];
 					d = g.data[t];
+					ii = g.getPixPos(event.layerX,event.layerY);
 					g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:event.layerX,ypix:ii[1],title:d.title,color:d.color});
 				}
 				if(g.events["mousemove"]){
@@ -616,6 +614,7 @@ var Graph;
 			this.data[index].marks = new Array(l);
 
 			if(!this.data[index].symbol) this.data[index].symbol = { 'show': true };
+			if(!this.data[index].rect) this.data[index].rect = { 'show': true };
 			if(!this.data[index].line) this.data[index].line = { 'show': true };
 			if(!this.data[index].format) this.data[index].format = { };
 
@@ -632,13 +631,14 @@ var Graph;
 
 				// Copy the general symbol to the datapoint.
 				if(!this.data[index].marks[i].props.symbol) this.data[index].marks[i].props.symbol = this.data[index].symbol;
+				if(!this.data[index].marks[i].props.rect) this.data[index].marks[i].props.rect = this.data[index].rect;
 				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
 				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
 
 				// Should process all the "enter" options here
 				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
 			}
-			
+			console.log(this.data[index].marks,this.data[index].enter,this.data[index].encode)
 			this.log('enter',this.data[index].enter,this.data[index]);
 			
 		}
@@ -666,28 +666,32 @@ var Graph;
 
 		if(this.data.length <= 0) return this;
 		
-		//this.errors = (this.options.useerrorsforrange) ? this.data[0].data[0].length - 2 : 0;
-		for(var i in this.data){
+		var d,i,max,t;
+		var tests = {'x':[],'y':[]}
+		
+		for(i in this.data){
 			max = this.data[i].marks.length
 
-			if(this.data[i].marks[0].data.err){
-				// Need to correct for different +/- errors
-				var errs = new Array();
-				for(var j = 0; j < max ; j++){
-					if(this.data[i].marks[j].data.err) errs.push(this.data[i].marks[j].data.err);
-				}
-				m = G.stddev(errs);
-				var err = (m) ? [m,m] : [0,0];
-			}else var err = [0,0];
+			for(j = 0; j < max ; j++){
+				d = this.data[i].marks[j].data;
 
-			for(var j = 0; j < max ; j++){
-				if(this.data[i].marks[j].data.x < this.x.min) this.x.min = this.data[i].marks[j].data.x;
-				if(this.data[i].marks[j].data.x > this.x.max) this.x.max = this.data[i].marks[j].data.x;
-				if(this.data[i].marks[j].data.y-err[1] < this.y.min) this.y.min = this.data[i].marks[j].data.y-err[1];
-				if(this.data[i].marks[j].data.y+err[1] > this.y.max) this.y.max = this.data[i].marks[j].data.y+err[1];
+				if(d.x < this.x.min) this.x.min = d.x;
+				if(d.x > this.x.max) this.x.max = d.x;
+				if(d.y < this.y.min) this.y.min = d.y;
+				if(d.y > this.y.max) this.y.max = d.y;
+
+				if(d.x1 && d.x1 < this.x.min) this.x.min = d.x1;
+				if(d.x1 && d.x1 > this.x.max) this.x.max = d.x1;
+				if(d.y1 && d.y1 < this.y.min) this.y.min = d.y1;
+				if(d.y1 && d.y1 > this.y.max) this.y.max = d.y1;
+				if(d.x2 && d.x2 < this.x.min) this.x.min = d.x2;
+				if(d.x2 && d.x2 > this.x.max) this.x.max = d.x2;
+				if(d.y2 && d.y2 < this.y.min) this.y.min = d.y2;
+				if(d.y2 && d.y2 > this.y.max) this.y.max = d.y2;
 			}
 			if(typeof this.data[i].hoverprops!="object") this.data[i].hoverprops = {};
 		}
+		console.log(this.x,this.y)
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;
@@ -774,11 +778,18 @@ var Graph;
 		t = "string";
 		var found = "";
 		// Define a search pattern moving out in pixels
-		search = [[0,0],[-1,0],[1,0],[0,-1],[0,1],[1,1],[1,-1],[-1,1],[-1,-1],[-2,0],[0,-2],[2,0],[0,2],[-1,-2],[1,-2],[2,-1],[2,1],[1,2],[-1,2],[-2,1],[-2,-1],[-2,-2],[-2,2],[2,2],[2,-2],[1,-3],[-1,3],[-3,-1],[-3,1],[-1,3],[1,3],[3,1],[3,-1],[3,-3],[-3,-3],[-3,3],[3,3]];
+		//search = [[0,0],[-1,0],[1,0],[0,-1],[0,1],[1,1],[1,-1],[-1,1],[-1,-1],[-2,0],[0,-2],[2,0],[0,2],[-1,-2],[1,-2],[2,-1],[2,1],[1,2],[-1,2],[-2,1],[-2,-1],[-2,-2],[-2,2],[2,2],[2,-2],[1,-3],[-1,3],[-3,-1],[-3,1],[-1,3],[1,3],[3,1],[3,-1],[3,-3],[-3,-3],[-3,3],[3,3]];
+		search = [[0,0]]
+		// search
 		for(i = 0; i < search.length; i++){
 			dx = x+search[i][0];
 			dy = y+search[i][1];
-			if(dx >= 0 && dy >= 0 && dx < this.canvas.wide && dy < this.canvas.tall && is(this.lookup[dx][dy],t)) return this.lookup[dx][dy].split(':');
+			if(dx >= 0 && dy >= 0 && dx < this.canvas.wide && dy < this.canvas.tall && this.lookup[dx][dy] && is(this.lookup[dx][dy].id,t)){
+				this.canvas.canvas.css({'cursor':'pointer'});
+				return this.lookup[dx][dy].id.split(':');
+			}else{
+				this.canvas.canvas.css({'cursor':''});
+			}
 		}
 	}
 	// Function to clone a hash otherwise we end up using the same one
@@ -787,11 +798,11 @@ var Graph;
 		var object = JSON.parse(json);
 		return object;
 	}
-	Graph.prototype.setCanvasStyles = function(datum){
-		this.canvas.ctx.fillStyle = (datum.props.format.fill ? datum.props.format.fill : '#000000');
-		this.canvas.ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
-		this.canvas.ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
-		this.canvas.ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
+	Graph.prototype.setCanvasStyles = function(ctx,datum){
+		ctx.fillStyle = (datum.props.format.fill ? datum.props.format.fill : '#000000');
+		ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
+		ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
+		ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
 		return this;
 	}
 	Graph.prototype.highlight = function(d){
@@ -811,14 +822,31 @@ var Graph;
 				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 
 				// Set the canvas colours
-				this.setCanvasStyles(mark);
+				this.setCanvasStyles(this.canvas.ctx,mark);
 
 				// Draw the new mark
 				this.drawShape(mark);
 
 				// Put the mark object back to how it was
 				this.data[t].marks[i] = clone(oldmark);
-				this.setCanvasStyles(this.data[t].marks[i]);
+				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
+			}
+
+			if(this.data[t].rect.show){
+				// Clone the mark
+				var oldmark = clone(this.data[t].marks[i]);
+				// Update the mark
+				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
+
+				// Set the canvas colours
+				this.setCanvasStyles(this.canvas.ctx,mark);
+
+				// Draw the new mark
+				this.drawRect(mark);
+
+				// Put the mark object back to how it was
+				this.data[t].marks[i] = clone(oldmark);
+				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
 
 			var data = this.data[t];
@@ -841,16 +869,17 @@ var Graph;
 				return e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*.*$/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*.*$/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
 			}
 			txt = is(data.hoverprops.text,"function") ? data.hoverprops.text.call(this,val) : "";
-			//if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: {{ y }}<br />Uncertainty: {{ err }}";
+			if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: val {{ value }}<br />Uncertainty: {{ err }}";
 			if(txt){
 				var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
 				if(typeof data.hoverprops.before=="string") html = data.hoverprops.before+html;
 				if(typeof data.hoverprops.after=="string") html = html+data.hoverprops.after;
 				html = html.replace(/{{ *x *}}/g,(this.x.isDate ? new Date(val.data.x) : val.data.x));
 				html = html.replace(/{{ *y *}}/g,val.data.y);
+				html = html.replace(/{{ *value *}}/g,val.data.value);
 				html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
 				html = html.replace(/{{ *ylabel *}}/g,val.ylabel);
-				html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
+				//html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
 				html = html.replace(/{{ *title *}}/g,val.title);
 				while(html.match(/{{.*}}/)){
 					var a = html.indexOf("{{")+2;
@@ -1176,116 +1205,77 @@ var Graph;
 	// Function to calculate the x,y coordinates for each data point. 
 	// It also creates a pixel-based lookup table for mouse hover events
 	Graph.prototype.calculateData = function(event){
-		this.log('calculateData')
+		this.log('calculateData');
 		this.getChartOffset();
 
-		// Define a pixel-based lookup table
+		// Define an empty pixel-based lookup table
 		this.lookup = new Array(this.canvas.wide);
-		for (i=0; i < this.canvas.wide; i++){
-			this.lookup[i] = new Array(this.canvas.tall);
-		}
+		for (i=0; i < this.canvas.wide; i++) this.lookup[i] = new Array(this.canvas.tall);
+		
+		var d,n,xpx,ypx,x,y,x2,y2;
 
 		for(var sh in this.data){
 			if(this.data[sh].show){
-
 				for(var i = 0; i < this.data[sh].marks.length ; i++){
 
-					// Process all the series updates here
-					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i],this.data[sh].encode.update);
+					d = this.data[sh].marks[i];
 
-					ii = this.getPixPos(this.data[sh].marks[i].data.x,this.data[sh].marks[i].data.y);
-					x = Math.round(ii[0]);
-					y = Math.round(ii[1]);
-					if(this.data[sh].hoverable && typeof ii[0]=="number" && typeof ii[1]=="number" && x < this.lookup.length && y < this.lookup[x].length && this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max) this.lookup[x][y] = sh+":"+i;
-					this.data[sh].marks[i].props.x = ii[0];
-					this.data[sh].marks[i].props.y = ii[1];
+					// Process all the series updates here
+					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,d,this.data[sh].encode.update);
+
+					// Store IDs for the layer and the item
+					this.data[sh].marks[i].id = parseInt(sh)+':'+i;
+					
+					x = this.getXPos(d.data.x);
+					y = this.getYPos(d.data.y);
+
+					this.data[sh].marks[i].props.x = parseFloat(x.toFixed(1));
+					this.data[sh].marks[i].props.y = parseFloat(y.toFixed(1));
+					if(d.data.x2){
+						this.data[sh].marks[i].props.x2 = this.getXPos(d.data.x2);
+						this.data[sh].marks[i].props.x1 = x;
+						this.data[sh].marks[i].props.x = x + (this.data[sh].marks[i].props.x2-x)/2;
+					}
+					if(d.data.y2){
+						this.data[sh].marks[i].props.y2 = this.getYPos(d.data.y2);
+						this.data[sh].marks[i].props.y1 = y;
+						this.data[sh].marks[i].props.y = y + (this.data[sh].marks[i].props.y2-y)/2;
+					}
 				}
 			}
 		}
 		return this;
 	}
 
-	Graph.prototype.drawShape = function(datum){
-
-		var x1 = datum.props.x;
-		var y1 = datum.props.y;
-		
-		this.canvas.ctx.moveTo(x1,y1);
-		this.canvas.ctx.beginPath();
-		var shape = datum.props.symbol.shape;
-
-		if(shape=="circle"){
-			this.canvas.ctx.arc(x1,y1,(datum.props.format.size/2 || 4),0,Math.PI*2,false);
-		}else if(shape=="rect"){
-			var w = datum.props.format.width || datum.props.format.size || 4;
-			var h = datum.props.format.height || w;
-			if(datum.props.x2) w = datum.props.x2-datum.props.x1;
-			else if(datum.props.width && datum.props.x){ w = datum.props.width; x1 = datum.props.x - datum.props.width/2; }
-			else if(datum.props.width && datum.props.xc){ w = datum.props.width; x1 = datum.props.xc - datum.props.width/2; }
-			else{ x1 = datum.props.x - w/2; }
-
-			if(datum.props.y2) h = datum.props.y2-datum.props.y1;
-			else if(datum.props.height && datum.props.y){ h = datum.props.height; y1 = datum.props.y - datum.props.height/2; }
-			else if(datum.props.height && datum.props.yc){ h = datum.props.height; y1 = datum.props.yc - datum.props.height/2; }
-			else{ y1 = datum.props.y - h/2; }
-
-			this.canvas.ctx.rect(x1,y1,w,h);
-		}else if(shape=="cross"){
-			var w = datum.props.format.size || 4;
-			dw = w/6;
-			this.canvas.ctx.moveTo(x1+dw,y1+dw);
-			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
-			this.canvas.ctx.lineTo(x1+dw*3,y1-dw);
-			this.canvas.ctx.lineTo(x1+dw,y1-dw);
-			this.canvas.ctx.lineTo(x1+dw,y1-dw*3);
-			this.canvas.ctx.lineTo(x1-dw,y1-dw*3);
-			this.canvas.ctx.lineTo(x1-dw,y1-dw);
-			this.canvas.ctx.lineTo(x1-dw*3,y1-dw);
-			this.canvas.ctx.lineTo(x1-dw*3,y1+dw);
-			this.canvas.ctx.lineTo(x1-dw,y1+dw);
-			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
-			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
-		}else if(shape=="diamond"){
-			var w = (datum.props.format.size || 4)*Math.sqrt(2)/2;
-			this.canvas.ctx.moveTo(x1,y1+w);
-			this.canvas.ctx.lineTo(x1+w,y1);
-			this.canvas.ctx.lineTo(x1,y1-w);
-			this.canvas.ctx.lineTo(x1-w,y1);
-		}else if(shape=="triangle-up"){
-			var w = (datum.props.format.size || 4)/3;
-			this.canvas.ctx.moveTo(x1,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
-		}else if(shape=="triangle-down"){
-			var w = (datum.props.format.size || 4)/3;
-			this.canvas.ctx.moveTo(x1,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
-		}else if(shape=="triangle-left"){
-			var w = (datum.props.format.size || 4)/3;
-			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1-w*1.5,y1);
-		}else if(shape=="triangle-right"){
-			var w = (datum.props.format.size || 4)/3;
-			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1+w*1.5,y1);
-		}
-		this.canvas.ctx.fill();
+	/*var cscale = 10;
+	function c2id(rgba){
+		var v = ((((rgba[0]*256)+rgba[1])*256)+rgba[2])/cscale;
+		return (Number.isInteger(v)) ? v : -1;
 	}
+	function id2c(id){
+		// Find the lookup ID colour for this layer
+		var c = (id*cscale).toString(16);
+		return '#'+(new Array(6 - c.length + 1).join('0'))+c;
+	}*/
+	
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(){
 
 		this.log('drawData')
-		var lo,hi,x,y,ii,l;
+		var lo,hi,x,y,ii,l,p,s,sh,o;
 		var twopi = Math.PI*2;
-		var p;
+	
+		// Build the clip path
+		this.canvas.ctx.save();
+		this.canvas.ctx.beginPath();
+		this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+		this.canvas.ctx.clip();
 
-		for(var sh in this.data){
+		for(sh in this.data){
 
 			if(this.data[sh].show){
-				this.setCanvasStyles(this.data[sh].marks[0]);
+
+				this.setCanvasStyles(this.canvas.ctx,this.data[sh].marks[0]);
 
 				// Draw lines
 				if(this.data[sh].lines.show){
@@ -1305,43 +1295,36 @@ var Graph;
 					this.canvas.ctx.closePath();
 				}
 
-				if(this.data[sh].symbol.show){
+				if(this.data[sh].symbol.show || this.data[sh].rect.show){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
-						if(i == 0){
-							this.setCanvasStyles(this.data[sh].marks[0]);
-						}
-						p = this.data[sh].marks[i].props;
-						if(p.x && p.y && this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
-							if(p.y <= this.chart.top+this.chart.height){
+						m = this.data[sh].marks[i];
+						p = m.props;
 
-								this.drawShape(this.data[sh].marks[i]);
+						// Update the canvas styles for this dataset
+						// Perhaps this should actually be done for every mark individually rather than just the first
+						//if(i == 0) this.setCanvasStyles(m);
 
-								e = (this.data[sh].marks[i].data.err) ? (this.data[sh].marks[i].data.err.length==2 ? 2 : 1) : 0;
-								if(e > 0){
-									if(e == 2){
-										hi = this.getYPos(this.data[sh].marks[i].data.y+this.data[sh].marks[i].data.err[0]);
-										lo = this.getYPos(this.data[sh].marks[i].data.y-this.data[sh].marks[i].data.err[1]);
-									}else{
-										hi = this.getYPos(this.data[sh].marks[i].data.y+this.data[sh].marks[i].data.err);
-										lo = this.getYPos(this.data[sh].marks[i].data.y-this.data[sh].marks[i].data.err);
-									}
-								
-									if(hi && lo){
-										this.canvas.ctx.beginPath();
-										//this.canvas.ctx.moveTo(this.data[sh].marks[i].props.x,lo);
-										this.canvas.ctx.rect(this.data[sh].marks[i].props.x-this.data[sh].marks[i].props.format.strokeWidth/2,lo,this.data[sh].marks[i].props.format.strokeWidth,hi-lo);
-										//this.canvas.ctx.lineTo(this.data[sh].marks[i].props.x,hi);
-										//this.canvas.ctx.stroke();
-										this.canvas.ctx.fill();
-										this.canvas.ctx.closePath();
-									}
+						if(p.x && p.y){
+							if(this.data[sh].symbol.show){
+								if(p.x && p.y && m.data.x >= this.x.min && m.data.x <= this.x.max && m.data.y >= this.y.min && m.data.y <= this.y.max && p.y <= this.chart.top+this.chart.height){
+									o = this.drawShape(this.data[sh].marks[i]);
+									this.addRectToLookup(o);
+
 								}
+							}
+							if(this.data[sh].rect.show){
+								o = this.drawRect(this.data[sh].marks[i]);
+								this.addRectToLookup(o);
 							}
 						}
 					}
 				}
 			}
 		}
+		
+		// Apply the clipping
+		this.canvas.ctx.restore();
+
 		return this;
 	}
 	Graph.prototype.addLine = function(opt){
@@ -1388,6 +1371,122 @@ var Graph;
 		}
 		return this;
 	}
+
+
+	Graph.prototype.drawRect = function(datum){
+		if(datum.props.x2 || datum.props.y2){
+			var x1 = (datum.props.x1 || datum.props.x);
+			var y1 = (datum.props.y1 || datum.props.y);
+			var x2 = (datum.props.x2 || x1);
+			var y2 = (datum.props.y2 || y1);
+		
+			var dx = (datum.props.format.width||1);
+			var dy = (datum.props.format.height||1);
+
+			this.canvas.ctx.beginPath();
+			this.canvas.ctx.rect(x1-dx/2,y1,dx,(y2-y1));
+			this.canvas.ctx.fill();
+			this.canvas.ctx.closePath();
+
+			return {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
+
+		}
+		return [];
+	}
+	Graph.prototype.drawShape = function(datum){
+
+		var x1 = datum.props.x;
+		var y1 = datum.props.y;
+		
+		this.canvas.ctx.moveTo(x1,y1);
+		this.canvas.ctx.beginPath();
+
+		var shape = datum.props.symbol.shape;
+
+		var s = (datum.props.format.size || 4);
+		var w = s;
+		var h = s;
+
+		if(shape=="circle"){
+			this.canvas.ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
+		}else if(shape=="rect"){
+			w = datum.props.format.width || s;
+			h = datum.props.format.height || w;
+			if(datum.props.x2) w = datum.props.x2-datum.props.x1;
+			else if(datum.props.width && datum.props.x){ w = datum.props.width; x1 = datum.props.x - datum.props.width/2; }
+			else if(datum.props.width && datum.props.xc){ w = datum.props.width; x1 = datum.props.xc - datum.props.width/2; }
+			else{ x1 = datum.props.x - w/2; }
+
+			if(datum.props.y2) h = datum.props.y2-datum.props.y1;
+			else if(datum.props.height && datum.props.y){ h = datum.props.height; y1 = datum.props.y - datum.props.height/2; }
+			else if(datum.props.height && datum.props.yc){ h = datum.props.height; y1 = datum.props.yc - datum.props.height/2; }
+			else{ y1 = datum.props.y - h/2; }
+
+			this.canvas.ctx.rect(x1,y1,w,h);
+		}else if(shape=="cross"){
+			dw = w/6;
+			this.canvas.ctx.moveTo(x1+dw,y1+dw);
+			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
+			this.canvas.ctx.lineTo(x1+dw*3,y1-dw);
+			this.canvas.ctx.lineTo(x1+dw,y1-dw);
+			this.canvas.ctx.lineTo(x1+dw,y1-dw*3);
+			this.canvas.ctx.lineTo(x1-dw,y1-dw*3);
+			this.canvas.ctx.lineTo(x1-dw,y1-dw);
+			this.canvas.ctx.lineTo(x1-dw*3,y1-dw);
+			this.canvas.ctx.lineTo(x1-dw*3,y1+dw);
+			this.canvas.ctx.lineTo(x1-dw,y1+dw);
+			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
+			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
+		}else if(shape=="diamond"){
+			w *= Math.sqrt(2)/2;
+			this.canvas.ctx.moveTo(x1,y1+w);
+			this.canvas.ctx.lineTo(x1+w,y1);
+			this.canvas.ctx.lineTo(x1,y1-w);
+			this.canvas.ctx.lineTo(x1-w,y1);
+		}else if(shape=="triangle-up"){
+			w /= 3;
+			this.canvas.ctx.moveTo(x1,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
+		}else if(shape=="triangle-down"){
+			w /=3;
+			this.canvas.ctx.moveTo(x1,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
+		}else if(shape=="triangle-left"){
+			w /= 3;
+			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1-w*1.5,y1);
+		}else if(shape=="triangle-right"){
+			w /= 3;
+			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
+			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
+			this.canvas.ctx.lineTo(x1+w*1.5,y1);
+		}
+		this.canvas.ctx.fill();
+
+		
+		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
+	}
+	// We'll use a bounding box to define the lookup area
+	Graph.prototype.addRectToLookup = function(i){
+		if(!i.weight) i.weight = 1;
+		var x,y,value;
+		var p = 2;
+		// Use bounding box to define the lookup area
+		for(x = (i.xa-p); x < (i.xb+p); x++){
+			for(y = (i.ya-p); y < (i.yb+p); y++){
+				value = ((x >= i.xa && x <= i.xb && y >= i.ya && y <= i.yb) ? 1 : 0.5)*i.weight;
+				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
+					if(!this.lookup[x][y]) this.lookup[x][y] = {'value':0};
+					if(value >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': i.id, 'value': value };
+				}
+			}
+		}
+		return this;
+	}
+
 	// Clear the canvas
 	Graph.prototype.clear = function(){
 		this.canvas.ctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
