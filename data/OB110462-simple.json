@@ -71,7 +71,8 @@
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "cross"},
 				"size": {"value": 10},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Y: ' + datum.y"}
 			}
 		}
 	}]

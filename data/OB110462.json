@@ -88,8 +88,7 @@
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
 				"size": {"value": 4},
-				"fill": {"value": "#000000"},
-				"tooltip": {"field": "tooltip"}
+				"fill": {"value": "#000000"}
 			},
 			"update": {
 				"fillOpacity": {"value": 1},
@@ -98,7 +97,8 @@
 			"hover": {
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -123,8 +123,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#7F0000"},
@@ -134,7 +133,8 @@
 			"hover": {
 				"fill": {"value": "#7F0000"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -159,8 +159,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#FF7F00"},
@@ -170,7 +169,8 @@
 			"hover": {
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -195,8 +195,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#00FFFF"},
@@ -206,7 +205,8 @@
 			"hover": {
 				"fill": {"value": "#00FFFF"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -231,8 +231,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#007F00"},
@@ -242,7 +241,8 @@
 			"hover": {
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -267,8 +267,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#00A0A0"},
@@ -278,7 +277,8 @@
 			"hover": {
 				"fill": {"value": "#00A0A0"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -303,8 +303,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#7F007F"},
@@ -314,7 +313,8 @@
 			"hover": {
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -339,8 +339,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#FF00FF"},
@@ -350,7 +349,8 @@
 			"hover": {
 				"fill": {"value": "#FF00FF"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -375,8 +375,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#00FF00"},
@@ -386,7 +385,8 @@
 			"hover": {
 				"fill": {"value": "#00FF00"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -411,8 +411,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#0000FF"},
@@ -422,7 +421,8 @@
 			"hover": {
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -447,8 +447,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#007F00"},
@@ -458,7 +457,8 @@
 			"hover": {
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -483,8 +483,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#0000FF"},
@@ -494,7 +493,8 @@
 			"hover": {
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -519,8 +519,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#00007F"},
@@ -530,7 +529,8 @@
 			"hover": {
 				"fill": {"value": "#00007F"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -555,8 +555,7 @@
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
 				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
-				"tooltip": {"field": "tooltip"}
+				"size": {"value": 4}
 			},
 			"update": {
 				"fill": {"value": "#7F007F"},
@@ -566,7 +565,8 @@
 			"hover": {
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -576,8 +576,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"strokeWidth": {"value": 2},
-				"tooltip": {"field": "tooltip"}
+				"strokeWidth": {"value": 2}
 			},
 			"update": {
 				"stroke": {"value": "#999999"},

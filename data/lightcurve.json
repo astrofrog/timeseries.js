@@ -21,8 +21,8 @@
 				"fill": {"value": "#000000"}
 			},
 			"update": {
-				"fillOpacity": {"value": 1},
-				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 0.5},
+				"fill": {"value": "#FF7F00"},
 				"zindex": {"value": 0},
 				"width": {"value": 1}
 			},
@@ -40,8 +40,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
 				"y": {"scale": "yscale", "field": "value"},
-				"shape": {"value": "circle"},
-				"tooltip": {"field": "tooltip"}
+				"shape": {"value": "circle"}
 			},
 			"update": {
 				"shape": "cross",
@@ -52,10 +51,12 @@
 				"zindex": {"value": 0}
 			},
 			"hover": {
+				"fill": {"value":"#0DBC37"},
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "diamond"},
 				"size": {"value": 20},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Y: ' + datum.y + (datum.note ? '<br />Note:' + datum.note:'')"}
 			}
 		}
 	}]

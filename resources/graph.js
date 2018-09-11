@@ -592,7 +592,7 @@ var Graph;
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
 	Graph.prototype.addDataset = function(data,index){
-		this.log('addDataset',data,index);
+		this.log('addDataset',index);
 		if(typeof index!=="number"){
 			if(typeof index==="undefined"){
 				// Create an index
@@ -637,12 +637,8 @@ var Graph;
 
 				// Should process all the "enter" options here
 				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
-			}
-			console.log(this.data[index].marks,this.data[index].enter,this.data[index].encode)
-			this.log('enter',this.data[index].enter,this.data[index]);
-			
+			}			
 		}
-		this.log('datasets',this.data);
 
 		return this;
 	}
@@ -652,7 +648,7 @@ var Graph;
 		this.getGraphRange();
 		this.calculateData();
 		this.clear();
-		this.draw();
+		this.draw(true);
 	}
 	Graph.prototype.setColours = function(){
 		this.colours = { background:'', lines:'rgb(0,0,0)', labels:'rgb(0,0,0)' };
@@ -689,9 +685,7 @@ var Graph;
 				if(d.y2 && d.y2 < this.y.min) this.y.min = d.y2;
 				if(d.y2 && d.y2 > this.y.max) this.y.max = d.y2;
 			}
-			if(typeof this.data[i].hoverprops!="object") this.data[i].hoverprops = {};
 		}
-		console.log(this.x,this.y)
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;
@@ -721,7 +715,7 @@ var Graph;
 		this.calculateData();
 		// Update the graph
 		this.clear();
-		this.draw();
+		this.draw(true);
 	}
 	
 	// For an input data value find the y-pixel location
@@ -751,7 +745,7 @@ var Graph;
 			var max = this.x.max;
 			var ran = this.x.range;
 		}
-		return (x < min || x > max) ? (x < min ? this.chart.left-1 : this.chart.left+this.chart.width+1) : (this.x.dir=="reverse" ? this.chart.left + this.chart.width*(Math.abs(max-x)/(ran)) : this.chart.left + this.chart.width*(Math.abs(x-min)/ran));
+		return (this.x.dir=="reverse" ? this.chart.left + this.chart.width*((max-x)/(ran)) : this.chart.left + this.chart.width*((x-min)/ran));
 	}
 	
 	// For an input data value find the pixel locations
@@ -798,8 +792,16 @@ var Graph;
 		var object = JSON.parse(json);
 		return object;
 	}
+	function hex2rgba(hex,a){
+		var r = parseInt(hex.substr(1,2),16);
+		var g = parseInt(hex.substr(3,2),16);
+		var b = parseInt(hex.substr(5,2),16);
+		return 'rgba('+r+','+g+','+b+','+(a||1)+')';
+	}
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
-		ctx.fillStyle = (datum.props.format.fill ? datum.props.format.fill : '#000000');
+		var fill = (datum.props.format.fill ? datum.props.format.fill : '#000000');
+		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,datum.props.format.fillOpacity);		
+		ctx.fillStyle = fill;
 		ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
 		ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
 		ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
@@ -865,37 +867,8 @@ var Graph;
 				ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 				data: data.data[i]
 			}
-			function removeRoundingErrors(e){
-				return e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*.*$/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*.*$/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
-			}
-			txt = is(data.hoverprops.text,"function") ? data.hoverprops.text.call(this,val) : "";
-			if(typeof txt!="string" || txt=="") txt = "{{ xlabel }}: {{ x }}<br />{{ ylabel }}: val {{ value }}<br />Uncertainty: {{ err }}";
-			if(txt){
-				var html = (typeof data.hoverprops.text=="string") ? data.hoverprops.text : txt;
-				if(typeof data.hoverprops.before=="string") html = data.hoverprops.before+html;
-				if(typeof data.hoverprops.after=="string") html = html+data.hoverprops.after;
-				html = html.replace(/{{ *x *}}/g,(this.x.isDate ? new Date(val.data.x) : val.data.x));
-				html = html.replace(/{{ *y *}}/g,val.data.y);
-				html = html.replace(/{{ *value *}}/g,val.data.value);
-				html = html.replace(/{{ *xlabel *}}/g,val.xlabel);
-				html = html.replace(/{{ *ylabel *}}/g,val.ylabel);
-				//html = html.replace(/{{ *err *}}/g,(val.data.err ? removeRoundingErrors(val.data.err) : 0));
-				html = html.replace(/{{ *title *}}/g,val.title);
-				while(html.match(/{{.*}}/)){
-					var a = html.indexOf("{{")+2;
-					var b = html.indexOf("}}");
-					var pattern = html.substring(a,b);
-					pattern = pattern.replace(/^\s+|\s+$/g,"");	// trim
-					var reg = new RegExp("{{ *"+pattern+" *}}","g");
-					// First we try for a value for the data point
-					if(typeof val.data[pattern] === "string") html = html.replace(reg,val.data[pattern]);
-					// Next we try for a value for the data set
-					else if(typeof data[pattern] === "string") html = html.replace(reg,data[pattern]);
-					// Remove the pattern
-					else html = html.replace(reg,"");
-				}
-			
-
+			var html = removeRoundingErrors(mark.props.tooltip) || "";
+			if(html){
 				this.coordinates.html(html);
 				var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1;
 				if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
@@ -1207,10 +1180,6 @@ var Graph;
 	Graph.prototype.calculateData = function(event){
 		this.log('calculateData');
 		this.getChartOffset();
-
-		// Define an empty pixel-based lookup table
-		this.lookup = new Array(this.canvas.wide);
-		for (i=0; i < this.canvas.wide; i++) this.lookup[i] = new Array(this.canvas.tall);
 		
 		var d,n,xpx,ypx,x,y,x2,y2;
 
@@ -1259,11 +1228,18 @@ var Graph;
 	}*/
 	
 	// Draw the data onto the graph
-	Graph.prototype.drawData = function(){
+	Graph.prototype.drawData = function(updateLookup){
 
-		this.log('drawData')
+		this.log('drawData',updateLookup)
 		var lo,hi,x,y,ii,l,p,s,sh,o;
 		var twopi = Math.PI*2;
+
+		if(updateLookup){
+			// Define an empty pixel-based lookup table
+			this.lookup = new Array(this.canvas.wide);
+			for (i=0; i < this.canvas.wide; i++) this.lookup[i] = new Array(this.canvas.tall);
+		}
+
 	
 		// Build the clip path
 		this.canvas.ctx.save();
@@ -1283,12 +1259,12 @@ var Graph;
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
 						p = this.data[sh].marks[i].props;
 						if(p.x && p.y){
-							if(this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
+							//if(this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
 								if(i == 0) this.canvas.ctx.moveTo(p.x,p.y);
 								else this.canvas.ctx.lineTo(p.x,p.y);
-							}else{
-								this.canvas.ctx.moveTo(p.x,p.y);
-							}
+							//}else{
+							//	this.canvas.ctx.moveTo(p.x,p.y);
+							//}
 						}
 					}
 					this.canvas.ctx.stroke();
@@ -1308,13 +1284,12 @@ var Graph;
 							if(this.data[sh].symbol.show){
 								if(p.x && p.y && m.data.x >= this.x.min && m.data.x <= this.x.max && m.data.y >= this.y.min && m.data.y <= this.y.max && p.y <= this.chart.top+this.chart.height){
 									o = this.drawShape(this.data[sh].marks[i]);
-									this.addRectToLookup(o);
-
+									if(updateLookup) this.addRectToLookup(o);
 								}
 							}
 							if(this.data[sh].rect.show){
 								o = this.drawRect(this.data[sh].marks[i]);
-								this.addRectToLookup(o);
+								if(updateLookup) this.addRectToLookup(o);
 							}
 						}
 					}
@@ -1494,10 +1469,10 @@ var Graph;
 	}
 	
 	// Draw everything
-	Graph.prototype.draw = function(){
+	Graph.prototype.draw = function(updateLookup){
 		this.clear();
 		this.drawAxes();
-		this.drawData();
+		this.drawData(updateLookup);
 		this.canvas.copyToClipboard();
 		this.drawOverlay();
 		return this;
@@ -1506,6 +1481,10 @@ var Graph;
 	Graph.prototype.drawOverlay = function(){
 		this.drawLines();
 		return this;
+	}
+
+	function removeRoundingErrors(e){
+		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
 
 })(S);

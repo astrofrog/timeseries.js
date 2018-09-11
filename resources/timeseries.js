@@ -325,8 +325,85 @@ var TimeSeries;
 		this.olddatasetsused = this.datasetsused;
 		this.datasetsused = "";
 
-		this.log('update',datasetID,this.json.marks)
+		this.log('update',datasetID)
 		
+		// This is much quicker than looseJsonParse
+		// We'll use it for coordinates despite the eval()
+		var ev = function(str,datum){ return eval(str); }
+
+		function updateProperties(d,event){
+			datum = d.data;
+			x2 = undefined;
+			y2 = undefined;
+			x = undefined;
+			y = undefined;
+
+			// Update the data
+			if(event.x && event.x.field){
+				if(datum[event.x.field]) x = datum[event.x.field];
+				else{
+					try { x = ev.call(datum,event.x.field,datum); }
+					catch(e) { _obj.log('Error',datum,event.x); }
+				}
+			}
+			if(event.x2 && event.x2.field){
+				if(datum[event.x2.field]) x2 = datum[event.x2.field];
+				else{
+					try { x2 = ev.call(datum,event.x2.field,datum); }
+					catch(e) { _obj.log('Error',datum,event.x2); }
+				}
+			}
+			if(event.y && event.y.field){
+				if(datum[event.y.field]) y = datum[event.y.field];
+				else{
+					try { y = ev.call(datum,event.y.field,datum); }
+					catch(e) { _obj.log('Error',datum,event.y); }
+				}
+			}
+			if(event.y2 && event.y2.field){
+				//err = 0;
+				if(datum[event.y2.field]) y2 = datum[event.y2.field];
+				else{
+					try { y2 = ev.call(datum,event.y2.field,datum); }
+					catch(e) { _obj.log('Error',datum,event.y2); }
+				}
+			}
+
+			if(x) datum.x = x;
+			if(y) datum.y = y;
+			if(x2) datum.x2 = x2;
+			if(y2) datum.y2 = y2;
+			d.data = datum;
+
+			// Process style properties
+			var p = ['size','shape','fill','fillOpacity','stroke','strokeWidth','strokeDash','width','height'];
+			for(var i = 0; i < p.length;i++){
+				if(event[p[i]] && event[p[i]].value){
+					if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;
+					if(d.props.format) d.props.format[p[i]] = event[p[i]].value;
+				}
+			}
+
+			// Process tooltip
+			if(event && event.tooltip){
+				if(event.tooltip.signal){
+					try { d.props.tooltip = looseJsonParse(event.tooltip.signal,d.data); }
+					catch(e) { _obj.log('Error',d.data,event.tooltip); }
+					
+					// If we now have an object we build a string
+					if(typeof d.props.tooltip==="object"){
+						str = "<table>";
+						for(var i in d.props.tooltip) str += "<tr><td>"+i+":</td><td>"+d.props.tooltip[i]+"</td></tr>";
+						d.props.tooltip = str+"</table>";
+					}
+				}
+			}
+
+			return d;
+		}
+
+		var _obj = this;
+
 		for(var m = 0; m < this.json.marks.length; m++){
 			id = "";
 			mark = this.json.marks[m];
@@ -349,92 +426,14 @@ var TimeSeries;
 					if(mark.encode && mark.encode.hover){
 						dataset.hoverable = true;
 						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
-						dataset.hoverprops = { text:'{{xlabel}}: {{x}}<br />{{ylabel}}: {{y}}', before:'{{title}}<br />' };
 					}
 
 					dataset.encode = mark.encode;
 
-					var _obj = this;
-					function updateCoordinates(d,event){
-						datum = d.data;
-						x2 = undefined;
-						y2 = undefined;
-						x = undefined;
-						y = undefined;
-
-						// Update the data
-						if(event.x && event.x.field){
-							if(datum[event.x.field]) x = datum[event.x.field];
-							else{
-								try { x = ev.call(datum,event.x.field,datum); }
-								catch(e) { _obj.log('Error',datum,event.x); }
-							}
-						}
-						if(event.x2 && event.x2.field){
-							if(datum[event.x2.field]) x2 = datum[event.x2.field];
-							else{
-								try { x2 = ev.call(datum,event.x2.field,datum); }
-								catch(e) { _obj.log('Error',datum,event.x2); }
-							}
-						}
-						if(event.y && event.y.field){
-							if(datum[event.y.field]) y = datum[event.y.field];
-							else{
-								try { y = ev.call(datum,event.y.field,datum); }
-								catch(e) { _obj.log('Error',datum,event.y); }
-							}
-						}
-						if(event.y2 && event.y2.field){
-							//err = 0;
-							if(datum[event.y2.field]) y2 = datum[event.y2.field];
-							else{
-								try { y2 = ev.call(datum,event.y2.field,datum); }
-								catch(e) { _obj.log('Error',datum,event.y2); }
-							}
-						}
-
-						if(x) datum.x = x;
-						if(y) datum.y = y;
-						if(x2) datum.x2 = x2;
-						if(y2) datum.y2 = y2;
-						d.data = datum;
-
-						return d;
-					}
-					function updateProperties(d,event){
-						var p = ['size','shape','fill','stroke','strokeWidth','strokeDash','width','height'];
-						for(var i = 0; i < p.length;i++){
-							if(event[p[i]] && event[p[i]].value){
-								if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;
-								if(d.props.format) d.props.format[p[i]] = event[p[i]].value;
-							}
-						}
-						return d;
-					}
-
 					// Add callbacks
-					if(mark.encode.enter){
-						dataset.enter = function(datum,event){
-							datum = updateProperties(datum,event);
-							return updateCoordinates(datum,event);
-						}
-					}
-					if(mark.encode.update){
-						// Keep our evaluation contained
-						var ev = function(str,datum){ return eval(str); }
-						dataset.update = function(datum,event){
-							datum = updateProperties(datum,event);
-							return updateCoordinates(datum,event);
-						}
-					}
-					if(mark.encode.hover){
-						// Keep our evaluation contained
-						var ev = function(str,datum){ return eval(str); }
-						dataset.hover = function(datum,event){
-							datum = updateProperties(datum,event);
-							return updateCoordinates(datum,event);
-						}
-					}
+					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); }
+					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); }
+					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); }
 
 					// Now we add this mark-based dataset
 					this.graph.addDataset(dataset,m);
@@ -557,6 +556,9 @@ var TimeSeries;
 		// Return the structured data
 		return newdata;
 	}
+
+	function looseJsonParse(obj,datum){ return Function('"use strict";return (' + obj + ')')(); }
+
 	// Function to clone a hash otherwise we end up using the same one
 	function clone(hash) {
 		var json = JSON.stringify(hash);
