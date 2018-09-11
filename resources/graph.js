@@ -730,7 +730,7 @@ var Graph;
 			var max = this.y.max;
 			var ran = this.y.range;
 		}
-		return (y < min || y > max) ? (y > max ? this.chart.top-1 : this.chart.top+this.chart.height+1) : this.options.height-(this.chart.bottom + this.chart.height*((y-min)/ran));
+		return this.options.height-(this.chart.bottom + this.chart.height*((y-min)/ran));
 	}
 	
 	// For an input data value find the x-pixel location
