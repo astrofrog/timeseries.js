@@ -123,7 +123,7 @@
 											"x": {"scale": "xscale", "field": "HJD"},
 											"y": {"scale": "yscale", "field": "dmag"},
 											"shape": {"value": "circle"},
-											"tooltip": {"field": "tooltip"}
+											"tooltip": {"signal": "'Time: ' + datum.x + '<br />Dmag: ' + datum.dmag + '<br />Error: ' + datum.err"}
 										},
 										"update": {
 											"shape": "cross",

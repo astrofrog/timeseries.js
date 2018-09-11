@@ -72,7 +72,7 @@
 				"shape": {"value": "cross"},
 				"size": {"value": 10},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Y: ' + datum.y"}
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y"}
 			}
 		}
 	}]
