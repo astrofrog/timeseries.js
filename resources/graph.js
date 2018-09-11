@@ -464,7 +464,9 @@ var Graph;
 						g.selectfrom[0] = g.getXPos(g.x.min);
 						g.selectto[0] = g.getXPos(g.x.max);
 					}
+
 					g.canvas.pasteFromClipboard();
+					
 					// Draw selection rectangle
 					g.canvas.ctx.beginPath();
 					g.canvas.ctx.fillStyle = g.options.grid.colorZoom || 'rgba(0,0,0,0.1)';
@@ -843,8 +845,17 @@ var Graph;
 				// Set the canvas colours
 				this.setCanvasStyles(this.canvas.ctx,mark);
 
+				// Build the clip path
+				this.canvas.ctx.save();
+				this.canvas.ctx.beginPath();
+				this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+				this.canvas.ctx.clip();
+
 				// Draw the new mark
 				this.drawRect(mark);
+
+				// Set the clipping
+				this.canvas.ctx.restore();
 
 				// Put the mark object back to how it was
 				this.data[t].marks[i] = clone(oldmark);

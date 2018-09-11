@@ -76,8 +76,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#000000"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -112,8 +116,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#7F0000"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -148,8 +156,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#FF7F00"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -184,8 +196,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#00FFFF"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -220,8 +236,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#007F00"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -256,8 +276,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#00A0A0"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -292,8 +316,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#7F007F"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -328,8 +356,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#FF00FF"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -364,8 +396,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#00FF00"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -400,8 +436,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#0000FF"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -436,8 +476,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#007F00"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -472,8 +516,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#0000FF"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -508,8 +556,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#00007F"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
@@ -544,8 +596,12 @@
 				"width": {"value": 1},
 				"fill": {"value": "#7F007F"}
 			},
-			"update": {},
-			"hover": {}
+			"update": {
+				"fillOpacity": {"value": 0.5}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1}
+			}
 		}
 	},{
 		"type": "symbol",
