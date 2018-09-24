@@ -82,6 +82,17 @@
 									"url": "data/OB110462-model.csv",
 									"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 								}],
+								"axes": [
+									{
+										"orient": "bottom",
+										"scale": "xscale",
+										"title": "Observation time"
+									},{
+										"orient": "left",
+										"scale": "yscale",
+										"title": "Intensity"
+									}
+								],
 								"marks":[{
 									"type": "line",
 									"from": {"data": "Model"},
@@ -104,11 +115,16 @@
 									"from": {"data": "Danish 1.54m"},
 									"encode": {
 										"enter": {
+										"x": {"scale": "xscale", "field": "x"},
 											"x": {"scale": "xscale", "field": "HJD"},
-											"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-											"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+											"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+											"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
+											"width": {"value": 1},
+											"fill": {"value": "#FF7F00"},
+											"fillOpacity": {"value": 0.5}
 										},
 										"update": {
+											"fillOpacity": {"value": 1},
 											"fill": {"value": "#FF7F00"}
 										},
 										"hover": {
@@ -130,14 +146,14 @@
 											"fill": {"value": "#FF7F00"},
 											"fillOpacity": {"value": 1},
 											"shape": {"value": "circle"},
-											"size": {"value": 4},
+											"size": {"value": 16},
 											"zindex": {"value": 0}
 										},
 										"hover": {
 											"fill": {"value": "#D60303"},
 											"fillOpacity": {"value": 1},
 											"shape": {"value": "cross"},
-											"size": {"value": 10},
+											"size": {"value": 100},
 											"zindex": {"value": 1}
 										}
 									}
@@ -254,7 +270,7 @@
 					</li>
 					<li id="ex5">
 						<h3>Example 5</h3>
-						<p>This example uses a different dataset.</p>
+						<p>This example uses a different dataset. Once again we delay loading until prompted by the user. In this example we style the tooltips using a CSS class (<code>aas-theme</code>) provided in the Javascript set-up.</p>
 						<div class="example">
 							<figure style="text-align:center;">
 								<div id="example5" vega-src="data/lightcurve.json" vega-scale="inherit">
@@ -277,9 +293,16 @@
 								text-align: center;
 								margin-right: -50%;
 							}
+							.aas-theme {
+								background: #253788!important;
+								color: white!important;
+								padding: 0.5em 1em;
+								text-align: left;
+								box-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+							}
 							</style>
 							<script>
-								var ex5 = TimeSeries.create({},{'logging':true});
+								var ex5 = TimeSeries.create({},{'logging':true,'tooltip':{'theme':'aas-theme'}});
 								// Add click event to load the interactive graph
 								S('#example5').addClass('toload');
 								S('#example5').on("click",{ts:ex5},function(e){

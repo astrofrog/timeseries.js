@@ -4,13 +4,15 @@ a:hover { text-decoration: underline; }
 header h1 { margin: 0px; padding-top: 0.5em; }
 header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 
-.graph-popup {
+.vg-tooltip {
 	position: absolute;
 	background-color: black;
 	color: white;
 	padding: 0.25em 0.5em;
 	box-shadow: 1px 1px 5px rgba(0,0,0,0.6);
+	text-align: left;
 }
+
 
 figure {
 	text-align: left;

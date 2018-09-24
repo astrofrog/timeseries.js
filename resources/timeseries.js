@@ -45,13 +45,22 @@ var TimeSeries;
 	}
 	// End of helper functions
 
+	// Base directory for timeseries.js
+	var basedir = "";
 
 	TimeSeries = new function(){
-		this.version = "0.0.2";
+		this.version = "0.0.3";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
+		this.callback = "";
 		this.logging = false;
 		
+		
+		var scripts= document.getElementsByTagName('script');
+		var path = scripts[scripts.length-1].src.split('?')[0];
+		var idx = path.lastIndexOf("/");
+		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
+
 		var _obj = this;
 		
 		this.log = function(){
@@ -185,7 +194,8 @@ var TimeSeries;
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
-		if(json) this.json = json;
+		if(typeof json==="object") this.json = json;
+		else if(typeof json==="string") this.file = json;
 		this.logging = opt.logging || false;
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 
@@ -193,9 +203,10 @@ var TimeSeries;
 
 		// Set some defaults
 		this.options = {
-			xaxis: { label:'Time', log: false, fit:true },
-			yaxis: { label: 'y-axis', log: false },
-			grid: { hoverable: true, clickable: true },
+			xaxis: { 'title':'Time', log: false, fit:true },
+			yaxis: { 'title': 'y-axis', log: false },
+			grid: { hoverable: true, clickable: true, 'color': '#888888' },
+			labels: { 'color': '#000000' },
 			fit: false,
 			showaswego: opt.showaswego
 		}
@@ -204,9 +215,9 @@ var TimeSeries;
 		for(var o in opt){
 			if(o=="directory") this[o] = opt[o];
 			if(o=="fit") this.options[o] = opt[o];
+			if(o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
 		}
-		if(json) this.processJSON(json);
-		if(typeof file==="string") this.file = file;
+		if(this.json) this.processJSON(json);
 
 		return this;
 	}
@@ -223,6 +234,17 @@ var TimeSeries;
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
+		
+		// Work out axes
+		if(d.axes){
+			for(var a = 0; a < d.axes.length; a++){
+				var dim = "";
+				if(d.axes[a].orient=="bottom") dim = "xaxis";
+				if(d.axes[a].orient=="left") dim = "yaxis";
+				if(dim) for(var p in d.axes[a]) this.options[dim][p] = d.axes[a][p];
+			}
+		}
+		
 		this.options.logging = true;
 		return this;
 	}
@@ -234,6 +256,7 @@ var TimeSeries;
 			this.options.height = this.initializedValues.h;
 		}
 		this.options.logging = this.logging;
+		this.options.xaxis.mode = 'time';
 
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
 		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
@@ -249,6 +272,9 @@ var TimeSeries;
 
 		this.log('initialize',e)
 
+		// Store the callback function
+		if(typeof callback==="function") this.callback = callback;
+
 		var el = S(e);
 		if(el.length == 0) return this;
 		this.el = e;
@@ -256,7 +282,8 @@ var TimeSeries;
 		if(el.attr('vega-scale')=="inherit") this.options.fit = true;
 		this.log('load',e,el,this.options.fit);
 
-		this.file = el.attr('vega-src');
+		var f = el.attr('vega-src');
+		if(f) this.file = f;
 		if(!this.file) this.file = "";
 		if(typeof this.file!=="string") return this;
 		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
@@ -266,7 +293,7 @@ var TimeSeries;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources("resources/graph.js", {"this":this, "el":e}, function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
+			TimeSeries.loadResources(basedir+"graph.js", {"this":this, "el":e}, function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
 		}else{
 
 			if(this.file){
@@ -277,7 +304,6 @@ var TimeSeries;
 					"dataType": "json",
 					"this": this,
 					"cache": true,
-					"element": e,
 					"success": function(d,attr){
 						this.processJSON(d);
 						this.postProcess();
@@ -332,69 +358,35 @@ var TimeSeries;
 		var ev = function(str,datum){ return eval(str); }
 
 		function updateProperties(d,event){
+		
+			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeWidth':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props'};
+		
 			datum = d.data;
-			x2 = undefined;
-			y2 = undefined;
-			x = undefined;
-			y = undefined;
 
-			// Update the data
-			if(event.x && event.x.field){
-				if(datum[event.x.field]) x = datum[event.x.field];
-				else{
-					try { x = ev.call(datum,event.x.field,datum); }
-					catch(e) { _obj.log('Error',datum,event.x); }
-				}
-			}
-			if(event.x2 && event.x2.field){
-				if(datum[event.x2.field]) x2 = datum[event.x2.field];
-				else{
-					try { x2 = ev.call(datum,event.x2.field,datum); }
-					catch(e) { _obj.log('Error',datum,event.x2); }
-				}
-			}
-			if(event.y && event.y.field){
-				if(datum[event.y.field]) y = datum[event.y.field];
-				else{
-					try { y = ev.call(datum,event.y.field,datum); }
-					catch(e) { _obj.log('Error',datum,event.y); }
-				}
-			}
-			if(event.y2 && event.y2.field){
-				//err = 0;
-				if(datum[event.y2.field]) y2 = datum[event.y2.field];
-				else{
-					try { y2 = ev.call(datum,event.y2.field,datum); }
-					catch(e) { _obj.log('Error',datum,event.y2); }
-				}
-			}
-
-			if(x) datum.x = x;
-			if(y) datum.y = y;
-			if(x2) datum.x2 = x2;
-			if(y2) datum.y2 = y2;
-			d.data = datum;
-
-			// Process style properties
-			var p = ['size','shape','fill','fillOpacity','stroke','strokeWidth','strokeDash','width','height'];
-			for(var i = 0; i < p.length;i++){
-				if(event[p[i]] && event[p[i]].value){
-					if(d.props.symbol) d.props.symbol[p[i]] = event[p[i]].value;
-					if(d.props.format) d.props.format[p[i]] = event[p[i]].value;
-				}
-			}
-
-			// Process tooltip
-			if(event && event.tooltip){
-				if(event.tooltip.signal){
-					try { d.props.tooltip = looseJsonParse(event.tooltip.signal,d.data); }
-					catch(e) { _obj.log('Error',d.data,event.tooltip); }
+			for(var p in event){
+				if(dest[p] && dest[p]=="props"){
+					if(event[p].value){
+						if(d.props.symbol) d.props.symbol[p] = event[p].value;
+						if(d.props.format) d.props.format[p] = event[p].value;
+					}
+					if(event[p].signal){
+						if(event[p].signal){
+							try { d.props[p] = looseJsonParse(event[p].signal,d.data); }
+							catch(e) { _obj.log('Error',d.data,event[p]); }
 					
-					// If we now have an object we build a string
-					if(typeof d.props.tooltip==="object"){
-						str = "<table>";
-						for(var i in d.props.tooltip) str += "<tr><td>"+i+":</td><td>"+d.props.tooltip[i]+"</td></tr>";
-						d.props.tooltip = str+"</table>";
+							// If we now have an object we build a string
+							if(p=="tooltip" && typeof d.props[p]==="object"){
+								str = "<table>";
+								for(var i in d.props[p]) str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+								d.props[p] = str+"</table>";
+							}
+						}
+					}
+				}else{
+					if(event[p].field && datum[event[p].field]) datum[p] = datum[event[p].field];
+					if(event[p].signal){
+						try { datum[p] = ev.call(datum,event[p].signal,datum); }
+						catch(e) { _obj.log('Error',datum,event[p]); }
 					}
 				}
 			}
@@ -454,7 +446,10 @@ var TimeSeries;
 		this.log('loaded',this.attr.showaswego,this.graph.data);
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
-		this.graph.canvas.container.find('.loader').remove();;
+		this.graph.canvas.container.find('.loader').remove();
+		
+		// CALLBACK
+		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
 	}
 
@@ -557,7 +552,42 @@ var TimeSeries;
 		return newdata;
 	}
 
-	function looseJsonParse(obj,datum){ return Function('"use strict";return (' + obj + ')')(); }
+
+	function looseJsonParse(obj,datum){
+
+		var fns = "function zeroPad(d){ d = d+''; if(d.length==1){ d = '0'+d;} return d; };function timeFormat(t,f){var d = new Date(t);var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,d.getUTCMilliseconds());}";
+		//YES %a - abbreviated weekday name.*
+		//YES %A - full weekday name.*
+		//YES %b - abbreviated month name.*
+		//YES %B - full month name.*
+		// %c - the locale’s date and time, such as %x, %X.*
+		//YES %d - zero-padded day of the month as a decimal number [01,31].
+		// %e - space-padded day of the month as a decimal number [ 1,31]; equivalent to %_d.
+		// %f - microseconds as a decimal number [000000, 999999].
+		// %H - hour (24-hour clock) as a decimal number [00,23].
+		// %I - hour (12-hour clock) as a decimal number [01,12].
+		// %j - day of the year as a decimal number [001,366].
+		// %m - month as a decimal number [01,12].
+		// %M - minute as a decimal number [00,59].
+		// %L - milliseconds as a decimal number [000, 999].
+		// %p - either AM or PM.*
+		// %Q - milliseconds since UNIX epoch.
+		// %s - seconds since UNIX epoch.
+		// %S - second as a decimal number [00,61].
+		// %u - Monday-based (ISO 8601) weekday as a decimal number [1,7].
+		// %U - Sunday-based week of the year as a decimal number [00,53].
+		// %V - ISO 8601 week of the year as a decimal number [01, 53].
+		// %w - Sunday-based weekday as a decimal number [0,6].
+		// %W - Monday-based week of the year as a decimal number [00,53].
+		// %x - the locale’s date, such as %-m/%-d/%Y.*
+		// %X - the locale’s time, such as %-I:%M:%S %p.*
+		//YES %y - year without century as a decimal number [00,99].
+		//YES %Y - year with century as a decimal number.
+		// %Z - time zone offset, such as -0700, -07:00, -07, or Z.
+		// %% - a literal percent sign (%).
+
+		return Function('"use strict";'+fns+' return (' + obj + ')')();
+	}
 
 	// Function to clone a hash otherwise we end up using the same one
 	function clone(hash) {
@@ -565,5 +595,71 @@ var TimeSeries;
 		var object = JSON.parse(json);
 		return object;
 	}
-
+	
 })(S);
+
+// Convert dates
+dateFormat = "jd";
+function formatDate(dt,t){
+	if(!t) t = dateFormat;
+	var d = new JD(dt,"unix");
+	if(t=="jd") return d.valueOf().toFixed(3);
+	else if(t=="mjd") return d.toMJD();
+	else if(t=="iso") return d.toISOString();
+	else return d;
+}
+
+// Can provide as:
+//   1) (ms,"unix") - milliseconds since the UNIX epoch
+//   2) (days,"mjd") - days since the MJD epoch
+//   3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
+//   4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
+//   5) <undefined> - uses the current time
+function JD(jd,t,offs){
+	epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
+	var secs = 86400;
+	var scale = secs*1e6;
+	if(typeof jd==="number"){
+		if(typeof t!=="undefined"){
+			if(t=="unix") this.val = u2jd(jd);
+			else if(t=="epoch" && offs) this.val = u2jd((new Date(offs)).getTime() + jd*1000);
+			else if(t=="mjd") jd += 2400000.5;
+		}
+		if(!this.val){
+			var days = Math.floor(jd);
+			this.val = [days,(jd - days)*scale];
+		}
+	}else this.val = u2jd(jd);
+	var _obj = this;
+
+	this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
+	this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
+	this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
+	this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString(); }
+
+	// Deal with Julian Date in two parts to avoid rounding errors
+	// Input is either:
+	//    1) the number of milliseconds since 1970-01-01
+	//    2) the ISO8601 date string (can go to microseconds)
+	//    3) <undefined> - uses the current time
+	function u2jd(today) {
+		// The Julian Date of the Unix Time epoch is 2440587.5
+		var days = rem = ms = 0;
+		if(typeof today==="undefined"){
+			today = new Date();
+			ms = today.getTime();
+		}else if(typeof today==="string"){
+			// We'll take the decimal seconds and deal with
+			// them separately to avoid rounding errors.
+			var s = 0;
+			today = today.replace(/(\:[0-9]{2})\.([0-9]+)/,function(m,p1,p2){ s = parseFloat("0."+p2); return p1; });
+			ms = (new Date(today)).getTime();
+			ms += s*1000;
+		}else ms = today*1000;
+		days = Math.floor(ms/scale);
+		rem = (ms - days*scale) + scale/2;
+		return [days + epoch - 0.5,rem];
+	}
+	return this;
+}
+

@@ -65,14 +65,25 @@
 		"url": "OB110462-model.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
+	"axes": [
+		{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "Observation time"
+		},{
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Intensity"
+		}
+	],
 	"marks":[{
 		"type": "rect",
 		"from": {"data": "OGLE"},
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#000000"}
 			},
@@ -89,9 +100,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10},
 				"fill": {"value": "#000000"}
 			},
 			"update": {
@@ -111,8 +121,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#7F0000"}
 			},
@@ -129,9 +139,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#7F0000"},
@@ -151,8 +160,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#FF7F00"}
 			},
@@ -169,9 +178,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#FF7F00"},
@@ -191,8 +199,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#00FFFF"}
 			},
@@ -209,9 +217,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#00FFFF"},
@@ -231,8 +238,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#007F00"}
 			},
@@ -249,9 +256,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#007F00"},
@@ -271,8 +277,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#00A0A0"}
 			},
@@ -289,9 +295,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#00A0A0"},
@@ -311,8 +316,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#7F007F"}
 			},
@@ -329,9 +334,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#7F007F"},
@@ -351,8 +355,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#FF00FF"}
 			},
@@ -369,9 +373,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#FF00FF"},
@@ -391,8 +394,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#00FF00"}
 			},
@@ -409,9 +412,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#00FF00"},
@@ -431,8 +433,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#0000FF"}
 			},
@@ -449,9 +451,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#0000FF"},
@@ -471,8 +472,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#007F00"}
 			},
@@ -489,9 +490,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#007F00"},
@@ -511,8 +511,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#0000FF"}
 			},
@@ -529,9 +529,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#0000FF"},
@@ -551,8 +550,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#00007F"}
 			},
@@ -569,9 +568,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#00007F"},
@@ -591,8 +589,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#7F007F"}
 			},
@@ -609,9 +607,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum['dmag'] - datum['err']"},
-				"y2": {"scale": "yscale", "field": "datum['dmag'] + datum['err']"},
-				"size": {"value": 4}
+				"y": {"scale": "yscale", "field": "dmag"},
+				"size": {"value": 10}
 			},
 			"update": {
 				"fill": {"value": "#7F007F"},

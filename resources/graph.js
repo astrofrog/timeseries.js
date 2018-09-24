@@ -364,7 +364,7 @@ var Graph;
 		this.wide = w;
 		this.tall = h;
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
-		if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
+		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	}
 
@@ -381,7 +381,7 @@ var Graph;
 		if(options.logging) this.logging = true;
 
 		// Define some variables
-		this.version = "0.2.2";
+		this.version = "0.2.3";
 		this.start = new Date();
 		if(typeof element!="object") return;
 		this.data = {};
@@ -407,7 +407,7 @@ var Graph;
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(ev.data.me.logging) var d = new Date();
-			ev.data.me.setOptions().calculateData().draw().trigger("resize",{event:ev.event});
+			ev.data.me.setOptions().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
@@ -520,7 +520,6 @@ var Graph;
 
 		// Extend the options with those provided by the user
 		this.setOptions(options);
-		this.setColours();
 
 		// Finally, set the data and update the display
 		this.updateData(data);
@@ -574,8 +573,11 @@ var Graph;
 
 		// Set defaults for options that haven't already been set
 		if(typeof this.options.grid!=="object") this.options.grid = {};
-		if(typeof this.options.grid.show!=="boolean") this.options.grid.show = true;
+		if(typeof this.options.grid.show!=="boolean") this.options.grid.show = false;
 		if(typeof this.options.grid.border!=="number") this.options.grid.border = 1;
+		if(typeof this.options.grid.color!=="string") this.options.grid.color = "#888888";
+		if(typeof this.options.labels!=="object") this.options.labels = {};
+		if(typeof this.options.labels.color!=="string") this.options.label.color = "black";
 		if(typeof this.options.padding!=="number") this.options.padding = 0;
 		if(typeof this.options.xaxis!=="object") this.options.xaxis = {};
 		if(typeof this.options.yaxis!=="object") this.options.yaxis = {};
@@ -652,12 +654,6 @@ var Graph;
 		this.clear();
 		this.draw(true);
 	}
-	Graph.prototype.setColours = function(){
-		this.colours = { background:'', lines:'rgb(0,0,0)', labels:'rgb(0,0,0)' };
-		if(typeof this.options.grid.background=="string") this.colours.background = this.options.grid.background;
-		if(typeof this.options.grid.color=="string") this.colours.lines = this.options.grid.color;
-		if(typeof this.options.labels=="string") this.colours.labels = this.options.grid.color;
-	}
 	Graph.prototype.getGraphRange = function(){
 		this.x = { min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit };
 		this.y = { min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit };
@@ -670,22 +666,25 @@ var Graph;
 		for(i in this.data){
 			max = this.data[i].marks.length
 
-			for(j = 0; j < max ; j++){
-				d = this.data[i].marks[j].data;
+			// Only calculate range based on symbols or lines
+			if(this.data[i].symbol.show || this.data[i].lines.show){
+				for(j = 0; j < max ; j++){
+					d = this.data[i].marks[j].data;
 
-				if(d.x < this.x.min) this.x.min = d.x;
-				if(d.x > this.x.max) this.x.max = d.x;
-				if(d.y < this.y.min) this.y.min = d.y;
-				if(d.y > this.y.max) this.y.max = d.y;
+					if(d.x < this.x.min) this.x.min = d.x;
+					if(d.x > this.x.max) this.x.max = d.x;
+					if(d.y < this.y.min) this.y.min = d.y;
+					if(d.y > this.y.max) this.y.max = d.y;
 
-				if(d.x1 && d.x1 < this.x.min) this.x.min = d.x1;
-				if(d.x1 && d.x1 > this.x.max) this.x.max = d.x1;
-				if(d.y1 && d.y1 < this.y.min) this.y.min = d.y1;
-				if(d.y1 && d.y1 > this.y.max) this.y.max = d.y1;
-				if(d.x2 && d.x2 < this.x.min) this.x.min = d.x2;
-				if(d.x2 && d.x2 > this.x.max) this.x.max = d.x2;
-				if(d.y2 && d.y2 < this.y.min) this.y.min = d.y2;
-				if(d.y2 && d.y2 > this.y.max) this.y.max = d.y2;
+					if(d.x1 && d.x1 < this.x.min) this.x.min = d.x1;
+					if(d.x1 && d.x1 > this.x.max) this.x.max = d.x1;
+					if(d.y1 && d.y1 < this.y.min) this.y.min = d.y1;
+					if(d.y1 && d.y1 > this.y.max) this.y.max = d.y1;
+					if(d.x2 && d.x2 < this.x.min) this.x.min = d.x2;
+					if(d.x2 && d.x2 > this.x.max) this.x.max = d.x2;
+					if(d.y2 && d.y2 < this.y.min) this.y.min = d.y2;
+					if(d.y2 && d.y2 > this.y.max) this.y.max = d.y2;
+				}
 			}
 		}
 		// Keep a record of the data min/max
@@ -720,40 +719,30 @@ var Graph;
 		this.draw(true);
 	}
 	
-	// For an input data value find the y-pixel location
-	Graph.prototype.getYPos = function(y){
-		if(this.y.log){
-			y = G.log10(y);
-			var min = this.y.gmin;
-			var max = this.y.gmax;
-			var ran = this.y.grange;
+	Graph.prototype.getPos = function(t,c){
+		if(!this[t]) return;
+		if(this[t].log){
+			c = G.log10(c);
+			var min = this[t].gmin;
+			var max = this[t].gmax;
+			var ran = this[t].grange;
 		}else{
-			var min = this.y.min;
-			var max = this.y.max;
-			var ran = this.y.range;
+			var min = this[t].min;
+			var max = this[t].max;
+			var ran = this[t].range;
 		}
-		return this.options.height-(this.chart.bottom + this.chart.height*((y-min)/ran));
+		if(t=="y") return this.options.height-(this.chart.bottom + this.chart.height*((c-min)/ran));
+		else return (this[t].dir=="reverse" ? this.chart.left + this.chart.width*((max-c)/(ran)) : this.chart.left + this.chart.width*((c-min)/ran));
+	
 	}
+	// For an input data value find the y-pixel location
+	Graph.prototype.getYPos = function(y){ return this.getPos("y",y); }
 	
 	// For an input data value find the x-pixel location
-	Graph.prototype.getXPos = function(x){
-		if(this.x.log){
-			x = G.log10(x);
-			var min = this.x.gmin;
-			var max = this.x.gmax;
-			var ran = this.x.grange;
-		}else{
-			var min = this.x.min;
-			var max = this.x.max;
-			var ran = this.x.range;
-		}
-		return (this.x.dir=="reverse" ? this.chart.left + this.chart.width*((max-x)/(ran)) : this.chart.left + this.chart.width*((x-min)/ran));
-	}
+	Graph.prototype.getXPos = function(x){ return this.getPos("x",x); }
 	
 	// For an input data value find the pixel locations
-	Graph.prototype.getPixPos = function(x,y){
-		return [this.getXPos(x),this.getYPos(y)];
-	}
+	Graph.prototype.getPixPos = function(x,y){ return [this.getXPos(x),this.getYPos(y)]; }
 	
 	// Are the x,y pixel coordinates in the displayed chart area?
 	Graph.prototype.within = function(x,y){
@@ -865,8 +854,8 @@ var Graph;
 			var data = this.data[t];
 
 			if(!this.coordinates){
-				this.canvas.container.append('<div class="graph-popup" style="position:absolute;display:none;"></div>');
-				this.coordinates = this.canvas.container.find('.graph-popup');
+				this.canvas.container.append('<div class="vg-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
+				this.coordinates = this.canvas.container.find('.vg-tooltip');
 			}
 			if(this.coordinates) this.coordinates.css({'display':''});
 			if(typeof data.css=="object") this.coordinates.css(data.css);
@@ -960,8 +949,9 @@ var Graph;
 					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
 			var t_div;
 
+
 			for(var st = 0; st < steps.length ; st++){
-				for(var sp = 0; sp < steps[s].spacings.length; sp++){
+				for(var sp = 0; sp < steps[st].spacings.length; sp++){
 					var n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
 					if(n < 1) continue;
 					if(!t_div || (n > 3 && n < t_div)){
@@ -1002,11 +992,18 @@ var Graph;
 
 		return true;
 	}
+	
+	Graph.prototype.getFontHeight = function(a,t){
+		var fs = this.chart.fontsize;
+		if(this.options[a+'axis'] && this.options[a+'axis'][t+'FontSize']) fs = this.options[a+'axis'][t+'FontSize'];
+		return fs;
+	}
 
 	Graph.prototype.getChartOffset = function(){
 		if(typeof this.chart!="object") this.chart = {}
 		var fs = getStyle(this.canvas.container[0], 'font-size');
 		var ff = getStyle(this.canvas.container[0], 'font-family');
+		var o = this.options;
 
 		if(this.canvas.fullscreen){
 			this.chart.padding = this.canvas.wide/40;
@@ -1014,56 +1011,66 @@ var Graph;
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
 			this.chart.padding = 0;
-			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
+			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs)*0.7 : 12;
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}
 		// Correct for sub-pixel positioning
-		b = this.options.grid.border*0.5;
-		this.chart.padding = this.options.padding || this.chart.padding;
-		this.chart.top = this.chart.padding+b;
-		this.chart.left = (this.y.label.text) ? this.chart.padding+Math.round(3.5*this.chart.fontsize)-b : this.chart.padding+Math.round(3*this.chart.fontsize)-b;
-		this.chart.right = this.chart.padding+b;
-		this.chart.bottom = (this.x.label.text) ? this.chart.padding+Math.round(4.5*this.chart.fontsize/2)-b : this.chart.padding+Math.round(2.5*this.chart.fontsize/2)+b;
+		b = o.grid.border*0.5;
+		this.chart.padding = o.padding || this.chart.padding;
+		this.chart.top = this.chart.padding + b;
+		this.chart.left = this.chart.padding + b;
+		if(o['yaxis'].title) this.chart.left += Math.round(this.getFontHeight('y','title')*1.5);
+		if(o['yaxis'].labels) this.chart.left += Math.round(this.getLabelWidth());
+		//if(o['yaxis'].labels) this.chart.left += Math.round(this.getFontHeight('y','label')*3);
+		if(o['yaxis'].ticks) this.chart.left += Math.round((o['yaxis'].tickSize||4) + 3);
+		this.chart.right = this.chart.padding + b;
+		this.chart.bottom = this.chart.padding + b;
+		if(o['xaxis'].title) this.chart.bottom += Math.round(this.getFontHeight('x','title')*1.5);
+		if(o['xaxis'].labels) this.chart.bottom += Math.round(this.getFontHeight('x','label')*1.5);
+		if(o['xaxis'].ticks) this.chart.bottom += Math.round((o['xaxis'].tickSize||4) + 3);
 		this.chart.width = this.canvas.wide-this.chart.right-this.chart.left;
 		this.chart.height = this.canvas.tall-this.chart.bottom-this.chart.top;
 		return this;
 	}
 	
+	Graph.prototype.getLabelWidth = function(){
+		// If we aren't showing labels the width is 0
+		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
+		if(!ok) return 0;
+		// Set font for labels
+		var fs = this.getFontHeight('y','label');
+		var maxw = 0;
+		var ctx = this.canvas.ctx;
+		ctx.font = fs+'px '+this.chart.fontfamily;
+		// Calculate the number of decimal places for the increment - helps with rounding errors
+		var prec = ""+this.y.inc;
+		prec = prec.length-prec.indexOf('.')-1;
+		for(var i = this.y.gmin; i <= this.y.gmax; i += this.y.inc){
+			j = (this.y.log) ? i : i.toFixed(prec);
+			maxw = Math.max(maxw,ctx.measureText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,""))).width);
+		}
+		return maxw + 4;
+	}
+	
 	// Draw the axes and grid lines for the graph
 	Graph.prototype.drawAxes = function(){
-		grid = this.options.grid.show;
-		o = this.chart;
-		rot = Math.PI/2;
-		
-		this.canvas.ctx.beginPath();
-		this.canvas.ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
-		this.canvas.ctx.textBaseline = 'middle';
-
-		// Draw main rectangle
-		this.canvas.ctx.strokeStyle = this.options.grid.color || 'rgb(0,0,0)';
-		this.canvas.ctx.lineWidth = this.options.grid.border;
-		if(typeof this.options.grid.background=="string"){
-			this.canvas.ctx.fillStyle = this.options.grid.background;
-			this.canvas.ctx.fillRect(o.left,o.top,o.width,o.height);
+		var grid,tw;
+		var c = this.chart;
+		var ctx = this.canvas.ctx;
+		var rot = Math.PI/2;
+		var axes = {'xaxis':{},'yaxis':{}};
+		var r = {
+			'xmin': this.chart.left,
+			'xmax': this.chart.left+this.chart.width,
+			'ymax': this.chart.top+this.chart.height,
+			'ymin': this.chart.top
 		}
-		this.canvas.ctx.strokeRect(o.left,o.top,o.width,o.height);
+		var orient = {
+			'left': {'rot':rot,'x1': r.xmin,'x2': r.xmax,'textAlign': 'end','textBaseline': 'middle'},
+			'right': {'rot':-rot,'x1': r.xmin,'x2': r.xmax,'textBaseline': 'middle'},
+			'bottom': {'textBaseline': 'top','y1': r.ymax,'y2': r.ymin}
+		};
 
-		this.canvas.ctx.lineWidth = 1;
-		// Draw x label
-		if(this.x.label.text!=""){
-			this.canvas.ctx.textAlign = "center";
-			this.canvas.ctx.fillStyle = (this.options.grid.color ? this.options.grid.color : "black");
-			this.canvas.ctx.fillText(this.x.label.text,o.left+o.width/2, this.options.height-Math.round(this.chart.fontsize/2)-this.chart.padding);
-		}
-
-		if(this.y.label.text!=""){
-			this.canvas.ctx.textAlign = "center";
-			this.canvas.ctx.fillStyle = (this.options.grid.color ? this.options.grid.color : "black");
-			this.canvas.ctx.rotate(-rot);
-			this.canvas.ctx.fillText(this.y.label.text,-(o.top+(o.height/2)),Math.round(this.chart.fontsize/2)+this.chart.padding);
-			this.canvas.ctx.rotate(rot);
-		}
-		this.canvas.ctx.closePath();
 
 		if(!this.subgrid){
 			v = [2,3,4,5,6,7,8,9]
@@ -1073,98 +1080,185 @@ var Graph;
 			}
 		}
 
-		this.canvas.ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
 
-		// Draw y-axis grid and labels
-		this.canvas.ctx.textAlign = "end";
-		x1 = this.chart.left;
-		x2 = this.chart.left+this.chart.width;
-		// Calculate the number of decimal places for the increment - helps with rounding errors
-		prec = ""+this.y.inc;
-		prec = prec.length-prec.indexOf('.')-1;
-		fshalf = Math.ceil(this.chart.fontsize/2);
-		for(var i = this.y.gmin; i <= this.y.gmax; i += this.y.inc) {
-			y = this.getYPos((this.y.log ? Math.pow(10, i) : i));
-			if(!y || y < this.chart.top || y > this.chart.top+this.chart.height) continue;
-			// As <canvas> usings sub-pixel positioning we want to shift the placement 0.5 pixels
-			y = (y-Math.round(y) > 0) ? Math.floor(y)+0.5 : Math.ceil(y)-0.5;
-			j = (this.y.log) ? i : i.toFixed(prec);
-			a = (j==this.y.gmax) ? fshalf : (j==this.y.gmin ? -fshalf : 0);
-			this.canvas.ctx.beginPath();
-			this.canvas.ctx.strokeStyle = (this.options.grid.color ? this.options.grid.color : 'rgba(0,0,0,0.5)');
-			this.canvas.ctx.fillStyle = (this.options.grid.color ? this.options.grid.color : "black");
-			this.canvas.ctx.fillText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,"")),x1-3,(y+a).toFixed(1));
-			if(grid && i != this.y.gmin && i != this.y.gmax){
-				this.canvas.ctx.moveTo(x1,y);
-				this.canvas.ctx.lineTo(x2,y);
+		ctx.beginPath();
+		ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
+		ctx.textBaseline = 'middle';
+
+		// Draw main rectangle
+		ctx.strokeStyle = (this.options.grid.color || 'rgb(0,0,0)');
+		ctx.lineWidth = this.options.grid.border;
+		if(typeof this.options.grid.background=="string"){
+			ctx.fillStyle = this.options.grid.background;
+			ctx.fillRect(c.left,c.top,c.width,c.height);
+		}
+		ctx.closePath();
+		
+		for(var a in axes){
+
+			var o = this.options[a].orient;
+			// Set axis direction
+			var d = "x";
+			if(o=="left" || o=="right") d = "y";
+			if(!this[d]) continue;
+
+			// What do we show?
+			var show = {'grid':false,'labels':true,'ticks':true,'domain':true,'ticks':true};
+			for(var s in show){
+				if(typeof this.options[a][s]==="boolean") show[s] = this.options[a][s];
+				if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
 			}
-			this.canvas.ctx.stroke();
-			this.canvas.ctx.closePath();
-			if(grid && this.y.log){
-				this.canvas.ctx.beginPath();
-				sub = (this.options.grid.sub) ? this.options.grid.sub : {};
-				this.canvas.ctx.strokeStyle = (sub.color ? sub.color : 'rgba(0,0,0,0.2)');
-				this.canvas.ctx.lineWidth = (sub.width ? sub.width : 0.5);
-				for(var j = 0; j < this.subgrid.length ; j++){
-					di = i+this.subgrid[j];
-					if(di < this.y.gmax){
-						y = this.getYPos(Math.pow(10,di))+0.5;
-						// As <canvas> usings sub-pixel positioning we want to shift the placement 0.5 pixels
-						y = (y-Math.round(y) > 0) ? Math.floor(y)+0.5 : Math.ceil(y)-0.5;
-						this.canvas.ctx.moveTo(x1,y);
-						this.canvas.ctx.lineTo(x2,y);
+			
+			// Set the tick width
+			tw = 0;
+			if(show.ticks) tw = (this.options[a].tickSize||4);
+
+			// Draw axis line
+			if(show.domain){
+				ctx.beginPath();
+				ctx.strokeStyle = (this.options[a].domainColor || this.options.grid.color || 'rgb(0,0,0)');
+				ctx.lineWidth = (this.options[a].domainWidth || this.options.grid.border);
+				if(o=="left"){
+					ctx.moveTo(c.left,c.top);
+					ctx.lineTo(c.left,c.top+c.height);
+				}else if(o=="bottom"){
+					ctx.moveTo(c.left,c.top+c.height);
+					ctx.lineTo(c.left+c.width,c.top+c.height);
+				}
+				ctx.stroke();
+				ctx.closePath();
+			}
+
+			ctx.lineWidth = 1;
+
+			// Draw label
+			if(this.options[a].title!=""){
+				var p = [0,0];
+				ctx.beginPath();
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				fs = this.getFontHeight(d,'title');
+				ctx.font = (this.options[a].titleFontWeight || "bold")+' '+fs+'px '+(this.options[a].titleFont || this.chart.fontfamily);
+				ctx.fillStyle = (this.options[a].titleColor || this.options.labels.color);
+
+				// Work out coordinates
+				if(o=="bottom") p = [c.left+c.width/2,this.options.height-Math.round(fs/2)-this.chart.padding];
+				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
+
+				if(orient[o].rot) ctx.rotate(-orient[o].rot);
+				ctx.fillText(this.options[a].title, p[0], p[1]);
+				if(orient[o].rot) ctx.rotate(orient[o].rot);
+				ctx.closePath();
+			}
+
+
+			// Draw axis grid and labels
+			ctx.textAlign = orient[o].textAlign || "end";
+			ctx.textBaseline = orient[o].textBaseline || 'top';
+
+			// Set font for labels
+			fs = this.getFontHeight(d,'label');
+			ctx.font = fs+'px '+this.chart.fontfamily;
+			ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
+			
+
+			// Get axis properties
+			var axis = this[d];
+
+			if(d=="x"){
+				y1 = orient[o].y1;
+				y2 = orient[o].y2;
+			}
+			if(d=="y"){
+				x1 = orient[o].x1;
+				x2 = orient[o].x2;
+			}
+			// Calculate the number of decimal places for the increment - helps with rounding errors
+			prec = ""+axis.inc;
+			prec = prec.length-prec.indexOf('.')-1;
+			fshalf = Math.ceil(fs/2);
+			
+			for(var i = axis.gmin; i <= axis.gmax; i += axis.inc) {
+				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
+				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
+				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
+				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
+				if(d=="y") y1 = y2 = p;
+				else if(d=="x") x1 = x2 = p;
+
+				j = (axis.log) ? i : i.toFixed(prec);
+
+				ctx.beginPath();
+				ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
+				ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
+
+				// Draw tick labels
+				if(show.labels){
+					if(d=="x"){
+						var str = (axis.isDate) ? this.formatLabelDate(j) : addCommas((this.x.log ? Math.pow(10, j) : j))
+						var ds = str.split(/\n/);
+						var maxw = 0;
+						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
+						if(x1+maxw/2 <= c.left+c.width){
+							ctx.textAlign = (j == axis.gmax) ? 'end' : (j==axis.gmin ? 'start' : 'center');
+							ctx.fillStyle = this.options.labels.color;
+							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
+						}
+					}else if(d=="y"){
+						ctx.textAlign = 'end';
+						if(j==this.y.gmax) ctx.textBaseline = 'top';
+						ctx.fillText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,"")),(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
-				this.canvas.ctx.stroke();
-				this.canvas.ctx.closePath();
-			}
-		}
-		this.canvas.ctx.closePath();
 
-		// Draw x-axis grid and labels
-		this.canvas.ctx.textBaseline = 'top';
-		y1 = this.chart.top+this.chart.height;
-		y2 = this.chart.top;
-		// Calculate the number of decimal places for the increment - helps with rounding errors
-		prec = ""+this.x.inc;
-		prec = (prec.indexOf('.') > 0) ? prec.length-prec.indexOf('.')-1 : 0;
-		for(var i = this.x.gmin; i <= this.x.gmax; i += this.x.inc) {
-			x = this.getXPos((this.x.log ? Math.pow(10,i): i));
-			if(!x || x < this.chart.left || x > this.chart.left+this.chart.width) continue;
-			// As <canvas> usings sub-pixel positioning we want to shift the placement 0.5 pixels
-			x = (x-Math.round(x) > 0) ? Math.floor(x)+0.5 : Math.ceil(x)-0.5;
-			j = (this.y.log) ? i : i.toFixed(prec);
-			this.canvas.ctx.beginPath();
-			this.canvas.ctx.textAlign = (j==this.x.gmax) ? 'end' : (j==this.x.gmin ? 'start' : 'center');
-			this.canvas.ctx.strokeStyle = (this.options.grid.color ? this.options.grid.color : 'rgba(0,0,0,0.5)');
-			var str = (this.x.isDate) ? this.formatLabelDate(j) : addCommas((this.x.log ? Math.pow(10, j) : j))
-			var ds = str.split(/\n/);
-			this.canvas.ctx.fillStyle = (this.options.grid.color ? this.options.grid.color : "black");
-			for(var d = 0; d < ds.length ; d++) this.canvas.ctx.fillText(ds[d],x.toFixed(1),(y1+3+d*this.chart.fontsize).toFixed(1));
-			if(grid && j != this.x.gmin && j != this.x.gmax){
-				this.canvas.ctx.moveTo(x,y1);
-				this.canvas.ctx.lineTo(x,y2);
-				this.canvas.ctx.stroke();
-			}
-			this.canvas.ctx.closePath();
-			if(grid && this.x.log){
-				this.canvas.ctx.beginPath();
-				sub = (this.options.grid.sub) ? this.options.grid.sub : {};
-				this.canvas.ctx.strokeStyle = (sub.color ? sub.color : 'rgba(0,0,0,0.2)');
-				for(var j = 0; j < this.subgrid.length ; j++){
-					di = i+this.subgrid[j];
-					if(di < this.x.gmax){
-						x = this.getXPos(Math.pow(10,di));
-						// As <canvas> usings sub-pixel positioning we want to shift the placement 0.5 pixels
-						x = (x-Math.round(x) > 0) ? Math.floor(x)+0.5 : Math.ceil(x)-0.5;
-						this.canvas.ctx.moveTo(x,this.chart.top);
-						this.canvas.ctx.lineTo(x,y1);
-					}
+				ctx.stroke();
+								
+				// Draw grid lines
+				if(show.grid && j >= axis.gmin && j <= axis.gmax){
+					ctx.beginPath();
+					ctx.lineWidth = (this.options[a].gridWidth || 0.5);
+					ctx.moveTo(x1,y1);
+					ctx.lineTo(x2,y2);
+					ctx.stroke();
 				}
-				this.canvas.ctx.stroke();
-				this.canvas.ctx.closePath();
+				
+				// Draw tick marks lines
+				if(show.ticks && j >= axis.gmin && j <= axis.gmax){
+					ctx.beginPath();
+					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
+					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+					if(d=="x"){
+						ctx.moveTo(x1,y1);
+						ctx.lineTo(x2,y1+tw);
+					}else if(d=="y"){
+						ctx.moveTo(x1,y1);
+						ctx.lineTo(x1-tw,y2);					
+					}
+					ctx.stroke();
+					ctx.closePath();
+				}
+				
+				// Draw sub grid for log scale
+				if(show.grid && axis.log){
+					ctx.beginPath();
+					sub = (this.options.grid.sub) ? this.options.grid.sub : {};
+					ctx.strokeStyle = (sub.color ? sub.color : 'rgba(0,0,0,0.2)');
+					ctx.lineWidth = (sub.width ? sub.width : 0.5);
+					for(var j = 0; j < this.subgrid.length ; j++){
+						di = i+this.subgrid[j];
+						if(di < axis.gmax){
+							p = this.getPos(d,Math.pow(10,di));
+							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
+							ctx.moveTo(p,y2);
+							ctx.lineTo(p,y1);
+						}
+					}
+					ctx.stroke();
+					ctx.closePath();
+				}
 			}
 		}
+
 		return this;
 	}
 
@@ -1187,7 +1281,6 @@ var Graph;
 	}
 
 	// Function to calculate the x,y coordinates for each data point. 
-	// It also creates a pixel-based lookup table for mouse hover events
 	Graph.prototype.calculateData = function(event){
 		this.log('calculateData');
 		this.getChartOffset();
@@ -1251,37 +1344,33 @@ var Graph;
 			for (i=0; i < this.canvas.wide; i++) this.lookup[i] = new Array(this.canvas.tall);
 		}
 
-	
+		var ctx = this.canvas.ctx;
+		
 		// Build the clip path
-		this.canvas.ctx.save();
-		this.canvas.ctx.beginPath();
-		this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
-		this.canvas.ctx.clip();
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+		ctx.clip();
 
 		for(sh in this.data){
 
 			if(this.data[sh].show){
 
-				this.setCanvasStyles(this.canvas.ctx,this.data[sh].marks[0]);
+				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
 
 				// Draw lines
 				if(this.data[sh].lines.show){
-					this.canvas.ctx.beginPath();
+					ctx.beginPath();
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
 						p = this.data[sh].marks[i].props;
 						if(p.x && p.y){
-							//if(this.data[sh].marks[i].data.x >= this.x.min && this.data[sh].marks[i].data.x <= this.x.max && this.data[sh].marks[i].data.y >= this.y.min && this.data[sh].marks[i].data.y <= this.y.max){
-								if(i == 0) this.canvas.ctx.moveTo(p.x,p.y);
-								else this.canvas.ctx.lineTo(p.x,p.y);
-							//}else{
-							//	this.canvas.ctx.moveTo(p.x,p.y);
-							//}
+							if(i == 0) ctx.moveTo(p.x,p.y);
+							else ctx.lineTo(p.x,p.y);
 						}
 					}
-					this.canvas.ctx.stroke();
-					this.canvas.ctx.closePath();
+					ctx.stroke();
+					ctx.closePath();
 				}
-
 				if(this.data[sh].symbol.show || this.data[sh].rect.show){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
@@ -1309,7 +1398,7 @@ var Graph;
 		}
 		
 		// Apply the clipping
-		this.canvas.ctx.restore();
+		ctx.restore();
 
 		return this;
 	}
@@ -1389,7 +1478,7 @@ var Graph;
 
 		var shape = datum.props.symbol.shape;
 
-		var s = (datum.props.format.size || 4);
+		var s = (Math.sqrt(datum.props.format.size) || 4);
 		var w = s;
 		var h = s;
 

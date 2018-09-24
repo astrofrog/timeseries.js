@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>AAS Time Series vs Vega</title>
+    <link rel="stylesheet" href="../resources/aas.css">
+    <link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/highlight/highlight.css">
+	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<!-- TimeSeries (will lazy-load graph.js when it needs it) -->
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+	<script src="../resources/vega/vega.min.js"></script>
+	<script src="../resources/vega/vega-embed.3.18.1.js"></script>
+	<style>
+	.compare {
+		width: 100%;
+		overflow: hidden;
+		display: block;
+		position: relative;
+		margin-left: -1em;
+		margin-bottom: -1em;
+		right: -1em;
+		margin: 2em 0 2em -1em;
+	}
+	.compare .col {
+		box-sizing: border-box;
+		width: 50%;
+		display: inline-block;
+		float: left;
+		border-right: 1em solid rgba(255,255,255,0);
+	}
+	.compare .col:nth-child(2n){
+		border-right: 0px;
+	}
+	.panel {
+		padding: 2em;
+		background-color: white;	
+	}
+	.compare .col h3 {
+		margin-top: 0px;
+	}
+	.compare .col:nth-child(2n){
+		padding-right: 0px;
+	}
+	.compare pre {
+		max-width: 100%;
+		overflow-x: auto;
+	}
+	</style>
+</head>
+<body>
+
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">Timeseries library vs Vega rendering</h1>
+				<p>Last updated: 18 September 2018</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<p>This page is to provide side-by side comparisons of how the <code>AASTimeseries</code> and <code>Vega</code> libraries render various examples.</p>
+	</div>
+	<div class="bkg-tint">
+		<div class="row">
+			<div class="compare">
+				<div class="col">
+					<div class="panel">
+						<h3>AASTimeseries</h3>
+						<div class="example">
+							<figure style="text-align:center;">
+								<div id="example1a" vega-scale="inherit">
+									<img src="data/lightcurve.png" style="width:400px;height:350px;" />
+								</div>
+								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+							</figure>
+							<!-- Javascript -->
+							<script>
+							var ex;
+							S(document).ready(function(){
+								ex = TimeSeries.create("lightcurve.json",{logging:false});
+								ex.initialize(document.getElementById('example1a'));
+							});
+							</script>
+						</div>
+					</div>
+				</div>
+				<div class="col">
+					<div class="panel">
+						<h3>Vega</h3>
+						<div class="example">
+							<figure style="text-align: center;">
+								<div id="example1b"></div>
+								<figcaption>An example using JSON loaded from a file and rendered with Vega.</figcaption>
+							</figure>
+							<!-- Javascript -->
+							<script>
+							vegaEmbed(
+								'#example1b',
+								'lightcurve.json',
+								{  }
+							);
+							</script>
+				
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
+
+</body>
+</html>

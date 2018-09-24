@@ -13,6 +13,17 @@
 		"url": "OB110462-model.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
+	"axes": [
+		{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "Observation time"
+		},{
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Intensity"
+		}
+	],
 	"marks":[{
 		"type": "line",
 		"from": {"data": "Model"},
@@ -36,8 +47,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
-				"y": {"scale": "yscale", "field": "datum.dmag - datum.err"},
-				"y2": {"scale": "yscale", "field": "datum.dmag + datum.err"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 				"width": {"value": 1},
 				"fill": {"value": "#FF7F00"}
 			},
@@ -63,14 +74,14 @@
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "circle"},
-				"size": {"value": 4},
+				"size": {"value": 16},
 				"zindex": {"value": 0}
 			},
 			"hover": {
 				"fill": {"value": "#D60303"},
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "cross"},
-				"size": {"value": 10},
+				"size": {"value": 100},
 				"zindex": {"value": 1},
 				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y"}
 			}
