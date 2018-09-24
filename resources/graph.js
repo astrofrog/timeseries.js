@@ -1051,7 +1051,7 @@ var Graph;
 		this.chart.bottom = this.chart.padding + b;
 		if(o['xaxis'].title) this.chart.bottom += Math.round(this.getFontHeight('x','title')*1.5);
 		if(typeof o['xaxis'].labels==="undefined") o['xaxis'].labels = true;
-		if(o['xaxis'].labels) this.chart.bottom += Math.round(this.getFontHeight('x','label')*1.5);
+		if(o['xaxis'].labels) this.chart.bottom += Math.round(this.getFontHeight('x','label')*1.2);
 		if(o['xaxis'].ticks) this.chart.bottom += Math.round((o['xaxis'].tickSize||4) + 3);
 		this.chart.width = this.canvas.wide-this.chart.right-this.chart.left;
 		this.chart.height = this.canvas.tall-this.chart.bottom-this.chart.top;
