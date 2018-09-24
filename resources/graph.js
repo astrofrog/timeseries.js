@@ -1044,12 +1044,13 @@ var Graph;
 		this.chart.top = this.chart.padding + b;
 		this.chart.left = this.chart.padding + b;
 		if(o['yaxis'].title) this.chart.left += Math.round(this.getFontHeight('y','title')*1.5);
+		if(typeof o['yaxis'].labels==="undefined") o['yaxis'].labels = true;
 		if(o['yaxis'].labels) this.chart.left += Math.round(this.getLabelWidth());
-		//if(o['yaxis'].labels) this.chart.left += Math.round(this.getFontHeight('y','label')*3);
 		if(o['yaxis'].ticks) this.chart.left += Math.round((o['yaxis'].tickSize||4) + 3);
 		this.chart.right = this.chart.padding + b;
 		this.chart.bottom = this.chart.padding + b;
 		if(o['xaxis'].title) this.chart.bottom += Math.round(this.getFontHeight('x','title')*1.5);
+		if(typeof o['xaxis'].labels==="undefined") o['xaxis'].labels = true;
 		if(o['xaxis'].labels) this.chart.bottom += Math.round(this.getFontHeight('x','label')*1.5);
 		if(o['xaxis'].ticks) this.chart.bottom += Math.round((o['xaxis'].tickSize||4) + 3);
 		this.chart.width = this.canvas.wide-this.chart.right-this.chart.left;
@@ -1058,8 +1059,11 @@ var Graph;
 	}
 	
 	Graph.prototype.getLabelWidth = function(){
+		console.log('getLabelWidth')
+
 		// If we aren't showing labels the width is 0
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
+
 		if(!ok) return 0;
 		// Set font for labels
 		var fs = this.getFontHeight('y','label');
@@ -1387,7 +1391,7 @@ var Graph;
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 					ctx.stroke();
-					ctx.closePath();
+//					ctx.closePath();
 				}
 				if(this.data[sh].symbol.show || this.data[sh].rect.show){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
