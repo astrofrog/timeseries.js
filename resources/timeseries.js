@@ -377,7 +377,9 @@ var TimeSeries;
 							// If we now have an object we build a string
 							if(p=="tooltip" && typeof d.props[p]==="object"){
 								str = "<table>";
-								for(var i in d.props[p]) str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+								for(var i in d.props[p]){
+									if(typeof d.props[p][i] != "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+								}
 								d.props[p] = str+"</table>";
 							}
 						}
