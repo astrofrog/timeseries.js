@@ -793,8 +793,11 @@ var Graph;
 		var fill = (datum.props.format.fill ? datum.props.format.fill : '#000000');
 		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,datum.props.format.fillOpacity);		
 		ctx.fillStyle = fill;
-		ctx.strokeStyle = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
+		var stroke = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
+		if(datum.props.format.strokeOpacity) stroke = hex2rgba(stroke,datum.props.format.strokeOpacity);
+		ctx.strokeStyle = stroke;
 		ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
+		ctx.lineCap = (datum.props.format.strokeCap || "square");
 		ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
 		return this;
 	}
@@ -807,6 +810,33 @@ var Graph;
 
 			var t = d[0];
 			var i = d[1];
+
+			if(this.data[t].lines.show || this.data[t].rect.show){
+				// Build the clip path
+				this.canvas.ctx.save();
+				this.canvas.ctx.beginPath();
+				this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+				this.canvas.ctx.clip();
+			}
+			if(this.data[t].lines.show){
+				// Clone the mark
+				var oldmark = clone(this.data[t].marks[i]);
+				// Update the mark
+				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
+
+				// Set the canvas colours
+				this.setCanvasStyles(this.canvas.ctx,mark);
+
+				// Draw the new line
+				this.drawLine(t);
+
+				// Set the clipping
+				this.canvas.ctx.restore();
+
+				// Put the mark object back to how it was
+				this.data[t].marks[i] = clone(oldmark);
+				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
+			}
 
 			if(this.data[t].symbol.show){
 				// Clone the mark
@@ -834,28 +864,22 @@ var Graph;
 				// Set the canvas colours
 				this.setCanvasStyles(this.canvas.ctx,mark);
 
-				// Build the clip path
-				this.canvas.ctx.save();
-				this.canvas.ctx.beginPath();
-				this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
-				this.canvas.ctx.clip();
-
 				// Draw the new mark
 				this.drawRect(mark);
-
-				// Set the clipping
-				this.canvas.ctx.restore();
 
 				// Put the mark object back to how it was
 				this.data[t].marks[i] = clone(oldmark);
 				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
-
+			if(this.data[t].lines.show || this.data[t].rect.show){
+				// Set the clipping
+				this.canvas.ctx.restore();
+			}
 			var data = this.data[t];
 
 			if(!this.coordinates){
-				this.canvas.container.append('<div class="vg-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
-				this.coordinates = this.canvas.container.find('.vg-tooltip');
+				this.canvas.container.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
+				this.coordinates = this.canvas.container.find('.graph-tooltip');
 			}
 			if(this.coordinates) this.coordinates.css({'display':''});
 			if(typeof data.css=="object") this.coordinates.css(data.css);
@@ -1361,13 +1385,7 @@ var Graph;
 				// Draw lines
 				if(this.data[sh].lines.show){
 					ctx.beginPath();
-					for(var i = 0; i < this.data[sh].marks.length ; i++){
-						p = this.data[sh].marks[i].props;
-						if(p.x && p.y){
-							if(i == 0) ctx.moveTo(p.x,p.y);
-							else ctx.lineTo(p.x,p.y);
-						}
-					}
+					this.drawLine(sh,updateLookup);
 					ctx.stroke();
 					ctx.closePath();
 				}
@@ -1417,7 +1435,6 @@ var Graph;
 	}
 
 	Graph.prototype.drawLines = function(){
-		//this.log('drawLines')
 		// Loop over each line
 		for(var l = 0; l < this.lines.length ; l++){
 			if(this.lines[l].x){
@@ -1467,6 +1484,24 @@ var Graph;
 
 		}
 		return [];
+	}
+	Graph.prototype.drawLine = function(sh,updateLookup){
+		this.canvas.ctx.beginPath();
+		var oldp = {};
+		for(var i = 0; i < this.data[sh].marks.length ; i++){
+			p = this.data[sh].marks[i].props;
+			if(p.x && p.y){
+				if(i == 0){
+					this.canvas.ctx.moveTo(p.x,p.y);
+				}else{
+					this.canvas.ctx.lineTo(p.x,p.y);
+					if(updateLookup) this.addRectToLookup({id:this.data[sh].marks[i].id,xa:Math.floor(oldp.x),xb:Math.ceil(p.x),ya:Math.floor(oldp.y),yb:Math.ceil(p.y),'weight':0.6});
+				}
+				oldp = p;
+			}
+		}
+		this.canvas.ctx.stroke();
+		return this;
 	}
 	Graph.prototype.drawShape = function(datum){
 
@@ -1549,11 +1584,14 @@ var Graph;
 		if(!i.weight) i.weight = 1;
 		var x,y,value;
 		var p = 2;
+		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
+		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
+
 		// Use bounding box to define the lookup area
 		for(x = (i.xa-p); x < (i.xb+p); x++){
 			for(y = (i.ya-p); y < (i.yb+p); y++){
-				value = ((x >= i.xa && x <= i.xb && y >= i.ya && y <= i.yb) ? 1 : 0.5)*i.weight;
 				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
+					value = ((x >= i.xa && x <= i.xb && y >= i.ya && y <= i.yb) ? 1 : 0.5)*i.weight;
 					if(!this.lookup[x][y]) this.lookup[x][y] = {'value':0};
 					if(value >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': i.id, 'value': value };
 				}

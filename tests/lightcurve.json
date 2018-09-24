@@ -66,7 +66,7 @@
 				"fillOpacity": {"value": 1},
 				"width": {"value":5},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Date: ' + timeFormat(datum.x,'%B %d, %Y') + '<br />Time: ' + timeFormat(datum.x,'%H:%M:%S.%L') + '<br />Unix: ' + datum.x + '<br />Y: ' + datum.value + (datum.note ? '<br />Note:' + datum.note:'')"}
+				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
 			}
 		}
 	},{
@@ -78,10 +78,15 @@
 				"y": {"scale": "yscale", "field": "value"}
 			},
 			"update": {
-				"stroke": {"value": "#777777"}
+				"stroke": {"value": "#777777"},
+				"strokeWidth": { "value": 0.8 },
+				"strokeCap": { "value": "round" },
+				"strokeOpacity": { "value": 0.8 }
 			},
 			"hover": {
-				"tooltip": {"signal":"'Date: ' + timeFormat(datum.x,'%B %d, %Y') + '<br />Time: ' + timeFormat(datum.x,'%H:%M:%S.%L') + '<br />Unix: ' + datum.x + '<br />Y: ' + datum.value + (datum.note ? '<br />Note:' + datum.note:'')"}
+				"stroke": { "value": "#000000" },
+				"strokeWidth": { "value": 2 },
+				"strokeOpacity": { "value": 1 }
 			}
 		}
 	},{
@@ -107,7 +112,7 @@
 				"shape": {"value": "diamond"},
 				"size": {"value": 400},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Date: ' + timeFormat(datum.x,'%B %d, %Y') + '<br />Time: ' + timeFormat(datum.x,'%H:%M:%S.%L') + '<br />Unix: ' + datum.x + '<br />Y: ' + datum.value + (datum.note ? '<br />Note:' + datum.note:'')"}
+				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
 			}
 		}
 	}]

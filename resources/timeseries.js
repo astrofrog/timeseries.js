@@ -208,6 +208,7 @@ var TimeSeries;
 			grid: { hoverable: true, clickable: true, 'color': '#888888' },
 			labels: { 'color': '#000000' },
 			fit: false,
+			tooltip: {'theme':'aas-theme'},
 			showaswego: opt.showaswego
 		}
 		this.datasets = [];

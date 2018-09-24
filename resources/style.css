@@ -4,7 +4,7 @@ a:hover { text-decoration: underline; }
 header h1 { margin: 0px; padding-top: 0.5em; }
 header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 
-.vg-tooltip {
+.graph-tooltip {
 	position: absolute;
 	background-color: black;
 	color: white;
@@ -12,7 +12,11 @@ header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 	box-shadow: 1px 1px 5px rgba(0,0,0,0.6);
 	text-align: left;
 }
-
+.aas-theme { font-size: 0.8em; }
+.aas-theme td:first-child{
+	text-align: right;
+	vertical-align: top;
+}
 
 figure {
 	text-align: left;
