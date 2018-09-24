@@ -52,8 +52,7 @@
 				"x": {"scale": "xscale", "field": "x"},
 				"y": {"scale": "yscale", "signal": "datum['value'] - datum['error']"},
 				"y2": {"scale": "yscale", "signal": "datum['value'] + datum['error']"},
-				"width": {"value": 1},
-				"fill": {"value": "#000000"}
+				"width": {"value": 1}
 			},
 			"update": {
 				"fillOpacity": {"value": 0.5},
@@ -99,7 +98,6 @@
 				"shape": {"value": "circle"}
 			},
 			"update": {
-				"shape": "cross",
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"shape": {"value": "circle"},

@@ -411,9 +411,9 @@ var TimeSeries;
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
 
-				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
-				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
+				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
+				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'font-size':'0.8em','background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){

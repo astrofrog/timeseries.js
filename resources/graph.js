@@ -370,11 +370,12 @@ var Graph;
 
 
 	// Now we define the Graph class
-	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",symbol:{show:false},rect{show:true},lines:{show:true},format:{width:4}}, options);
+	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",type:"symbol",format:{width:4}}, options);
 	// where:
 	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
 	//   options (object) contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
+	//     type: symbol, rect, line
 	Graph = function(element, data, options){
 
 		if(!options) options = {};
@@ -390,6 +391,7 @@ var Graph;
 		this.selecting = false;
 		this.events = [];
 		this.lines = [];
+		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 
 		this.log('init',element,typeof element,data,options);
 
@@ -592,6 +594,7 @@ var Graph;
 		if(typeof this.options.xaxis.mode==="string" && this.options.xaxis.mode==="time") this.options.xaxis.isDate = true;
 		return this;
 	}
+	
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
@@ -608,27 +611,27 @@ var Graph;
 				}
 			}
 		}
+
 		if(this.data[index]) this.log('addDataset error','refusing to overwrite existing dataset at '+index,this.data[index],data);
 		else {
 			this.data[index] = data;
+
 			// Set the default to show the dataset
 			if(typeof this.data[index].show!=="boolean") this.data[index].show = true;
 
 			l = this.data[index].data.length;
 			this.data[index].marks = new Array(l);
 
-			if(!this.data[index].symbol) this.data[index].symbol = { 'show': true };
-			if(!this.data[index].rect) this.data[index].rect = { 'show': true };
-			if(!this.data[index].line) this.data[index].line = { 'show': true };
+			if(!this.data[index].type) this.data[index].type = "symbol";
 			if(!this.data[index].format) this.data[index].format = { };
 
 			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
 			if(!this.data[index].format.size) this.data[index].format.size = 4;
-			if(!this.data[index].format.stroke) this.data[index].format.stroke = '#000000';
+			if(!this.data[index].format.stroke) this.data[index].format.stroke = this.colours[0];
 			if(!this.data[index].format.strokeDash) this.data[index].format.strokeDash = [1,0];
 			if(!this.data[index].format.strokeWidth) this.data[index].format.strokeWidth = 1;
-			if(!this.data[index].format.fill) this.data[index].format.fill = '#000000';
-
+			if(!this.data[index].format.fill) this.data[index].format.fill = this.colours[0];
+			
 			for(var i = 0; i < l ; i++){
 
 				if(!this.data[index].marks[i]) this.data[index].marks[i] = {'props':{},'data':this.data[index].data[i]};
@@ -667,7 +670,7 @@ var Graph;
 			max = this.data[i].marks.length
 
 			// Only calculate range based on symbols or lines
-			if(this.data[i].symbol.show || this.data[i].lines.show){
+			if(this.data[i].type=="symbol" || this.data[i].type=="line"){
 				for(j = 0; j < max ; j++){
 					d = this.data[i].marks[j].data;
 
@@ -790,15 +793,16 @@ var Graph;
 		return 'rgba('+r+','+g+','+b+','+(a||1)+')';
 	}
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
-		var fill = (datum.props.format.fill ? datum.props.format.fill : '#000000');
-		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,datum.props.format.fillOpacity);		
+		var f = datum.props.format;
+		var fill = (typeof f.fill==="string" ? f.fill : (typeof f.fill==="number" ? this.colours[f.fill % this.colours.length]:'#000000'));
+		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,f.fillOpacity);
 		ctx.fillStyle = fill;
-		var stroke = (datum.props.format.stroke ? datum.props.format.stroke : '#000000');
-		if(datum.props.format.strokeOpacity) stroke = hex2rgba(stroke,datum.props.format.strokeOpacity);
+		var stroke = (typeof f.stroke==="string" ? f.stroke : (typeof f.stroke==="number" ? this.colours[f.stroke % this.colours.length]:'#000000'));
+		if(f.strokeOpacity) stroke = hex2rgba(stroke,f.strokeOpacity);
 		ctx.strokeStyle = stroke;
-		ctx.lineWidth = (datum.props.format.strokeWidth || 0.8);
-		ctx.lineCap = (datum.props.format.strokeCap || "square");
-		ctx.setLineDash(datum.props.format.strokeDash ? datum.props.format.strokeDash : [1,0]);
+		ctx.lineWidth = (f.strokeWidth || 0.8);
+		ctx.lineCap = (f.strokeCap || "square");
+		ctx.setLineDash(f.strokeDash ? f.strokeDash : [1,0]);
 		return this;
 	}
 	Graph.prototype.highlight = function(d){
@@ -811,14 +815,14 @@ var Graph;
 			var t = d[0];
 			var i = d[1];
 
-			if(this.data[t].lines.show || this.data[t].rect.show){
+			if(this.data[t].type=="line" || this.data[t].type=="rect"){
 				// Build the clip path
 				this.canvas.ctx.save();
 				this.canvas.ctx.beginPath();
 				this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 				this.canvas.ctx.clip();
 			}
-			if(this.data[t].lines.show){
+			if(this.data[t].type=="line"){
 				// Clone the mark
 				var oldmark = clone(this.data[t].marks[i]);
 				// Update the mark
@@ -838,7 +842,7 @@ var Graph;
 				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
 
-			if(this.data[t].symbol.show){
+			if(this.data[t].type=="symbol"){
 				// Clone the mark
 				var oldmark = clone(this.data[t].marks[i]);
 				// Update the mark
@@ -855,7 +859,7 @@ var Graph;
 				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
 
-			if(this.data[t].rect.show){
+			if(this.data[t].type=="rect"){
 				// Clone the mark
 				var oldmark = clone(this.data[t].marks[i]);
 				// Update the mark
@@ -871,7 +875,7 @@ var Graph;
 				this.data[t].marks[i] = clone(oldmark);
 				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
-			if(this.data[t].lines.show || this.data[t].rect.show){
+			if(this.data[t].type=="line" || this.data[t].type=="rect"){
 				// Set the clipping
 				this.canvas.ctx.restore();
 			}
@@ -1059,8 +1063,6 @@ var Graph;
 	}
 	
 	Graph.prototype.getLabelWidth = function(){
-		console.log('getLabelWidth')
-
 		// If we aren't showing labels the width is 0
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
 
@@ -1387,13 +1389,13 @@ var Graph;
 				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
 
 				// Draw lines
-				if(this.data[sh].lines.show){
+				if(this.data[sh].type=="line"){
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 					ctx.stroke();
 //					ctx.closePath();
 				}
-				if(this.data[sh].symbol.show || this.data[sh].rect.show){
+				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
 						p = m.props;
@@ -1403,13 +1405,13 @@ var Graph;
 						//if(i == 0) this.setCanvasStyles(m);
 
 						if(p.x && p.y){
-							if(this.data[sh].symbol.show){
+							if(this.data[sh].type=="symbol"){
 								if(p.x && p.y && m.data.x >= this.x.min && m.data.x <= this.x.max && m.data.y >= this.y.min && m.data.y <= this.y.max && p.y <= this.chart.top+this.chart.height){
 									o = this.drawShape(this.data[sh].marks[i]);
 									if(updateLookup) this.addRectToLookup(o);
 								}
 							}
-							if(this.data[sh].rect.show){
+							if(this.data[sh].type=="rect"){
 								o = this.drawRect(this.data[sh].marks[i]);
 								if(updateLookup) this.addRectToLookup(o);
 							}
