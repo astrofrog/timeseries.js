@@ -49,7 +49,7 @@ var TimeSeries;
 	var basedir = "";
 
 	TimeSeries = new function(){
-		this.version = "0.0.3";
+		this.version = "0.0.4";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
@@ -190,7 +190,7 @@ var TimeSeries;
 		}
 		return this;
 	}
-
+	
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
@@ -280,7 +280,6 @@ var TimeSeries;
 		if(el.length == 0) return this;
 		this.el = e;
 
-		if(el.attr('vega-scale')=="inherit") this.options.fit = true;
 		this.log('load',e,el,this.options.fit);
 
 		var f = el.attr('vega-src');
@@ -598,8 +597,15 @@ var TimeSeries;
 		var object = JSON.parse(json);
 		return object;
 	}
-	
+
+
 })(S);
+
+function AASTimeSeriesEmbed(el,json,opt){
+	var ts = TimeSeries.create(json,opt);
+	ts.initialize(S(el)[0]);
+	return;
+}
 
 // Convert dates
 dateFormat = "jd";

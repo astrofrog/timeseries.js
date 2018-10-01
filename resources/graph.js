@@ -344,6 +344,8 @@ var Graph;
 			}else{
 				// We have to zap the width of the canvas to let it take the width of the container
 				this.canvas.css({'width':0,'height':0});
+				// Set a max-width so that it can shrink
+				this.container.css({'max-width':'100%'});
 				w = this.container.outerWidth();
 				h = this.container.outerHeight();
 				this.canvas.css({'width':w+'px','height':h+'px'});

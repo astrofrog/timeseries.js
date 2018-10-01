@@ -77,18 +77,15 @@
 						<h3>AASTimeseries</h3>
 						<div class="example">
 							<figure style="text-align:center;">
-								<div id="example1a" vega-scale="inherit">
-									<img src="data/lightcurve.png" style="width:400px;height:350px;" />
-								</div>
-								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+								<div id="example1a" class="vega-embed"><img src="data/lightcurve.png" style="width:400px;height:350px;" /></div>
+								<figcaption>Figure 1a</figcaption>
 							</figure>
 							<!-- Javascript -->
 							<script>
-							var ex;
-							S(document).ready(function(){
-								ex = TimeSeries.create("lightcurve.json",{logging:false});
-								ex.initialize(document.getElementById('example1a'));
-							});
+							// Create a timeseries object that will load from a JSON file
+							var ex = TimeSeries.create("lightcurve.json",{logging:false,fit:true});
+							// Initialise the timeseries object attached to a DOM element
+							ex.initialize(document.getElementById('example1a'));
 							</script>
 						</div>
 					</div>
@@ -99,7 +96,7 @@
 						<div class="example">
 							<figure style="text-align: center;">
 								<div id="example1b"></div>
-								<figcaption>An example using JSON loaded from a file and rendered with Vega.</figcaption>
+								<figcaption>Figure 1b</figcaption>
 							</figure>
 							<!-- Javascript -->
 							<script>

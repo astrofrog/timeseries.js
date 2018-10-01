@@ -19,7 +19,7 @@ header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 }
 
 figure {
-	text-align: left;
+	text-align: center;
 	line-height: 0px;
 	background: #fff;
 	padding: 0em;
@@ -43,6 +43,14 @@ figure > div {
 }
 #examples > ol li h3 {
 	margin-top: 0px;
+}
+.vega-embed {
+	position: relative;
+}
+.vega-actions-wrapper {
+	position: absolute;
+	top: 0px;
+	right: 0px;
 }
 section { 
 	padding: 2em 0;

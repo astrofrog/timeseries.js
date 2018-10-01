@@ -167,7 +167,7 @@
 							S(document).ready(function(){
 
 								var ex1 = TimeSeries.create(json);
-								ex1 = ex1.initialize(document.getElementById('example1'));
+								ex1.initialize(document.getElementById('example1'));
 
 							});
 							</script>
@@ -175,31 +175,51 @@
 					</li>
 					<li id="ex2">
 						<h3>Example 2</h3>
-						<p>This example behaves in a similar way to the one above except that we load the <code>Vega JSON</code> from a separate <code>JSON</code> file. The <code>vega-scale</code> attribute tells <code>TimeSeries</code> to use the existing size of the element in the HTML; over-riding the size specified in the <code>JSON</code> file.</p>
+						<p>This example behaves in a similar way to the one above except that we load the <code>Vega JSON</code> from a separate file. The <code>fit:true</code> attribute tells <code>TimeSeries</code> to use the existing size of the element in the HTML; over-riding the size specified in the <code>JSON</code> file.</p>
 						<div class="example">
-							<figure style="text-align:center;">
-								<div id="example2" vega-src="data/OB110462-simple.json" vega-scale="inherit">
+							<figure>
+								<div id="example2">
 									<img src="data/OB110462-simple2.png" style="width:500px;height:250px;" />
 								</div>
-								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+								<figcaption>An example using JSON loaded from a file</figcaption>
 							</figure>
 							<script>
 							S(document).ready(function(){
 								// Create a new TimeSeries object
-								var ex2 = TimeSeries.create({}).initialize(document.getElementById('example2'));
+								var ex2 = TimeSeries.create("data/OB110462-simple.json",{fit:true});
+								ex2.initialize(document.getElementById('example2'));
 							});
 							</script>
 						</div>
 					</li>
 					<li id="ex3">
 						<h3>Example 3</h3>
+						<p>This example is identical to the one above except that the container has a size specified in CSS and we inherit that using the <code>fit:true</code> option rather than use the width and height set in the <code>JSON</code>.</p>
+						<div class="example">
+							<figure>
+								<div id="example3" style="width:100%;height:300px">
+									<img src="data/OB110462-simple2.png" />
+								</div>
+								<figcaption>An example using JSON loaded from a file</figcaption>
+							</figure>
+							<script>
+							S(document).ready(function(){
+								// Create a new TimeSeries object
+								var ex3 = TimeSeries.create("data/OB110462-simple.json",{'fit':true});
+								ex3.initialize(document.getElementById('example3'));
+							});
+							</script>
+						</div>
+					</li>
+					<li id="ex4">
+						<h3>Example 4</h3>
 						<p>This example shows the same timeseries as the previous example but it is non-interactive by default. We add a CSS class to it and a Javascript event so that the end-user can choose to initialize it. This can help reduce the amount of processing done on page load if there are multiple timeseries on the page.</p>
 						<div class="example">
-							<figure style="text-align:center;">
-								<div id="example3" vega-src="data/OB110462-simple.json" vega-scale="inherit">
+							<figure>
+								<div id="example4" class="toload">
 									<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
 								</div>
-								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+								<figcaption>An example using JSON loaded from a file</figcaption>
 							</figure>
 							<style>
 							.toload { position: relative; line-height: 0em; cursor: pointer; filter: grayscale(1); }
@@ -218,10 +238,9 @@
 							}
 							</style>
 							<script>
-								var ex3 = TimeSeries.create({},{'logging':true});
+								var ex4 = TimeSeries.create("data/OB110462-simple.json",{'logging':true});
 								// Add click event to load the interactive graph
-								S('#example3').addClass('toload');
-								S('#example3').on("click",{ts:ex3},function(e){
+								S('#example3').on("click",{ts:ex4},function(e){
 									// Initialise the TimeSeries
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
@@ -230,12 +249,12 @@
 							</script>
 						</div>
 					</li>
-					<li id="ex4">
-						<h3>Example 4</h3>
+					<li id="ex5">
+						<h3>Example 5</h3>
 						<p>A more complicated example with multiple series all in different <code>CSV</code> files.</p>
 						<div class="example">
-							<figure style="text-align:center;">
-								<div id="example4" vega-src="data/OB110462.json">
+							<figure>
+								<div id="example5" class="toload">
 									<img src="data/OB110462.png" style="width:800px;height:450px;" />
 								</div>
 								<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
@@ -260,10 +279,9 @@
 							<script>
 							S(document).ready(function(){
 
-								var ex4 = TimeSeries.create({},{'logging':true});
-
+								var ex5 = TimeSeries.create("data/OB110462.json",{'logging':true,'fit':true});
 								// Add click event to load the interactive graph
-								S('#example4').addClass('toload').on("click",{ts:ex4},function(e){
+								S('#example4').on("click",{ts:ex5},function(e){
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
 									S(e.currentTarget).off("click").removeClass('toload');
@@ -272,15 +290,15 @@
 							</script>
 						</div>
 					</li>
-					<li id="ex5">
-						<h3>Example 5</h3>
+					<li id="ex6">
+						<h3>Example 6</h3>
 						<p>This example uses a different dataset. Once again we delay loading until prompted by the user. In this example we style the tooltips using a CSS class (<code>aas-theme</code>) provided in the Javascript set-up.</p>
 						<div class="example">
-							<figure style="text-align:center;">
-								<div id="example5" vega-src="data/lightcurve.json" vega-scale="inherit">
+							<figure>
+								<div id="example6">
 									<img src="data/lightcurve.png" style="width:500px;height:350px;" />
 								</div>
-								<figcaption>An example using JSON loaded from a file specified by the attribute <code>vega-src</code></figcaption>
+								<figcaption>An example using JSON loaded from a file</figcaption>
 							</figure>
 							<style>
 							.toload { position: relative; line-height: 0em; cursor: pointer; filter: grayscale(1); }
@@ -306,10 +324,10 @@
 							}
 							</style>
 							<script>
-								var ex5 = TimeSeries.create({},{'logging':true,'tooltip':{'theme':'my-theme'}});
+								var ex6 = TimeSeries.create("data/lightcurve.json",{'logging':true,'fit':true,'tooltip':{'theme':'my-theme'}});
 								// Add click event to load the interactive graph
 								S('#example5').addClass('toload');
-								S('#example5').on("click",{ts:ex5},function(e){
+								S('#example5').on("click",{ts:ex6},function(e){
 									// Initialise the TimeSeries
 									e.data.ts.initialize(e.currentTarget);
 									// Remove the click event and the toload class
