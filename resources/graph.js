@@ -248,15 +248,13 @@ var Graph;
 		}
 
 		// Bind events
-		if(fullScreenApi.supportsFullScreen){
-			// Bind the fullscreen function to the double-click event if the browser supports fullscreen
-			this.canvas.on('dblclick', {me:this}, function(e){ e.data.me.toggleFullScreen(); });
-		}
+		this.canvas.on("dblclick", {me:this}, function(e){ e.data.me.trigger("dblclick",{event:e}); });
 		this.canvas.on("mousedown",{me:this}, function(e){ e.data.me.trigger("mousedown",{event:e}); });
 		this.canvas.on("mousemove",{me:this}, function(e){ e.data.me.trigger("mousemove",{event:e}); });
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
+		this.canvas.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 	}
 	Canvas.prototype.log = function(){
 		if(this.logging){
@@ -520,7 +518,21 @@ var Graph;
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
 			return true;
-		})
+		}).on("wheel",{me:this},function(ev){
+			var g = ev.data.me;	 // The graph object
+			var event = ev.event.originalEvent;
+			console.log('wheely good',ev,event)
+			g.trigger('wheel',{event:event});
+		}).on("dblclick",{me:this},function(ev){
+			var g = ev.data.me;	 // The graph object
+			if(ev.event){
+			console.log(ev)
+				var event = ev.event.originalEvent;
+				// Bind events if the browser supports fullscreen
+				if(fullScreenApi.supportsFullScreen) g.canvas.toggleFullScreen();
+				g.canvas.trigger('dblclick',{event:event});
+			}
+		});
 
 		// Extend the options with those provided by the user
 		this.setOptions(options);
