@@ -1,0 +1,103 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 400,
+	"height": 350,
+	"padding": 0,
+	"autosize": {"type": "fit", "resize": true},
+	"data": [{
+		"name": "Danish 1.54m",
+		"url": "data/OB110462-danish.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	},{
+		"name": "Model",
+		"url": "data/OB110462-model.csv",
+		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+	}],
+	"scales": [{
+		"name": "xscale",
+		"type": "time",
+		"range": "width",
+		"zero": false,
+		"domain": {"data": "Model", "field": "HJD"}
+	},{
+		"name": "yscale",
+		"type": "linear",
+		"range": "height",
+		"zero": false,
+		"domain": {"data": "Model", "field": "dmag"}
+	}],
+	"axes": [
+		{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "Observation time"
+		},{
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Intensity"
+		}
+	],
+	"marks":[{
+		"type": "line",
+		"from": {"data": "Model"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"strokeWidth": {"value": 2},
+				"strokeDash": {"value":[8,8]},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"stroke": {"value": "#999999"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			}
+		}
+	},{
+		"type": "rect",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+				"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
+				"width": {"value": 1},
+				"fill": {"value": "#FF7F00"}
+			},
+			"update": {
+				"fill": {"value": "#FF7F00"}
+			},
+			"hover": {
+				"fill": {"value": "#D60303"}
+			}
+		}
+	},{
+		"type": "symbol",
+		"from": {"data": "Danish 1.54m"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "HJD"},
+				"y": {"scale": "yscale", "field": "dmag"},
+				"shape": {"value": "circle"},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"shape": "cross",
+				"fill": {"value": "#FF7F00"},
+				"fillOpacity": {"value": 1},
+				"shape": {"value": "circle"},
+				"size": {"value": 16},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#D60303"},
+				"fillOpacity": {"value": 1},
+				"shape": {"value": "cross"},
+				"size": {"value": 100},
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y"}
+			}
+		}
+	}]
+}

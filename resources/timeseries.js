@@ -607,6 +607,14 @@ function AASTimeSeriesEmbed(el,json,opt){
 	return;
 }
 
+function Te(e, t, n, r) {
+  var i = '<html><head>' + t + '</head><body><pre><code class="json">',
+  o = '</code></pre>' + n + '</body></html>',
+  a = window.open('');
+  a.document.write(i + e + o),
+  a.document.title = Ae[r] + ' JSON Source'
+}
+
 // Convert dates
 dateFormat = "jd";
 function formatDate(dt,t){

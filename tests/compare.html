@@ -112,6 +112,48 @@
 				</div>
 			</div>
 		</div>
+		<div class="row">
+			<div class="compare">
+				<div class="col">
+					<div class="panel">
+						<h3>AASTimeseries</h3>
+						<div class="example">
+							<figure style="text-align:center;">
+								<div id="example2a" class="vega-embed"><img src="data/lightcurve.png" style="width:400px;height:350px;" /></div>
+								<figcaption>Figure 2a</figcaption>
+							</figure>
+							<!-- Javascript -->
+							<script>
+							// Create a timeseries object that will load from a JSON file
+							var ex = TimeSeries.create("OB110462-simple.json",{logging:false,fit:true});
+							// Initialise the timeseries object attached to a DOM element
+							ex.initialize(document.getElementById('example2a'));
+							</script>
+						</div>
+					</div>
+				</div>
+				<div class="col">
+					<div class="panel">
+						<h3>Vega</h3>
+						<div class="example">
+							<figure style="text-align: center;">
+								<div id="example2b"></div>
+								<figcaption>Figure 2b</figcaption>
+							</figure>
+							<!-- Javascript -->
+							<script>
+							vegaEmbed(
+								'#example2b',
+								'OB110462-simple.json',
+								{  }
+							);
+							</script>
+				
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<!-- FOOTER	-->
