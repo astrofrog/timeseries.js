@@ -55,8 +55,8 @@ var TimeSeries;
 		this.callback = "";
 		this.logging = false;
 		
-		
-		var scripts= document.getElementsByTagName('script');
+		// Work out the file path to the code for other resources
+		var scripts = document.getElementsByTagName('script');
 		var path = scripts[scripts.length-1].src.split('?')[0];
 		var idx = path.lastIndexOf("/");
 		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
