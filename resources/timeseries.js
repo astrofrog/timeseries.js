@@ -188,31 +188,7 @@
 		}
 		return this;
 	}
-	
-	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-	/** Detect free variable `module`. */
-	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
 
-	// Some AMD build optimizers, like r.js, check for condition patterns like:
-	if(typeof define == 'function' && typeof define.amd == 'object' && define.amd){
-		// Expose on the global object to prevent errors when loaded by a script
-		// tag in the presence of an AMD loader.
-		root.TimeSeries = TimeSeries;
-
-		// Define as an anonymous module so, through path mapping, it can be
-		// referenced as the "underscore" module.
-		define(function(){ return TimeSeries; });
-	}else if(freeModule) {
-		// Check for `exports` after `define` in case a build optimizer adds it.
-		// Export for Node.js.
-		(freeModule.exports = TimeSeries).TimeSeries = TimeSeries;
-		// Export for CommonJS support.
-		freeExports.TimeSeries = TimeSeries;
-	}else{
-		// Export to the global object.
-		root.TimeSeries = TimeSeries;
-	}
-	
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
@@ -638,6 +614,8 @@
 		ts.initialize(S(el)[0]);
 		return;
 	}
+
+	root.TimeSeries = TimeSeries;
 
 })(window || this);
 
