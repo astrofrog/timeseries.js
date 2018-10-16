@@ -47,7 +47,7 @@
 	var basedir = "";
 
 	TimeSeries = new function(){
-		this.version = "0.0.5";
+		this.version = "0.0.6";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
@@ -351,20 +351,30 @@
 		var n = data.length;
 		var f = "";
 		var files = [];
-		for(var i = 0; i < n; i++) files.push(this.directory + data[i].url);
+		var fn = function(csv,attr){
+			var json = CSV2JSON(csv,attr.dataset.format.parse);
+			this.datasets[attr.dataset.name] = json;
+			this.update(attr.dataset.name);
+			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
+		}
+
+		// Build an array of files to load
+		for(var i = 0; i < n; i++){
+			if(data[i].url) files.push(this.directory + data[i].url);
+		}
 
 		this.log('files',files,TimeSeries.filesLoaded(files))
+
+		// Process any inline values
+		for(var i = 0; i < n; i++){
+			if(data[i].values) fn.call(this,data[i].values,{'dataset':data[i],'files':files});
+		}
 
 		for(var j = 0; j < n; j++){
 			// Load data and store it in datasets.
 			// Update the graph if necessary
 			// If we've loaded all data we then call loaded()
-			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},function(csv,attr){
-				var json = CSV2JSON(csv,attr.dataset.format.parse);
-				this.datasets[attr.dataset.name] = json;
-				this.update(attr.dataset.name);
-				if(TimeSeries.filesLoaded(attr.files)) this.loaded();
-			});
+			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},fn);
 		}
 
 		return this;
