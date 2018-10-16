@@ -1051,7 +1051,7 @@
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
 			this.chart.padding = 0;
-			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs)*0.7 : 12;
+			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}
 		// Correct for sub-pixel positioning
