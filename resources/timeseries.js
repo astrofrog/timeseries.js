@@ -21,9 +21,7 @@
 		</html>
 */
 
-var TimeSeries;
-
-(function(){
+(function(root){
 
 	// First we will include all the useful helper functions
 	// Get the current Julian Date
@@ -35,11 +33,11 @@ var TimeSeries;
 
 	// A non-jQuery dependent function to get a style
 	function getStyle(el, styleProp) {
-		if (typeof window === 'undefined') return;
+		if (typeof root === 'undefined') return;
 		var style;
 		var el = document.getElementById(el);
 		if (el.currentStyle) style = el.currentStyle[styleProp];
-		else if (window.getComputedStyle) style = document.defaultView.getComputedStyle(el, null).getPropertyValue(styleProp);
+		else if (root.getComputedStyle) style = document.defaultView.getComputedStyle(el, null).getPropertyValue(styleProp);
 		if (style && style.length === 0) style = null;
 		return style;
 	}
@@ -49,7 +47,7 @@ var TimeSeries;
 	var basedir = "";
 
 	TimeSeries = new function(){
-		this.version = "0.0.4";
+		this.version = "0.0.5";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
@@ -191,6 +189,30 @@ var TimeSeries;
 		return this;
 	}
 	
+	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+	/** Detect free variable `module`. */
+	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+	// Some AMD build optimizers, like r.js, check for condition patterns like:
+	if(typeof define == 'function' && typeof define.amd == 'object' && define.amd){
+		// Expose on the global object to prevent errors when loaded by a script
+		// tag in the presence of an AMD loader.
+		root.TimeSeries = TimeSeries;
+
+		// Define as an anonymous module so, through path mapping, it can be
+		// referenced as the "underscore" module.
+		define(function(){ return TimeSeries; });
+	}else if(freeModule) {
+		// Check for `exports` after `define` in case a build optimizer adds it.
+		// Export for Node.js.
+		(freeModule.exports = TimeSeries).TimeSeries = TimeSeries;
+		// Export for CommonJS support.
+		freeExports.TimeSeries = TimeSeries;
+	}else{
+		// Export to the global object.
+		root.TimeSeries = TimeSeries;
+	}
+	
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
@@ -251,6 +273,8 @@ var TimeSeries;
 	}
 	TS.prototype.postProcess = function(){
 
+		this.log('postProcess',this)
+
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
 			this.options.width = this.initializedValues.w;
@@ -262,7 +286,8 @@ var TimeSeries;
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
 		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 
-		this.loadDatasets(this.json.data);
+		if(this.json) this.loadDatasets(this.json.data);
+		
 		return this;
 	}
 	/*
@@ -598,14 +623,14 @@ var TimeSeries;
 		return object;
 	}
 
+	root.AASTimeSeriesEmbed = function(el,json,opt){
+		var ts = TimeSeries.create(json,opt);
+		ts.initialize(S(el)[0]);
+		return;
+	}
 
-})(S);
+})(this);
 
-function AASTimeSeriesEmbed(el,json,opt){
-	var ts = TimeSeries.create(json,opt);
-	ts.initialize(S(el)[0]);
-	return;
-}
 
 function Te(e, t, n, r) {
   var i = '<html><head>' + t + '</head><body><pre><code class="json">',

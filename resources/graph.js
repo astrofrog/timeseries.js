@@ -1,6 +1,4 @@
-var Graph;
-
-(function(){
+(function(root){
 
 	// First we will include all the useful helper functions
 	
@@ -67,7 +65,7 @@ var Graph;
 		};
 	}
 	// export api
-	window.fullScreenApi = fullScreenApi;
+	root.fullScreenApi = fullScreenApi;
 	// End of Full Screen API
 
 	// Extra mathematical/helper functions that will be useful - inspired by http://alexyoung.github.com/ico/
@@ -215,7 +213,7 @@ var Graph;
 		this.container.css({'position':'relative','width':this.wide,'height':this.tall});
 		// We'll need to change the sizes when the window changes size
 		var _obj = this;
-		window.addEventListener('resize',function(e){ _obj.resize(); });
+		root.addEventListener('resize',function(e){ _obj.resize(); });
 
 		// If the Javascript function has been passed a width/height
 		// those take precedence over the CSS-set values
@@ -335,10 +333,10 @@ var Graph;
 			
 			if(this.fullwindow){
 				this.canvas.css({'width':0,'height':0});
-				w = $(window).width();
-				h = $(window).height();
+				w = window.outerWidth;
+				h = window.outerHeight;
 				this.canvas.css({'width':w+'px','height':h+'px'});
-				$(document).css({'width':w+'px','height':h+'px'});
+				S(document).css({'width':w+'px','height':h+'px'});
 			}else{
 				// We have to zap the width of the canvas to let it take the width of the container
 				this.canvas.css({'width':0,'height':0});
@@ -1140,7 +1138,7 @@ var Graph;
 		
 		for(var a in axes){
 
-			var o = this.options[a].orient;
+			var o = this.options[a].orient || "left";
 			// Set axis direction
 			var d = "x";
 			if(o=="left" || o=="right") d = "y";
@@ -1189,12 +1187,11 @@ var Graph;
 				if(o=="bottom") p = [c.left+c.width/2,this.options.height-Math.round(fs/2)-this.chart.padding];
 				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
 
-				if(orient[o].rot) ctx.rotate(-orient[o].rot);
+				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
 				ctx.fillText(this.options[a].title, p[0], p[1]);
-				if(orient[o].rot) ctx.rotate(orient[o].rot);
+				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
 				ctx.closePath();
 			}
-
 
 			// Draw axis grid and labels
 			ctx.textAlign = orient[o].textAlign || "end";
@@ -1645,4 +1642,6 @@ var Graph;
 		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
 
-})(S);
+	root.Graph = Graph;
+
+})(this);
