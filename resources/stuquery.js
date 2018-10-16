@@ -495,8 +495,6 @@
 	}
 
 	root.stuQuery = stuQuery;
-	root.S = function(e){
-		return new stuQuery(e);
-	}
+	root.S = function(e){ return new stuQuery(e); }
 
-})(this);
+})(window || this);

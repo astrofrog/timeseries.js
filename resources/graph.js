@@ -1644,4 +1644,4 @@
 
 	root.Graph = Graph;
 
-})(this);
+})(window || this);

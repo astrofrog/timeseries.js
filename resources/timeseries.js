@@ -629,7 +629,7 @@
 		return;
 	}
 
-})(this);
+})(window || this);
 
 
 function Te(e, t, n, r) {
