@@ -692,4 +692,3 @@ function JD(jd,t,offs){
 	}
 	return this;
 }
-
