@@ -380,7 +380,7 @@
 		if(options.logging) this.logging = true;
 
 		// Define some variables
-		this.version = "0.2.3";
+		this.version = "0.2.4";
 		this.start = new Date();
 		if(typeof element!="object") return;
 		this.data = {};
@@ -1130,6 +1130,8 @@
 		// Draw main rectangle
 		ctx.strokeStyle = (this.options.grid.color || 'rgb(0,0,0)');
 		ctx.lineWidth = this.options.grid.border;
+		ctx.setLineDash([1,0]);
+
 		if(typeof this.options.grid.background=="string"){
 			ctx.fillStyle = this.options.grid.background;
 			ctx.fillRect(c.left,c.top,c.width,c.height);
