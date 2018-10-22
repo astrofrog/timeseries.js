@@ -157,6 +157,7 @@
 		this.background = "rgb(255,255,255)";
 		this.events = {resize:""};	// Let's add some default events
 		this.logging = false;
+		this.offset = {'x':0,'y':0};
 
 		// Add options to detect for older IE
 		this.ie = false;
@@ -381,6 +382,7 @@
 		this.chart = {};
 		this.options = {};
 		this.selecting = false;
+		this.panning = false;
 		this.events = [];
 		this.lines = [];
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
@@ -410,15 +412,16 @@
 			// Check if there is a data point at the position that the user clicked.
 			d = g.dataAtMousePosition(event.layerX,event.layerY);
 
-			// No data so we'll start the zoom selection
+			// No data (but the alt key is pressed) so we'll start the zoom selection
 			if(g.within(event.layerX,event.layerY) && g.options.zoomable){
 				g.selectfrom = [event.layerX,event.layerY];
 				g.selectto = g.selectfrom;
-				g.selecting = true;
+				if(event.altKey) g.selecting = true;
+				else g.panning = true;
 				if(g.coordinates) g.coordinates.css({'display':'none'})
 			}
 			// Keep a copy of the current state of the canvas
-			g.canvas.copyToClipboard();
+			// g.canvas.copyToClipboard();
 
 			if(!is(d,"undefined")){
 				// This is a data point so we'll trigger the clickpoint event
@@ -434,7 +437,7 @@
 			if(!event) return;
 			var g = ev.data.me;	// The graph object
 			// Attach hover event
-			if(!g.selecting){
+			if(!g.selecting && !g.panning){
 				d = g.dataAtMousePosition(event.offsetX,event.offsetY);
 				g.highlight(d);
 
@@ -449,7 +452,8 @@
 					var pos = g.pixel2data(event.layerX,event.layerY);
 					g.trigger("mousemove",{event:event,x:pos.x,y:pos.y});
 				}
-			}else{
+			}
+			if(g.selecting || g.panning){
 				if(g.within(event.layerX,event.layerY)){
 					g.selectto = [event.layerX,event.layerY];
 					if(g.options.zoommode == "x"){
@@ -460,15 +464,28 @@
 						g.selectfrom[0] = g.getXPos(g.x.min);
 						g.selectto[0] = g.getXPos(g.x.max);
 					}
-
 					g.canvas.pasteFromClipboard();
-					
-					// Draw selection rectangle
 					g.canvas.ctx.beginPath();
-					g.canvas.ctx.fillStyle = g.options.grid.colorZoom || 'rgba(0,0,0,0.1)';
-					g.canvas.ctx.lineWidth = g.options.grid.border;
-					g.canvas.ctx.fillRect(g.selectfrom[0]-0.5,g.selectfrom[1]-0.5,g.selectto[0]-g.selectfrom[0],g.selectto[1]-g.selectfrom[1]);
-					g.canvas.ctx.fill();
+					if(g.selecting){
+						// Draw selection rectangle
+						g.canvas.ctx.fillStyle = g.options.grid.colorZoom || 'rgba(0,0,0,0.1)';
+						g.canvas.ctx.lineWidth = g.options.grid.border;
+						g.canvas.ctx.fillRect(g.selectfrom[0]-0.5,g.selectfrom[1]-0.5,g.selectto[0]-g.selectfrom[0],g.selectto[1]-g.selectfrom[1]);
+						g.canvas.ctx.fill();
+					}
+					if(g.panning){
+						g.canvas.ctx.strokeStyle = 'rgba(0,100,200,1)';
+						g.canvas.ctx.setLineDash([5,8]);
+						g.canvas.ctx.lineWidth = 2;
+						g.canvas.ctx.textAlign = "center";
+						g.canvas.ctx.textBaseline = "middle";
+						g.canvas.ctx.moveTo(g.selectfrom[0],g.selectfrom[1]);
+						g.canvas.ctx.lineTo(g.selectto[0],g.selectto[1]);
+						g.canvas.ctx.stroke();
+						g.canvas.ctx.fillStyle = 'rgba(0,0,0,0.4)';
+						g.canvas.ctx.fillText('Panning (alt+mouse to zoom)',G.mean([g.selectto[0],g.selectfrom[0]]),G.mean([g.selectto[1],g.selectfrom[1]]));
+						g.canvas.ctx.fill();
+					}
 					g.canvas.ctx.closePath();
 				}
 			}
@@ -507,7 +524,11 @@
 					g.zoom(xlo,xhi,ylo,yhi);
 				}
 			}
+			if(g.panning){
+				console.log('end panning')
+			}
 			g.selecting = false;
+			g.panning = false;
 			g.canvas.pasteFromClipboard();
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
@@ -714,6 +735,12 @@
 		this.defineAxis("y");
 		return this;
 	}
+
+	Graph.prototype.pan = function(x,y){
+		//this.canvas.offset
+		console.log('pan')
+	}
+
 	Graph.prototype.zoom = function(){
 		var args = Array.prototype.slice.call(arguments, 0);
 		this.coordinates.css({'display':'none'});
@@ -833,7 +860,7 @@
 		return this;
 	}
 	Graph.prototype.highlight = function(d){
-		if(this.selecting) return;	// If we are dragging we don't want to highlight symbols
+		if(this.selecting) return;	// If we are panning we don't want to highlight symbols
 		if(this.lookup && d && d.length == 2){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
