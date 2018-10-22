@@ -238,7 +238,7 @@
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
-		this.canvas.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
+		this.container.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 		if(fullScreenApi.supportsFullScreen){
 			var _obj = this;
 			document.addEventListener(fullScreenApi.fullScreenEventName, function(event){
@@ -406,7 +406,6 @@
 		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
 			var g = ev.data.me;	// The graph object
-			console.log('mousedown',g);
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
 			d = g.dataAtMousePosition(event.layerX,event.layerY);
@@ -514,10 +513,16 @@
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
-			if(ev.data.options.scrollWheelZoom) ev.event.originalEvent.preventDefault();
+			var oe = ev.event.originalEvent;
+			var me = ev.data.me;
+			var c = {'x':oe.layerX,'y':oe.layerY};
+			var co = me.coordinates;
+			if(co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
+			if(ev.data.options.scrollWheelZoom) oe.preventDefault();
 			var f = 0.8;
-			ev.data.me.zoom((ev.event.originalEvent.deltaY > 0 ? 1/f : f),ev.event.originalEvent.layerX,ev.event.originalEvent.layerY);
-			ev.data.me.trigger('wheel',{event:ev.event.originalEvent});
+			if(co) co.css({'display':''});
+			me.zoom((oe.deltaY > 0 ? 1/f : f),c.x,c.y);
+			me.trigger('wheel',{event:oe});
 		}).on("dblclick",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			if(ev.event){
@@ -711,6 +716,7 @@
 	}
 	Graph.prototype.zoom = function(){
 		var args = Array.prototype.slice.call(arguments, 0);
+		this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
 		if(args.length == 3){
 			var s = args[0];
@@ -906,8 +912,6 @@
 				this.canvas.container.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
 				this.coordinates = this.canvas.container.find('.graph-tooltip');
 			}
-			// Prevent the wheel event (on the tooltip) propagating
-			if(this.coordinates) this.coordinates.css({'display':''}).on('wheel',{me:this},function(e){ if(e){ e.preventDefault().stopPropagation(); } });
 			if(typeof data.css=="object") this.coordinates.css(data.css);
 			
 			// Build the hovertext output
