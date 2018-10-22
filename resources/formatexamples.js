@@ -9,7 +9,21 @@ S(document).ready(function(){
 
 	function highlight(el){
 		var els = S(examples[el]).find('.prettyprint');
-		for(var i = 0; i < els.length; i++) hljs.highlightBlock(els[i]);
+		for(var i = 0; i < els.length; i++){
+
+			// Add styling to code blocks
+			hljs.highlightBlock(els[i]);
+
+			// Get the final markup
+			markup = S(els[i]).html()
+
+			// Make JSON files into links
+			markup = markup.replace(/([\"\'])([^\"\']*\.json)([\"\'])/g,function(m,p1,p2,p3){ return p1+'<a href="'+p2+'">'+p2+'</a>'+p3; });
+
+			// Add back to the document
+			S(els[i]).html(markup);
+		}
+
 	}
 
 	for(var i = 0; i < examples.length; i++){
@@ -37,19 +51,7 @@ S(document).ready(function(){
 		// Append the 'How to do it' content
 		S(examples[i]).append((showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':''))
 
-		match = js.match(/[\"\']([^\"\']*\.json)[\"\']/);
-		if(match && match.length == 2 && match[1].indexOf(/schema/) < 0){
-			S().ajax(match[1],{
-				'i': i,
-				'file':match[1],
-				'success': function(d,attr){
-					S(examples[attr.i]).append('<h4>JSON - '+attr.file+'</h4><pre class="prettyprint lang-js">'+d+'</pre>')
-					highlight(attr.i);
-				}
-			});
-		}else{
-			highlight(i);
-		}
+		highlight(i);
 	}
 
 	// Update anchor now that we've updated the page		
