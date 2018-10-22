@@ -48,7 +48,6 @@
 			}
 			return false;
 		}
-
 		if(typeof els==="string") this.e = this.querySelector(document,els);
 		else if(typeof els==="object") this.e = (typeof els.length=="number") ? els : [els];
 		for(var it in this.e) this[it] = this.e[it];

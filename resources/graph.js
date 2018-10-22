@@ -22,9 +22,8 @@
 	},
 	browserPrefixes = 'webkit moz o ms khtml'.split(' ');
 	// check for native support
-	if(typeof document.cancelFullScreen != 'undefined') {
-		fullScreenApi.supportsFullScreen = true;
-	}else{
+	if(typeof document.cancelFullScreen != 'undefined') fullScreenApi.supportsFullScreen = true;
+	else{
 		// check for fullscreen support by vendor prefix
 		for(var i = 0, il = browserPrefixes.length; i < il; i++ ) {
 			fullScreenApi.prefix = browserPrefixes[i];
@@ -47,22 +46,9 @@
 					return document[this.prefix + 'FullScreen'];
 			}
 		}
-		fullScreenApi.requestFullScreen = function(el) {
-			return (this.prefix === '') ? el.requestFullScreen() : el[this.prefix + 'RequestFullScreen']();
-		}
-		fullScreenApi.cancelFullScreen = function(el) {
-			return (this.prefix === '') ? document.cancelFullScreen() : document[this.prefix + 'CancelFullScreen']();
-		}
-	}
-	// jQuery plugin
-	if (typeof jQuery != 'undefined') {
-		jQuery.fn.requestFullScreen = function() {
-			return this.each(function() {
-				if (fullScreenApi.supportsFullScreen) {
-					fullScreenApi.requestFullScreen(this);
-				}
-			});
-		};
+		fullScreenApi.requestFullScreen = function(el){ return (this.prefix === '') ? el.requestFullScreen() : el[this.prefix + 'RequestFullScreen'](); }
+		fullScreenApi.cancelFullScreen = function(el){ return (this.prefix === '') ? document.cancelFullScreen() : document[this.prefix + 'CancelFullScreen'](); }
+		fullScreenApi.element = function(){ return document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement; }
 	}
 	// export api
 	root.fullScreenApi = fullScreenApi;
@@ -164,8 +150,8 @@
 		this.c = '';
 		this.wide = 0;
 		this.tall = 0;
-		this.fullscreen = false;
 		this.fullwindow = false;
+		this.fullscreen = false;
 		this.transparent = false;
 		this.color = "";
 		this.background = "rgb(255,255,255)";
@@ -253,6 +239,12 @@
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
 		this.canvas.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
+		if(fullScreenApi.supportsFullScreen){
+			var _obj = this;
+			document.addEventListener(fullScreenApi.fullScreenEventName, function(event){
+				_obj.fullscreen = (_obj.container[0] == fullScreenApi.element());
+			});
+		}
 	}
 	Canvas.prototype.log = function(){
 		if(this.logging){
@@ -308,16 +300,20 @@
 	}
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
-		if(fullScreenApi.supportsFullScreen) {
-			this.elem = this.container[0];
-			if(fullScreenApi.isFullScreen()){
-				fullScreenApi.cancelFullScreen(this.elem);
-				this.fullscreen = false;
-			}else{
-				fullScreenApi.requestFullScreen(this.elem);
-				this.fullscreen = true;
-			}
-			this.log('toggleFullScreen',this.fullscreen)
+		console.log('toggleFullScreen',this.fullscreen);
+		this.log('toggleFullScreen',this.fullscreen)
+
+		this.elem = this.container[0];
+		
+		if(this.fullscreen){
+			if(document.exitFullscreen) document.exitFullscreen();
+			else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+			else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+		}else{
+			if(this.elem.requestFullscreen) this.elem.requestFullscreen();
+			else if(this.elem.mozRequestFullScreen) this.elem.mozRequestFullScreen();
+			else if(this.elem.webkitRequestFullscreen) this.elem.webkitRequestFullscreen();
+			else if(this.elem.msRequestFullscreen) this.elem.msRequestFullscreen();
 		}
 	}
 	// A function to be called whenever the <canvas> needs to be resized.
@@ -326,8 +322,6 @@
 	Canvas.prototype.resize = function(w,h){
 		if(!this.canvas) return;
 		if(!w || !h){
-			// Reset the fullscreen toggle if necessary
-			//if(this.fullscreen && !fullScreenApi.isFullScreen()) this.fullscreen = false;
 			if(this.fullscreen) this.container.css({'background':'white'});
 			else this.container.css({'background':this.containerbg});
 			
@@ -412,25 +406,28 @@
 		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
 			var g = ev.data.me;	// The graph object
+			console.log('mousedown',g);
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
 			d = g.dataAtMousePosition(event.layerX,event.layerY);
-			if(is(d,"undefined")){
-				// No data so we'll start the zoom selection
-				if(g.within(event.layerX,event.layerY) && g.options.zoomable){
-					g.selectfrom = [event.layerX,event.layerY];
-					g.selectto = g.selectfrom;
-					g.selecting = true;
-				}
-				// Keep a copy of the current state of the canvas
-				g.canvas.copyToClipboard();
-			}else{
+
+			// No data so we'll start the zoom selection
+			if(g.within(event.layerX,event.layerY) && g.options.zoomable){
+				g.selectfrom = [event.layerX,event.layerY];
+				g.selectto = g.selectfrom;
+				g.selecting = true;
+				if(g.coordinates) g.coordinates.css({'display':'none'})
+			}
+			// Keep a copy of the current state of the canvas
+			g.canvas.copyToClipboard();
+
+			if(!is(d,"undefined")){
 				// This is a data point so we'll trigger the clickpoint event
 				t = parseInt(d[0]);
 				i = parseInt(d[1]);
 				d = g.data[t];
 				ii = g.getPixPos(event.layerX,event.layerY);
-				g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:event.layerX,ypix:ii[1],title:d.title,color:d.color});
+				a = g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:event.layerX,ypix:ii[1],title:d.title,color:d.color});
 			}
 			return true;
 		}).on("mousemove",{me:this},function(ev){
@@ -525,8 +522,8 @@
 			var g = ev.data.me;	 // The graph object
 			if(ev.event){
 				var event = ev.event.originalEvent;
-				// Bind events if the browser supports fullscreen
-				if(fullScreenApi.supportsFullScreen) g.canvas.toggleFullScreen();
+				// Bind events
+				g.canvas.toggleFullScreen();
 				g.canvas.trigger('dblclick',{event:event});
 			}
 		});
@@ -1067,6 +1064,7 @@
 			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}
+
 		// Correct for sub-pixel positioning
 		b = o.grid.border*0.5;
 		this.chart.padding = o.padding || this.chart.padding;

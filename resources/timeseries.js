@@ -278,6 +278,8 @@
 		// Store the callback function
 		if(typeof callback==="function") this.callback = callback;
 
+		if(!e) console.log('ERROR',e,callback)
+
 		var el = S(e);
 		if(el.length == 0) return this;
 		this.el = e;
