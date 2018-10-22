@@ -516,15 +516,14 @@
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
 			return true;
-		}).on("wheel",{me:this},function(ev){
-			var g = ev.data.me;	 // The graph object
-			var event = ev.event.originalEvent;
-			console.log('wheely good',ev,event)
-			g.trigger('wheel',{event:event});
+		}).on("wheel",{me:this,options:options},function(ev){
+			if(ev.data.options.scrollWheelZoom) ev.event.originalEvent.preventDefault();
+			var f = 0.8;
+			ev.data.me.zoom((ev.event.originalEvent.deltaY > 0 ? 1/f : f),ev.event.originalEvent.layerX,ev.event.originalEvent.layerY);
+			ev.data.me.trigger('wheel',{event:ev.event.originalEvent});
 		}).on("dblclick",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			if(ev.event){
-			console.log(ev)
 				var event = ev.event.originalEvent;
 				// Bind events if the browser supports fullscreen
 				if(fullScreenApi.supportsFullScreen) g.canvas.toggleFullScreen();
@@ -713,20 +712,33 @@
 		this.defineAxis("y");
 		return this;
 	}
-
-	Graph.prototype.zoom = function(x1,x2,y1,y2){
-		// Immediately return if the input seems wrong
-		if(typeof x1!="number" || typeof x2!="number" || typeof y1!="number" || typeof y2!="number"){
+	Graph.prototype.zoom = function(){
+		var args = Array.prototype.slice.call(arguments, 0);
+		// Zoom by a scale around a point [scale,x,y]
+		if(args.length == 3){
+			var s = args[0];
+			// Find the center
+			var c = this.pixel2data(args[1],args[2]);
+			// Calculate the new zoom range
+			args = [c.x - s*(c.x-this.x.min), c.x + s*(this.x.max-c.x), c.y - s*(c.y-this.y.min), c.y + s*(this.y.max-c.y)];
+		}
+		// Zoom into a defined region [x1,x2,y1,y2]
+		if(args.length == 4){
+			if(typeof args[0]!="number" || typeof args[1]!="number" || typeof args[2]!="number" || typeof args[3]!="number") args = 0;		
+			else{
+				// Re-define the axes
+				this.defineAxis("x",args[0],args[1]);
+				this.defineAxis("y",args[2],args[3]);
+			}
+		}
+		// No parameters set so reset the view
+		if(args.length == 0){
 			this.x.min = this.x.datamin;
 			this.x.max = this.x.datamax;
 			this.y.min = this.y.datamin;
 			this.y.max = this.y.datamax;
 			this.defineAxis("x");
 			this.defineAxis("y");		
-		}else{
-			// Re-define the axes
-			this.defineAxis("x",x1,x2);
-			this.defineAxis("y",y1,y2);
 		}
 		this.calculateData();
 		// Update the graph
@@ -897,7 +909,8 @@
 				this.canvas.container.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
 				this.coordinates = this.canvas.container.find('.graph-tooltip');
 			}
-			if(this.coordinates) this.coordinates.css({'display':''});
+			// Prevent the wheel event (on the tooltip) propagating
+			if(this.coordinates) this.coordinates.css({'display':''}).on('wheel',{me:this},function(e){ if(e){ e.preventDefault().stopPropagation(); } });
 			if(typeof data.css=="object") this.coordinates.css(data.css);
 			
 			// Build the hovertext output
