@@ -264,7 +264,16 @@
 		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 
 		if(this.json) this.loadDatasets(this.json.data);
-		
+
+		// Attach Hammer events
+		if(typeof Hammer!=="undefined"){
+			Hammer.on(this.graph.c, "pan", function(ev) {
+				S('.msg').html('panning '+ev.type).css({'display':'block'});
+			});
+		}
+
+		console.log(this.graph)
+
 		return this;
 	}
 	/*
@@ -296,9 +305,9 @@
 		var _obj = this;
 		var delay = false;
 		if('ontouchstart' in document.documentElement && typeof Hammer==="undefined"){
-			delay = true;	
+			delay = true;
 			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ S('h1').append('loaded hammer'); this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
+			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
 		}
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){

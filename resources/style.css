@@ -4,6 +4,17 @@ a:hover { text-decoration: underline; }
 header h1 { margin: 0px; padding-top: 0.5em; }
 header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 
+.msg {
+	position: fixed;
+	height: auto;
+	width: 100%;
+	left: 0px;
+	top: 0px;
+	padding: 0.25em 0.5em;
+	background: #efcfcf;
+	display: none;
+}
+
 figure {
 	text-align: center;
 	line-height: 0px;
