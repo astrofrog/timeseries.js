@@ -1457,7 +1457,6 @@
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 					ctx.stroke();
-//					ctx.closePath();
 				}
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
@@ -1534,7 +1533,6 @@
 		return this;
 	}
 
-
 	Graph.prototype.drawRect = function(datum){
 		if(datum.props.x2 || datum.props.y2){
 			var x1 = (datum.props.x1 || datum.props.x);
@@ -1555,6 +1553,7 @@
 		}
 		return [];
 	}
+
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.canvas.ctx.beginPath();
 		var oldp = {};
@@ -1573,6 +1572,7 @@
 		this.canvas.ctx.stroke();
 		return this;
 	}
+
 	Graph.prototype.drawShape = function(datum){
 
 		var x1 = datum.props.x;
@@ -1649,6 +1649,7 @@
 		
 		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
 	}
+
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.weight) i.weight = 1;
