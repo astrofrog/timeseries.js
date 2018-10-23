@@ -267,11 +267,11 @@
 
 		// Attach Hammer events
 		if(typeof Hammer!=="undefined"){
+			S('.msg').html('Loaded Hammer').css({'display':'block'});
+			S('header').css({'margin-top':'2em'});
 			Hammer.on(this.graph.c, "pan", function(ev) {
 				S('.msg').html('panning '+ev.type).css({'display':'block'});
 			});
-			S('.msg').html('panning '+ev.type).css({'display':'block'});
-			S('header').css({'margin-top':'2em'});
 		}
 
 		return this;
