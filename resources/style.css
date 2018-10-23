@@ -131,3 +131,8 @@ figure figcaption {
 		-webkit-transform: scaleY(1.0);
 	}
 }
+
+@media only screen and (max-width: 1080px) {
+	.row { padding: 0 1em; }
+	figure > div, img, canvas { max-width: 100%!important; }
+}
