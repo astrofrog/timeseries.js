@@ -294,12 +294,19 @@
 
 		// Load any necessary extra js/css
 		var _obj = this;
+		var delay = false;
+		if('ontouchstart' in document.documentElement && typeof Hammer==="undefined"){
+			delay = true;	
+			// Load the Javascript and, once done, call this function again
+			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ S('h1').append('loaded hammer'); this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
+		}
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
+			delay = true;
 			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources(basedir+"graph.js", {"this":this, "el":e}, function(ev){ this.log('ev',ev,this); this.log('loadedResources'); this.initialize(ev.data.el); });
-		}else{
-
+			TimeSeries.loadResources(basedir+"graph.js", {"this":this, "el":e}, function(ev){ this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
+		}
+		if(!delay){
 			if(this.file){
 				// Load the Vega-JSON file
 				var idx = this.file.lastIndexOf("/");
