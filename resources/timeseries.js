@@ -267,8 +267,6 @@
 
 		// Attach Hammer events
 		if(typeof Hammer!=="undefined"){
-			S('.msg').html('Loaded Hammer').css({'display':'block'});
-			S('header').css({'margin-top':'2em'});
 			Hammer.on(this.graph.c, "pan", function(ev) {
 				S('.msg').html('panning '+ev.type).css({'display':'block'});
 			});
@@ -306,8 +304,10 @@
 		var delay = false;
 		if('ontouchstart' in document.documentElement && typeof Hammer==="undefined"){
 			delay = true;
+			S('.msg').html('Loading Hammer...').css({'display':'block'});
+			S('header').css({'margin-top':'2em'});
 			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
+			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ S('.msg').html('Hammer loaded'); this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
 		}
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
