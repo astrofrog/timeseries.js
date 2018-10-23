@@ -268,7 +268,7 @@
 		// Attach Hammer events
 		S('.msg').html((typeof Hammer!=="undefined" ? "Got it":"Not loaded"));
 		if(typeof Hammer!=="undefined"){
-			this.hammer = new Hammer(this.graph.container[0], {});
+			this.hammer = new Hammer(this.el, {});
 			this.hammer.on("tap", function(ev) {
 				S('.msg').html('tap '+ev.type);
 			});
