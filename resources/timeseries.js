@@ -265,9 +265,6 @@
 
 		if(this.json) this.loadDatasets(this.json.data);
 
-		// Attach Hammer events
-		S('.msg').html('postProcess');
-
 		return this;
 	}
 	/*
@@ -297,7 +294,6 @@
 
 		// Load any necessary extra js/css
 		var _obj = this;
-		S('.msg').css({'display':'block'});
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
