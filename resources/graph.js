@@ -489,46 +489,43 @@
 		}).on("mouseup",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			var event = ev.event.originalEvent;
-			var c1,c2,xlo,xhi,ylo,yhi;
-			if(g.selecting){
-				c1 = g.pixel2data(g.selectfrom[0],g.selectfrom[1]);
-				c2 = g.pixel2data(g.selectto[0],g.selectto[1]);
+			function getDataRange(x1,x2,y1,y2){
+				var c1 = g.pixel2data(x1,y1);
+				var c2 = g.pixel2data(x2,y2);
+				var xlo = (c1.x < c2.x) ? c1.x : c2.x;
+				var xhi = (c1.x < c2.x) ? c2.x : c1.x;
+				var ylo = (c1.y < c2.y) ? c1.y : c2.y;
+				var yhi = (c1.y < c2.y) ? c2.y : c1.y;
+				return [xlo,xhi,ylo,yhi];
 			}
-			if(g.panning){
-				// Work out the new range
-				c1 = g.pixel2data(g.chart.left-g.offset.x,g.chart.top-g.offset.y);
-				c2 = g.pixel2data(g.chart.left+g.chart.width-g.offset.x,g.chart.top+g.chart.height-g.offset.y);
-			}
-
-			xlo = (c1.x < c2.x) ? c1.x : c2.x;
-			xhi = (c1.x < c2.x) ? c2.x : c1.x;
-			ylo = (c1.y < c2.y) ? c1.y : c2.y;
-			syhi = (c1.y < c2.y) ? c2.y : c1.y;
-
 			if(g.selecting){
-				if(c1.x==c2.x && c1.y==c2.y){
-					g.zoom();
-				}else{
+				var r = getDataRange(g.selectfrom[0],g.selectto[0],g.selectfrom[1],g.selectto[1]);
+
+				// No difference between points - reset view
+				if(r[0]==r[1] && r[2]==r[3]) g.zoom();
+				else{
 					if(g.options.zoommode == "x"){
 						// If we are only zooming in the x-axis we don't change the y values
-						ylo = g.y.datamin;
-						yhi = g.y.datamax;
+						r[2] = g.y.datamin;
+						r[3] = g.y.datamax;
 					}
 					if(g.options.zoommode == "y"){
 						// If we are only zooming in the y-axis we don't change the x values
-						xlo = g.x.datamin;
-						xhi = g.x.datamax;
+						r[0] = g.x.datamin;
+						r[1] = g.x.datamax;
 					}
-					g.zoom(xlo,xhi,ylo,yhi);
+					g.zoom(r[0],r[1],r[2],r[3]);
 				}
 				g.selecting = false;
 			}
 			if(g.panning){
+				// Work out the new range
+				var r = getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
 				// Reset the offsets
 				g.offset.x = 0;
 				g.offset.y = 0;
 				// Zoom to new range
-				g.zoom(xlo,xhi,ylo,yhi);
+				g.zoom(r[0],r[1],r[2],r[3]);
 				g.panning = false;
 			}
 			g.canvas.pasteFromClipboard();
@@ -1457,6 +1454,7 @@
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 					ctx.stroke();
+//					ctx.closePath();
 				}
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
@@ -1533,6 +1531,7 @@
 		return this;
 	}
 
+
 	Graph.prototype.drawRect = function(datum){
 		if(datum.props.x2 || datum.props.y2){
 			var x1 = (datum.props.x1 || datum.props.x);
@@ -1553,7 +1552,6 @@
 		}
 		return [];
 	}
-
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.canvas.ctx.beginPath();
 		var oldp = {};
@@ -1572,7 +1570,6 @@
 		this.canvas.ctx.stroke();
 		return this;
 	}
-
 	Graph.prototype.drawShape = function(datum){
 
 		var x1 = datum.props.x;
@@ -1649,7 +1646,6 @@
 		
 		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
 	}
-
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.weight) i.weight = 1;
