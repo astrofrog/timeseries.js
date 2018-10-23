@@ -239,6 +239,76 @@
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
 		this.container.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
+		if('ontouchstart' in document.documentElement){
+			var ongoingTouches = [];
+			function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
+			function copyTouch(touch){ return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY }; }
+			function updateEvent(e,touches){
+				var el = e.currentTarget;
+				var oe = clone(e.originalEvent);
+				var x = [];
+				var y = [];
+				for(var i = 0; i < touches.length; i++){ x.push(touches[i].pageX); y.push(touches[i].pageY); }
+				oe.layerX = G.mean(x)-el.offsetLeft;
+				oe.layerY = G.mean(y)-el.offsetTop;
+				oe.offsetX = el.offsetLeft;
+				oe.offsetY = el.offsetTop;
+				return oe;
+			}
+			var olddist = null;
+			this.container.on("touchstart",{me:this}, function(e){
+				var ev = e.originalEvent;
+				ev.preventDefault();
+				olddist = null;
+				var touches = ev.touches;
+				if(touches && touches.length==1){
+					// One touch maps to pan (mousedown)
+					e.originalEvent = updateEvent(e,touches)
+					e.originalEvent.which = 1;
+					e.data.me.trigger("mousedown",{event:e});
+				}
+			});
+			var lastevent = null;
+			this.container.on("touchmove",{me:this}, function(e){
+				e.originalEvent.preventDefault();
+				var g = e.data.me;
+				var touches = e.originalEvent.touches;
+
+				var m = (touches ? touches.length:0);
+				e.originalEvent = updateEvent(e,touches);
+
+				// Keep a copy of the event for the touchend event
+				lastevent = e.originalEvent;
+				if(typeof g.updating!=="boolean") g.updating = false;
+				if(!g.updating){
+					if(m == 1){
+						// One touch maps to pan (mousemove)
+						e.originalEvent.which = 1;
+						g.trigger("mousemove",{event:e});
+					}else if(m == 2){
+						var dist = Math.hypot(touches[0].pageX - touches[1].pageX,touches[0].pageY - touches[1].pageY);
+						// Multi-touch maps to zoom (wheel)
+						e.originalEvent.deltaY = (olddist ? (dist > olddist ? -1 : 1):-1);
+						if(Math.abs(dist-olddist) > 4){
+							g.trigger("wheel",{event:e,'speed':0.95,'update':false});
+							olddist = dist;
+						}
+					}
+				}
+			});
+			this.container.on("touchend",{me:this}, function(e){
+				var ev = e.originalEvent;
+				ev.preventDefault();
+				var touches = ev.touches;
+				var event = e;
+				if(touches){
+					// One touch maps to pan (mousedown)
+					if(touches.length > 0) e.originalEvent = updateEvent(e,touches)
+					e.originalEvent.which = 1;
+				}else event = lastevent;
+				e.data.me.trigger("mouseup",{event:event});
+			});
+		}
 		if(fullScreenApi.supportsFullScreen){
 			var _obj = this;
 			document.addEventListener(fullScreenApi.fullScreenEventName, function(event){
@@ -410,11 +480,12 @@
 			var g = ev.data.me;	// The graph object
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
-			d = g.dataAtMousePosition(event.layerX,event.layerY);
-
+			var x = event.layerX;
+			var y = event.layerY;
+			d = g.dataAtMousePosition(x,y);
 			// No data (but the alt key is pressed) so we'll start the zoom selection
-			if(g.within(event.layerX,event.layerY) && g.options.zoomable){
-				g.selectfrom = [event.layerX,event.layerY];
+			if(g.within(x,y) && g.options.zoomable){
+				g.selectfrom = [x,y];
 				g.selectto = g.selectfrom;
 				if(event.altKey) g.selecting = true;
 				else g.panning = true;
@@ -428,14 +499,18 @@
 				t = parseInt(d[0]);
 				i = parseInt(d[1]);
 				d = g.data[t];
-				ii = g.getPixPos(event.layerX,event.layerY);
-				a = g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:event.layerX,ypix:ii[1],title:d.title,color:d.color});
+				ii = g.getPixPos(x,y);
+				a = g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
 			}
 			return true;
 		}).on("mousemove",{me:this},function(ev){
 			var event = ev.event.originalEvent;
 			if(!event) return;
 			var g = ev.data.me;	// The graph object
+			if(g.updating) return;
+			g.updating = true;
+			var x = event.layerX;
+			var y = event.layerY;
 			// Attach hover event
 			if(!g.selecting && !g.panning){
 				d = g.dataAtMousePosition(event.offsetX,event.offsetY);
@@ -445,17 +520,17 @@
 					t = d[0];
 					i = d[1];
 					d = g.data[t];
-					ii = g.getPixPos(event.layerX,event.layerY);
-					g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:event.layerX,ypix:ii[1],title:d.title,color:d.color});
+					ii = g.getPixPos(x,y);
+					g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
 				}
 				if(g.events["mousemove"]){
-					var pos = g.pixel2data(event.layerX,event.layerY);
+					var pos = g.pixel2data(x,y);
 					g.trigger("mousemove",{event:event,x:pos.x,y:pos.y});
 				}
 			}
 			if(g.selecting || g.panning){
-				if(g.within(event.layerX,event.layerY)){
-					g.selectto = [event.layerX,event.layerY];
+				if(g.within(x,y)){
+					g.selectto = [x,y];
 					if(g.options.zoommode == "x"){
 						g.selectfrom[1] = g.getYPos(g.y.min);
 						g.selectto[1] = g.getYPos(g.y.max);
@@ -477,6 +552,7 @@
 					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1])
 				}
 			}
+			g.updating = false;
 			return true;
 		}).on("mouseleave",{me:this},function(ev){
 			var event = ev.event.originalEvent;
@@ -514,7 +590,7 @@
 						r[0] = g.x.datamin;
 						r[1] = g.x.datamax;
 					}
-					g.zoom(r[0],r[1],r[2],r[3]);
+					g.zoom(r,{'update':true});
 				}
 				g.selecting = false;
 			}
@@ -525,7 +601,7 @@
 				g.offset.x = 0;
 				g.offset.y = 0;
 				// Zoom to new range
-				g.zoom(r[0],r[1],r[2],r[3]);
+				g.zoom(r,{});
 				g.panning = false;
 			}
 			g.canvas.pasteFromClipboard();
@@ -534,15 +610,20 @@
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
 			var oe = ev.event.originalEvent;
+			if(ev.data.options.scrollWheelZoom && typeof oe.preventDefault==="function") oe.preventDefault();
 			var me = ev.data.me;
-			var c = {'x':oe.layerX,'y':oe.layerY};
-			var co = me.coordinates;
-			if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
-			if(ev.data.options.scrollWheelZoom) oe.preventDefault();
-			var f = 0.8;
-			if(co) co.css({'display':''});
-			me.zoom((oe.deltaY > 0 ? 1/f : f),c.x,c.y);
-			me.trigger('wheel',{event:oe});
+			if(!me.updating){
+				me.updating = true;
+				var c = {'x':oe.layerX,'y':oe.layerY};
+				var co = me.coordinates;
+				if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
+				var f = (ev.speed || 0.8);
+				oe.update = ev.update;
+				if(co) co.css({'display':''});
+				me.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f)});
+				me.trigger('wheel',{event:oe});
+				me.updating = false;
+			}
 		}).on("dblclick",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			if(ev.event){
@@ -627,7 +708,7 @@
 		if(typeof this.options.xaxis.mode==="string" && this.options.xaxis.mode==="time") this.options.xaxis.isDate = true;
 		return this;
 	}
-	
+
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
@@ -664,7 +745,7 @@
 			if(!this.data[index].format.strokeDash) this.data[index].format.strokeDash = [1,0];
 			if(!this.data[index].format.strokeWidth) this.data[index].format.strokeWidth = 1;
 			if(!this.data[index].format.fill) this.data[index].format.fill = this.colours[0];
-			
+
 			for(var i = 0; i < l ; i++){
 
 				if(!this.data[index].marks[i]) this.data[index].marks[i] = {'props':{},'data':this.data[index].data[i]};
@@ -677,7 +758,7 @@
 
 				// Should process all the "enter" options here
 				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
-			}			
+			}
 		}
 
 		return this;
@@ -695,10 +776,10 @@
 		this.y = { min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit };
 
 		if(this.data.length <= 0) return this;
-		
+
 		var d,i,max,t;
 		var tests = {'x':[],'y':[]}
-		
+
 		for(i in this.data){
 			max = this.data[i].marks.length
 
@@ -738,7 +819,6 @@
 	Graph.prototype.panBy = function(dx,dy){
 		this.offset.x = dx;
 		this.offset.y = dy;
-		this.draw(true);
 		this.calculateData();
 		// Update the graph
 		this.clear();
@@ -747,41 +827,44 @@
 		return this;
 	}
 
-	Graph.prototype.zoom = function(){
-		var args = Array.prototype.slice.call(arguments, 0);
+	Graph.prototype.zoom = function(pos,attr){
+
+		if(!attr) attr = {};
+		if(!pos) pos = [];
 		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
-		if(args.length == 3){
-			var s = args[0];
+		if(pos.length == 2){
+			var s = (attr.scale || 0.8);
 			// Find the center
-			var c = this.pixel2data(args[1],args[2]);
+			var c = this.pixel2data(pos[0],pos[1]);
 			// Calculate the new zoom range
-			args = [c.x - s*(c.x-this.x.min), c.x + s*(this.x.max-c.x), c.y - s*(c.y-this.y.min), c.y + s*(this.y.max-c.y)];
+			pos = [c.x - s*(c.x-this.x.min), c.x + s*(this.x.max-c.x), c.y - s*(c.y-this.y.min), c.y + s*(this.y.max-c.y)];
 		}
 		// Zoom into a defined region [x1,x2,y1,y2]
-		if(args.length == 4){
-			if(typeof args[0]!="number" || typeof args[1]!="number" || typeof args[2]!="number" || typeof args[3]!="number") args = 0;		
+		if(pos.length == 4){
+			if(typeof pos[0]!="number" || typeof pos[1]!="number" || typeof pos[2]!="number" || typeof pos[3]!="number") pos = [];
 			else{
 				// Re-define the axes
-				this.defineAxis("x",args[0],args[1]);
-				this.defineAxis("y",args[2],args[3]);
+				this.defineAxis("x",pos[0],pos[1]);
+				this.defineAxis("y",pos[2],pos[3]);
 			}
 		}
 		// No parameters set so reset the view
-		if(args.length == 0){
+		if(pos.length == 0){
 			this.x.min = this.x.datamin;
 			this.x.max = this.x.datamax;
 			this.y.min = this.y.datamin;
 			this.y.max = this.y.datamax;
 			this.defineAxis("x");
-			this.defineAxis("y");		
+			this.defineAxis("y");
 		}
 		this.calculateData();
 		// Update the graph
 		this.clear();
-		this.draw(true);
+		this.draw(typeof attr.update==="boolean" ? attr.update : true);
+		return this;
 	}
-	
+
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
 		if(this[t].log){

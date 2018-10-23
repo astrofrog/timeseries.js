@@ -266,13 +266,7 @@
 		if(this.json) this.loadDatasets(this.json.data);
 
 		// Attach Hammer events
-		S('.msg').html((typeof Hammer!=="undefined" ? "Got it":"Not loaded"));
-		if(typeof Hammer!=="undefined"){
-			this.hammer = new Hammer(this.el, {});
-			this.hammer.on("tap", function(ev) {
-				S('.msg').html('tap '+ev.type);
-			});
-		}
+		S('.msg').html('postProcess');
 
 		return this;
 	}
@@ -303,21 +297,12 @@
 
 		// Load any necessary extra js/css
 		var _obj = this;
-		var delay = false;
-		if('ontouchstart' in document.documentElement && typeof Hammer==="undefined"){
-			delay = true;
-			S('.msg').html('Loading Hammer...').css({'display':'block'});
-			S('header').css({'margin-top':'2em'});
-			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources(basedir+"hammer/hammer.min.js", {"this":this, "el":e}, function(ev){ S('.msg').html('Hammer loaded'); this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
-		}
+		S('.msg').css({'display':'block'});
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
-			delay = true;
 			// Load the Javascript and, once done, call this function again
 			TimeSeries.loadResources(basedir+"graph.js", {"this":this, "el":e}, function(ev){ this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
-		}
-		if(!delay){
+		}else{
 			if(this.file){
 				// Load the Vega-JSON file
 				var idx = this.file.lastIndexOf("/");

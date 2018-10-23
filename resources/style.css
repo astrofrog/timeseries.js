@@ -6,10 +6,10 @@ header h2 { margin-top: 0em; margin-bottom: 0.5em; }
 
 .msg {
 	position: fixed;
-	height: auto;
+	height: 2em;
 	width: 100%;
 	left: 0px;
-	top: 0px;
+	bottom: 0px;
 	padding: 0 0.5em;
 	background: #fff9ef;
 	display: none;
