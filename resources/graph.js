@@ -157,7 +157,6 @@
 		this.background = "rgb(255,255,255)";
 		this.events = {resize:""};	// Let's add some default events
 		this.logging = false;
-		this.offset = {'x':0,'y':0};
 
 		// Add options to detect for older IE
 		this.ie = false;
@@ -386,6 +385,7 @@
 		this.events = [];
 		this.lines = [];
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
+		this.offset = {'x':0,'y':0};
 
 		this.log('init',element,typeof element,data,options);
 
@@ -464,29 +464,17 @@
 						g.selectfrom[0] = g.getXPos(g.x.min);
 						g.selectto[0] = g.getXPos(g.x.max);
 					}
-					g.canvas.pasteFromClipboard();
-					g.canvas.ctx.beginPath();
 					if(g.selecting){
+						g.canvas.pasteFromClipboard();
+						g.canvas.ctx.beginPath();
 						// Draw selection rectangle
 						g.canvas.ctx.fillStyle = g.options.grid.colorZoom || 'rgba(0,0,0,0.1)';
 						g.canvas.ctx.lineWidth = g.options.grid.border;
 						g.canvas.ctx.fillRect(g.selectfrom[0]-0.5,g.selectfrom[1]-0.5,g.selectto[0]-g.selectfrom[0],g.selectto[1]-g.selectfrom[1]);
 						g.canvas.ctx.fill();
+						g.canvas.ctx.closePath();
 					}
-					if(g.panning){
-						g.canvas.ctx.strokeStyle = 'rgba(0,100,200,1)';
-						g.canvas.ctx.setLineDash([5,8]);
-						g.canvas.ctx.lineWidth = 2;
-						g.canvas.ctx.textAlign = "center";
-						g.canvas.ctx.textBaseline = "middle";
-						g.canvas.ctx.moveTo(g.selectfrom[0],g.selectfrom[1]);
-						g.canvas.ctx.lineTo(g.selectto[0],g.selectto[1]);
-						g.canvas.ctx.stroke();
-						g.canvas.ctx.fillStyle = 'rgba(0,0,0,0.4)';
-						g.canvas.ctx.fillText('Panning (alt+mouse to zoom)',G.mean([g.selectto[0],g.selectfrom[0]]),G.mean([g.selectto[1],g.selectfrom[1]]));
-						g.canvas.ctx.fill();
-					}
-					g.canvas.ctx.closePath();
+					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1])
 				}
 			}
 			return true;
@@ -501,16 +489,26 @@
 		}).on("mouseup",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			var event = ev.event.originalEvent;
+			var c1,c2,xlo,xhi,ylo,yhi;
 			if(g.selecting){
-				var c1 = g.pixel2data(g.selectfrom[0],g.selectfrom[1]);
-				var c2 = g.pixel2data(g.selectto[0],g.selectto[1]);
+				c1 = g.pixel2data(g.selectfrom[0],g.selectfrom[1]);
+				c2 = g.pixel2data(g.selectto[0],g.selectto[1]);
+			}
+			if(g.panning){
+				// Work out the new range
+				c1 = g.pixel2data(g.chart.left-g.offset.x,g.chart.top-g.offset.y);
+				c2 = g.pixel2data(g.chart.left+g.chart.width-g.offset.x,g.chart.top+g.chart.height-g.offset.y);
+			}
+
+			xlo = (c1.x < c2.x) ? c1.x : c2.x;
+			xhi = (c1.x < c2.x) ? c2.x : c1.x;
+			ylo = (c1.y < c2.y) ? c1.y : c2.y;
+			syhi = (c1.y < c2.y) ? c2.y : c1.y;
+
+			if(g.selecting){
 				if(c1.x==c2.x && c1.y==c2.y){
 					g.zoom();
 				}else{
-					xlo = (c1.x < c2.x) ? c1.x : c2.x;
-					xhi = (c1.x < c2.x) ? c2.x : c1.x;
-					ylo = (c1.y < c2.y) ? c1.y : c2.y;
-					yhi = (c1.y < c2.y) ? c2.y : c1.y;
 					if(g.options.zoommode == "x"){
 						// If we are only zooming in the x-axis we don't change the y values
 						ylo = g.y.datamin;
@@ -523,12 +521,16 @@
 					}
 					g.zoom(xlo,xhi,ylo,yhi);
 				}
+				g.selecting = false;
 			}
 			if(g.panning){
-				console.log('end panning')
+				// Reset the offsets
+				g.offset.x = 0;
+				g.offset.y = 0;
+				// Zoom to new range
+				g.zoom(xlo,xhi,ylo,yhi);
+				g.panning = false;
 			}
-			g.selecting = false;
-			g.panning = false;
 			g.canvas.pasteFromClipboard();
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
@@ -538,7 +540,7 @@
 			var me = ev.data.me;
 			var c = {'x':oe.layerX,'y':oe.layerY};
 			var co = me.coordinates;
-			if(co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
+			if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
 			if(ev.data.options.scrollWheelZoom) oe.preventDefault();
 			var f = 0.8;
 			if(co) co.css({'display':''});
@@ -736,14 +738,21 @@
 		return this;
 	}
 
-	Graph.prototype.pan = function(x,y){
-		//this.canvas.offset
-		console.log('pan')
+	Graph.prototype.panBy = function(dx,dy){
+		this.offset.x = dx;
+		this.offset.y = dy;
+		this.draw(true);
+		this.calculateData();
+		// Update the graph
+		this.clear();
+		// We don't need to update the lookup whilst panning
+		this.draw(false);
+		return this;
 	}
 
 	Graph.prototype.zoom = function(){
 		var args = Array.prototype.slice.call(arguments, 0);
-		this.coordinates.css({'display':'none'});
+		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
 		if(args.length == 3){
 			var s = args[0];
@@ -788,8 +797,8 @@
 			var max = this[t].max;
 			var ran = this[t].range;
 		}
-		if(t=="y") return this.options.height-(this.chart.bottom + this.chart.height*((c-min)/ran));
-		else return (this[t].dir=="reverse" ? this.chart.left + this.chart.width*((max-c)/(ran)) : this.chart.left + this.chart.width*((c-min)/ran));
+		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((c-min)/ran));
+		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((max-c)/(ran)) : this.chart.left + this.chart.width*((c-min)/ran));
 	
 	}
 	// For an input data value find the y-pixel location
