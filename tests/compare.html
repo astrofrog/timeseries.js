@@ -11,7 +11,7 @@
 	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
 	<!-- StuQuery for DOM manipulation -->
 	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
-	<!-- TimeSeries (will lazy-load graph.js when it needs it) -->
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
 	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
 	<script src="../resources/vega/vega.min.js"></script>
 	<script src="../resources/vega/vega-embed.3.18.1.js"></script>
@@ -83,7 +83,7 @@
 							<!-- Javascript -->
 							<script>
 							// Create a timeseries object that will load from a JSON file
-							var ex = TimeSeries.create("lightcurve.json",{logging:false,fit:true});
+							var ex = TimeSeries.create("lightcurve2.json",{logging:false,fit:true});
 							// Initialise the timeseries object attached to a DOM element
 							ex.initialize(document.getElementById('example1a'));
 							</script>
@@ -102,7 +102,7 @@
 							<script>
 							vegaEmbed(
 								'#example1b',
-								'lightcurve.json',
+								'lightcurve2.json',
 								{  }
 							);
 							</script>

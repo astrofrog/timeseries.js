@@ -757,6 +757,7 @@
 				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
 				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
 
+//console.log(this.data[index].encode.enter)
 				// Should process all the "enter" options here
 				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
 			}
@@ -1655,7 +1656,7 @@
 		var s = (Math.sqrt(datum.props.format.size) || 4);
 		var w = s;
 		var h = s;
-
+		
 		if(shape=="circle"){
 			this.canvas.ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
