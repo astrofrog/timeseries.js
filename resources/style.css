@@ -51,7 +51,8 @@ figure > div {
 .vega-actions-wrapper {
 	position: absolute;
 	top: 0px;
-	right: 0px;
+	left: 0px;
+	z-index: 1000;
 }
 section { 
 	padding: 2em 0;

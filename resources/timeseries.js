@@ -260,9 +260,12 @@
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 
-		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
-		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+		var id = S(this.el).attr('id');
 
+		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
+		this.graph.canvas.container.addClass('timeseries');
+		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+		this.graph.canvas.container.prepend('<input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><div class="holder">TimeSeries Menu</div></menu>')
 		if(this.json) this.loadDatasets(this.json.data);
 
 		return this;

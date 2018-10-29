@@ -11,3 +11,56 @@
 	text-align: right;
 	vertical-align: top;
 }
+.timeseries { position: relative; overflow: hidden; }
+.timeseries .timeseries-actions-wrapper { height: 100%; overflow-y: auto; }
+.timeseries .hamburger {
+	cursor: pointer;
+	display: block;
+	opacity: 0.05;
+	width: 2em;
+	height: 2em;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	font-size: 1em;
+	margin: 0px;
+}
+.timeseries label.hamburger {
+	z-index: 1;
+	box-sizing: border-box;
+}
+.timeseries label.hamburger .nv { display: none; }
+.timeseries input.hamburger { z-index: 1005; opacity: 0.01; }
+.timeseries label.hamburger:after {
+	position: absolute;
+	padding: 0.25em 0;
+	width: 100%;
+	height: 100%;
+	top: 0px;
+	left: 0px;
+	content:"\2261";
+	font-size: 2em;
+	text-align: center;
+	line-height: 0.65em;
+}
+.timeseries menu { width: 0%; transition: width 0.3s ease-in; }
+.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; }
+.timeseries input.hamburger:checked ~ menu { width: 360px; }
+.timeseries input.hamburger:checked ~ menu > .holder { left: 0px; }
+.timeseries input.hamburger:checked ~ .canvas { margin-left: 360px; }
+.timeseries .canvas { transition: margin-left 0.3s ease-in; margin-left: 0px; }
+.timeseries .hamburger, .timeseries menu > .holder { transition: left 0.3s ease-in; }
+.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
+.timeseries menu > .holder {
+	left: -360px;
+	width: 360px;
+	position: absolute;
+	height: 100%;
+	overflow-y: auto;
+	padding: 0.5em;
+	text-align: left;
+}
+.timeseries label.hamburger, .timeseries menu > .holder {
+	background-color: #253788;
+	color: white;
+}
