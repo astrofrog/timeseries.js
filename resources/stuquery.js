@@ -8,7 +8,7 @@
 	function stuQuery(els){
 		// Make our own fake, tiny, version of jQuery simulating the parts we need
 		var elements;
-		this.stuquery = "1.0.17";
+		this.stuquery = "1.0.18";
 
 		this.getBy = function(e,s){
 			var i,m,k;
@@ -94,9 +94,14 @@
 		}
 		return this;	
 	}
-	stuQuery.prototype.prepend = function(j){
-		if(!j && this.length==1) return this[0].innerHTML;
-		if(j) for(var e=0;e<this.length;e++) this[e].innerHTML = j+this[e].innerHTML;
+	stuQuery.prototype.prepend = function(t){
+		if(!t && this.length==1) return this[0].innerHTML;
+		for(i = 0 ; i < this.length ; i++){
+			d = document.createElement('div');
+			d.innerHTML = t;
+			e = d.childNodes;
+			for(j = e.length-1; j >= 0; j--) this[i].insertBefore(e[j], this[i].firstChild);
+		}
 		return this;
 	}
 	stuQuery.prototype.before=function(t){
