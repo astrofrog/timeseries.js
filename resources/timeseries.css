@@ -59,8 +59,8 @@
 }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
 .timeseries input.hamburger:checked ~ menu { left: 0px; }
-.timeseries input.hamburger:checked ~ .canvas { margin-left: 360px; }
-.timeseries .canvas { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
+.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }
+.timeseries .canvasholder { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: left 0.3s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
 .timeseries menu > .holder {
@@ -74,6 +74,6 @@
 @media only screen and (max-width: 520px) {
 	.timeseries menu, .timeseries .hamburger { display: none; }
 	.timeseries menu { width: 75%; left: -75%; }
-	.timeseries input.hamburger:checked ~ .canvas { margin-left: 75%; }
+	.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }
 	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 75%; }
 }

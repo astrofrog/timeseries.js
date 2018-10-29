@@ -209,10 +209,12 @@
 		this.tall = this.container.height();
 		
 		// Add a <canvas> to it
-		this.container.html('<canvas class="canvas" style="display:block;font:inherit;"></canvas>');
+		this.container.html('<div class="canvasholder"><canvas class="canvas" style="display:block;font:inherit;"></canvas></div>');
 		this.containerbg = this.container.css('background');
+		this.canvasholder = this.container.find('.canvasholder');
 		this.canvas = this.container.find('canvas');
-		this.canvas.css({'position':'absolute'})
+		this.canvasholder.css({'position':'relative'});
+		this.canvas.css({'position':'absolute'});
 		this.c = this.canvas[0];
 		// For excanvas we need to initialise the newly created <canvas>
 		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
@@ -256,7 +258,7 @@
 				return oe;
 			}
 			var olddist = null;
-			this.container.on("touchstart",{me:this}, function(e){
+			this.canvasholder.on("touchstart",{me:this}, function(e){
 				var ev = e.originalEvent;
 				ev.preventDefault();
 				olddist = null;
@@ -270,7 +272,7 @@
 				}
 			});
 			var lastevent = null;
-			this.container.on("touchmove",{me:this}, function(e){
+			this.canvasholder.on("touchmove",{me:this}, function(e){
 				e.originalEvent.preventDefault();
 				var g = e.data.me;
 				var touches = e.originalEvent.touches;
@@ -297,7 +299,7 @@
 					}
 				}
 			});
-			this.container.on("touchend",{me:this}, function(e){
+			this.canvasholder.on("touchend",{me:this}, function(e){
 				var ev = e.originalEvent;
 				ev.preventDefault();
 				var touches = ev.touches;
@@ -401,7 +403,6 @@
 				this.canvas.css({'width':0,'height':0});
 				w = window.outerWidth;
 				h = window.outerHeight;
-				this.canvas.css({'width':w+'px','height':h+'px'});
 				S(document).css({'width':w+'px','height':h+'px'});
 			}else{
 				// We have to zap the width of the canvas to let it take the width of the container
@@ -410,7 +411,6 @@
 				this.container.css({'max-width':'100%'});
 				w = this.container.outerWidth();
 				h = this.container.outerHeight();
-				this.canvas.css({'width':w+'px','height':h+'px'});
 			}
 		}
 		if(w == this.wide && h == this.tall) return;
@@ -429,6 +429,7 @@
 		this.tall = h;
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
+		this.canvasholder.css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	}
 
