@@ -386,6 +386,7 @@
 			else if(this.elem.msRequestFullscreen) this.elem.msRequestFullscreen();
 		}
 	}
+
 	// A function to be called whenever the <canvas> needs to be resized.
 	//   .resize();
 	//   .resize(400,250)
@@ -418,7 +419,7 @@
 	}
 	// Internal function to update the internal variables defining the width and height.
 	Canvas.prototype.setWH = function(w,h,ctx){
-	this.log('setWH',w,h)
+		this.log('setWH',w,h)
 		if(!w || !h) return;
 		var c = (typeof ctx=="undefined") ? this.c : ctx;
 		c.width = w;
@@ -429,7 +430,6 @@
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	}
-
 
 	// Now we define the Graph class
 	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",type:"symbol",format:{width:4}}, options);
@@ -473,7 +473,7 @@
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(ev.data.me.logging) var d = new Date();
-			ev.data.me.setOptions().calculateData().draw(true).trigger("resize",{event:ev.event});
+			ev.data.me.setOptions().defineAxis("x").calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
@@ -1063,7 +1063,7 @@
 	Graph.prototype.defineAxis = function(axis,min,max){
 
 		// Immediately return if the input seems wrong
-		if(typeof axis != "string" || (axis != "x" && axis != "y")) return false;
+		if(typeof axis != "string" || (axis != "x" && axis != "y")) return this;
 
 		// Set the min/max if provided
 		if(typeof max=="number") this[axis].max = max;
@@ -1082,14 +1082,14 @@
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
-			return true;
+			return this;
 		}
 
 		// If we have zero range we need to expand it
 		if(this[axis].range < 0){
 			this[axis].inc = 0.0;
 			this[axis].grange = 0.0;
-			return true;
+			return this;
 		}else if(this[axis].range == 0){
 			this[axis].gmin = Math.ceil(this[axis].max)-1;
 			this[axis].gmax = Math.ceil(this[axis].max);
@@ -1098,7 +1098,7 @@
 			this[axis].inc = 1.0;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
-			return true;
+			return this;
 		}
 
 		var param = {'name': 'seconds', 'div': 1, 'base': 10};
@@ -1118,7 +1118,6 @@
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
 					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
 			var t_div;
-
 
 			for(var st = 0; st < steps.length ; st++){
 				for(var sp = 0; sp < steps[st].spacings.length; sp++){
@@ -1153,14 +1152,13 @@
 			if((t_max - t_inc) >= mx) t_max -= t_inc ;
 			i = i*2;
 		}
-
 		// Set the first/last gridline values as well as the spacing
 		this[axis].gmin = t_min;
 		this[axis].gmax = t_max;
 		this[axis].inc = t_inc;
 		this[axis].grange = this[axis].gmax-this[axis].gmin;
 
-		return true;
+		return this;
 	}
 	
 	Graph.prototype.getFontHeight = function(a,t){
@@ -1244,7 +1242,6 @@
 			'bottom': {'textBaseline': 'top','y1': r.ymax,'y2': r.ymin}
 		};
 
-
 		if(!this.subgrid){
 			v = [2,3,4,5,6,7,8,9]
 			this.subgrid = []
@@ -1252,7 +1249,6 @@
 				this.subgrid[i] = G.log10(v[i]);
 			}
 		}
-
 
 		ctx.beginPath();
 		ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
@@ -1334,7 +1330,6 @@
 			fs = this.getFontHeight(d,'label');
 			ctx.font = fs+'px '+this.chart.fontfamily;
 			ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
-			
 
 			// Get axis properties
 			var axis = this[d];
@@ -1351,6 +1346,7 @@
 			prec = ""+axis.inc;
 			prec = prec.length-prec.indexOf('.')-1;
 			fshalf = Math.ceil(fs/2);
+			var oldx = 0;
 			
 			for(var i = axis.gmin; i <= axis.gmax; i += axis.inc) {
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
@@ -1373,10 +1369,11 @@
 						var ds = str.split(/\n/);
 						var maxw = 0;
 						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
-						if(x1+maxw/2 <= c.left+c.width){
+						if(x1+maxw/2 <= c.left+c.width && x1 > oldx){
 							ctx.textAlign = (j == axis.gmax) ? 'end' : (j==axis.gmin ? 'start' : 'center');
 							ctx.fillStyle = this.options.labels.color;
 							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
+							oldx = x1 + maxw + 4;	// Add on the label width with a tiny bit of padding
 						}
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
@@ -1432,7 +1429,6 @@
 				}
 			}
 		}
-
 		return this;
 	}
 
@@ -1494,17 +1490,6 @@
 		return this;
 	}
 
-	/*var cscale = 10;
-	function c2id(rgba){
-		var v = ((((rgba[0]*256)+rgba[1])*256)+rgba[2])/cscale;
-		return (Number.isInteger(v)) ? v : -1;
-	}
-	function id2c(id){
-		// Find the lookup ID colour for this layer
-		var c = (id*cscale).toString(16);
-		return '#'+(new Array(6 - c.length + 1).join('0'))+c;
-	}*/
-	
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
 
@@ -1537,7 +1522,6 @@
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 					ctx.stroke();
-//					ctx.closePath();
 				}
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
@@ -1570,15 +1554,18 @@
 
 		return this;
 	}
+
 	Graph.prototype.addLine = function(opt){
 		// Should sanitize the input here
 		this.lines.push(opt);
 		return this;
 	}
+
 	Graph.prototype.removeLines = function(opt){
 		this.lines = [];
 		return this;
 	}
+
 	Graph.prototype.remove = function(){
 		this.canvas.container.replaceWith(this.canvas.origcontainer);
 		return {};
@@ -1614,7 +1601,6 @@
 		return this;
 	}
 
-
 	Graph.prototype.drawRect = function(datum){
 		if(datum.props.x2 || datum.props.y2){
 			var x1 = (datum.props.x1 || datum.props.x);
@@ -1635,6 +1621,7 @@
 		}
 		return [];
 	}
+
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.canvas.ctx.beginPath();
 		var oldp = {};
@@ -1653,6 +1640,7 @@
 		this.canvas.ctx.stroke();
 		return this;
 	}
+
 	Graph.prototype.drawShape = function(datum){
 
 		var x1 = datum.props.x;
@@ -1729,6 +1717,7 @@
 		
 		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
 	}
+
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.weight) i.weight = 1;
