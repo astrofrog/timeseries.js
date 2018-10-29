@@ -43,11 +43,11 @@
 	text-align: center;
 	line-height: 0.65em;
 }
-.timeseries menu { width: 360px; }
+.timeseries menu { width: 360px; z-index: 0; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; }
 .timeseries input.hamburger:checked ~ menu > .holder { left: 0px; }
 .timeseries input.hamburger:checked ~ .canvas { margin-left: 360px; }
-.timeseries .canvas { transition: margin-left 0.3s ease-in; margin-left: 0px; }
+.timeseries .canvas { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu > .holder { transition: left 0.3s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
 .timeseries menu > .holder {
@@ -66,6 +66,7 @@
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 100%; }
 	.timeseries input.hamburger:checked ~ .canvas { margin-left: 75%; }
+	.timeseries input.hamburger:checked ~ menu { width: 100%; }
 	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 75%; }
 	.timeseries menu > .holder { left: -75%; width: 75%; }
 }
