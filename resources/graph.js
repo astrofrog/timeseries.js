@@ -1042,7 +1042,7 @@
 			var html = removeRoundingErrors(mark.props.tooltip) || "";
 			if(html){
 				this.coordinates.html(html);
-				var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1;
+				var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
 				if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
 				this.coordinates.css({'display':'','left':Math.round(x)+'px','top':Math.round(this.data[t].marks[i].props.y+1)+'px'});
 			}else{
