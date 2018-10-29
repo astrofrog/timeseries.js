@@ -377,7 +377,6 @@
 	}
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
-		console.log('toggleFullScreen',this.fullscreen);
 		this.log('toggleFullScreen',this.fullscreen)
 
 		this.elem = this.container[0];
@@ -636,6 +635,7 @@
 				var event = ev.event.originalEvent;
 				// Bind events
 				g.canvas.toggleFullScreen();
+				g.draw(true);
 				g.canvas.trigger('dblclick',{event:event});
 			}
 		});
