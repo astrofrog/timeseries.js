@@ -1032,7 +1032,7 @@
 			var data = this.data[t];
 
 			if(!this.coordinates){
-				this.canvas.container.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
+				this.canvas.canvasholder.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
 				this.coordinates = this.canvas.container.find('.graph-tooltip');
 			}
 			if(typeof data.css=="object") this.coordinates.css(data.css);
