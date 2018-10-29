@@ -285,6 +285,7 @@
 						// One touch maps to pan (mousemove)
 						e.originalEvent.which = 1;
 						g.trigger("mousemove",{event:e});
+						g.trigger("mouseover",{event:e});
 					}else if(m == 2){
 						var dist = Math.hypot(touches[0].pageX - touches[1].pageX,touches[0].pageY - touches[1].pageY);
 						// Multi-touch maps to zoom (wheel)
