@@ -17,7 +17,7 @@
 .timeseries .hamburger {
 	cursor: pointer;
 	display: block;
-	opacity: 0.05;
+	opacity: 0.2;
 	width: 2em;
 	height: 2em;
 	position: absolute;
@@ -27,12 +27,8 @@
 	margin: 0px;
 	z-index: 2;
 }
-.timeseries label.hamburger {
-	z-index: 1;
-	box-sizing: border-box;
-}
 .timeseries label.hamburger .nv { display: none; }
-.timeseries input.hamburger { z-index: 1005; opacity: 0.01; }
+.timeseries input.hamburger { z-index: 1005; opacity: 0.01; box-sizing: border-box; }
 .timeseries label.hamburger:after {
 	position: absolute;
 	padding: 0.25em 0;
@@ -44,6 +40,8 @@
 	font-size: 2em;
 	text-align: center;
 	line-height: 0.65em;
+	background: transparent;
+	color: black; 
 }
 
 .timeseries menu {
@@ -55,24 +53,31 @@
 	position: absolute;
 	height: 100%;
 	overflow-y: auto;
-	z-index: 0;
+	z-index: 1000;
+	text-align: left;
 }
+.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; }
+.timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
+.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
+	background-color: #253788;
+	opacity: 0.85;
+	color: white;
+}
+
 .timeseries input.hamburger:checked ~ menu { left: 0px; }
-.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }
+/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }*/
 .timeseries .canvasholder { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: left 0.3s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
-.timeseries menu > .holder {
-	padding: 0.5em;
-	text-align: left;
+.timeseries menu h2, .timeseries menu .row {
+	padding: 0 0.5em;
 }
-.timeseries label.hamburger, .timeseries menu {
-	background-color: #253788;
-	color: white;
+.timeseries menu .row {
+	margin-bottom: 0.5em;
 }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; left: -75%; }
-	.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }
+	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/
 	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 75%; }
 }

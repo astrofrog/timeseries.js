@@ -240,7 +240,7 @@
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
-		this.container.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
+		this.canvasholder.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
 			var ongoingTouches = [];
 			function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
