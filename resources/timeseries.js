@@ -265,7 +265,14 @@
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
 		this.graph.canvas.container.addClass('timeseries');
 		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
-		this.graph.canvas.container.prepend('<input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><h2>TimeSeries Menu</h2><div class="row"><button class="fullscreen">Toggle fullscreen</button></div><div class="row"><button class="autozoom">Zoom to data</button></div></menu>');
+
+		function getIcon(icon,colour){
+			var icons = {
+				'fit':'<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path style="fill:%COLOUR%" d="M 0,12 L0,0 12,0 12,4 6,4 12,10 10,12 4,6 4,12 M20,0 L 32,0 32,12 28,12 28,6 22,12 20,10 26,4 20,4 20,0 M 20,32 L20,28 26,28 20,22 22,20 28,26 28,20 32,20, 32,32 20,32 M 12,32 L 0,32 0,20 4,20 4,26 10,20 12,22 6,28 12,28 12,32" /></svg>'
+			}
+			return icons[icon].replace(/%COLOUR%/g,(colour||"black"));
+		}
+		this.graph.canvas.container.prepend('<input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><h2>TimeSeries Menu</h2><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div></menu>');
 
 		// Add button events
 		this.graph.canvas.container.find('button.fullscreen').on('click',{me:this,canvas:this.graph.canvas},function(e){

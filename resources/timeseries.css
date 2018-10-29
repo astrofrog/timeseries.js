@@ -56,7 +56,7 @@
 	z-index: 1000;
 	text-align: left;
 }
-.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; }
+.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; margin-right: 0.5em; float: left; line-height: 1em; }
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
@@ -70,12 +70,10 @@
 .timeseries .canvasholder { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: left 0.3s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
-.timeseries menu h2, .timeseries menu .row {
-	padding: 0 0.5em;
-}
-.timeseries menu .row {
-	margin-bottom: 0.5em;
-}
+.timeseries menu h2, .timeseries menu .row { padding: 0 0.5em; }
+.timeseries menu .row { margin-bottom: 0.5em; }
+.timeseries menu button.icon { line-height: 0px;  }
+.timeseries menu button.icon svg { width: 1em; height: auto; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; left: -75%; }
 	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/
