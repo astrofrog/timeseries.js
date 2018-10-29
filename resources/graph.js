@@ -256,7 +256,7 @@
 				return oe;
 			}
 			var olddist = null;
-			this.container.on("touchstart",{me:this}, function(e){
+			this.canvas.on("touchstart",{me:this}, function(e){
 				var ev = e.originalEvent;
 				ev.preventDefault();
 				olddist = null;
@@ -270,7 +270,7 @@
 				}
 			});
 			var lastevent = null;
-			this.container.on("touchmove",{me:this}, function(e){
+			this.canvas.on("touchmove",{me:this}, function(e){
 				e.originalEvent.preventDefault();
 				var g = e.data.me;
 				var touches = e.originalEvent.touches;
@@ -297,7 +297,7 @@
 					}
 				}
 			});
-			this.container.on("touchend",{me:this}, function(e){
+			this.canvas.on("touchend",{me:this}, function(e){
 				var ev = e.originalEvent;
 				ev.preventDefault();
 				var touches = ev.touches;
