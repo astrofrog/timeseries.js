@@ -72,7 +72,6 @@
 	color: white;
 }
 @media only screen and (max-width: 520px) {
-	.timeseries menu, .timeseries .hamburger { display: none; }
 	.timeseries menu { width: 75%; left: -75%; }
 	.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }
 	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 75%; }

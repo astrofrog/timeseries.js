@@ -255,6 +255,10 @@
 				oe.layerY = G.mean(y)-el.offsetTop;
 				oe.offsetX = el.offsetLeft;
 				oe.offsetY = el.offsetTop;
+				var bRect = document.body.getBoundingClientRect();
+				var rect = el.getBoundingClientRect();
+				oe.layerX -= (rect.left-bRect.left);
+				oe.layerY -= (rect.top-bRect.top);
 				return oe;
 			}
 			var olddist = null;
