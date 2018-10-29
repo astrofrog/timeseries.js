@@ -47,6 +47,7 @@
 .timeseries menu {
 	left: -360px;
 	width: 360px;
+	top: 0px;
 	padding-left: 0px;
 	position: absolute;
 	height: 100%;
