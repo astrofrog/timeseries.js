@@ -459,6 +459,7 @@
 		this.panning = false;
 		this.events = [];
 		this.lines = [];
+		this.fontscale = 1;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
 
@@ -762,7 +763,6 @@
 				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
 				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
 
-//console.log(this.data[index].encode.enter)
 				// Should process all the "enter" options here
 				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
 			}
@@ -1058,8 +1058,6 @@
 			if(this.annotated){
 				this.annotated = false;
 				this.coordinates.css({'display':'none'});
-				//this.clear();
-				//this.draw();
 				this.canvas.pasteFromClipboard();
 				this.drawOverlay();
 			}
@@ -1168,10 +1166,19 @@
 		return this;
 	}
 	
+	// A factor to scale the overall font size then redraw the graph
+	Graph.prototype.scaleFont = function(s){
+		if(s == 0)this.fontscale = 1;
+		else if(s > 0) this.fontscale *= 1.1;
+		else if(s < 0) this.fontscale /= 1.1;
+		this.calculateData().draw(false);
+		return this;
+	}
+	
 	Graph.prototype.getFontHeight = function(a,t){
 		var fs = this.chart.fontsize;
 		if(this.options[a+'axis'] && this.options[a+'axis'][t+'FontSize']) fs = this.options[a+'axis'][t+'FontSize'];
-		return fs;
+		return fs*this.fontscale;
 	}
 
 	Graph.prototype.getChartOffset = function(){
@@ -1182,7 +1189,7 @@
 
 		if(this.canvas.fullscreen){
 			this.chart.padding = this.canvas.wide/40;
-			this.chart.fontsize = this.canvas.wide/80;
+			this.chart.fontsize = Math.max(fs,this.canvas.wide/80);
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
 			this.chart.padding = 0;
