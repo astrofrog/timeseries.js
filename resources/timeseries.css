@@ -22,7 +22,7 @@
 	width: 2em;
 	height: 2em;
 	position: absolute;
-	left: 0px;
+	right: 0px;
 	top: 0px;
 	font-size: 1em;
 	margin: 0px;
@@ -46,18 +46,18 @@
 }
 
 .timeseries menu {
-	left: -360px;
+	right: -360px;
 	width: 360px;
 	top: 0px;
-	padding-left: 0px;
 	margin-top: 0px;
 	position: absolute;
 	height: 100%;
 	overflow-y: auto;
 	z-index: 1000;
 	text-align: left;
+	padding: 0.5em;
 }
-.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; margin-right: 0.5em; float: left; line-height: 1em; }
+.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; float: left; line-height: 1em; }
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
@@ -65,16 +65,15 @@
 	opacity: 0.85;
 	color: white;
 }
-.timeseries input.hamburger:checked ~ menu { left: 0px; }
+.timeseries input.hamburger:checked ~ menu { right: 0px; }
 /*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }*/
-.timeseries .canvasholder { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }
-.timeseries .hamburger, .timeseries menu { transition: left 0.3s ease-in; }
-.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 360px; }
-.timeseries menu h2, .timeseries menu .row { padding: 0 0.5em; }
-.timeseries menu .row { margin-bottom: 0.5em; }
+.timeseries .canvasholder { transition: margin-right 0.3s ease-in; margin-left: 0px; z-index: 1; }
+.timeseries .hamburger, .timeseries menu { transition: right 0.3s ease-in; }
+.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { right: 360px; }
+.timeseries menu .row { margin-bottom: 0em; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
-.timeseries menu ol.layers { padding-left: 0.5em; }
+.timeseries menu ol.layers { padding-left: 0px; }
 .timeseries menu ol.layers li { list-style: none; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; left: -75%; }

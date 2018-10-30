@@ -1390,10 +1390,10 @@
 						var maxw = 0;
 						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
 						if(x1+maxw/2 <= c.left+c.width && x1 > oldx){
-							ctx.textAlign = (j == axis.gmax) ? 'end' : (j==axis.gmin ? 'start' : 'center');
+							ctx.textAlign = (j == axis.gmax) ? 'end' : 'center';
 							ctx.fillStyle = this.options.labels.color;
 							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
-							oldx = x1 + maxw + 4;	// Add on the label width with a tiny bit of padding
+							oldx = x1 + (j == axis.gmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 						}
 					}else if(d=="y"){
 						ctx.textAlign = 'end';

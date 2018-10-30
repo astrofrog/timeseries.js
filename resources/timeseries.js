@@ -272,9 +272,10 @@
 			}
 			return icons[icon].replace(/%COLOUR%/g,(colour||"black"));
 		}
-		this.graph.canvas.container.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><h2>TimeSeries Menu</h2><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu></div>');
+		this.graph.canvas.container.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu></div>');
 
 		// Add button events
+		this.graph.canvas.container.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
 		this.graph.canvas.container.find('button.fullscreen').on('click',{me:this,graph:this.graph},function(e){ e.data.graph.toggleFullScreen(); });
 		this.graph.canvas.container.find('button.autozoom').on('click',{graph:this.graph},function(e){ e.data.graph.zoom(); });
 		this.graph.canvas.container.find('button.fontup').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(+1) });

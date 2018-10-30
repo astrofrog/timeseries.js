@@ -114,7 +114,7 @@
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: ' + series.title + '<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: OGLE<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -155,7 +155,7 @@
 				"fill": {"value": "#7F0000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: MOA<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -196,7 +196,7 @@
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Danish 1.54m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -237,7 +237,7 @@
 				"fill": {"value": "#00FFFF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Faulkes North 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -278,7 +278,7 @@
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Faulkes South 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -319,7 +319,7 @@
 				"fill": {"value": "#00A0A0"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Liverpool 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -360,7 +360,7 @@
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: MONET North 1.2m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -401,7 +401,7 @@
 				"fill": {"value": "#FF00FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: UTas 1.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -442,7 +442,7 @@
 				"fill": {"value": "#00FF00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: SAAO 1.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -483,7 +483,7 @@
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: CTIO 1.3m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -524,7 +524,7 @@
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Auckland 0.4m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -565,7 +565,7 @@
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Farm Cove 0.35m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -606,7 +606,7 @@
 				"fill": {"value": "#00007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Kumeu Obs 0.35m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
@@ -647,7 +647,7 @@
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: Vintage Lane 0.4m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{
