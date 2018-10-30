@@ -12,7 +12,8 @@
 	text-align: right;
 	vertical-align: top;
 }
-.timeseries { position: relative; overflow: hidden; }
+.timeseries { position: relative; }
+.timeseries .menuholder { position: absolute; overflow: hidden; width: 100%; height: 100%; }
 .timeseries .timeseries-actions-wrapper { height: 100%; overflow-y: auto; }
 .timeseries .hamburger {
 	cursor: pointer;

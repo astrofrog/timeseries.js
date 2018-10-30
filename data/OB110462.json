@@ -114,7 +114,7 @@
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"'Title: ' + series.title + '<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
 			}
 		}
 	},{

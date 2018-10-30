@@ -56,7 +56,7 @@
 				"fillOpacity": {"value": 1},
 				"width": {"value":5},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+				"tooltip": {"signal":"{'Title': 'Lightcurve', 'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
 			}
 		}
 	},{
@@ -83,7 +83,7 @@
 				"shape": {"value": "diamond"},
 				"size": {"value": 400},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+				"tooltip": {"signal":"{'Title': 'Lightcurve', 'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
 			}
 		}
 	}]
