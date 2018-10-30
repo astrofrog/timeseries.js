@@ -1661,80 +1661,85 @@
 		return this;
 	}
 
-	Graph.prototype.drawShape = function(datum){
+	// Draw a shape
+	// Override the datum.x and datum.y with x,y if provided
+	// Draw to ctx if provided; otherwise to this.canvas.ctx
+	Graph.prototype.drawShape = function(datum,ctx,x,y){
 
-		var x1 = datum.props.x;
-		var y1 = datum.props.y;
+		if(!ctx) ctx = this.canvas.ctx;
+		p = datum.props;
+
+		var x1 = x || p.x;
+		var y1 = y || p.y;
 		
-		this.canvas.ctx.moveTo(x1,y1);
-		this.canvas.ctx.beginPath();
+		ctx.moveTo(x1,y1);
+		ctx.beginPath();
 
-		var shape = datum.props.symbol.shape;
+		var shape = p.symbol.shape;
 
-		var s = (Math.sqrt(datum.props.format.size) || 4);
+		var s = (Math.sqrt(p.format.size) || 4);
 		var w = s;
 		var h = s;
 		
 		if(shape=="circle"){
-			this.canvas.ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
+			ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
-			w = datum.props.format.width || s;
-			h = datum.props.format.height || w;
-			if(datum.props.x2) w = datum.props.x2-datum.props.x1;
-			else if(datum.props.width && datum.props.x){ w = datum.props.width; x1 = datum.props.x - datum.props.width/2; }
-			else if(datum.props.width && datum.props.xc){ w = datum.props.width; x1 = datum.props.xc - datum.props.width/2; }
-			else{ x1 = datum.props.x - w/2; }
+			w = p.format.width || s;
+			h = p.format.height || w;
+			if(p.x2) w = p.x2-p.x1;
+			else if(p.width && p.x){ w = p.width; x1 = p.x - p.width/2; }
+			else if(p.width && p.xc){ w = p.width; x1 = p.xc - p.width/2; }
+			else{ x1 = p.x - w/2; }
 
-			if(datum.props.y2) h = datum.props.y2-datum.props.y1;
-			else if(datum.props.height && datum.props.y){ h = datum.props.height; y1 = datum.props.y - datum.props.height/2; }
-			else if(datum.props.height && datum.props.yc){ h = datum.props.height; y1 = datum.props.yc - datum.props.height/2; }
-			else{ y1 = datum.props.y - h/2; }
+			if(p.y2) h = p.y2-p.y1;
+			else if(p.height && p.y){ h = p.height; y1 = p.y - p.height/2; }
+			else if(p.height && p.yc){ h = p.height; y1 = p.yc - p.height/2; }
+			else{ y1 = p.y - h/2; }
 
-			this.canvas.ctx.rect(x1,y1,w,h);
+			ctx.rect(x1,y1,w,h);
 		}else if(shape=="cross"){
 			dw = w/6;
-			this.canvas.ctx.moveTo(x1+dw,y1+dw);
-			this.canvas.ctx.lineTo(x1+dw*3,y1+dw);
-			this.canvas.ctx.lineTo(x1+dw*3,y1-dw);
-			this.canvas.ctx.lineTo(x1+dw,y1-dw);
-			this.canvas.ctx.lineTo(x1+dw,y1-dw*3);
-			this.canvas.ctx.lineTo(x1-dw,y1-dw*3);
-			this.canvas.ctx.lineTo(x1-dw,y1-dw);
-			this.canvas.ctx.lineTo(x1-dw*3,y1-dw);
-			this.canvas.ctx.lineTo(x1-dw*3,y1+dw);
-			this.canvas.ctx.lineTo(x1-dw,y1+dw);
-			this.canvas.ctx.lineTo(x1-dw,y1+dw*3);
-			this.canvas.ctx.lineTo(x1+dw,y1+dw*3);
+			ctx.moveTo(x1+dw,y1+dw);
+			ctx.lineTo(x1+dw*3,y1+dw);
+			ctx.lineTo(x1+dw*3,y1-dw);
+			ctx.lineTo(x1+dw,y1-dw);
+			ctx.lineTo(x1+dw,y1-dw*3);
+			ctx.lineTo(x1-dw,y1-dw*3);
+			ctx.lineTo(x1-dw,y1-dw);
+			ctx.lineTo(x1-dw*3,y1-dw);
+			ctx.lineTo(x1-dw*3,y1+dw);
+			ctx.lineTo(x1-dw,y1+dw);
+			ctx.lineTo(x1-dw,y1+dw*3);
+			ctx.lineTo(x1+dw,y1+dw*3);
 		}else if(shape=="diamond"){
 			w *= Math.sqrt(2)/2;
-			this.canvas.ctx.moveTo(x1,y1+w);
-			this.canvas.ctx.lineTo(x1+w,y1);
-			this.canvas.ctx.lineTo(x1,y1-w);
-			this.canvas.ctx.lineTo(x1-w,y1);
+			ctx.moveTo(x1,y1+w);
+			ctx.lineTo(x1+w,y1);
+			ctx.lineTo(x1,y1-w);
+			ctx.lineTo(x1-w,y1);
 		}else if(shape=="triangle-up"){
 			w /= 3;
-			this.canvas.ctx.moveTo(x1,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1+w*2,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1-w*2,y1+w*1.5);
+			ctx.moveTo(x1,y1-w*1.5);
+			ctx.lineTo(x1+w*2,y1+w*1.5);
+			ctx.lineTo(x1-w*2,y1+w*1.5);
 		}else if(shape=="triangle-down"){
 			w /=3;
-			this.canvas.ctx.moveTo(x1,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1+w*2,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1-w*2,y1-w*1.5);
+			ctx.moveTo(x1,y1+w*1.5);
+			ctx.lineTo(x1+w*2,y1-w*1.5);
+			ctx.lineTo(x1-w*2,y1-w*1.5);
 		}else if(shape=="triangle-left"){
 			w /= 3;
-			this.canvas.ctx.moveTo(x1+w*1.5,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1+w*1.5,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1-w*1.5,y1);
+			ctx.moveTo(x1+w*1.5,y1+w*1.5);
+			ctx.lineTo(x1+w*1.5,y1-w*1.5);
+			ctx.lineTo(x1-w*1.5,y1);
 		}else if(shape=="triangle-right"){
 			w /= 3;
-			this.canvas.ctx.moveTo(x1-w*1.5,y1+w*1.5);
-			this.canvas.ctx.lineTo(x1-w*1.5,y1-w*1.5);
-			this.canvas.ctx.lineTo(x1+w*1.5,y1);
+			ctx.moveTo(x1-w*1.5,y1+w*1.5);
+			ctx.lineTo(x1-w*1.5,y1-w*1.5);
+			ctx.lineTo(x1+w*1.5,y1);
 		}
-		this.canvas.ctx.fill();
+		ctx.fill();
 
-		
 		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
 	}
 

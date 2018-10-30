@@ -272,7 +272,7 @@
 			}
 			return icons[icon].replace(/%COLOUR%/g,(colour||"black"));
 		}
-		this.graph.canvas.container.prepend('<input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><h2>TimeSeries Menu</h2><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></menu>');
+		this.graph.canvas.container.prepend('<input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper vega-actions-wrapper"><h2>TimeSeries Menu</h2><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu>');
 
 		// Add button events
 		this.graph.canvas.container.find('button.fullscreen').on('click',{me:this,graph:this.graph},function(e){ e.data.graph.toggleFullScreen(); });
@@ -434,16 +434,15 @@
 			mark = this.json.marks[m];
 			if(mark.from.data) id = mark.from.data;
 		
-			if(this.datasets[id]){
-				this.datasetsused += id;
-			}
+			if(this.datasets[id]) this.datasetsused += id;
 
 			if(this.datasets[id] && id==datasetID){
 				var dataset;
+				var desc = mark.description || "";
 
-				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){
@@ -480,6 +479,21 @@
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
+		
+		var layers = this.graph.canvas.container.find('.layers');
+		console.log('loaded',S(this.el).attr('id'),this.graph.data)
+		for(var i in this.graph.data){
+			id = S(this.el).attr('id')+'_'+i;
+			// Check if we've already added this
+			if(layers.find('#'+id).length == 0){
+				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" /> '+this.graph.data[i].desc+'</li>');
+				layers.find('#'+id).on('click',{me:this,i:i},function(e){
+					i = e.data.i;
+					e.data.me.graph.data[i].show = !e.data.me.graph.data[i].show;
+					e.data.me.graph.calculateData().draw(true);
+				});
+			}
+		}
 		
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);

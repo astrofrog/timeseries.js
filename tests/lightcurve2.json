@@ -35,6 +35,7 @@
 	],
 	"marks":[{
 		"type": "rect",
+		"description": "Error bars",
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
@@ -60,6 +61,7 @@
 		}
 	},{
 		"type": "symbol",
+		"description": "Data points",
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {

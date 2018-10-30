@@ -26,6 +26,7 @@
 	],
 	"marks":[{
 		"type": "line",
+		"description": "Model fit",
 		"from": {"data": "Model"},
 		"encode": {
 			"enter": {
@@ -43,6 +44,7 @@
 		}
 	},{
 		"type": "rect",
+		"description": "Error bars for Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
@@ -61,6 +63,7 @@
 		}
 	},{
 		"type": "symbol",
+		"description": "Data points for Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {

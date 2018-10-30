@@ -73,6 +73,8 @@
 .timeseries menu .row { margin-bottom: 0.5em; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
+.timeseries menu ol.layers { padding-left: 0.5em; }
+.timeseries menu ol.layers li { list-style: none; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; left: -75%; }
 	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/

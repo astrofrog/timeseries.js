@@ -36,13 +36,13 @@ figure > div {
 	margin: 0px;
 	padding: 0px;
 }
-#examples > ol li {
+#examples > ol > li {
 	list-style: none;
 	padding: 2em;
 	background-color: white;
 	margin-bottom: 2em;
 }
-#examples > ol li h3 {
+#examples > ol > li h3 {
 	margin-top: 0px;
 }
 .vega-embed {
