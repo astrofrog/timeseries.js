@@ -485,11 +485,18 @@
 			id = S(this.el).attr('id')+'_'+i;
 			// Check if we've already added this
 			if(layers.find('#'+id).length == 0){
-				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" /> '+this.graph.data[i].desc+'</li>');
-				layers.find('#'+id).on('click',{me:this,i:i},function(e){
+				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" /><label for="'+id+'"><span class="key" style="background-color:'+this.graph.data[i].format.fill+';"></span>'+this.graph.data[i].desc+'</label></li>');
+				layers.find('#'+id).on('change',{me:this,i:i},function(e){
 					i = e.data.i;
-					e.data.me.graph.data[i].show = !e.data.me.graph.data[i].show;
-					e.data.me.graph.calculateData().draw(true);
+					g = e.data.me.graph;
+					g.data[i].show = !g.data[i].show;
+					//this.parent().css({'display':(g.data[i].show ? '':'none')});
+					g.calculateData().draw(true);
+				}).parent().find('label').on('click',{me:this,id:id},function(e){
+					console.log(this)
+					//this.parent().find('input')[0].checked = !this.find('input')[0].checked;
+					if(this.parent().find('input')[0].checked) this.addClass('inactive')
+					else this.removeClass('inactive')
 				});
 			}
 		}

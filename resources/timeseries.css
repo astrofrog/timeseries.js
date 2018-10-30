@@ -74,7 +74,11 @@
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
 .timeseries menu ol.layers { padding-left: 0px; }
-.timeseries menu ol.layers li { list-style: none; }
+.timeseries menu ol.layers li { list-style: none; margin-bottom: 0.25em; }
+.timeseries menu ol.layers li input[type=checkbox] { display: none; }
+.timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; }
+.timeseries menu ol.layers li label.inactive { filter: grayscale(1); opacity: 0.5; }
+.timeseries menu ol.layers li .key { width: 1.5em; height: 1.5em; display: inline-block; float: left; margin-right: 0.25em; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; right: -75%; }
 	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/
