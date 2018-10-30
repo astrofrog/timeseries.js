@@ -64,7 +64,6 @@
 	opacity: 0.85;
 	color: white;
 }
-
 .timeseries input.hamburger:checked ~ menu { left: 0px; }
 /*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }*/
 .timeseries .canvasholder { transition: margin-left 0.3s ease-in; margin-left: 0px; z-index: 1; }

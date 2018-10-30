@@ -378,7 +378,6 @@
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
 		this.log('toggleFullScreen',this.fullscreen)
-
 		this.elem = this.container[0];
 		
 		if(this.fullscreen){
@@ -391,6 +390,9 @@
 			else if(this.elem.webkitRequestFullscreen) this.elem.webkitRequestFullscreen();
 			else if(this.elem.msRequestFullscreen) this.elem.msRequestFullscreen();
 		}
+
+		this.fullscreen = !this.fullscreen;
+		return this;
 	}
 
 	// A function to be called whenever the <canvas> needs to be resized.
@@ -634,9 +636,8 @@
 			var g = ev.data.me;	 // The graph object
 			if(ev.event){
 				var event = ev.event.originalEvent;
+				g.toggleFullScreen();
 				// Bind events
-				g.canvas.toggleFullScreen();
-				g.draw(true);
 				g.canvas.trigger('dblclick',{event:event});
 			}
 		});
@@ -650,6 +651,13 @@
 		this.log("Total:" + (new Date() - d) + "ms");
 		return this;
 	}
+
+	Graph.prototype.toggleFullScreen = function(){
+		this.canvas.toggleFullScreen();
+		this.calculateData().draw(true);
+		return this;
+	}
+
 	Graph.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
@@ -657,6 +665,7 @@
 		}
 		return this;
 	}
+
 	// Attach a handler to an event for the Graph object in a style similar to that used by jQuery
 	//   .on(eventType[,eventData],handler(eventObject));
 	//   .on("resize",function(e){ console.log(e); });
@@ -773,10 +782,7 @@
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log('updateData',this.data)
-		this.getGraphRange();
-		this.calculateData();
-		this.clear();
-		this.draw(true);
+		this.getGraphRange().calculateData().draw(true);
 	}
 	Graph.prototype.getGraphRange = function(){
 		this.x = { min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit };
@@ -1189,7 +1195,7 @@
 
 		if(this.canvas.fullscreen){
 			this.chart.padding = this.canvas.wide/40;
-			this.chart.fontsize = Math.max(fs,this.canvas.wide/80);
+			this.chart.fontsize = this.canvas.wide/80;
 			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
 			this.chart.padding = 0;
