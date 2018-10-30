@@ -76,7 +76,7 @@
 .timeseries menu ol.layers { padding-left: 0px; }
 .timeseries menu ol.layers li { list-style: none; }
 @media only screen and (max-width: 520px) {
-	.timeseries menu { width: 75%; left: -75%; }
+	.timeseries menu { width: 75%; right: -75%; }
 	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/
-	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { left: 75%; }
+	.timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { right: 75%; }
 }
