@@ -1056,7 +1056,6 @@
 				var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
 				if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
 				var y = Math.max(0,Math.min(this.data[t].marks[i].props.y,this.canvas.tall-this.coordinates.outerHeight())); 
-				console.log(y,this)
 				this.coordinates.css({'display':'','left':Math.round(x)+'px','top':Math.round(y)+'px'});
 			}else{
 				this.coordinates.css({'display':'none'});
@@ -1496,7 +1495,6 @@
 		for(var sh in this.data){
 			if(this.data[sh].show){
 				for(var i = 0; i < this.data[sh].marks.length ; i++){
-
 					d = this.data[sh].marks[i];
 
 					// Process all the series updates here
@@ -1661,16 +1659,21 @@
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.canvas.ctx.beginPath();
 		var oldp = {};
+		var gaps = 0;
 		for(var i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
 			if(p.x && p.y){
 				if(i == 0){
 					this.canvas.ctx.moveTo(p.x,p.y);
 				}else{
+					if(gaps > 0) this.canvas.ctx.moveTo(p.x,p.y);
 					this.canvas.ctx.lineTo(p.x,p.y);
 					if(updateLookup) this.addRectToLookup({id:this.data[sh].marks[i].id,xa:Math.floor(oldp.x),xb:Math.ceil(p.x),ya:Math.floor(oldp.y),yb:Math.ceil(p.y),'weight':0.6});
 				}
+				gaps = 0;
 				oldp = p;
+			}else{
+				gaps++;
 			}
 		}
 		this.canvas.ctx.stroke();

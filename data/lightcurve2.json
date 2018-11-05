@@ -8,6 +8,10 @@
 		"name": "lightcurve",
 		"url": "lightcurve2.csv",
 		"format": {"type": "csv", "parse": {"x":"date", "value":"number", "error":"number", "note":"string"}}
+	},{
+		"name": "threshold",
+		"values": "x,value\n2018-10-29T13:53:18.0Z,1\n2018-10-29T13:53:21.0Z,1\n2018-10-29T13:53:23.0Z,\n2018-10-29T13:53:26.0Z,1\n2018-10-29T13:53:28.8Z,1\n",
+		"format": {"type": "csv", "parse": {"x":"date", "value":"number"}}
 	}],
 	"scales": [{
 		"name": "xscale",
@@ -34,6 +38,23 @@
 		}
 	],
 	"marks":[{
+		"type": "line",
+		"description": "Baseline",
+		"from": {"data": "threshold"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "x"},
+				"y": {"scale": "yscale", "field": "value"},
+				"strokeWidth": {"value": 2},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"stroke": {"value": "#396bad"},
+				"fillOpacity": {"value": 1},
+				"zindex": {"value": 0}
+			}
+		}
+	},{
 		"type": "rect",
 		"description": "Error bars",
 		"from": {"data": "lightcurve"},
