@@ -314,23 +314,6 @@
 					if(this.x.spacing.name == "micro") o.truncated = mjd.toFixed(8)+'';
 					return o;
 				}
-			},
-			'iso': {
-				'title': 'ISO 8601',
-				'steps': [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
-					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
-					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
-					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
-					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}
-				],
-				'fn': function(j,old){
-					var o = {'str': formatDate(parseInt(j),"iso")};
-					if(this.x.spacing.name != "seconds") o.str = o.str.replace(/^(.*):[0-9]{2}([^0-9])/,function(m,p1,p2){ return p1+p2; })
-					if(this.x.spacing.name == "weeks") o.str = o.str.replace(/T.*/,"");
-					if(old && old.str && old.str.substr(0,10)==o.str.substr(0,10)) o['truncated'] = o.str.replace(/[0-9]{4}-[0-9]{2}-[0-9]{2}T/,'');
-					return o;
-				}
 			}
 		}
 
