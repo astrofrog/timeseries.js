@@ -18,7 +18,7 @@
 .timeseries .hamburger {
 	cursor: pointer;
 	display: block;
-	opacity: 0.2;
+	opacity: 0.1;
 	width: 2em;
 	height: 2em;
 	position: absolute;
@@ -57,10 +57,11 @@
 	text-align: left;
 	padding: 0.5em;
 }
-.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; float: left; line-height: 1em; }
+.timeseries menu button { border: 0px; font-size: 1em; background-color: #efefef; color: black; text-decoration: none!important; display: inline-block; padding: 0.5em; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; float: left; line-height: 1em; tab-index: -1; }
+.timeseries menu select { font-size: 1em; display: inline-block; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; tab-index: -1; }
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
-.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
-.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
+.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
+.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:focus ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
 	background-color: #253788;
 	opacity: 0.85;
 	color: white;

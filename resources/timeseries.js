@@ -247,6 +247,7 @@
 		this.options.logging = true;
 		return this;
 	}
+
 	TS.prototype.postProcess = function(){
 
 		this.log('postProcess',this)
@@ -260,32 +261,106 @@
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 
-		var id = S(this.el).attr('id');
-
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
-		this.graph.canvas.container.addClass('timeseries');
-		this.graph.canvas.container.append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+		
 
-		function getIcon(icon,colour){
-			var icons = {
-				'fit':'<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path style="fill:%COLOUR%" d="M 0,12 L0,0 12,0 12,4 6,4 12,10 10,12 4,6 4,12 M20,0 L 32,0 32,12 28,12 28,6 22,12 20,10 26,4 20,4 20,0 M 20,32 L20,28 26,28 20,22 22,20 28,26 28,20 32,20, 32,32 20,32 M 12,32 L 0,32 0,20 4,20 4,26 10,20 12,22 6,28 12,28 12,32" /></svg>'
-			}
-			return icons[icon].replace(/%COLOUR%/g,(colour||"black"));
-		}
-		this.graph.canvas.container.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu></div>');
+		var el = S(this.el);
+		el.addClass('timeseries').append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
 
-		// Add button events
-		this.graph.canvas.container.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
-		this.graph.canvas.container.find('button.fullscreen').on('click',{me:this,graph:this.graph},function(e){ e.data.graph.toggleFullScreen(); });
-		this.graph.canvas.container.find('button.autozoom').on('click',{graph:this.graph},function(e){ e.data.graph.zoom(); });
-		this.graph.canvas.container.find('button.fontup').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(+1) });
-		this.graph.canvas.container.find('button.fontdn').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(-1) });
-		this.graph.canvas.container.find('button.fontreset').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(0) });
+		this.makeMenu();
 
 		if(this.json) this.loadDatasets(this.json.data);
 
 		return this;
 	}
+	
+	TS.prototype.makeMenu = function(){
+		var el = S(this.el);
+		var id = el.attr('id');
+		var formats = {
+			'default': {
+				'title': 'Default'
+			},
+			'locale': {
+				'title': 'Locale',
+				'steps': [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
+					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
+					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
+					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
+					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
+					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}
+				],
+				'fn': function(j){
+					var d = new Date(parseInt(j));
+					return {'str':d.toLocaleString()};
+				}
+			},
+			'jd': {
+				'title': 'Julian date',
+				'steps': [{'name': 'days', 'div':86400000,'spacings':[0.00001,0.00005,0.0001,0.0005,0.001,0.005,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}],
+				'fn': function(j){ return {'str':formatDate(parseInt(j),"jd")+''}; }
+			},
+			'mjd': {
+				'title': 'Modified Julian date',
+				'steps': [
+					{'name': 'micro', 'div':864,'spacings':[0.00001,0.00005,0.0001,0.0005,0.001,0.005,0.01,0.05,0.1]},
+					{'name': 'milli', 'div':86400,'spacings':[0.001,0.005,0.01,0.05,0.1]},
+					{'name': 'days', 'div':86400000,'spacings':[0.0005,0.001,0.005,0.01,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}
+				],
+				'fn': function(j){
+					var mjd = formatDate(parseInt(j),"mjd");
+					var o = {'str':mjd+''};
+					if(this.x.spacing.name == "milli") o.truncated = mjd.toFixed(5)+'';
+					if(this.x.spacing.name == "micro") o.truncated = mjd.toFixed(8)+'';
+					return o;
+				}
+			},
+			'iso': {
+				'title': 'ISO 8601',
+				'steps': [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
+					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
+					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
+					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
+					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
+					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}
+				],
+				'fn': function(j,old){
+					var o = {'str': formatDate(parseInt(j),"iso")};
+					if(this.x.spacing.name != "seconds") o.str = o.str.replace(/^(.*):[0-9]{2}([^0-9])/,function(m,p1,p2){ return p1+p2; })
+					if(this.x.spacing.name == "weeks") o.str = o.str.replace(/T.*/,"");
+					if(old && old.str && old.str.substr(0,10)==o.str.substr(0,10)) o['truncated'] = o.str.replace(/[0-9]{4}-[0-9]{2}-[0-9]{2}T/,'');
+					return o;
+				}
+			}
+		}
+
+		if(el.find('.menuholder').length == 0){
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu></div>');
+
+			// Add button events
+			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
+			el.find('#'+id+'_hamburger').on('click',{me:this},function(e){
+				var tab = (this[0].checked ? 0 : -1);
+				this.parent().find('menu button, menu a').attr('tabIndex', tab);
+			});
+			el.find('button.fullscreen').on('click',{me:this,graph:this.graph},function(e){ e.data.graph.toggleFullScreen(); });
+			el.find('button.autozoom').on('click',{graph:this.graph},function(e){ e.data.graph.zoom(); });
+			el.find('button.fontup').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(+1) });
+			el.find('button.fontdn').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(-1) });
+			el.find('button.fontreset').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(0) });
+
+			// Build date selector
+			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
+			for(var k in formats) html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+formats[k].title+'</option>';
+			html += '</select></div>';
+			el.find('.layers').append(html);
+			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:formats},function(e){
+				e.data.graph.options.formatLabelX = e.data.formats[this[0].value];
+				e.data.graph.defineAxis("x").calculateData().draw(true);
+			});
+		}
+	}
+
 	/*
 		Render a TimeSeries from an HTML element 
 		We look for attributes vega-src and vega-scale
@@ -337,10 +412,10 @@
 				return this;
 			}
 		};
-	
+
 		return this;
 	}
-
+	
 	TS.prototype.loadDatasets = function(data){
 		this.log('loadDatasets',data)
 		if(!data) return this;
@@ -493,7 +568,6 @@
 					//this.parent().css({'display':(g.data[i].show ? '':'none')});
 					g.calculateData().draw(true);
 				}).parent().find('label').on('click',{me:this,id:id},function(e){
-					console.log(this)
 					//this.parent().find('input')[0].checked = !this.find('input')[0].checked;
 					if(this.parent().find('input')[0].checked) this.addClass('inactive')
 					else this.removeClass('inactive')
@@ -504,6 +578,13 @@
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
+	}
+
+	function getIcon(icon,colour){
+		var icons = {
+			'fit':'<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path style="fill:%COLOUR%" d="M 0,12 L0,0 12,0 12,4 6,4 12,10 10,12 4,6 4,12 M20,0 L 32,0 32,12 28,12 28,6 22,12 20,10 26,4 20,4 20,0 M 20,32 L20,28 26,28 20,22 22,20 28,26 28,20 32,20, 32,32 20,32 M 12,32 L 0,32 0,20 4,20 4,26 10,20 12,22 6,28 12,28 12,32" /></svg>'
+		}
+		return icons[icon].replace(/%COLOUR%/g,(colour||"black"));
 	}
 
 	/**
@@ -674,11 +755,10 @@ function Te(e, t, n, r) {
 }
 
 // Convert dates
-dateFormat = "jd";
 function formatDate(dt,t){
-	if(!t) t = dateFormat;
+	if(!t) t = "jd";
 	var d = new JD(dt,"unix");
-	if(t=="jd") return d.valueOf().toFixed(3);
+	if(t=="jd") return d.valueOf();
 	else if(t=="mjd") return d.toMJD();
 	else if(t=="iso") return d.toISOString();
 	else return d;
@@ -710,7 +790,7 @@ function JD(jd,t,offs){
 	this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
 	this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
 	this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
-	this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString(); }
+	this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); }
 
 	// Deal with Julian Date in two parts to avoid rounding errors
 	// Input is either:

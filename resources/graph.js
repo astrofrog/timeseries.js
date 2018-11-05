@@ -625,7 +625,7 @@
 				var c = {'x':oe.layerX,'y':oe.layerY};
 				var co = me.coordinates;
 				if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
-				var f = (ev.speed || 0.8);
+				var f = (ev.speed || 0.9);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
 				me.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f)});
@@ -1120,6 +1120,7 @@
 		
 		// Calculate reasonable grid line spacings
 		if(this[axis].isDate){
+			if(!this.options.formatLabelX) this.options.formatLabelX = {};
 			// Dates are in milliseconds
 			// Grid line spacings can range from 1 ms to 10000 years
 			var steps = [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
@@ -1128,6 +1129,7 @@
 					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
 					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
+			steps = (this.options.formatLabelX.steps || steps);
 			var t_div;
 
 			for(var st = 0; st < steps.length ; st++){
@@ -1367,6 +1369,7 @@
 			prec = prec.length-prec.indexOf('.')-1;
 			fshalf = Math.ceil(fs/2);
 			var oldx = 0;
+			var prev = {};
 			
 			for(var i = axis.gmin; i <= axis.gmax; i += axis.inc) {
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
@@ -1385,7 +1388,17 @@
 				// Draw tick labels
 				if(show.labels){
 					if(d=="x"){
-						var str = (axis.isDate) ? this.formatLabelDate(j) : addCommas((this.x.log ? Math.pow(10, j) : j))
+						var str = "";
+						if(typeof this.options.formatLabelX.fn==="function"){
+							var o = this.options.formatLabelX.fn.call(this,j,prev);
+							if(o){
+								str = (o.truncated || o.str);
+								prev = o;
+							}
+						}else{
+							str = (axis.isDate) ? this.formatLabelDate(j) : addCommas((this.x.log ? Math.pow(10, j) : j));
+							prev = {'str':str};
+						}
 						var ds = str.split(/\n/);
 						var maxw = 0;
 						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
