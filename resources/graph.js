@@ -444,14 +444,14 @@
 	//   id (HTMLelement) is the HTML element to attach the canvas to
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
 	//   options (object) contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
-	//     type: symbol, rect, line
+	//     type: symbol, rect, line, area
 	Graph = function(element, data, options){
 
 		if(!options) options = {};
 		if(options.logging) this.logging = true;
 
 		// Define some variables
-		this.version = "0.2.4";
+		this.version = "0.2.5";
 		this.start = new Date();
 		if(typeof element!="object") return;
 		this.data = {};
@@ -756,10 +756,10 @@
 			if(!this.data[index].format) this.data[index].format = { };
 
 			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
-			if(!this.data[index].format.size) this.data[index].format.size = 4;
+			if(typeof this.data[index].format.size!=="number") this.data[index].format.size = 4;
 			if(!this.data[index].format.stroke) this.data[index].format.stroke = this.colours[0];
 			if(!this.data[index].format.strokeDash) this.data[index].format.strokeDash = [1,0];
-			if(!this.data[index].format.strokeWidth) this.data[index].format.strokeWidth = 1;
+			if(typeof this.data[index].format.strokeWidth!=="number") this.data[index].format.strokeWidth = 1;
 			if(!this.data[index].format.fill) this.data[index].format.fill = this.colours[0];
 
 			for(var i = 0; i < l ; i++){
@@ -770,6 +770,7 @@
 				if(!this.data[index].marks[i].props.symbol) this.data[index].marks[i].props.symbol = this.data[index].symbol;
 				if(!this.data[index].marks[i].props.rect) this.data[index].marks[i].props.rect = this.data[index].rect;
 				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
+				if(!this.data[index].marks[i].props.area) this.data[index].marks[i].props.area = this.data[index].area;
 				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
 
 				// Should process all the "enter" options here
@@ -956,7 +957,7 @@
 		var stroke = (typeof f.stroke==="string" ? f.stroke : (typeof f.stroke==="number" ? this.colours[f.stroke % this.colours.length]:'#000000'));
 		if(f.strokeOpacity) stroke = hex2rgba(stroke,f.strokeOpacity);
 		ctx.strokeStyle = stroke;
-		ctx.lineWidth = (f.strokeWidth || 0.8);
+		ctx.lineWidth = (typeof f.strokeWidth==="number" ? f.strokeWidth : 0.8);
 		ctx.lineCap = (f.strokeCap || "square");
 		ctx.setLineDash(f.strokeDash ? f.strokeDash : [1,0]);
 		return this;
@@ -970,71 +971,40 @@
 
 			var t = d[0];
 			var i = d[1];
+			var clipping = false;
+			var typ = this.data[t].type;
 
-			if(this.data[t].type=="line" || this.data[t].type=="rect"){
+			if(typ=="line" || typ=="rect" || typ=="area"){
+				clipping = true;
 				// Build the clip path
 				this.canvas.ctx.save();
 				this.canvas.ctx.beginPath();
 				this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 				this.canvas.ctx.clip();
 			}
-			if(this.data[t].type=="line"){
+			if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
 				// Clone the mark
 				var oldmark = clone(this.data[t].marks[i]);
 				// Update the mark
 				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
-
 				// Set the canvas colours
 				this.setCanvasStyles(this.canvas.ctx,mark);
+			}
 
-				// Draw the new line
-				this.drawLine(t);
+			if(typ=="line") this.drawLine(t);
+			if(typ=="symbol") this.drawShape(mark);
+			if(typ=="rect") this.drawRect(mark);
+			if(typ=="area") this.drawArea(mark);
 
-				// Set the clipping
-				this.canvas.ctx.restore();
-
+			if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
 				// Put the mark object back to how it was
 				this.data[t].marks[i] = clone(oldmark);
 				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
 			}
 
-			if(this.data[t].type=="symbol"){
-				// Clone the mark
-				var oldmark = clone(this.data[t].marks[i]);
-				// Update the mark
-				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
+			// Set the clipping
+			if(clipping) this.canvas.ctx.restore();
 
-				// Set the canvas colours
-				this.setCanvasStyles(this.canvas.ctx,mark);
-
-				// Draw the new mark
-				this.drawShape(mark);
-
-				// Put the mark object back to how it was
-				this.data[t].marks[i] = clone(oldmark);
-				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
-			}
-
-			if(this.data[t].type=="rect"){
-				// Clone the mark
-				var oldmark = clone(this.data[t].marks[i]);
-				// Update the mark
-				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
-
-				// Set the canvas colours
-				this.setCanvasStyles(this.canvas.ctx,mark);
-
-				// Draw the new mark
-				this.drawRect(mark);
-
-				// Put the mark object back to how it was
-				this.data[t].marks[i] = clone(oldmark);
-				this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
-			}
-			if(this.data[t].type=="line" || this.data[t].type=="rect"){
-				// Set the clipping
-				this.canvas.ctx.restore();
-			}
 			var data = this.data[t];
 
 			if(!this.coordinates){
@@ -1555,7 +1525,10 @@
 				if(this.data[sh].type=="line"){
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
-					ctx.stroke();
+				}
+				if(this.data[sh].type=="area"){
+					ctx.beginPath();
+					this.drawArea(sh,updateLookup);
 				}
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
 					for(var i = 0; i < this.data[sh].marks.length ; i++){
@@ -1677,6 +1650,43 @@
 			}
 		}
 		this.canvas.ctx.stroke();
+		return this;
+	}
+
+	Graph.prototype.drawArea = function(sh,updateLookup){
+		this.canvas.ctx.beginPath();
+		var oldp = {};
+		var areas = new Array();
+		// We need to loop across the data first splitting into segments
+		for(var i = 0, a = 0; i < this.data[sh].marks.length ; i++){
+			p = this.data[sh].marks[i].props;
+			y1 = (p.y1 || p.y);
+			y2 = p.y2;
+			if(p.x && y1 && y2){
+				if(!areas[a]) areas[a] = new Array();
+				areas[a].push(i);
+			}else a++;
+		}
+		for(var a = 0; a < areas.length ; a++){
+			// Move along top of area (y2 coordinates)
+			for(var j = 0; j < areas[a].length; j++){
+				i = areas[a][j];
+				p = this.data[sh].marks[i].props;
+				if(j == 0) this.canvas.ctx.moveTo(p.x,p.y2);
+				else this.canvas.ctx.lineTo(p.x,p.y2);
+			}
+			// Move along bottom of area backwards
+			for(var j = areas[a].length-1; j >= 0; j--){
+				i = areas[a][j];
+				p = this.data[sh].marks[i].props;
+				p.y1 = (p.y1 || p.y);
+				this.canvas.ctx.lineTo(p.x,p.y1);
+				if(j == 0) this.canvas.ctx.lineTo(p.x,p.y2);
+				//if(updateLookup) this.addRectToLookup({id:this.data[sh].marks[i].id,xa:Math.floor(oldp.x),xb:Math.ceil(p.x),ya:Math.floor(oldp.y),yb:Math.ceil(p.y),'weight':0.6});
+			}
+		}
+		this.canvas.ctx.fill();
+		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.canvas.ctx.stroke();
 		return this;
 	}
 

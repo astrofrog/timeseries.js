@@ -47,7 +47,7 @@
 	var basedir = "";
 
 	TimeSeries = new function(){
-		this.version = "0.0.6";
+		this.version = "0.0.7";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
@@ -454,7 +454,7 @@
 
 			for(var p in event){
 				if(dest[p] && dest[p]=="props"){
-					if(event[p].value){
+					if(typeof event[p].value !== "undefined"){
 						if(d.props.symbol) d.props.symbol[p] = event[p].value;
 						if(d.props.format) d.props.format[p] = event[p].value;
 					}
@@ -467,7 +467,7 @@
 							if(p=="tooltip" && typeof d.props[p]==="object"){
 								str = "<table>";
 								for(var i in d.props[p]){
-									if(typeof d.props[p][i] != "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+									if(typeof d.props[p][i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
 								}
 								d.props[p] = str+"</table>";
 							}
@@ -501,6 +501,7 @@
 				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
 				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
 				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "area") dataset = { data: clone(this.datasets[id]), id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){
