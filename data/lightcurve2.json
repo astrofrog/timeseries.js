@@ -55,8 +55,8 @@
 			},
 			"update": {
 				"stroke": {"value": "#999999"},
-				"fill": {"value": "#dddddd"},
-				"fillOpacity": {"value": 1},
+				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 0.1},
 				"zindex": {"value": 0}
 			}
 		}
