@@ -106,8 +106,7 @@
 				"fill": {"value": "#0DBC37"},
 				"fillOpacity": {"value": 1},
 				"width": {"value":5},
-				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Title': 'Lightcurve', 'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+				"zindex": {"value": 1}
 			}
 		}
 	},{
