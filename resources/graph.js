@@ -994,7 +994,7 @@
 			if(typ=="line") this.drawLine(t);
 			if(typ=="symbol") this.drawShape(mark);
 			if(typ=="rect") this.drawRect(mark);
-			if(typ=="area") this.drawArea(mark);
+			if(typ=="area") this.drawArea(t);
 
 			if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
 				// Put the mark object back to how it was
@@ -1632,6 +1632,7 @@
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.canvas.ctx.beginPath();
 		var oldp = {};
+		var pad = 10;
 		var gaps = 0;
 		for(var i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
@@ -1641,7 +1642,7 @@
 				}else{
 					if(gaps > 0) this.canvas.ctx.moveTo(p.x,p.y);
 					this.canvas.ctx.lineTo(p.x,p.y);
-					if(updateLookup) this.addRectToLookup({id:this.data[sh].marks[i].id,xa:Math.floor(oldp.x),xb:Math.ceil(p.x),ya:Math.floor(oldp.y),yb:Math.ceil(p.y),'weight':0.6});
+					if(updateLookup) this.addPolygonToLookup({id:this.data[sh].marks[i].id,polygon:[[Math.floor(oldp.x),Math.floor(oldp.y-pad)],[Math.floor(p.x),Math.floor(p.y-pad)],[Math.floor(p.x),Math.ceil(p.y+pad)],[Math.floor(oldp.x),Math.ceil(oldp.y+pad)]],'weight':0.6});
 				}
 				gaps = 0;
 				oldp = p;
@@ -1667,24 +1668,33 @@
 				areas[a].push(i);
 			}else a++;
 		}
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		var poly = new Array(areas.length);
 		for(var a = 0; a < areas.length ; a++){
+			poly[a] = new Array(areas[a].length*2);
 			// Move along top of area (y2 coordinates)
-			for(var j = 0; j < areas[a].length; j++){
-				i = areas[a][j];
-				p = this.data[sh].marks[i].props;
-				if(j == 0) this.canvas.ctx.moveTo(p.x,p.y2);
-				else this.canvas.ctx.lineTo(p.x,p.y2);
+			var k = 0;
+			for(var j = 0; j < areas[a].length; j++,k++){
+				p = this.data[sh].marks[areas[a][j]].props;
+				poly[a][k] = [p.x,p.y2];
 			}
 			// Move along bottom of area backwards
-			for(var j = areas[a].length-1; j >= 0; j--){
-				i = areas[a][j];
-				p = this.data[sh].marks[i].props;
+			for(var j = areas[a].length-1; j >= 0; j--,k++){
+				p = this.data[sh].marks[areas[a][j]].props;
 				p.y1 = (p.y1 || p.y);
-				this.canvas.ctx.lineTo(p.x,p.y1);
-				if(j == 0) this.canvas.ctx.lineTo(p.x,p.y2);
-				//if(updateLookup) this.addRectToLookup({id:this.data[sh].marks[i].id,xa:Math.floor(oldp.x),xb:Math.ceil(p.x),ya:Math.floor(oldp.y),yb:Math.ceil(p.y),'weight':0.6});
+				poly[a][k] = [p.x,p.y1];
 			}
 		}
+		// Draw each polygon
+		for(var a = 0; a < poly.length; a++){
+			for(var j = 0; j < poly[a].length; j++){
+				if(j==0) this.canvas.ctx.moveTo(poly[a][j][0],poly[a][j][1]);
+				else this.canvas.ctx.lineTo(poly[a][j][0],poly[a][j][1]);
+			}
+			if(updateLookup) this.addPolygonToLookup({id:this.data[sh].marks[areas[a][0]].id,polygon:poly[a],'weight':0.4});
+		}
+
 		this.canvas.ctx.fill();
 		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.canvas.ctx.stroke();
 		return this;
@@ -1793,6 +1803,39 @@
 		return this;
 	}
 
+	// We'll use a bounding box to define the lookup area
+	// i = {'id':54,'weight':0.5,'polygon':[[1,1],[2,1],[3,4]]}
+	Graph.prototype.addPolygonToLookup = function(i){
+		if(!i.weight) i.weight = 1;
+		var x,y,value;
+		if(!i.polygon) return this;
+		var xlo = ylo = 1e100;
+		var xhi = yhi = -1e100;
+		for(var j = 0; j < i.polygon.length; j++){
+			xlo = Math.min(xlo,i.polygon[j][0]);
+			xhi = Math.max(xhi,i.polygon[j][0]);
+			ylo = Math.min(ylo,i.polygon[j][1]);
+			yhi = Math.max(yhi,i.polygon[j][1]);
+		}
+		xlo = Math.floor(xlo);
+		xhi = Math.ceil(xhi);
+		ylo = Math.floor(ylo);
+		yhi = Math.ceil(yhi);
+
+		// Use bounding box to define the lookup area
+		for(x = xlo; x < xhi; x++){
+			for(y = ylo; y < yhi; y++){
+				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
+					if(!this.lookup[x][y]) this.lookup[x][y] = {'value': 0};
+					if(inside([x,y],i.polygon)){
+						if(i.weight >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': i.id, 'value': i.weight };
+					}
+				}
+			}
+		}
+		return this;
+	}
+
 	// Clear the canvas
 	Graph.prototype.clear = function(){
 		this.canvas.ctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
@@ -1817,7 +1860,24 @@
 	function removeRoundingErrors(e){
 		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
-
+	
+	// Work out if a point is within a polygon
+	// e.g. inside([1.5,4.9],[[1,1],[2,1],[3,4],[2,2]]);
+	// Adapted from https://github.com/substack/point-in-polygon
+	function inside(point, vs){
+		// ray-casting algorithm based on
+		// http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+		var x = point[0], y = point[1];
+		var inside = false;
+		for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+			var xi = vs[i][0], yi = vs[i][1];
+			var xj = vs[j][0], yj = vs[j][1];
+			var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+			if(intersect) inside = !inside;
+		}
+		return inside;
+	};
+	
 	root.Graph = Graph;
 
 })(window || this);

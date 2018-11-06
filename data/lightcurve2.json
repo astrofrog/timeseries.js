@@ -58,6 +58,10 @@
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 0.1},
 				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#0DBC37"},
+				"fillOpacity": {"value": 0.2}
 			}
 		}
 	},{
@@ -73,8 +77,11 @@
 			},
 			"update": {
 				"stroke": {"value": "#396bad"},
-				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
+			},
+			"hover": {
+				"stroke": {"value": "#0DBC37"},
+				"strokeWidth": {"value": 3}
 			}
 		}
 	},{
