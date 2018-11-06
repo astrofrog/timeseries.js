@@ -476,11 +476,22 @@
 		opt.logging = this.logging;
 		
 		this.canvas = new Canvas(element,opt);
+		
+		this.temp = document.createElement('canvas');
+		this.temp.width = this.canvas.wide;
+		this.temp.height = this.canvas.tall;
+		this.tempctx = this.temp.getContext('2d');
+
 
 		// Bind events to the canvas
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(ev.data.me.logging) var d = new Date();
+
+			ev.data.me.temp.width = ev.data.me.canvas.wide;
+			ev.data.me.temp.height = ev.data.me.canvas.tall;
+			ev.data.me.tempctx = ev.data.me.temp.getContext('2d');
+
 			ev.data.me.setOptions().defineAxis("x").calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
@@ -617,8 +628,8 @@
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
+			if(ev.data.options.scrollWheelZoom && typeof ev.event.originalEvent.preventDefault==="function") ev.event.originalEvent.preventDefault();
 			var oe = ev.event.originalEvent;
-			if(ev.data.options.scrollWheelZoom && typeof oe.preventDefault==="function") oe.preventDefault();
 			var me = ev.data.me;
 			if(!me.updating){
 				me.updating = true;
@@ -929,6 +940,7 @@
 		for(i = 0; i < search.length; i++){
 			dx = x+search[i][0];
 			dy = y+search[i][1];
+//			console.log(dx,dy,this.lookup[dx][dy])
 			if(dx >= 0 && dy >= 0 && dx < this.canvas.wide && dy < this.canvas.tall && this.lookup[dx][dy] && is(this.lookup[dx][dy].id,t)){
 				this.canvas.canvas.css({'cursor':'pointer'});
 				return this.lookup[dx][dy].id.split(':');
@@ -989,6 +1001,7 @@
 				mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 				// Set the canvas colours
 				this.setCanvasStyles(this.canvas.ctx,mark);
+				this.setCanvasStyles(this.tempctx,mark);
 			}
 
 			if(typ=="line") this.drawLine(t);
@@ -1496,15 +1509,16 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-
-		this.log('drawData',updateLookup)
 		var lo,hi,x,y,ii,l,p,s,sh,o;
 		var twopi = Math.PI*2;
 
 		if(updateLookup){
 			// Define an empty pixel-based lookup table
 			this.lookup = new Array(this.canvas.wide);
-			for (i=0; i < this.canvas.wide; i++) this.lookup[i] = new Array(this.canvas.tall);
+			for(var i=0; i < this.canvas.wide; i++){
+				this.lookup[i] = new Array(this.canvas.tall);
+				for(var j = 0 ; j < this.canvas.tall; j++) this.lookup[i][j] = {'value': 0};
+			}
 		}
 
 		var ctx = this.canvas.ctx;
@@ -1516,10 +1530,11 @@
 		ctx.clip();
 
 		for(sh in this.data){
-
+			this.logTime('draw series '+sh);
 			if(this.data[sh].show){
 
 				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
+				this.setCanvasStyles(this.tempctx,this.data[sh].marks[0]);
 
 				// Draw lines
 				if(this.data[sh].type=="line"){
@@ -1554,6 +1569,7 @@
 					}
 				}
 			}
+			this.logTime('draw series '+sh);
 		}
 		
 		// Apply the clipping
@@ -1630,7 +1646,8 @@
 	}
 
 	Graph.prototype.drawLine = function(sh,updateLookup){
-		this.canvas.ctx.beginPath();
+		this.clearTemp();
+		this.tempctx.beginPath();
 		var oldp = {};
 		var pad = 10;
 		var gaps = 0;
@@ -1638,11 +1655,10 @@
 			p = this.data[sh].marks[i].props;
 			if(p.x && p.y){
 				if(i == 0){
-					this.canvas.ctx.moveTo(p.x,p.y);
+					this.tempctx.moveTo(p.x,p.y);
 				}else{
-					if(gaps > 0) this.canvas.ctx.moveTo(p.x,p.y);
-					this.canvas.ctx.lineTo(p.x,p.y);
-					if(updateLookup) this.addPolygonToLookup({id:this.data[sh].marks[i].id,polygon:[[Math.floor(oldp.x),Math.floor(oldp.y-pad)],[Math.floor(p.x),Math.floor(p.y-pad)],[Math.floor(p.x),Math.ceil(p.y+pad)],[Math.floor(oldp.x),Math.ceil(oldp.y+pad)]],'weight':0.6});
+					if(gaps > 0) this.tempctx.moveTo(p.x,p.y);
+					this.tempctx.lineTo(p.x,p.y);
 				}
 				gaps = 0;
 				oldp = p;
@@ -1650,12 +1666,15 @@
 				gaps++;
 			}
 		}
-		this.canvas.ctx.stroke();
+		this.tempctx.stroke();
+		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		this.canvas.ctx.drawImage(this.temp,0,0);
 		return this;
 	}
-
+	
 	Graph.prototype.drawArea = function(sh,updateLookup){
-		this.canvas.ctx.beginPath();
+		this.clearTemp();
+		this.tempctx.beginPath();
 		var oldp = {};
 		var areas = new Array();
 		// We need to loop across the data first splitting into segments
@@ -1689,14 +1708,17 @@
 		// Draw each polygon
 		for(var a = 0; a < poly.length; a++){
 			for(var j = 0; j < poly[a].length; j++){
-				if(j==0) this.canvas.ctx.moveTo(poly[a][j][0],poly[a][j][1]);
-				else this.canvas.ctx.lineTo(poly[a][j][0],poly[a][j][1]);
+				if(j==0) this.tempctx.moveTo(poly[a][j][0],poly[a][j][1]);
+				else this.tempctx.lineTo(poly[a][j][0],poly[a][j][1]);
 			}
-			if(updateLookup) this.addPolygonToLookup({id:this.data[sh].marks[areas[a][0]].id,polygon:poly[a],'weight':0.4});
 		}
 
-		this.canvas.ctx.fill();
-		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.canvas.ctx.stroke();
+		this.tempctx.fill();
+		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.tempctx.stroke();
+		
+		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
+		this.canvas.ctx.drawImage(this.temp,0,0);
+
 		return this;
 	}
 
@@ -1782,6 +1804,24 @@
 		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
 	}
 
+	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
+	Graph.prototype.addTempToLookup = function(attr){
+		var px = this.tempctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
+		for(var i = 0, p = 0, x = 0, y = 0; i < px.data.length; i+=4, p++, x++){
+			if(x == this.canvas.wide){
+				x = 0;
+				y++;
+			}
+			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]){
+				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
+					if(attr.weight >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': attr.id, 'value': (attr.weight||1) };
+				}
+			}
+		}
+		return this;
+	}
+
+
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.weight) i.weight = 1;
@@ -1795,41 +1835,7 @@
 			for(y = (i.ya-p); y < (i.yb+p); y++){
 				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
 					value = ((x >= i.xa && x <= i.xb && y >= i.ya && y <= i.yb) ? 1 : 0.5)*i.weight;
-					if(!this.lookup[x][y]) this.lookup[x][y] = {'value':0};
 					if(value >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': i.id, 'value': value };
-				}
-			}
-		}
-		return this;
-	}
-
-	// We'll use a bounding box to define the lookup area
-	// i = {'id':54,'weight':0.5,'polygon':[[1,1],[2,1],[3,4]]}
-	Graph.prototype.addPolygonToLookup = function(i){
-		if(!i.weight) i.weight = 1;
-		var x,y,value;
-		if(!i.polygon) return this;
-		var xlo = ylo = 1e100;
-		var xhi = yhi = -1e100;
-		for(var j = 0; j < i.polygon.length; j++){
-			xlo = Math.min(xlo,i.polygon[j][0]);
-			xhi = Math.max(xhi,i.polygon[j][0]);
-			ylo = Math.min(ylo,i.polygon[j][1]);
-			yhi = Math.max(yhi,i.polygon[j][1]);
-		}
-		xlo = Math.floor(xlo);
-		xhi = Math.ceil(xhi);
-		ylo = Math.floor(ylo);
-		yhi = Math.ceil(yhi);
-
-		// Use bounding box to define the lookup area
-		for(x = xlo; x < xhi; x++){
-			for(y = ylo; y < yhi; y++){
-				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
-					if(!this.lookup[x][y]) this.lookup[x][y] = {'value': 0};
-					if(inside([x,y],i.polygon)){
-						if(i.weight >= this.lookup[x][y].value) this.lookup[x][y] = { 'id': i.id, 'value': i.weight };
-					}
 				}
 			}
 		}
@@ -1839,16 +1845,24 @@
 	// Clear the canvas
 	Graph.prototype.clear = function(){
 		this.canvas.ctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
+		// Reset lookup BLAH
+		return this;
+	}
+	Graph.prototype.clearTemp = function(){
+		this.tempctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
 		return this;
 	}
 	
 	// Draw everything
 	Graph.prototype.draw = function(updateLookup){
+		this.logTime('draw')
 		this.clear();
+		this.clearTemp();
 		this.drawAxes();
 		this.drawData(updateLookup);
 		this.canvas.copyToClipboard();
 		this.drawOverlay();
+		this.logTime('draw');
 		return this;
 	}
 
@@ -1857,26 +1871,20 @@
 		return this;
 	}
 
+	Graph.prototype.logTime = function(key){
+	
+		if(!this.times) this.times = {};
+		if(!this.times[key]) this.times[key] = new Date();
+		else{
+			console.log('Time ('+key+'): '+((new Date())-this.times[key])+'ms')
+			delete this.times[key];
+		}
+		return this;
+	}
+
 	function removeRoundingErrors(e){
 		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
-	
-	// Work out if a point is within a polygon
-	// e.g. inside([1.5,4.9],[[1,1],[2,1],[3,4],[2,2]]);
-	// Adapted from https://github.com/substack/point-in-polygon
-	function inside(point, vs){
-		// ray-casting algorithm based on
-		// http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-		var x = point[0], y = point[1];
-		var inside = false;
-		for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-			var xi = vs[i][0], yi = vs[i][1];
-			var xj = vs[j][0], yj = vs[j][1];
-			var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-			if(intersect) inside = !inside;
-		}
-		return inside;
-	};
 	
 	root.Graph = Graph;
 

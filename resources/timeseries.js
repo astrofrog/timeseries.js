@@ -23,14 +23,6 @@
 
 (function(root){
 
-	// First we will include all the useful helper functions
-	// Get the current Julian Date
-	function getJD(today) {
-		// The Julian Date of the Unix Time epoch is 2440587.5
-		if(!today) today = new Date();
-		return ( today.getTime() / 86400000.0 ) + 2440587.5;
-	}
-
 	// A non-jQuery dependent function to get a style
 	function getStyle(el, styleProp) {
 		if (typeof root === 'undefined') return;
@@ -260,9 +252,12 @@
 		this.options.logging = this.logging;
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
+		for(var i = 0; i < this.json.scales.length; i++){
+			if(this.json.scales[i].name=="yscale" && this.json.scales[i].type=="log") this.options.yaxis.log = true;
+		}
 
-		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element
-		
+		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element		
+		console.log(this)
 
 		var el = S(this.el);
 		el.addClass('timeseries').append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
@@ -725,79 +720,80 @@
 		return;
 	}
 
+	// Convert dates
+	function formatDate(dt,t){
+		if(!t) t = "jd";
+		var d = new JD(dt,"unix");
+		if(t=="jd") return d.valueOf();
+		else if(t=="mjd") return d.toMJD();
+		else if(t=="iso") return d.toISOString();
+		else return d;
+	}
+
+	// Can provide as:
+	//   1) (ms,"unix") - milliseconds since the UNIX epoch
+	//   2) (days,"mjd") - days since the MJD epoch
+	//   3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
+	//   4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
+	//   5) <undefined> - uses the current time
+	function JD(jd,t,offs){
+		epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
+		var secs = 86400;
+		var scale = secs*1e6;
+		if(typeof jd==="number"){
+			if(typeof t!=="undefined"){
+				if(t=="unix") this.val = u2jd(jd);
+				else if(t=="epoch" && offs) this.val = u2jd((new Date(offs)).getTime() + jd*1000);
+				else if(t=="mjd") jd += 2400000.5;
+			}
+			if(!this.val){
+				var days = Math.floor(jd);
+				this.val = [days,(jd - days)*scale];
+			}
+		}else this.val = u2jd(jd);
+		var _obj = this;
+
+		this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
+		this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
+		this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
+		this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); }
+
+		// Deal with Julian Date in two parts to avoid rounding errors
+		// Input is either:
+		//    1) the number of milliseconds since 1970-01-01
+		//    2) the ISO8601 date string (can go to microseconds)
+		//    3) <undefined> - uses the current time
+		function u2jd(today) {
+			// The Julian Date of the Unix Time epoch is 2440587.5
+			var days = rem = ms = 0;
+			if(typeof today==="undefined"){
+				today = new Date();
+				ms = today.getTime();
+			}else if(typeof today==="string"){
+				// We'll take the decimal seconds and deal with
+				// them separately to avoid rounding errors.
+				var s = 0;
+				today = today.replace(/(\:[0-9]{2})\.([0-9]+)/,function(m,p1,p2){ s = parseFloat("0."+p2); return p1; });
+				ms = (new Date(today)).getTime();
+				ms += s*1000;
+			}else ms = today*1000;
+			days = Math.floor(ms/scale);
+			rem = (ms - days*scale) + scale/2;
+			return [days + epoch - 0.5,rem];
+		}
+		return this;
+	}
+
+	function Te(e, t, n, r) {
+		var i = '<html><head>' + t + '</head><body><pre><code class="json">',
+		o = '</code></pre>' + n + '</body></html>',
+		a = window.open('');
+		a.document.write(i + e + o),
+		a.document.title = Ae[r] + ' JSON Source'
+	}
+
 	root.TimeSeries = TimeSeries;
 
 })(window || this);
 
 
-function Te(e, t, n, r) {
-  var i = '<html><head>' + t + '</head><body><pre><code class="json">',
-  o = '</code></pre>' + n + '</body></html>',
-  a = window.open('');
-  a.document.write(i + e + o),
-  a.document.title = Ae[r] + ' JSON Source'
-}
-
-// Convert dates
-function formatDate(dt,t){
-	if(!t) t = "jd";
-	var d = new JD(dt,"unix");
-	if(t=="jd") return d.valueOf();
-	else if(t=="mjd") return d.toMJD();
-	else if(t=="iso") return d.toISOString();
-	else return d;
-}
-
-// Can provide as:
-//   1) (ms,"unix") - milliseconds since the UNIX epoch
-//   2) (days,"mjd") - days since the MJD epoch
-//   3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
-//   4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
-//   5) <undefined> - uses the current time
-function JD(jd,t,offs){
-	epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
-	var secs = 86400;
-	var scale = secs*1e6;
-	if(typeof jd==="number"){
-		if(typeof t!=="undefined"){
-			if(t=="unix") this.val = u2jd(jd);
-			else if(t=="epoch" && offs) this.val = u2jd((new Date(offs)).getTime() + jd*1000);
-			else if(t=="mjd") jd += 2400000.5;
-		}
-		if(!this.val){
-			var days = Math.floor(jd);
-			this.val = [days,(jd - days)*scale];
-		}
-	}else this.val = u2jd(jd);
-	var _obj = this;
-
-	this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
-	this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
-	this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
-	this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); }
-
-	// Deal with Julian Date in two parts to avoid rounding errors
-	// Input is either:
-	//    1) the number of milliseconds since 1970-01-01
-	//    2) the ISO8601 date string (can go to microseconds)
-	//    3) <undefined> - uses the current time
-	function u2jd(today) {
-		// The Julian Date of the Unix Time epoch is 2440587.5
-		var days = rem = ms = 0;
-		if(typeof today==="undefined"){
-			today = new Date();
-			ms = today.getTime();
-		}else if(typeof today==="string"){
-			// We'll take the decimal seconds and deal with
-			// them separately to avoid rounding errors.
-			var s = 0;
-			today = today.replace(/(\:[0-9]{2})\.([0-9]+)/,function(m,p1,p2){ s = parseFloat("0."+p2); return p1; });
-			ms = (new Date(today)).getTime();
-			ms += s*1000;
-		}else ms = today*1000;
-		days = Math.floor(ms/scale);
-		rem = (ms - days*scale) + scale/2;
-		return [days + epoch - 0.5,rem];
-	}
-	return this;
-}
