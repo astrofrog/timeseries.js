@@ -1,0 +1,77 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 800,
+	"height": 350,
+	"padding": 0,
+	"autosize": {"type": "fit", "resize": true},
+	"data": [{
+		"name": "lightcurve",
+		"url": "goes_xrs_timeseries.csv",
+		"format": {"type": "csv", "parse": {"time":"date", "xrsa":"number", "xrsb":"number"}}
+	}],
+	"scales": [{
+		"name": "xscale",
+		"type": "time",
+		"range": "width",
+		"zero": false,
+		"domain": {"data": "lightcurve", "field": "time"}
+	},{
+		"name": "yscale",
+		"type": "log",
+		"range": "height",
+		"zero": false,
+		"domain": {"data": "lightcurve", "field": "xrsa"}
+	}],
+	"axes": [
+		{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "2011-06-06"
+		},{
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Watts m^-2"
+		}
+	],
+	"marks":[{
+		"type": "line",
+		"description": "xrsa",
+		"from": {"data": "lightcurve"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "time"},
+				"y": {"scale": "yscale", "field": "xrsa"},
+				"shape": {"value": "circle"}
+			},
+			"update": {
+				"stroke": {"value": "#FF7F00"},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"stroke": {"value":"#0DBC37"},
+				"strokeWidth": {"value": 2},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "line",
+		"description": "xrsb",
+		"from": {"data": "lightcurve"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "time"},
+				"y": {"scale": "yscale", "field": "xrsb"}
+			},
+			"update": {
+				"shape": "cross",
+				"stroke": {"value": "#396bad"},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"stroke": {"value":"#0DBC37"},
+				"strokeWidth": {"value": 2},
+				"zindex": {"value": 1}
+			}
+		}
+	}]
+}
