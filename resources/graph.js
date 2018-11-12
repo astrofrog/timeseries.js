@@ -1372,12 +1372,40 @@
 
 			ctx.lineWidth = 1;
 
+			function drawText(txt,p,attr){
+				// Deal with superscript
+				var str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
+				var bits = str.split(/%%/);
+				var w = 0;
+				// Calculate the width of the text
+				for(var b = 0; b < bits.length; b++){
+					bits[b] = bits[b].split(":");
+					fs = (bits[b][0]=="NORMAL" ? 1 : 0.8)*attr.fs;
+					attr.ctx.font = attr.font.replace(/%SIZE%/,fs);
+					w += attr.ctx.measureText(bits[b][1]).width;
+				}
+				// Starting x-position
+				var l = p[0] - w/2;
+				attr.ctx.textAlign = "left";
+				for(var b = 0; b < bits.length; b++){
+					f = (bits[b][0]=="NORMAL" ? 1 : 0.6);
+					fs = f*attr.fs;
+					dy = 0;
+					if(bits[b][0] == "SUP") dy = -(1-f)*attr.fs;
+					if(bits[b][0] == "SUB") dy = (1-f)*attr.fs;
+					attr.ctx.font = attr.font.replace(/%SIZE%/,fs);
+					attr.ctx.fillText(bits[b][1],l,p[1]+dy+attr.fs/2)
+					l += attr.ctx.measureText(bits[b][1]).width;s
+				}
+				return;
+			}
+
 			// Draw label
 			if(this.options[a].title!=""){
 				var p = [0,0];
 				ctx.beginPath();
 				ctx.textAlign = "center";
-				ctx.textBaseline = "middle";
+				ctx.textBaseline = "bottom";
 				fs = this.getFontHeight(d,'title');
 				ctx.font = (this.options[a].titleFontWeight || "bold")+' '+fs+'px '+(this.options[a].titleFont || this.chart.fontfamily);
 				ctx.fillStyle = (this.options[a].titleColor || this.options.labels.color);
@@ -1387,7 +1415,7 @@
 				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
 
 				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
-				ctx.fillText(this.options[a].title, p[0], p[1]);
+				drawText(this.options[a].title, p,{ctx:ctx,axis:d,fs:fs,font:(this.options[a].titleFontWeight || "bold")+' %SIZE%px '+(this.options[a].titleFont || this.chart.fontfamily)});
 				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
 				ctx.closePath();
 			}

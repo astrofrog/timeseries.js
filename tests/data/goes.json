@@ -30,7 +30,7 @@
 		},{
 			"orient": "left",
 			"scale": "yscale",
-			"title": "Watts m^-2"
+			"title": "Watts m^{-2}"
 		}
 	],
 	"marks":[{
