@@ -252,12 +252,13 @@
 		this.options.logging = this.logging;
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
-		for(var i = 0; i < this.json.scales.length; i++){
-			if(this.json.scales[i].name=="yscale" && this.json.scales[i].type=="log") this.options.yaxis.log = true;
+		if(this.json.scales){
+			for(var i = 0; i < this.json.scales.length; i++){
+				if(this.json.scales[i].name=="yscale" && this.json.scales[i].type=="log") this.options.yaxis.log = true;
+			}
 		}
 
 		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element		
-		console.log(this)
 
 		var el = S(this.el);
 		el.addClass('timeseries').append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
@@ -403,7 +404,7 @@
 		var files = [];
 		var fn = function(csv,attr){
 			var json = CSV2JSON(csv,attr.dataset.format.parse);
-			this.datasets[attr.dataset.name] = json;
+			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
 			this.update(attr.dataset.name);
 			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
 		}
@@ -493,10 +494,10 @@
 				var dataset;
 				var desc = mark.description || "";
 
-				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id]), title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { data: clone(this.datasets[id]), id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "area") dataset = { data: clone(this.datasets[id]), id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "area") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
 
 				// Add the dataset
 				if(dataset){
@@ -638,39 +639,15 @@
 		for(var i = 1 ; i < data.length; i++){
 			// If there is no content on this line we skip it
 			if(!data[i] || data[i] == "") continue;
-			
 			datum = {};
 			// Loop over each column in the line
-			for(var j=0; j < data[i].length; j++){
-				if(formats[j]!="string"){
-					// "number", "boolean" or "date"
-					if(formats[j]=="number"){
-						data[i][j] = parseFloat(data[i][j]);
-					}else if(formats[j]=="date"){
-						// Convert to milliseconds since the epoch
-						s = new Date(data[i][j].replace(/^"/,"").replace(/"$/,"")).getTime();
-						// Extract anything less than milliseconds
-						var m = data[i][j].match(/\.[0-9]{3}([0-9]+)/);
-						// Add it back
-						if(m && m.length == 2) s += parseFloat('0.'+m[1]);
-						data[i][j] = s;
-					}else if(formats[j]=="boolean"){
-						if(data[i][j]=="1" || data[i][j]=="true" || data[i][j]=="Y") data[i][j] = true;
-						else if(data[i][j]=="0" || data[i][j]=="false" || data[i][j]=="N") data[i][j] = false;
-						else data[i][j] = null;
-					}
-				}
-				datum[header[j]] = data[i][j];
-				//if(header[j]=="HJD") datum['x'] = data[i][j];
-				//if(header[j]=="dmag") datum['y'] = data[i][j];
-			}
+			for(var j=0; j < data[i].length; j++) datum[header[j]] = data[i][j];
 			newdata.push(datum);
 		}
 
 		// Return the structured data
 		return newdata;
 	}
-
 
 	function looseJsonParse(obj){
 		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };function timeFormat(t,f){ var d = new Date(t); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);}";
@@ -795,5 +772,3 @@
 	root.TimeSeries = TimeSeries;
 
 })(window || this);
-
-
