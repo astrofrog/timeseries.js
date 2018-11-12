@@ -1663,7 +1663,7 @@
 		if(updateLookup) this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
 
 		var ctx = this.canvas.ctx;
-		
+
 		// Build the clip path
 		ctx.save();
 		ctx.beginPath();
@@ -1671,7 +1671,7 @@
 		ctx.clip();
 
 		for(sh in this.data){
-			//this.logTime('draw series '+sh);
+			//this.logTime('draw series '+sh+' '+this.data[sh].type);
 			if(this.data[sh].show){
 
 				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
@@ -1699,18 +1699,18 @@
 							if(this.data[sh].type=="symbol"){
 								if(p.x && p.y && m.data.x >= this.x.min && m.data.x <= this.x.max && m.data.y >= this.y.min && m.data.y <= this.y.max && p.y <= this.chart.top+this.chart.height){
 									o = this.drawShape(this.data[sh].marks[i]);
-									if(updateLookup) this.addRectToLookup(o);
+									if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
 								}
 							}
 							if(this.data[sh].type=="rect"){
 								o = this.drawRect(this.data[sh].marks[i]);
-								if(updateLookup) this.addRectToLookup(o);
+								if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
 							}
 						}
 					}
 				}
 			}
-			//this.logTime('draw series '+sh);
+			//this.logTime('draw series '+sh+' '+this.data[sh].type);
 		}
 		
 		// Apply the clipping
@@ -1945,7 +1945,7 @@
 		}
 		ctx.fill();
 
-		return {id:datum.id,xa:Math.floor(x1-w),xb:Math.ceil(x1+w),ya:Math.floor(y1-h),yb:Math.ceil(y1+h)};
+		return {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
 	}
 
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
@@ -1974,17 +1974,22 @@
 		if(!i.id) return;
 		var x,y,value;
 		var p = 2;
+		var a = { 'id': i.id, 'value': i.weight };
 		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
 		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
-
+		i.xb += p*2;
+		i.xb = Math.min(i.xb,this.lookup.length-1);
+		i.ya -= p;
+		i.yb += p;
+		if(i.xa < 0) i.xa = 0;
+		if(i.ya < 0) i.ya = 0;
+		// Clip to chart
+		i.yb = Math.min(i.yb,this.chart.top+this.chart.height);
 		// Use bounding box to define the lookup area
-		for(x = (i.xa-p); x < (i.xb+p); x++){
-			for(y = (i.ya-p); y < (i.yb+p); y++){
-				if(x >= 0 && x < this.lookup.length && y >= 0 && y < this.lookup[x].length){
-					value = ((x >= i.xa && x <= i.xb && y >= i.ya && y <= i.yb) ? 1 : 0.5)*i.weight;
-					if(this.lookup[x][y] == null) this.lookup[x][y] = new Array();
-					this.lookup[x][y].push({ 'id': i.id, 'value': value });
-				}
+		for(x = i.xa; x < i.xb; x++){
+			for(y = i.ya; y < i.yb; y++){
+				if(this.lookup[x][y] == null) this.lookup[x][y] = new Array();
+				this.lookup[x][y].push(a);
 			}
 		}
 		return this;
