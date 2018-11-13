@@ -34,6 +34,29 @@
 		}
 	],
 	"marks":[{
+		"type": "rule",
+		"encode": {
+			"enter": {
+				"x": {"scale": "x", "signal": "(new Date('2011-06-07 05:40Z')).getTime()"},
+				"y": {"scale": "y", "value": 1e-9},
+				"y2": {"scale": "y", "value": 1e-3 },
+				"stroke": {"value": "#1f77b4"},
+				"strokeWidth": {"value": 1}
+			}
+		}
+	},{
+		"type": "rect",
+		"encode": {
+			"enter": {
+				"x": {"scale": "x", "signal": "(new Date('2011-06-07 05:20Z')).getTime()"},
+				"x2": {"scale": "x", "signal": "(new Date('2011-06-07 06:00Z')).getTime()"},
+				"y": {"scale": "y", "value": 1e-9},
+				"y2": {"scale": "y", "value": 1e-3 },
+				"fill": {"value": "#1f77b4"},
+				"fillOpacity": {"value": 0.2}
+			}
+		}
+	},{
 		"type": "line",
 		"description": "xrsa",
 		"from": {"data": "lightcurve"},
@@ -44,7 +67,7 @@
 				"shape": {"value": "circle"}
 			},
 			"update": {
-				"stroke": {"value": "#FF7F00"},
+				"stroke": {"value": "#0000ff"},
 				"zindex": {"value": 0}
 			},
 			"hover": {
@@ -64,7 +87,7 @@
 			},
 			"update": {
 				"shape": "cross",
-				"stroke": {"value": "#396bad"},
+				"stroke": {"value": "#ff0000"},
 				"zindex": {"value": 0}
 			},
 			"hover": {

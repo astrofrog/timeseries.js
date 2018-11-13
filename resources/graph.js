@@ -796,6 +796,7 @@
 				if(!this.data[idx].marks[i].props.rect) this.data[idx].marks[i].props.rect = this.data[idx].rect;
 				if(!this.data[idx].marks[i].props.lines) this.data[idx].marks[i].props.lines = this.data[idx].lines;
 				if(!this.data[idx].marks[i].props.area) this.data[idx].marks[i].props.area = this.data[idx].area;
+				if(!this.data[idx].marks[i].props.rule) this.data[idx].marks[i].props.rule = this.data[idx].rule;
 				if(!this.data[idx].marks[i].props.format) this.data[idx].marks[i].props.format = this.data[idx].format;
 
 				// Should process all the "enter" options here
@@ -991,6 +992,7 @@
 	}
 
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
+		if(!datum) return this;
 		var f = datum.props.format;
 		var fill = (typeof f.fill==="string" ? f.fill : (typeof f.fill==="number" ? this.colours[f.fill % this.colours.length]:'#000000'));
 		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,f.fillOpacity);
@@ -1021,7 +1023,7 @@
 				clipping = false;
 				var typ = this.data[t].type;
 
-				if(typ=="line" || typ=="rect" || typ=="area"){
+				if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
 					clipping = true;
 					// Build the clip path
 					ctx.save();
@@ -1029,7 +1031,7 @@
 					ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 					ctx.clip();
 				}
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
+				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule"){
 					// Clone the mark
 					var oldmark = clone(this.data[t].marks[i]);
 					// Update the mark
@@ -1043,8 +1045,9 @@
 				if(typ=="symbol") this.drawShape(mark);
 				if(typ=="rect") this.drawRect(mark);
 				if(typ=="area") this.drawArea(t);
+				if(typ=="rule") this.drawRule(t);
 
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
+				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule"){
 					// Put the mark object back to how it was
 					this.data[t].marks[i] = clone(oldmark);
 					this.setCanvasStyles(ctx,this.data[t].marks[i]);
@@ -1568,7 +1571,6 @@
 			if(this.data[sh].show){
 				for(var i = 0; i < this.data[sh].marks.length ; i++){
 					d = this.data[sh].marks[i];
-
 					// Process all the series updates here
 					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,d,this.data[sh].encode.update);
 
@@ -1580,6 +1582,11 @@
 
 					this.data[sh].marks[i].props.x = parseFloat(x.toFixed(1));
 					this.data[sh].marks[i].props.y = parseFloat(y.toFixed(1));
+
+					// Add properties for rule lines
+					if(this.data[sh].type=="rule" && !d.data.x2) d.data.x2 = d.data.x;
+					if(this.data[sh].type=="rule" && !d.data.y2) d.data.y2 = d.data.y;
+
 					if(d.data.x2){
 						this.data[sh].marks[i].props.x2 = this.getXPos(d.data.x2);
 						this.data[sh].marks[i].props.x1 = x;
@@ -1670,6 +1677,10 @@
 					ctx.beginPath();
 					this.drawLine(sh,updateLookup);
 				}
+				if(this.data[sh].type=="rule"){
+					ctx.beginPath();
+					this.drawRule(sh,updateLookup);
+				}
 				if(this.data[sh].type=="area"){
 					ctx.beginPath();
 					this.drawArea(sh,updateLookup);
@@ -1754,17 +1765,27 @@
 	}
 
 	Graph.prototype.drawRect = function(datum){
+		var x1,y1,x2,y2,dx,dy;
 		if(datum.props.x2 || datum.props.y2){
-			var x1 = (datum.props.x1 || datum.props.x);
-			var y1 = (datum.props.y1 || datum.props.y);
-			var x2 = (datum.props.x2 || x1);
-			var y2 = (datum.props.y2 || y1);
-		
-			var dx = (datum.props.format.width||1);
-			var dy = (datum.props.format.height||1);
+			x1 = (datum.props.x1 || datum.props.x);
+			y1 = (datum.props.y1 || datum.props.y);
+			x2 = (datum.props.x2 || x1);
+			y2 = (datum.props.y2 || y1);
+			dx = (x2-x1);
+			dy = (y2-y1);
+
+			// Use provided width/height
+			if(datum.props.format.width){
+				x1 = x1+(dx-datum.props.format.width)/2;
+				dx = datum.props.format.width;
+			}
+			if(datum.props.format.height){
+				y1 = y1+(dy-datum.props.format.height)/2;
+				dy = datum.props.format.height;
+			}
 
 			this.canvas.ctx.beginPath();
-			this.canvas.ctx.rect(x1-dx/2,y1,dx,(y2-y1));
+			this.canvas.ctx.rect(x1,y1,dx,dy);
 			this.canvas.ctx.fill();
 			this.canvas.ctx.closePath();
 
@@ -1772,6 +1793,25 @@
 
 		}
 		return [];
+	}
+
+	Graph.prototype.drawRule = function(sh,updateLookup){
+		this.clearTemp();
+		this.tempctx.beginPath();
+		for(var i = 0; i < this.data[sh].marks.length ; i++){
+			p = this.data[sh].marks[i].props;
+			if(!p.x1) p.x1 = p.x;
+			if(!p.x2) p.x2 = p.x;
+			if(!p.y1) p.y1 = p.y;
+			if(!p.y2) p.y2 = p.y;
+			if(p.x1 && p.y1) this.tempctx.moveTo(p.x1,p.y1);
+			if(p.x2 && p.y2) this.tempctx.lineTo(p.x2,p.y2);
+		}
+		this.tempctx.stroke();
+		this.canvas.ctx.drawImage(this.temp,0,0);
+
+		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		return this;
 	}
 
 	Graph.prototype.drawLine = function(sh,updateLookup){
@@ -1823,7 +1863,7 @@
 		// not processing the entire shape in one go
 		var poly = new Array(areas.length);
 		for(a = 0; a < areas.length ; a++){
-			if(areas[a].length){
+			if(areas[a] && areas[a].length){
 				poly[a] = new Array(areas[a].length*2);
 				// Move along top of area (y2 coordinates)
 				k = 0;
@@ -1841,9 +1881,11 @@
 		}
 		// Draw each polygon
 		for(a = 0; a < poly.length; a++){
-			for(j = 0; j < poly[a].length; j++){
-				if(j==0) this.tempctx.moveTo(poly[a][j][0],poly[a][j][1]);
-				else this.tempctx.lineTo(poly[a][j][0],poly[a][j][1]);
+			if(poly[a]){
+				for(j = 0; j < poly[a].length; j++){
+					if(j==0) this.tempctx.moveTo(poly[a][j][0],poly[a][j][1]);
+					else this.tempctx.lineTo(poly[a][j][0],poly[a][j][1]);
+				}
 			}
 		}
 

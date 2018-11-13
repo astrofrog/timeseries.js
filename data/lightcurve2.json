@@ -43,6 +43,18 @@
 		}
 	],
 	"marks":[{
+		"type": "rule",
+		"description": "Event",
+		"encode": {
+			"enter": {
+				"x": {"scale": "x", "signal": "(new Date('2018-10-29T13:53:22Z')).getTime()"},
+				"y": {"scale": "y", "value": 0},
+				"y2": {"scale": "y", "value": 2 },
+				"stroke": {"value": "#000"},
+				"strokeWidth": {"value": 2}
+			}
+		}
+	},{
 		"type": "area",
 		"description": "Shadow",
 		"from": {"data": "shadow"},

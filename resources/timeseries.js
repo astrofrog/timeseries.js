@@ -426,7 +426,10 @@
 
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props'};
-		
+			if(!d){
+				console.log('updateProps fail',d,event)
+				return;
+			}
 			datum = d.data;
 
 			for(var p in event){
@@ -452,6 +455,7 @@
 					}
 				}else{
 					if(event[p].field && datum[event[p].field]) datum[p] = datum[event[p].field];
+					if(typeof event[p].value!=="undefined") datum[p] = event[p].value;
 					if(event[p].signal){
 						try { datum[p] = ev.call(datum,event[p].signal,datum); }
 						catch(e) { _obj.log('Error',datum,event[p]); }
@@ -467,18 +471,28 @@
 		for(var m = 0; m < this.json.marks.length; m++){
 			id = "";
 			mark = this.json.marks[m];
-			if(mark.from.data) id = mark.from.data;
-		
-			if(this.datasets[id]) this.datasetsused += id;
+			if(mark.from && mark.from.data){
+				id = mark.from.data;
+				if(this.datasets[id]) this.datasetsused += id;
+			}
 
-			if(this.datasets[id] && id==datasetID){
+			if(!id || this.datasets[id]){// && id==datasetID){
 				var dataset;
 				var desc = mark.description || "";
 
-				if(mark.type == "symbol") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "rect") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "area") dataset = { data: clone(this.datasets[id].json), parse: this.datasets[id].parse, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				if(mark.type == "symbol") dataset = { title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "rect") dataset = { title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "line") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "rule") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, rule: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				else if(mark.type == "area") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+
+				if(this.datasets[id]){
+					dataset.data = clone(this.datasets[id].json);
+					dataset.parse = this.datasets[id].parse;
+				}else{
+					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
+					dataset.parse = {};
+				}
 
 				// Add the dataset
 				if(dataset){
