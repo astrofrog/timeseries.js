@@ -18,7 +18,7 @@
 .timeseries .hamburger {
 	cursor: pointer;
 	display: block;
-	opacity: 0.1;
+	opacity: 0.5;
 	width: 2em;
 	height: 2em;
 	position: absolute;
