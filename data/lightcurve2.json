@@ -38,7 +38,8 @@
 		},{
 			"orient": "left",
 			"scale": "yscale",
-			"title": "Intensity"
+			"title": "Intensity",
+			"grid": true
 		}
 	],
 	"marks":[{
