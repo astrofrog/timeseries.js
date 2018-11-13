@@ -780,25 +780,24 @@
 			if(!this.data[idx].type) this.data[idx].type = "symbol";
 			if(!this.data[idx].format) this.data[idx].format = { };
 
-			if(!this.data[idx].symbol.shape) this.data[idx].symbol.shape = "circle";
+			if(this.data[idx].symbol && !this.data[idx].symbol.shape) this.data[idx].symbol.shape = "circle";
 			if(typeof this.data[idx].format.size!=="number") this.data[idx].format.size = 4;
 			if(!this.data[idx].format.stroke) this.data[idx].format.stroke = this.colours[0];
 			if(!this.data[idx].format.strokeDash) this.data[idx].format.strokeDash = [1,0];
 			if(typeof this.data[idx].format.strokeWidth!=="number") this.data[idx].format.strokeWidth = 1;
 			if(!this.data[idx].format.fill) this.data[idx].format.fill = this.colours[0];
 
-			for(var i = 0; i < l ; i++){
+			types = ['symbol','rect','lines','area','rule','text','format'];
+			var i,j,t;
+
+			for(i = 0; i < l ; i++){
 
 				if(!this.data[idx].marks[i]) this.data[idx].marks[i] = {'props':{},'data':this.data[idx].data[i]};
 
-				// Copy the general symbol to the datapoint.
-				if(!this.data[idx].marks[i].props.symbol) this.data[idx].marks[i].props.symbol = this.data[idx].symbol;
-				if(!this.data[idx].marks[i].props.rect) this.data[idx].marks[i].props.rect = this.data[idx].rect;
-				if(!this.data[idx].marks[i].props.lines) this.data[idx].marks[i].props.lines = this.data[idx].lines;
-				if(!this.data[idx].marks[i].props.area) this.data[idx].marks[i].props.area = this.data[idx].area;
-				if(!this.data[idx].marks[i].props.rule) this.data[idx].marks[i].props.rule = this.data[idx].rule;
-				if(!this.data[idx].marks[i].props.format) this.data[idx].marks[i].props.format = this.data[idx].format;
-
+				for(j = 0; j < types.length; j++){
+					t = types[j];
+					if(!this.data[idx].marks[i].props[t] && this.data[idx][t]) this.data[idx].marks[i].props[t] = this.data[idx][t];
+				}
 				// Should process all the "enter" options here
 				if(this.data[idx].enter) this.data[idx].marks[i] = this.data[idx].enter.call(this,this.data[idx].marks[i],this.data[idx].encode.enter);
 			}
@@ -1718,50 +1717,9 @@
 		return this;
 	}
 
-	Graph.prototype.addLine = function(opt){
-		// Should sanitize the input here
-		this.lines.push(opt);
-		return this;
-	}
-
-	Graph.prototype.removeLines = function(opt){
-		this.lines = [];
-		return this;
-	}
-
 	Graph.prototype.remove = function(){
 		this.canvas.container.replaceWith(this.canvas.origcontainer);
 		return {};
-	}
-
-	Graph.prototype.drawLines = function(){
-		// Loop over each line
-		for(var l = 0; l < this.lines.length ; l++){
-			if(this.lines[l].x){
-				x = (this.lines[l].x.length == 2) ? this.lines[l].x : [this.lines[l].x,this.lines[l].x];
-				x1 = this.getXPos((this.x.log ? Math.pow(10,x[0]): x[0]));
-				x2 = this.getXPos((this.x.log ? Math.pow(10,x[1]): x[1]));
-			}else{
-				x1 = this.chart.left;
-				x2 = this.chart.left+this.chart.width;
-			}
-			if(this.lines[l].y){
-				y = (this.lines[l].y.length == 2) ? this.lines[l].y : [this.lines[l].y,this.lines[l].y];
-				y1 = this.getYPos((this.y.log ? Math.pow(10,y[0]): y[0]));
-				y2 = this.getYPos((this.y.log ? Math.pow(10,y[1]): y[1]));
-			}else{
-				y1 = this.chart.top+this.chart.height;
-				y2 = this.chart.top;
-			}
-			this.canvas.ctx.beginPath();
-			this.canvas.ctx.strokeStyle = (typeof this.data[l].format.stroke=="string" ? this.data[l].format.stroke : 'black');
-			this.canvas.ctx.lineWidth = (typeof this.data[l].format.strokeWidth=="number" ? this.data[l].format.strokeWidth : 1);
-			this.canvas.ctx.moveTo(x1,y1);
-			this.canvas.ctx.lineTo(x2,y2);
-			this.canvas.ctx.stroke();
-			this.canvas.ctx.closePath();
-		}
-		return this;
 	}
 
 	Graph.prototype.drawRect = function(datum){
@@ -2056,7 +2014,8 @@
 	}
 
 	Graph.prototype.drawOverlay = function(){
-		this.drawLines();
+		// Potentially draw things afterwards
+		
 		return this;
 	}
 

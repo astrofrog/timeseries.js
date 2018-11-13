@@ -476,15 +476,15 @@
 				if(this.datasets[id]) this.datasetsused += id;
 			}
 
-			if(!id || this.datasets[id]){// && id==datasetID){
-				var dataset;
+			if(!id || this.datasets[id]){
 				var desc = mark.description || "";
+				var dataset = { title: id, id: id, desc: desc, type: mark.type, clickable: true, css:{'background-color':'#000000'} };
 
-				if(mark.type == "symbol") dataset = { title: id, id: id, desc: desc, type: mark.type, symbol: { show:true }, rect: { show:false }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "rect") dataset = { title: id, id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:true }, lines: { show: false }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "line") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: true }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "rule") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, rule: { show: true }, clickable: true, css:{'background-color':'#000000'} };
-				else if(mark.type == "area") dataset = { id: id, desc: desc, type: mark.type, symbol: { show:false }, rect: { show:false }, title: id, lines: { show: false }, area: { show: true }, clickable: true, css:{'background-color':'#000000'} };
+				if(mark.type == "symbol") dataset.symbol = {show:true};
+				else if(mark.type == "rect") dataset.rect = {show:true};
+				else if(mark.type == "line") dataset.lines = {show:true};
+				else if(mark.type == "rule") dataset.rule = {show:true};
+				else if(mark.type == "area") dataset.area = {show:true};
 
 				if(this.datasets[id]){
 					dataset.data = clone(this.datasets[id].json);
