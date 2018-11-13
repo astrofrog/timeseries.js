@@ -211,6 +211,7 @@
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
+		this.canvas.on("wheel",{me:this}, function(e){ e.preventDefault(); });
 		this.canvasholder.on("wheel",{me:this}, function(e){ e.preventDefault(); e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
 			var ongoingTouches = [];
