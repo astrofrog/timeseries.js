@@ -722,21 +722,21 @@
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
-	Graph.prototype.addDataset = function(data,index){
-		this.log('addDataset',index);
-		if(typeof index!=="number"){
-			if(typeof index==="undefined"){
-				// Create an index
+	Graph.prototype.addDataset = function(data,idx){
+		this.log('addDataset',idx);
+		if(typeof idx!=="number"){
+			if(typeof idx==="undefined"){
+				// Create an idx
 				for(var i = 0; i < 200; i++){
 					if(typeof this.data[i]==="undefined"){
-						index = i;
+						idx = i;
 						i = 100;
 					}
 				}
 			}
 		}
 
-		if(this.data[index]) this.log('addDataset error','refusing to overwrite existing dataset at '+index,this.data[index],data);
+		if(this.data[idx]) this.log('addDataset error','refusing to overwrite existing dataset at '+idx,this.data[idx],data);
 		else {
 			// Parse the data
 			for(var key in data.parse){
@@ -766,37 +766,37 @@
 				}
 			}
 
-			this.data[index] = data;
+			this.data[idx] = data;
 
 			// Set the default to show the dataset
-			if(typeof this.data[index].show!=="boolean") this.data[index].show = true;
+			if(typeof this.data[idx].show!=="boolean") this.data[idx].show = true;
 
-			l = this.data[index].data.length;
-			this.data[index].marks = new Array(l);
+			l = this.data[idx].data.length;
+			this.data[idx].marks = new Array(l);
 
-			if(!this.data[index].type) this.data[index].type = "symbol";
-			if(!this.data[index].format) this.data[index].format = { };
+			if(!this.data[idx].type) this.data[idx].type = "symbol";
+			if(!this.data[idx].format) this.data[idx].format = { };
 
-			if(!this.data[index].symbol.shape) this.data[index].symbol.shape = "circle";
-			if(typeof this.data[index].format.size!=="number") this.data[index].format.size = 4;
-			if(!this.data[index].format.stroke) this.data[index].format.stroke = this.colours[0];
-			if(!this.data[index].format.strokeDash) this.data[index].format.strokeDash = [1,0];
-			if(typeof this.data[index].format.strokeWidth!=="number") this.data[index].format.strokeWidth = 1;
-			if(!this.data[index].format.fill) this.data[index].format.fill = this.colours[0];
+			if(!this.data[idx].symbol.shape) this.data[idx].symbol.shape = "circle";
+			if(typeof this.data[idx].format.size!=="number") this.data[idx].format.size = 4;
+			if(!this.data[idx].format.stroke) this.data[idx].format.stroke = this.colours[0];
+			if(!this.data[idx].format.strokeDash) this.data[idx].format.strokeDash = [1,0];
+			if(typeof this.data[idx].format.strokeWidth!=="number") this.data[idx].format.strokeWidth = 1;
+			if(!this.data[idx].format.fill) this.data[idx].format.fill = this.colours[0];
 
 			for(var i = 0; i < l ; i++){
 
-				if(!this.data[index].marks[i]) this.data[index].marks[i] = {'props':{},'data':this.data[index].data[i]};
+				if(!this.data[idx].marks[i]) this.data[idx].marks[i] = {'props':{},'data':this.data[idx].data[i]};
 
 				// Copy the general symbol to the datapoint.
-				if(!this.data[index].marks[i].props.symbol) this.data[index].marks[i].props.symbol = this.data[index].symbol;
-				if(!this.data[index].marks[i].props.rect) this.data[index].marks[i].props.rect = this.data[index].rect;
-				if(!this.data[index].marks[i].props.lines) this.data[index].marks[i].props.lines = this.data[index].lines;
-				if(!this.data[index].marks[i].props.area) this.data[index].marks[i].props.area = this.data[index].area;
-				if(!this.data[index].marks[i].props.format) this.data[index].marks[i].props.format = this.data[index].format;
+				if(!this.data[idx].marks[i].props.symbol) this.data[idx].marks[i].props.symbol = this.data[idx].symbol;
+				if(!this.data[idx].marks[i].props.rect) this.data[idx].marks[i].props.rect = this.data[idx].rect;
+				if(!this.data[idx].marks[i].props.lines) this.data[idx].marks[i].props.lines = this.data[idx].lines;
+				if(!this.data[idx].marks[i].props.area) this.data[idx].marks[i].props.area = this.data[idx].area;
+				if(!this.data[idx].marks[i].props.format) this.data[idx].marks[i].props.format = this.data[idx].format;
 
 				// Should process all the "enter" options here
-				if(this.data[index].enter) this.data[index].marks[i] = this.data[index].enter.call(this,this.data[index].marks[i],this.data[index].encode.enter);
+				if(this.data[idx].enter) this.data[idx].marks[i] = this.data[idx].enter.call(this,this.data[idx].marks[i],this.data[idx].encode.enter);
 			}
 		}
 
@@ -1006,6 +1006,7 @@
 			this.canvas.pasteFromClipboard();
 			this.drawOverlay();
 			var t,i,clipping;
+			var ctx = this.canvas.ctx;
 
 			for(var s = 0; s < ds.length; s++){
 				d = ds[s].id.split(":");
@@ -1017,10 +1018,10 @@
 				if(typ=="line" || typ=="rect" || typ=="area"){
 					clipping = true;
 					// Build the clip path
-					this.canvas.ctx.save();
-					this.canvas.ctx.beginPath();
-					this.canvas.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
-					this.canvas.ctx.clip();
+					ctx.save();
+					ctx.beginPath();
+					ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+					ctx.clip();
 				}
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
 					// Clone the mark
@@ -1028,7 +1029,7 @@
 					// Update the mark
 					mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 					// Set the canvas colours
-					this.setCanvasStyles(this.canvas.ctx,mark);
+					this.setCanvasStyles(ctx,mark);
 					this.setCanvasStyles(this.tempctx,mark);
 				}
 
@@ -1040,11 +1041,11 @@
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area"){
 					// Put the mark object back to how it was
 					this.data[t].marks[i] = clone(oldmark);
-					this.setCanvasStyles(this.canvas.ctx,this.data[t].marks[i]);
+					this.setCanvasStyles(ctx,this.data[t].marks[i]);
 				}
 
 				// Set the clipping
-				if(clipping) this.canvas.ctx.restore();
+				if(clipping) ctx.restore();
 			}
 
 			d = getTopLayer(ds);
@@ -1129,29 +1130,28 @@
 			return this;
 		}
 
+		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn;
 		var param = {'name': 'seconds', 'div': 1, 'base': 10};
-		var rg = this[axis].range;
-		var mx = this[axis].max;
-		var mn = this[axis].min;
-		var t_inc;
+		rg = this[axis].range;
+		mx = this[axis].max;
+		mn = this[axis].min;
 		
 		// Calculate reasonable grid line spacings
 		if(this[axis].isDate){
 			if(!this.options.formatLabelX) this.options.formatLabelX = {};
 			// Dates are in milliseconds
 			// Grid line spacings can range from 1 ms to 10000 years
-			var steps = [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
+			steps = [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
 					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
 					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
 					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
 					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
 			steps = (this.options.formatLabelX.steps || steps);
-			var t_div;
 
-			for(var st = 0; st < steps.length ; st++){
-				for(var sp = 0; sp < steps[st].spacings.length; sp++){
-					var n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
+			for(st = 0; st < steps.length ; st++){
+				for(sp = 0; sp < steps[st].spacings.length; sp++){
+					n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
 					if(n < 1) continue;
 					if(!t_div || (n > 3 && n < t_div)){
 						t_div = n;
@@ -1163,10 +1163,10 @@
 		}else t_inc = Math.pow(param.base,Math.floor(Math.log(rg)/Math.log(param.base)));
 
 		//t_inc = Math.pow(10,Math.ceil(G.log10(this[axis].range/10)));
-		var t_max = (Math.floor(mx/t_inc))*t_inc;
+		t_max = (Math.floor(mx/t_inc))*t_inc;
 		if(t_max < mx) t_max += t_inc;
-		var t_min = t_max;
-		var i = 0;
+		t_min = t_max;
+		i = 0;
 		do {
 			i++;
 			t_min -= t_inc;
@@ -1193,9 +1193,8 @@
 	
 	// A factor to scale the overall font size then redraw the graph
 	Graph.prototype.scaleFont = function(s){
-		if(s == 0)this.fontscale = 1;
-		else if(s > 0) this.fontscale *= 1.1;
-		else if(s < 0) this.fontscale /= 1.1;
+		if(s == 0) this.fontscale = 1;
+		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
 		this.calculateData().draw(false);
 		return this;
 	}
@@ -1211,31 +1210,34 @@
 		var fs = getStyle(this.canvas.container[0], 'font-size');
 		var ff = getStyle(this.canvas.container[0], 'font-family');
 		var o = this.options;
+		var c = this.chart;
 
 		if(this.canvas.fullscreen){
-			this.chart.padding = this.canvas.wide/40;
-			this.chart.fontsize = this.canvas.wide/80;
-			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
+			c.padding = this.canvas.wide/40;
+			c.fontsize = this.canvas.wide/80;
+			c.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
-			this.chart.padding = 0;
-			this.chart.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
-			this.chart.fontfamily = (typeof ff=="string") ? ff : "";
+			c.padding = 0;
+			c.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
+			c.fontfamily = (typeof ff=="string") ? ff : "";
 		}
 
 		// Correct for sub-pixel positioning
 		b = o.grid.border*0.5;
-		this.chart.padding = o.padding || this.chart.padding;
-		this.chart.top = this.chart.left = this.chart.bottom = this.chart.right = this.chart.padding + b;
+		c.padding = o.padding || c.padding;
+		c.top = c.left = c.bottom = c.right = c.padding + b;
 		var ax = {'xaxis':'bottom','yaxis':'left'};
 		for(var a in ax){
 			if(o[a].title) this.chart[ax[a]] += this.getFontHeight(a.substr(0,1),'title')*1.5;
 			if(typeof o[a].labels==="undefined") o[a].labels = true;
-			if(o[a].labels) this.chart[ax[a]] += (a=="xaxis" ? this.getFontHeight('x','label')*1.2 : this.getLabelWidth());
-			if(o[a].ticks) this.chart[ax[a]] += (o[a].tickSize||4) + 3;
-			this.chart[ax[a]] = Math.round(this.chart[ax[a]]);
+			if(o[a].labels) c[ax[a]] += (a=="xaxis" ? this.getFontHeight('x','label')*1.2 : this.getLabelWidth());
+			if(o[a].ticks) c[ax[a]] += (o[a].tickSize||4) + 3;
+			c[ax[a]] = Math.round(this.chart[ax[a]]);
 		}
-		this.chart.width = this.canvas.wide-this.chart.right-this.chart.left;
-		this.chart.height = this.canvas.tall-this.chart.bottom-this.chart.top;
+		c.width = this.canvas.wide-this.chart.right-c.left;
+		c.height = this.canvas.tall-this.chart.bottom-c.top;
+
+		this.chart = c;
 		return this;
 	}
 	
@@ -1245,22 +1247,23 @@
 
 		if(!ok) return 0;
 		// Set font for labels
-		var fs = this.getFontHeight('y','label');
-		var maxw = 0;
-		var ctx = this.canvas.ctx;
+		var fs,mn,mx,ctx,maxw,prec,i;
+		fs = this.getFontHeight('y','label');
+		maxw = 0;
+		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 		// Calculate the number of decimal places for the increment - helps with rounding errors
-		var prec = ""+this.y.inc;
+		prec = ""+this.y.inc;
 		prec = prec.length-prec.indexOf('.')-1;
 
-		var mn = this.y.gmin;
-		var mx = this.y.gmax;
+		mn = this.y.gmin;
+		mx = this.y.gmax;
 		if(this.y.log){
 			mn = Math.ceil(this.y.gmin);
 			mx = Math.floor(this.y.gmax);
 		}
 
-		for(var i = mn; i <= mx; i += this.y.inc){
+		for(i = mn; i <= mx; i += this.y.inc){
 			j = (this.y.log) ? i : i.toFixed(prec);
 			maxw = Math.max(maxw,ctx.measureText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,""))).width);
 		}
@@ -1269,12 +1272,12 @@
 	
 	// Draw the axes and grid lines for the graph
 	Graph.prototype.drawAxes = function(){
-		var grid,tw;
-		var c = this.chart;
-		var ctx = this.canvas.ctx;
-		var rot = Math.PI/2;
-		var axes = {'xaxis':{},'yaxis':{}};
-		var r = {
+		var grid,tw,c,ctx,rot,axes,r,i,a,o,d,s,p,mn,mx;
+		c = this.chart;
+		ctx = this.canvas.ctx;
+		rot = Math.PI/2;
+		axes = {'xaxis':{},'yaxis':{}};
+		r = {
 			'xmin': this.chart.left,
 			'xmax': this.chart.left+this.chart.width,
 			'ymax': this.chart.top+this.chart.height,
@@ -1289,7 +1292,7 @@
 		if(!this.subgrid){
 			v = [2,3,4,5,6,7,8,9]
 			this.subgrid = []
-			for(var i = 0 ; i < v.length ; i++){
+			for(i = 0 ; i < v.length ; i++){
 				this.subgrid[i] = G.log10(v[i]);
 			}
 		}
@@ -1309,17 +1312,17 @@
 		}
 		ctx.closePath();
 		
-		for(var a in axes){
+		for(a in axes){
 
-			var o = this.options[a].orient || "left";
+			o = this.options[a].orient || "left";
 			// Set axis direction
-			var d = "x";
+			d = "x";
 			if(o=="left" || o=="right") d = "y";
 			if(!this[d]) continue;
 
 			// What do we show?
 			var show = {'grid':false,'labels':true,'ticks':true,'domain':true,'ticks':true};
-			for(var s in show){
+			for(s in show){
 				if(typeof this.options[a][s]==="boolean") show[s] = this.options[a][s];
 				if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
 			}
@@ -1348,20 +1351,21 @@
 
 			function drawText(txt,p,attr){
 				// Deal with superscript
-				var str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
-				var bits = str.split(/%%/);
-				var w = 0;
+				var str,w,b,l,bits;
+				str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
+				bits = str.split(/%%/);
+				w = 0;
 				// Calculate the width of the text
-				for(var b = 0; b < bits.length; b++){
+				for(b = 0; b < bits.length; b++){
 					bits[b] = bits[b].split(":");
 					fs = (bits[b][0]=="NORMAL" ? 1 : 0.8)*attr.fs;
 					attr.ctx.font = attr.font.replace(/%SIZE%/,fs);
 					w += attr.ctx.measureText(bits[b][1]).width;
 				}
 				// Starting x-position
-				var l = p[0] - w/2;
+				l = p[0] - w/2;
 				attr.ctx.textAlign = "left";
-				for(var b = 0; b < bits.length; b++){
+				for(b = 0; b < bits.length; b++){
 					f = (bits[b][0]=="NORMAL" ? 1 : 0.6);
 					fs = f*attr.fs;
 					dy = 0;
@@ -1376,7 +1380,7 @@
 
 			// Draw label
 			if(this.options[a].title!=""){
-				var p = [0,0];
+				p = [0,0];
 				ctx.beginPath();
 				ctx.textAlign = "center";
 				ctx.textBaseline = "bottom";
@@ -1395,7 +1399,7 @@
 			}
 
 			// Draw axis grid and labels
-			ctx.textAlign = orient[o].textAlign || "end";
+			ctx.textAlign = orient[o].textAlign || 'end';
 			ctx.textBaseline = orient[o].textBaseline || 'top';
 
 			// Set font for labels
@@ -1421,14 +1425,14 @@
 			var oldx = 0;
 			var prev = {};
 			
-			var mn = axis.gmin;
-			var mx = axis.gmax;
+			mn = axis.gmin;
+			mx = axis.gmax;
 			if(axis.log){
 				mn = Math.floor(axis.gmin);
 				mx = Math.ceil(axis.gmax);
 			}
 			
-			for(var i = mn; i <= mx; i += axis.inc) {
+			for(i = mn; i <= mx; i += axis.inc) {
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -1525,19 +1529,21 @@
 
 	Graph.prototype.formatLabelDate = function(d){
 		d = new Date(parseInt(d));
-		var hr = zeroFill(d.getUTCHours(),2);
-		var mn = zeroFill(d.getUTCMinutes(),2);
-		var sc = zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2);
-		var dy = zeroFill(d.getUTCDate(),2);
-		var mo = zeroFill(d.getUTCMonth()+1,2);
-		var yr = d.getUTCFullYear();
-		var n = this.x.spacing.name;
-		if(n=="seconds") return (this.x.spacing.fract >= 1 ? hr+":"+mn+":"+sc : ""+sc);
+		var hr,mn,sc,dy,mo,yr,n,f;
+		f = this.x.spacing.fract;
+		hr = zeroFill(d.getUTCHours(),2);
+		mn = zeroFill(d.getUTCMinutes(),2);
+		sc = zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2);
+		dy = zeroFill(d.getUTCDate(),2);
+		mo = zeroFill(d.getUTCMonth()+1,2);
+		yr = d.getUTCFullYear();
+		n = this.x.spacing.name;
+		if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc);
 		else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
 		else if(n=="hours") return hr+":"+mn;
-		else if(n=="days") return (this.x.spacing.fract >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
+		else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
 		else if(n=="weeks") return yr+"-"+mo+"-"+dy+(hr=="00" ? '' : ' '+Math.round((d.getUTCHours()+(d.getUTCMinutes()/60)))+'h');
-		else if(n=="years") return ((this.x.spacing.fract >= 1) ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
+		else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
 		else return hr+":"+mn+":"+sc;
 	}
 
@@ -1583,6 +1589,7 @@
 		return this;
 	}
 
+	// Polyfill
 	if(!Array.prototype.fill) {
 		Object.defineProperty(Array.prototype, 'fill', {
 			value: function(value) {
@@ -1591,23 +1598,23 @@
 				if (this == null) {
 					throw new TypeError('this is null or not defined');
 				}
-
-				var O = Object(this);
+				var O,len,k,end;
+				O = Object(this);
 
 				// Steps 3-5.
-				var len = O.length >>> 0;
+				len = O.length >>> 0;
 
 				// Steps 6-7.
 				var start = arguments[1];
 				var relativeStart = start >> 0;
 
 				// Step 8.
-				var k = relativeStart < 0 ?
+				k = relativeStart < 0 ?
 					Math.max(len + relativeStart, 0) :
 					Math.min(relativeStart, len);
 
 				// Steps 9-10.
-				var end = arguments[2];
+				end = arguments[2];
 				var relativeEnd = end === undefined ?
 					len : end >> 0;
 
@@ -1630,7 +1637,7 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var lo,hi,x,y,ii,l,p,s,sh,o;
+		var lo,hi,x,y,ii,l,p,s,sh,o,i;
 		var twopi = Math.PI*2;
 
 		// Define an empty pixel-based lookup table
@@ -1661,7 +1668,7 @@
 					this.drawArea(sh,updateLookup);
 				}
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
-					for(var i = 0; i < this.data[sh].marks.length ; i++){
+					for(i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
 						p = m.props;
 
@@ -1793,9 +1800,10 @@
 		this.clearTemp();
 		this.tempctx.beginPath();
 		var oldp = {};
+		var a,i,j,k;
 		var areas = new Array();
 		// We need to loop across the data first splitting into segments
-		for(var i = 0, a = 0; i < this.data[sh].marks.length ; i++){
+		for(i = 0, a = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
 			y1 = (p.y1 || p.y);
 			y2 = p.y2;
@@ -1807,24 +1815,24 @@
 		// To do: make the polygon lookup processing more efficient by
 		// not processing the entire shape in one go
 		var poly = new Array(areas.length);
-		for(var a = 0; a < areas.length ; a++){
+		for(a = 0; a < areas.length ; a++){
 			poly[a] = new Array(areas[a].length*2);
 			// Move along top of area (y2 coordinates)
-			var k = 0;
-			for(var j = 0; j < areas[a].length; j++,k++){
+			k = 0;
+			for(j = 0; j < areas[a].length; j++,k++){
 				p = this.data[sh].marks[areas[a][j]].props;
 				poly[a][k] = [p.x,p.y2];
 			}
 			// Move along bottom of area backwards
-			for(var j = areas[a].length-1; j >= 0; j--,k++){
+			for(j = areas[a].length-1; j >= 0; j--,k++){
 				p = this.data[sh].marks[areas[a][j]].props;
 				p.y1 = (p.y1 || p.y);
 				poly[a][k] = [p.x,p.y1];
 			}
 		}
 		// Draw each polygon
-		for(var a = 0; a < poly.length; a++){
-			for(var j = 0; j < poly[a].length; j++){
+		for(a = 0; a < poly.length; a++){
+			for(j = 0; j < poly[a].length; j++){
 				if(j==0) this.tempctx.moveTo(poly[a][j][0],poly[a][j][1]);
 				else this.tempctx.lineTo(poly[a][j][0],poly[a][j][1]);
 			}
@@ -1847,6 +1855,8 @@
 
 		if(!ctx) ctx = this.canvas.ctx;
 		p = datum.props;
+		
+		var x1,y1,s,w,h;
 
 		var x1 = x || p.x;
 		var y1 = y || p.y;
@@ -1856,10 +1866,11 @@
 
 		var shape = p.symbol.shape;
 
-		var s = (Math.sqrt(p.format.size) || 4);
-		var w = s;
-		var h = s;
-		
+		w = s = h = (Math.sqrt(p.format.size) || 4);
+
+		function m(a,b){ ctx.moveTo(x1+a,y1+b); }
+		function l(a,b){ ctx.lineTo(x1+a,y1+b); }
+				
 		if(shape=="circle"){
 			ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
@@ -1878,44 +1889,44 @@
 			ctx.rect(x1,y1,w,h);
 		}else if(shape=="cross"){
 			dw = w/6;
-			ctx.moveTo(x1+dw,y1+dw);
-			ctx.lineTo(x1+dw*3,y1+dw);
-			ctx.lineTo(x1+dw*3,y1-dw);
-			ctx.lineTo(x1+dw,y1-dw);
-			ctx.lineTo(x1+dw,y1-dw*3);
-			ctx.lineTo(x1-dw,y1-dw*3);
-			ctx.lineTo(x1-dw,y1-dw);
-			ctx.lineTo(x1-dw*3,y1-dw);
-			ctx.lineTo(x1-dw*3,y1+dw);
-			ctx.lineTo(x1-dw,y1+dw);
-			ctx.lineTo(x1-dw,y1+dw*3);
-			ctx.lineTo(x1+dw,y1+dw*3);
+			m(dw,dw);
+			l(dw*3,dw);
+			l(dw*3,-dw);
+			l(dw,-dw);
+			l(dw,-dw*3);
+			l(-dw,-dw*3);
+			l(-dw,-dw);
+			l(-dw*3,-dw);
+			l(-dw*3,dw);
+			l(-dw,dw);
+			l(-dw,dw*3);
+			l(dw,dw*3);
 		}else if(shape=="diamond"){
 			w *= Math.sqrt(2)/2;
-			ctx.moveTo(x1,y1+w);
-			ctx.lineTo(x1+w,y1);
-			ctx.lineTo(x1,y1-w);
-			ctx.lineTo(x1-w,y1);
+			m(0,w);
+			l(w,0);
+			l(0,-w);
+			l(-w,0);
 		}else if(shape=="triangle-up"){
 			w /= 3;
-			ctx.moveTo(x1,y1-w*1.5);
-			ctx.lineTo(x1+w*2,y1+w*1.5);
-			ctx.lineTo(x1-w*2,y1+w*1.5);
+			m(0,-w*1.5);
+			l(w*2,w*1.5);
+			l(-w*2,w*1.5);
 		}else if(shape=="triangle-down"){
 			w /=3;
-			ctx.moveTo(x1,y1+w*1.5);
-			ctx.lineTo(x1+w*2,y1-w*1.5);
-			ctx.lineTo(x1-w*2,y1-w*1.5);
+			m(0,w*1.5);
+			l(w*2,-w*1.5);
+			l(-w*2,-w*1.5);
 		}else if(shape=="triangle-left"){
 			w /= 3;
-			ctx.moveTo(x1+w*1.5,y1+w*1.5);
-			ctx.lineTo(x1+w*1.5,y1-w*1.5);
-			ctx.lineTo(x1-w*1.5,y1);
+			m(w*1.5,w*1.5);
+			l(w*1.5,-w*1.5);
+			l(-w*1.5,0);
 		}else if(shape=="triangle-right"){
 			w /= 3;
-			ctx.moveTo(x1-w*1.5,y1+w*1.5);
-			ctx.lineTo(x1-w*1.5,y1-w*1.5);
-			ctx.lineTo(x1+w*1.5,y1);
+			m(-w*1.5,w*1.5);
+			l(-w*1.5,-w*1.5);
+			l(w*1.5,0);
 		}
 		ctx.fill();
 
