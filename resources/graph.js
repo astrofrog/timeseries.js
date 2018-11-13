@@ -616,7 +616,7 @@
 				var c = {'x':oe.layerX,'y':oe.layerY};
 				var co = me.coordinates;
 				if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
-				var f = (ev.speed || 0.9);
+				var f = (ev.speed || (1 - Math.min(40,Math.abs(oe.deltaY))/250));
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
 				me.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f),'update':false});
