@@ -58,7 +58,7 @@
 				this.log('loading data',f)
 				// Now grab the data
 				S().ajax(f,{
-					"dataType": "csv",
+					"dataType": "text",
 					"this": this,
 					"file": f,
 					"success": function(d,attr){
@@ -71,7 +71,6 @@
 							// Set original context dataset data
 							this.load.data.files[cb[i].attr.file].data = d;
 							this.load.data.files[cb[i].attr.file].loaded = true;
-							this.log('DATA ',cb[i].attr.dataset.name,this.load.data.files[cb[i].attr.file])
 
 							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr['this'],this.load.data.files[cb[i].attr.file].data,cb[i].attr);
 						}

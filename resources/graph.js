@@ -1,6 +1,6 @@
 /* graph.js */
 (function(root){
-
+	
 	// First we will include all the useful helper functions
 	
 	/*@cc_on
@@ -211,8 +211,7 @@
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
-		this.canvas.on("wheel",{me:this}, function(e){ e.preventDefault(); });
-		this.canvasholder.on("wheel",{me:this}, function(e){ e.preventDefault(); e.data.me.trigger("wheel",{event:e}); });
+		this.canvasholder.on("wheel",{me:this}, function(e){ e.preventDefault(); e.stopPropagation(); e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
 			var ongoingTouches = [];
 			function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
@@ -487,7 +486,7 @@
 			// Loop over the series that match
 			for(var s = 0; s < ds.length; s++){
 				d = ds[s].id.split(":");
-				if(d && d.length == 2){
+				if(d && d.length == 3){
 					// This is a data point so we'll trigger the clickpoint event
 					t = parseInt(d[0]);
 					i = parseInt(d[1]);
@@ -506,12 +505,12 @@
 			var x = event.layerX;
 			var y = event.layerY;
 			// Attach hover event
-			if(!g.selecting && !g.panning && !g.wheeling){
+			if(!g.selecting && !g.panning && !g.wheelid){
 				ds = g.dataAtMousePosition(event.offsetX,event.offsetY);
 				g.highlight(ds);
 				for(var s = 0; s < ds.length; s++){
-					d = ds[s].id.split(":");
-					if(d && d.length == 2){
+					d = ds[s].split(":");
+					if(d && d.length == 3){
 						t = d[0];
 						i = d[1];
 						d = g.data[t];
@@ -605,10 +604,13 @@
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
-			if(ev.data.options.scrollWheelZoom && typeof ev.event.originalEvent.preventDefault==="function") ev.event.originalEvent.preventDefault();
 			var oe = ev.event.originalEvent;
+			if(ev.data.options.scrollWheelZoom){
+				oe.preventDefault();
+				oe.stopPropagation();
+			}
 			var me = ev.data.me;
-			if(me.wheeling) clearTimeout(me.wheeling);
+			if(me.wheelid) clearTimeout(me.wheelid);
 			if(!me.updating){
 				me.updating = true;
 				var c = {'x':oe.layerX,'y':oe.layerY};
@@ -622,10 +624,10 @@
 				me.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
-			me.wheeling = setTimeout(function(e){ e.data.me.canvas.trigger('wheelstop',{event:e}); },250,{event:oe,data:ev.data});
+			me.wheelid = setTimeout(function(e){ e.data.me.canvas.trigger('wheelstop',{event:e}); },250,{event:oe,data:ev.data});
 		}).on("wheelstop",{me:this,options:options},function(ev){
 			ev.data.me.draw(true);
-			ev.data.me.wheeling = undefined;
+			ev.data.me.wheelid = undefined;
 			ev.data.me.trigger('wheelstop',{event:ev.event});
 		}).on("dblclick",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
@@ -961,12 +963,14 @@
 		var idx = 0;
 		if(l && l.length > 0){
 			for(var s = 0; s < l.length; s++){
-				if(l[s].value > max){
-					max = l[s].value;
+				d = l[s].split(':');
+				w = parseFloat(d[2]);
+				if(w > max){
+					max = w;
 					idx = s;
 				}
 			}
-			if(is(l[idx].id,"string")) return l[idx].id.split(':');
+			if(is(l[idx],"string")) return l[idx].split(':');
 		}
 		return;
 	}
@@ -1010,9 +1014,10 @@
 			var ctx = this.canvas.ctx;
 
 			for(var s = 0; s < ds.length; s++){
-				d = ds[s].id.split(":");
+				d = ds[s].split(":");
 				t = d[0];
 				i = d[1];
+				w = d[2];
 				clipping = false;
 				var typ = this.data[t].type;
 
@@ -1051,9 +1056,10 @@
 
 			d = getTopLayer(ds);
 
-			if(d && d.length == 2){
+			if(d && d.length == 3){
 				t = d[0];
 				i = d[1];
+				w = d[2];
 				var data = this.data[t];
 
 				if(!this.coordinates){
@@ -1937,6 +1943,7 @@
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
 	Graph.prototype.addTempToLookup = function(attr){
 		if(!attr.id) return;
+		var a = attr.id+':'+(attr.weight||1);
 		var px = this.tempctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
 		for(var i = 0, p = 0, x = 0, y = 0; i < px.data.length; i+=4, p++, x++){
 			if(x == this.canvas.wide){
@@ -1944,9 +1951,9 @@
 				y++;
 			}
 			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]){
-				if(x < this.lookup.length && y < this.lookup[x].length){
+				if(x < this.canvas.wide && y < this.canvas.tall){
 					if(this.lookup[x][y] == null) this.lookup[x][y] = new Array();
-					this.lookup[x][y].push({'id': attr.id, 'value': (attr.weight||1)});
+					this.lookup[x][y].push(a);
 				}
 			}
 		}
@@ -1956,15 +1963,14 @@
 
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
-		if(!i.weight) i.weight = 1;
 		if(!i.id) return;
 		var x,y,value;
 		var p = 2;
-		var a = { 'id': i.id, 'value': i.weight };
+		var a = i.id+':'+(i.weight||1);
 		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
 		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
 		i.xb += p*2;
-		i.xb = Math.min(i.xb,this.lookup.length-1);
+		i.xb = Math.min(i.xb,this.canvas.wide-1);
 		i.ya -= p;
 		i.yb += p;
 		if(i.xa < 0) i.xa = 0;
