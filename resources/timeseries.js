@@ -1,51 +1,25 @@
 /*
-	AAS Time Series graphing library.
-	Written by Stuart Lowe
+	AAS Time Series graphing library
+	Written by Stuart Lowe (Aperio Software)
 	
-	INCLUDES:
-	* Fix for setTimeout in IE - http://webreflection.blogspot.com/2007/06/simple-settimeout-setinterval-extra.html
-	* Full screen API - http://johndyer.name/native-fullscreen-javascript-api-plus-jquery-plugin/
-	
-	USAGE:
-		<html>
-		<head>
-			<script src="stuquery.js" type="text/javascript"></script>
-			<script src="graph.js" type="text/javascript"></script>
-			<script src="timeseries.js" type="text/javascript"></script>
-			<script type="text/javascript">
-			</script>
-		</head>
-		<body>
-			<div id="lightcurve" style="width:100%;height:350px;font-size:0.8em;font-family:Century Gothic,sans-serif;"></div>
-		</body>
-		</html>
+	REQUIRES:
+		stuquery.js
+		graph.js
 */
-
 (function(root){
-
-	// A non-jQuery dependent function to get a style
-	function getStyle(el, styleProp) {
-		if (typeof root === 'undefined') return;
-		var style;
-		var el = document.getElementById(el);
-		if (el.currentStyle) style = el.currentStyle[styleProp];
-		else if (root.getComputedStyle) style = document.defaultView.getComputedStyle(el, null).getPropertyValue(styleProp);
-		if (style && style.length === 0) style = null;
-		return style;
-	}
-	// End of helper functions
 
 	// Base directory for timeseries.js
 	var basedir = "";
 
+	// Main object to coordinate data loading
 	TimeSeries = new function(){
-		this.version = "0.0.7";
+		this.version = "0.0.8";
 		this.create = function(json,opt){ return new TS(json,opt); }
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
 		this.logging = false;
 		
-		// Work out the file path to the code for other resources
+		// Work out the file path to this code to use for further resources
 		var scripts = document.getElementsByTagName('script');
 		var path = scripts[scripts.length-1].src.split('?')[0];
 		var idx = path.lastIndexOf("/");
@@ -113,16 +87,17 @@
 				}
 			}
 		}
+
 		this.loadResources = function(files,attr,callback){
 
-			this.log('loadResources',files)
+			this.log('loadResources',files);
+
 			// Load any necessary extra js/css for clustering
 			if(typeof files==="string") files = [files];
 			
 			// Store the callback for when we've loaded everything
 			this.load.resources.callbacks.push({'callback':callback,'attr':attr});
-		
-		
+
 			function checkAndGo(files,t){
 				var got = 0;
 				for(var f = 0; f < files.length; f++){
@@ -181,6 +156,7 @@
 		return this;
 	}
 
+	// Object for each individual timeseries
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
@@ -205,13 +181,13 @@
 		this.directory = "";
 		for(var o in opt){
 			if(o=="directory") this[o] = opt[o];
-			if(o=="fit") this.options[o] = opt[o];
-			if(o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
+			if(o=="fit" || o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
 		}
 		if(this.json) this.processJSON(json);
 
 		return this;
 	}
+
 	TS.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
@@ -219,6 +195,7 @@
 		}
 		return this;
 	}
+
 	TS.prototype.processJSON = function(d){
 		this.json = d;
 		this.log('processJSON',d,this.json)
@@ -258,11 +235,16 @@
 			}
 		}
 
-		this.graph = new Graph(this.el, [], this.options) // Need to make this target the correct element		
+		// Build the graph object
+		this.graph = new Graph(this.el, [], this.options)	
 
 		var el = S(this.el);
-		el.addClass('timeseries').append('<div class="loader"><div class="spinner"><div class="rect1 seasonal"></div><div class="rect2 seasonal"></div><div class="rect3 seasonal"></div><div class="rect4 seasonal"></div><div class="rect5 seasonal"></div></div></div>');
+		var str = '<div class="loader"><div class="spinner">';
+		for(var i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
+		str += '</div></div>';
+		el.addClass('timeseries').append(str);
 
+		// Build the menu
 		this.makeMenu();
 
 		if(this.json) this.loadDatasets(this.json.data);
@@ -322,11 +304,11 @@
 				var tab = (this[0].checked ? 0 : -1);
 				this.parent().find('menu button, menu a').attr('tabIndex', tab);
 			});
-			el.find('button.fullscreen').on('click',{me:this,graph:this.graph},function(e){ e.data.graph.toggleFullScreen(); });
-			el.find('button.autozoom').on('click',{graph:this.graph},function(e){ e.data.graph.zoom(); });
-			el.find('button.fontup').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(+1) });
-			el.find('button.fontdn').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(-1) });
-			el.find('button.fontreset').on('click',{graph:this.graph},function(e){ e.data.graph.scaleFont(0) });
+			el.find('button.fullscreen').on('click',{g:this.graph},function(e){ e.data.g.toggleFullScreen(); });
+			el.find('button.autozoom').on('click',{g:this.graph},function(e){ e.data.g.zoom(); });
+			el.find('button.fontup').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(+1) });
+			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1) });
+			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0) });
 
 			// Build date selector
 			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';

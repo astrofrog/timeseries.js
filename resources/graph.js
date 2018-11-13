@@ -89,42 +89,12 @@
 	// Define a shortcut for checking variable types
 	function is(a,b){ return (typeof a == b) ? true : false; }
 
-	// Convert a "#xxxxxx" colour into an "rgb(x,x,x)" colour
-	function parseColour(c){
-		if(c.indexOf('#')!=0) return c;
-		//Easier to visualize bitshifts in hex
-		rgb = parseInt(c.substr(1), 16);
-		//Extract rgb info
-		r = (rgb & (255 << 16)) >> 16;
-		g = (rgb & (255 << 8)) >> 8;
-		b = (rgb & 255);
-		return "rgb("+r+","+g+","+b+")";
-	}
-
 	function zeroFill(number, width){
 		width -= number.toString().length;
 		if(width > 0) return new Array( width + (/\./.test( number ) ? 2 : 1) ).join( '0' ) + number;
 		return number + ""; // always return a string
 	}
 	
-	// Add commas every 10^3
-	function addCommas(nStr) {
-		nStr += '';
-		var x = nStr.split('.');
-		var x1 = x[0];
-		var x2 = x.length > 1 ? '.' + x[1] : '';
-		var rgx = /(\d+)(\d{3})/;
-		while (rgx.test(x1)) x1 = x1.replace(rgx, '$1' + ',' + '$2');
-		return x1 + x2;
-	}
-
-	// Get the current Julian Date
-	function getJD(today) {
-		// The Julian Date of the Unix Time epoch is 2440587.5
-		if(!today) today = new Date();
-		return ( today.getTime() / 86400000.0 ) + 2440587.5;
-	}
-
 	// A non-jQuery dependent function to get a style
 	function getStyle(el, styleProp) {
 		if (typeof window === 'undefined') return;
@@ -983,6 +953,7 @@
 		else this.canvas.canvas.css({'cursor':''});
 		return [];
 	}
+
 	// Find the highest layer in the stack
 	function getTopLayer(l){
 		var max = 0;
@@ -998,18 +969,22 @@
 		}
 		return;
 	}
+
 	// Function to clone a hash otherwise we end up using the same one
 	function clone(hash) {
 		var json = JSON.stringify(hash);
 		var object = JSON.parse(json);
 		return object;
 	}
+
+	// Convert a "#xxxxxx" colour into an "rgb(x,x,x)" or "rgba(x,x,x,x)" colour
 	function hex2rgba(hex,a){
 		var r = parseInt(hex.substr(1,2),16);
 		var g = parseInt(hex.substr(3,2),16);
 		var b = parseInt(hex.substr(5,2),16);
-		return 'rgba('+r+','+g+','+b+','+(a||1)+')';
+		return 'rgba('+r+','+g+','+b+(a ? ','+a:'')+')';
 	}
+
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
 		var f = datum.props.format;
 		var fill = (typeof f.fill==="string" ? f.fill : (typeof f.fill==="number" ? this.colours[f.fill % this.colours.length]:'#000000'));
@@ -1023,6 +998,7 @@
 		ctx.setLineDash(f.strokeDash ? f.strokeDash : [1,0]);
 		return this;
 	}
+
 	Graph.prototype.highlight = function(ds){
 		if(this.selecting) return;	// If we are panning we don't want to highlight symbols
 		if(this.lookup && ds){
@@ -1030,8 +1006,6 @@
 			this.canvas.pasteFromClipboard();
 			this.drawOverlay();
 			var t,i,clipping;
-
-			d = getTopLayer(ds);
 
 			for(var s = 0; s < ds.length; s++){
 				d = ds[s].id.split(":");
@@ -1072,6 +1046,9 @@
 				// Set the clipping
 				if(clipping) this.canvas.ctx.restore();
 			}
+
+			d = getTopLayer(ds);
+
 			if(d && d.length == 2){
 				t = d[0];
 				i = d[1];
@@ -1248,18 +1225,15 @@
 		// Correct for sub-pixel positioning
 		b = o.grid.border*0.5;
 		this.chart.padding = o.padding || this.chart.padding;
-		this.chart.top = this.chart.padding + b;
-		this.chart.left = this.chart.padding + b;
-		if(o['yaxis'].title) this.chart.left += Math.round(this.getFontHeight('y','title')*1.5);
-		if(typeof o['yaxis'].labels==="undefined") o['yaxis'].labels = true;
-		if(o['yaxis'].labels) this.chart.left += Math.round(this.getLabelWidth());
-		if(o['yaxis'].ticks) this.chart.left += Math.round((o['yaxis'].tickSize||4) + 3);
-		this.chart.right = this.chart.padding + b;
-		this.chart.bottom = this.chart.padding + b;
-		if(o['xaxis'].title) this.chart.bottom += Math.round(this.getFontHeight('x','title')*1.5);
-		if(typeof o['xaxis'].labels==="undefined") o['xaxis'].labels = true;
-		if(o['xaxis'].labels) this.chart.bottom += Math.round(this.getFontHeight('x','label')*1.2);
-		if(o['xaxis'].ticks) this.chart.bottom += Math.round((o['xaxis'].tickSize||4) + 3);
+		this.chart.top = this.chart.left = this.chart.bottom = this.chart.right = this.chart.padding + b;
+		var ax = {'xaxis':'bottom','yaxis':'left'};
+		for(var a in ax){
+			if(o[a].title) this.chart[ax[a]] += this.getFontHeight(a.substr(0,1),'title')*1.5;
+			if(typeof o[a].labels==="undefined") o[a].labels = true;
+			if(o[a].labels) this.chart[ax[a]] += (a=="xaxis" ? this.getFontHeight('x','label')*1.2 : this.getLabelWidth());
+			if(o[a].ticks) this.chart[ax[a]] += (o[a].tickSize||4) + 3;
+			this.chart[ax[a]] = Math.round(this.chart[ax[a]]);
+		}
 		this.chart.width = this.canvas.wide-this.chart.right-this.chart.left;
 		this.chart.height = this.canvas.tall-this.chart.bottom-this.chart.top;
 		return this;
@@ -1479,7 +1453,7 @@
 								prev = o;
 							}
 						}else{
-							str = (axis.isDate) ? this.formatLabelDate(j) : addCommas((this.x.log ? Math.pow(10, j) : j));
+							str = (axis.isDate) ? this.formatLabelDate(j) : (this.x.log ? Math.pow(10, j) : j).toLocaleString();
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
