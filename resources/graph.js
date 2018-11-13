@@ -1823,18 +1823,20 @@
 		// not processing the entire shape in one go
 		var poly = new Array(areas.length);
 		for(a = 0; a < areas.length ; a++){
-			poly[a] = new Array(areas[a].length*2);
-			// Move along top of area (y2 coordinates)
-			k = 0;
-			for(j = 0; j < areas[a].length; j++,k++){
-				p = this.data[sh].marks[areas[a][j]].props;
-				poly[a][k] = [p.x,p.y2];
-			}
-			// Move along bottom of area backwards
-			for(j = areas[a].length-1; j >= 0; j--,k++){
-				p = this.data[sh].marks[areas[a][j]].props;
-				p.y1 = (p.y1 || p.y);
-				poly[a][k] = [p.x,p.y1];
+			if(areas[a].length){
+				poly[a] = new Array(areas[a].length*2);
+				// Move along top of area (y2 coordinates)
+				k = 0;
+				for(j = 0; j < areas[a].length; j++,k++){
+					p = this.data[sh].marks[areas[a][j]].props;
+					poly[a][k] = [p.x,p.y2];
+				}
+				// Move along bottom of area backwards
+				for(j = areas[a].length-1; j >= 0; j--,k++){
+					p = this.data[sh].marks[areas[a][j]].props;
+					p.y1 = (p.y1 || p.y);
+					poly[a][k] = [p.x,p.y1];
+				}
 			}
 		}
 		// Draw each polygon
