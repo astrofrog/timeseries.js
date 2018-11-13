@@ -485,7 +485,7 @@
 
 			// Loop over the series that match
 			for(var s = 0; s < ds.length; s++){
-				d = ds[s].id.split(":");
+				d = ds[s].split(":");
 				if(d && d.length == 3){
 					// This is a data point so we'll trigger the clickpoint event
 					t = parseInt(d[0]);
