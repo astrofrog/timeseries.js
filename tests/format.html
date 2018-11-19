@@ -131,7 +131,7 @@ return v;</textarea>
 					els[t] = S('#output-'+t);
 				}
 
-				S('#function').on('change',function(){
+				S('#function').on('keydown',function(){
 					fn = this[0].value;
 					processFunction(fn);
 				
