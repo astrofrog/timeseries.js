@@ -61,10 +61,10 @@
 			<pre>function(value, increment){</pre>
 			<textarea id="function">
 // Set the precision
-v = value.toPrecision(4);
+v = value.toPrecision(10);
 
 // Remove trailing spaces
-v = v.replace(/\.([0-9]+?)0+$/,function(m,p1){ return '.'+p1; })
+v = v.replace(/\.([0-9]*?)0+((e[-\+0-9]*)?)$/,function(m,p1,p2){ return (p1? '.':'')+p1+p2; })
 
 return v;</textarea>
 			<pre>}</pre>
@@ -85,6 +85,11 @@ return v;</textarea>
 						'inc':0.1,
 						'steps':5,
 						'outputs':["1.1","1.2","1.3","1.4","1.5"]
+					},{
+						'value':0.0000001,
+						'inc':0.00000002,
+						'steps':6,
+						'outputs':["1e-7","1.2e-7","1.4e-7","1.6e-7","1.8e-7","2e-7"]
 					}
 				]
 				var els = new Array();
