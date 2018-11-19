@@ -1313,7 +1313,6 @@
 			var s = v.toPrecision(p);
 			return (n.length > s.length ? s : n);
 		}
-		console.log(v,inc,prec,v.toPrecision(prec))
 		var j = (this[dir].log) ? v : (typeof v==="number" ? shortest(v,prec) : v);
 		return (this[dir].log ? Math.pow(10, j) : j.replace(/\.0+$/,"").toLocaleString());
 	}
