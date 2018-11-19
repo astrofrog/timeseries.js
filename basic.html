@@ -41,9 +41,10 @@
 			</figure>
 			<!-- Javascript -->
 			<script>
+			var ex1;
 			S(document).ready(function(){
 
-				var ex1 = TimeSeries.create("data/lightcurve2.json");
+				ex1 = TimeSeries.create("data/lightcurve2.json");
 				ex1.initialize(document.getElementById('example1'));
 
 			});

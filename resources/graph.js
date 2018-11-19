@@ -455,19 +455,20 @@
 
 
 		// Bind events to the canvas
-		this.canvas.on("resize",{me:this},function(ev){
+		var _obj = this;
+		this.canvas.on("resize",function(ev){
 			// Attach an event to deal with resizing the <canvas>
-			if(ev.data.me.logging) var d = new Date();
+			if(_obj.logging) var d = new Date();
 
-			ev.data.me.temp.width = ev.data.me.canvas.wide;
-			ev.data.me.temp.height = ev.data.me.canvas.tall;
-			ev.data.me.tempctx = ev.data.me.temp.getContext('2d');
+			_obj.temp.width = _obj.canvas.wide;
+			_obj.temp.height = _obj.canvas.tall;
+			_obj.tempctx = _obj.temp.getContext('2d');
 
-			ev.data.me.setOptions().defineAxis("x").calculateData().draw(true).trigger("resize",{event:ev.event});
+			_obj.setOptions().defineAxis("x").getChartOffset().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
-		}).on("mousedown",{me:this},function(ev){
+		}).on("mousedown",function(ev){
 			var event = ev.event.originalEvent;
-			var g = ev.data.me;	// The graph object
+			var g = _obj;	// The graph object
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
 			var x = event.layerX;
@@ -496,10 +497,10 @@
 				}
 			}
 			return true;
-		}).on("mousemove",{me:this},function(ev){
+		}).on("mousemove",function(ev){
 			var event = ev.event.originalEvent;
 			if(!event) return;
-			var g = ev.data.me;	// The graph object
+			var g = _obj;	// The graph object
 			if(g.updating) return;
 			g.updating = true;
 			var x = event.layerX;
@@ -549,16 +550,16 @@
 			}
 			g.updating = false;
 			return true;
-		}).on("mouseleave",{me:this},function(ev){
+		}).on("mouseleave",function(ev){
 			var event = ev.event.originalEvent;
-			if(event.offsetX >= ev.data.me.options.width) event.layerX = ev.data.me.options.width;
+			if(event.offsetX >= _obj.options.width) event.layerX = _obj.options.width;
 			if(event.offsetX <= 0) event.layerX = 0;
-			if(event.offsetY >= ev.data.me.options.height) event.layerY = ev.data.me.options.height;
+			if(event.offsetY >= _obj.options.height) event.layerY = _obj.options.height;
 			if(event.offsetY <= 0) event.layerY = 0;
-			ev.data.me.canvas.trigger('mousemove',{event:event});
-			ev.data.me.canvas.trigger('mouseup',{event:event});
-		}).on("mouseup",{me:this},function(ev){
-			var g = ev.data.me;	 // The graph object
+			_obj.canvas.trigger('mousemove',{event:event});
+			_obj.canvas.trigger('mouseup',{event:event});
+		}).on("mouseup",function(ev){
+			var g = _obj;	 // The graph object
 			var event = ev.event.originalEvent;
 			function getDataRange(x1,x2,y1,y2){
 				var c1 = g.pixel2data(x1,y1);
@@ -603,34 +604,36 @@
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
 			return true;
-		}).on("wheel",{me:this,options:options},function(ev){
-			var oe = ev.event.originalEvent;
+		}).on("wheel",{options:options},function(ev){
+			var oe,g,c,co,f;
+			oe = ev.event.originalEvent;
 			if(ev.data.options.scrollWheelZoom){
 				oe.preventDefault();
 				oe.stopPropagation();
 			}
-			var me = ev.data.me;
-			if(me.wheelid) clearTimeout(me.wheelid);
-			if(!me.updating){
-				me.updating = true;
-				var c = {'x':oe.layerX,'y':oe.layerY};
-				var co = me.coordinates;
+			g = _obj;
+			if(g.wheelid) clearTimeout(g.wheelid);
+			if(!g.updating){
+				g.updating = true;
+				c = {'x':oe.layerX,'y':oe.layerY};
+				co = g.coordinates;
 				if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
-				var f = (ev.speed || (1 - Math.min(40,Math.abs(oe.deltaY))/250));
+				f = (ev.speed || (1 - Math.min(40,Math.abs(oe.deltaY))/250));
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				me.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f),'update':false});
-				me.trigger('wheel',{event:oe});
-				me.updating = false;
+				g.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f),'update':false});
+				g.trigger('wheel',{event:oe});
+				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
-			me.wheelid = setTimeout(function(e){ e.data.me.canvas.trigger('wheelstop',{event:e}); },250,{event:oe,data:ev.data});
-		}).on("wheelstop",{me:this,options:options},function(ev){
-			ev.data.me.draw(true);
-			ev.data.me.wheelid = undefined;
-			ev.data.me.trigger('wheelstop',{event:ev.event});
-		}).on("dblclick",{me:this},function(ev){
-			var g = ev.data.me;	 // The graph object
+			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },250,{event:oe});
+		}).on("wheelstop",{options:options},function(ev){
+			_obj.updating = false;
+			_obj.draw(true);
+			_obj.wheelid = undefined;
+			_obj.trigger('wheelstop',{event:ev.event});
+		}).on("dblclick",function(ev){
+			var g = _obj;	 // The graph object
 			if(ev.event){
 				var event = ev.event.originalEvent;
 				g.toggleFullScreen();
@@ -651,7 +654,7 @@
 
 	Graph.prototype.toggleFullScreen = function(){
 		this.canvas.toggleFullScreen();
-		this.calculateData().draw(true);
+		this.getChartOffset().calculateData().draw(true);
 		return this;
 	}
 
@@ -808,7 +811,7 @@
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log('updateData',this.data)
-		this.getGraphRange().calculateData().draw(true);
+		this.getGraphRange().getChartOffset().calculateData().draw(true);
 	}
 	Graph.prototype.getGraphRange = function(){
 		this.x = { min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit };
@@ -860,6 +863,7 @@
 	Graph.prototype.panBy = function(dx,dy){
 		this.offset.x = dx;
 		this.offset.y = dy;
+		this.getChartOffset();
 		this.calculateData();
 		// Update the graph
 		this.clear();
@@ -899,6 +903,7 @@
 			this.defineAxis("x");
 			this.defineAxis("y");
 		}
+		this.getChartOffset();
 		this.calculateData();
 		// Update the graph
 		this.clear();
@@ -1204,7 +1209,7 @@
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
 		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
-		this.calculateData().draw(false);
+		this.getChartOffset().calculateData().draw(false);
 		return this;
 	}
 	
@@ -1215,12 +1220,16 @@
 	}
 
 	Graph.prototype.getChartOffset = function(){
-		if(typeof this.chart!="object") this.chart = {}
-		var fs = getStyle(this.canvas.container[0], 'font-size');
-		var ff = getStyle(this.canvas.container[0], 'font-family');
-		var o = this.options;
-		var c = this.chart;
-
+		if(typeof this.chart!="object") this.chart = {};
+		var fs,ff,o,c,cc,ts,t,a,ax,offx,dp;
+		fs = getStyle(this.canvas.container[0], 'font-size');
+		ff = getStyle(this.canvas.container[0], 'font-family');
+		o = this.options;
+		c = this.chart;
+		if(!c.left) c.left = 0;
+		var current = clone(c.left);
+		// Set the target
+		
 		if(this.canvas.fullscreen){
 			c.padding = this.canvas.wide/40;
 			c.fontsize = this.canvas.wide/80;
@@ -1234,17 +1243,32 @@
 		// Correct for sub-pixel positioning
 		b = o.grid.border*0.5;
 		c.padding = o.padding || c.padding;
-		c.top = c.left = c.bottom = c.right = c.padding + b;
-		var ax = {'xaxis':'bottom','yaxis':'left'};
-		for(var a in ax){
-			if(o[a].title) this.chart[ax[a]] += this.getFontHeight(a.substr(0,1),'title')*1.5;
+		c.top = c.padding + b;
+		c.left = clone(c.top);
+		c.bottom = clone(c.top);
+		c.right = clone(c.top);
+		offx = clone(c.top);
+		ax = {'xaxis':'bottom','yaxis':'left'};
+		for(a in ax){
+			if(o[a].title){
+				dp = this.getFontHeight(a.substr(0,1),'title')*1.5;
+				this.chart[ax[a]] += dp;
+				if(a=="xaxis") offx += dp;
+			}
 			if(typeof o[a].labels==="undefined") o[a].labels = true;
-			if(o[a].labels) c[ax[a]] += (a=="xaxis" ? this.getFontHeight('x','label')*1.2 : this.getLabelWidth());
-			if(o[a].ticks) c[ax[a]] += (o[a].tickSize||4) + 3;
-			c[ax[a]] = Math.round(this.chart[ax[a]]);
+			if(o[a].labels){
+				c[ax[a]] += (a=="xaxis" ? this.getFontHeight('x','label')*1.2 : this.getLabelWidth());
+				offx += 4;
+			}
+			if(o[a].ticks){
+				dp = (o[a].tickSize||4) + 3
+				c[ax[a]] += dp;
+				if(a=="xaxis") offx += dp;
+			}
+			c[ax[a]] = Math.round(c[ax[a]]);
 		}
-		c.width = this.canvas.wide-this.chart.right-c.left;
-		c.height = this.canvas.tall-this.chart.bottom-c.top;
+		c.width = this.canvas.wide-c.right-c.left;
+		c.height = this.canvas.tall-c.bottom-c.top;
 
 		this.chart = c;
 		return this;
@@ -1253,17 +1277,15 @@
 	Graph.prototype.getLabelWidth = function(){
 		// If we aren't showing labels the width is 0
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
-
 		if(!ok) return 0;
+
+		var fs,mn,mx,ctx,maxw,i;
+
 		// Set font for labels
-		var fs,mn,mx,ctx,maxw,prec,i;
 		fs = this.getFontHeight('y','label');
 		maxw = 0;
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
-		// Calculate the number of decimal places for the increment - helps with rounding errors
-		prec = ""+this.y.inc;
-		prec = prec.length-prec.indexOf('.')-1;
 
 		mn = this.y.gmin;
 		mx = this.y.gmax;
@@ -1273,10 +1295,27 @@
 		}
 
 		for(i = mn; i <= mx; i += this.y.inc){
-			j = (this.y.log) ? i : i.toFixed(prec);
-			maxw = Math.max(maxw,ctx.measureText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,""))).width);
+			maxw = Math.max(maxw,ctx.measureText(this.formatLabel('y',i)).width);
 		}
-		return maxw + 4;
+		s = Math.round(fs*1.5);
+		return Math.max(s*2,Math.round(Math.ceil(maxw/s)*s)) + 4;
+	}
+	
+	Graph.prototype.formatLabel = function(dir,v,inc){
+		if(!v) return "";
+		// Calculate the number of decimal places for the increment - helps with rounding errors
+		var prec = ""+(inc || this[dir].inc);
+		var m = prec.match(/e([-0-9]+)/);
+		if(!m) prec = prec.length-prec.indexOf('.')-1;
+		else prec = parseInt(m[1])
+		function shortest(v,p){
+			var n = v.toFixed(p);
+			var s = v.toPrecision(p);
+			return (n.length > s.length ? s : n);
+		}
+		console.log(v,inc,prec,v.toPrecision(prec))
+		var j = (this[dir].log) ? v : (typeof v==="number" ? shortest(v,prec) : v);
+		return (this[dir].log ? Math.pow(10, j) : j.replace(/\.0+$/,"").toLocaleString());
 	}
 	
 	// Draw the axes and grid lines for the graph
@@ -1466,7 +1505,7 @@
 								prev = o;
 							}
 						}else{
-							str = (axis.isDate) ? this.formatLabelDate(j) : (this.x.log ? Math.pow(10, j) : j).toLocaleString();
+							str = (axis.isDate) ? this.formatLabelDate(j) : this.formatLabel('x',j);
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
@@ -1482,7 +1521,7 @@
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
-						ctx.fillText((this.y.log ? Math.pow(10, j) : j.replace(/\.0+$/,"")),(x1 - 3 - tw),(y1).toFixed(1));
+						ctx.fillText(this.formatLabel('y',j),(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
 
@@ -1559,7 +1598,6 @@
 	// Function to calculate the x,y coordinates for each data point. 
 	Graph.prototype.calculateData = function(update){
 		this.log('calculateData');
-		this.getChartOffset();
 		if(typeof update!=="boolean") update = true;
 		
 		var d,n,xpx,ypx,x,y,x2,y2;
@@ -1650,7 +1688,7 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var lo,hi,x,y,ii,l,p,s,sh,o,i;
+		var lo,hi,x,y,ii,l,p,s,sh,o;
 		var twopi = Math.PI*2;
 
 		// Define an empty pixel-based lookup table
@@ -1999,16 +2037,17 @@
 		this.tempctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
 		return this;
 	}
-	
+
 	// Draw everything
 	Graph.prototype.draw = function(updateLookup){
-		this.logTime('draw')
+		this.logTime('draw');
 		this.clear();
 		this.clearTemp();
 		this.drawAxes();
 		this.drawData(updateLookup);
 		this.canvas.copyToClipboard();
 		this.drawOverlay();
+
 		this.logTime('draw');
 		return this;
 	}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+	<link rel="stylesheet" href="../resources/aas.css">
+	<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<style>
+	.result {
+		margin-bottom: 1em;
+		padding: 1em;
+	}
+	.result:last-child {
+		margin-bottom: 0px;
+	}
+	#function {
+		width: 100%;height:15em;text-align:left;padding:0.25em;padding-left:2em;font-size:1em;border:0;
+		line-height: 1.25em;
+	}
+	#function, .result {
+		background:	#efefef;
+	}
+	table {
+		width: 100%;
+		text-align: left;
+		border-collapse: collapse;
+	}
+	table th { background: #444; color: #dfdfdf; }
+	table th, table td { border: 1px solid #999999; padding: 0.25em 0.5em; width: 25%; }
+	h3 { margin: 0px; }
+	.success td, .success { background-color: rgba(100,255,100,0.1)!important; }
+	.fail td, .fail { background-color: rgba(255,100,100,0.1)!important; }
+	#summary { text-align: center; padding: 0.5em; background-color: #efefef; }
+	</style>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<div class="example">
+			<div id="summary"></div>
+			<h2>Formatting function</h2>
+			<p>Define the Javascript formatting function below. It should take <code>value</code> and <code>increment</code> as arguments and it should return a string.</p>
+			<pre>function(value, increment){</pre>
+			<textarea id="function">
+// Set the precision
+v = value.toPrecision(4);
+
+// Remove trailing spaces
+v = v.replace(/\.([0-9]+?)0+$/,function(m,p1){ return '.'+p1; })
+
+return v;</textarea>
+			<pre>}</pre>
+			<h2>Output</h2>
+			<div id="output"></div>
+			<!-- Javascript -->
+			<script>
+			S(document).ready(function(){
+
+				var tests = [
+					{
+						'value':1000000,
+						'inc':1000,
+						'steps':5,
+						'outputs':["1000000","1001000","1002000","1003000","1004000"]
+					},{
+						'value':1.1,
+						'inc':0.1,
+						'steps':5,
+						'outputs':["1.1","1.2","1.3","1.4","1.5"]
+					}
+				]
+				var els = new Array();
+
+				function processFunction(fn){
+					fn = 'function parseValue(value, increment){'+fn+'}'
+					eval(fn);
+					var good = 0;
+					var total = 0;
+					
+					for(var t = 0; t < tests.length; t++){
+						var ok = 0;
+						table = '';
+						for(var i = 0; i < tests[t].steps; i++,total++){
+							v = (tests[t].value + i*tests[t].inc);
+							p = parseValue(v,tests[t].inc);
+							s = (p==tests[t].outputs[i]);
+							if(s) ok++;
+							table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].outputs[i]+'</td><td>'+p+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
+						}
+						//if(ok == tests[t].steps) good++;
+						good += ok;
+						var o = '<h3>Example '+(t+1)+': '+(ok == tests[t].steps ? 'success':'fail')+'</h3><table><tr><th>Value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+						els[t].html(o);
+					}
+				
+					var summary = S('#summary');
+					summary.html('The function passes '+(good)+'/'+total+' tests');
+					if(good==total) summary.addClass('success').removeClass('fail');
+					else summary.removeClass('success').addClass('fail');
+					
+				
+				}
+				
+				// Build DOM containers
+				var el = S('#output');
+				for(var t = 0; t < tests.length; t++){
+					if(S('#output-'+t).length==0) el.append('<div id="output-'+t+'" class="result">Test '+t+'</div>');
+					els[t] = S('#output-'+t);
+				}
+
+				S('#function').on('change',function(){
+					fn = this[0].value;
+					processFunction(fn);
+				
+				});
+				
+				processFunction(S('#function')[0].value);
+
+			});
+			</script>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+
+</body>
+</html>
