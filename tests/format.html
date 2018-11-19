@@ -79,22 +79,27 @@ return v;</textarea>
 
 				var tests = [
 					{
-						'value':1.5678e11,
-						'inc':1.5e7,
+						'value':'1542651740795',
+						'inc':1.5e8,
 						'steps':5,
-						'outputs':["1.5678e+11","1.56795e+11","1.5681e+11","1.56825e+11","1.5684e+11"]
+						'outputs':["1.54265e+12","1.54280e+12","1.54295e+12","1.54310e+12","1.54325e+12"]
 					},{
-						'value':1000000,
+						'value':'1000000',
 						'inc':1000,
 						'steps':5,
 						'outputs':["1000000","1001000","1002000","1003000","1004000"]
 					},{
-						'value':1.1,
+						'value':'0.9',
 						'inc':0.1,
-						'steps':5,
-						'outputs':["1.1","1.2","1.3","1.4","1.5"]
+						'steps':7,
+						'outputs':["0.9","1","1.1","1.2","1.3","1.4","1.5"]
 					},{
-						'value':0.0000001,
+						'value':'0.995',
+						'inc':0.01,
+						'steps':5,
+						'outputs':["0.995","1.005","1.015","1.025","1.035"]
+					},{
+						'value':'0.0000001',
 						'inc':0.00000002,
 						'steps':6,
 						'outputs':["1e-7","1.2e-7","1.4e-7","1.6e-7","1.8e-7","2e-7"]
@@ -112,7 +117,7 @@ return v;</textarea>
 						var ok = 0;
 						table = '';
 						for(var i = 0; i < tests[t].steps; i++,total++){
-							v = (tests[t].value + i*tests[t].inc);
+							v = (parseFloat(tests[t].value) + i*tests[t].inc);
 							p = parseValue(v,tests[t].inc);
 							s = (p==tests[t].outputs[i]);
 							if(s) ok++;
@@ -120,7 +125,7 @@ return v;</textarea>
 						}
 						//if(ok == tests[t].steps) good++;
 						good += ok;
-						var o = '<h3>Example '+(t+1)+': '+(ok == tests[t].steps ? 'success':'fail')+'</h3><table><tr><th>Value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+						var o = '<h3>Example '+(t+1)+': '+(ok == tests[t].steps ? 'success':'fail')+'</h3><p>Starting value is '+tests[t].value+'</p><table><tr><th>Value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
 						els[t].html(o);
 					}
 				
