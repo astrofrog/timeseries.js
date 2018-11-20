@@ -709,7 +709,7 @@
 		if(typeof this.options.grid.border!=="number") this.options.grid.border = 1;
 		if(typeof this.options.grid.color!=="string") this.options.grid.color = "#888888";
 		if(typeof this.options.labels!=="object") this.options.labels = {};
-		if(typeof this.options.labels.color!=="string") this.options.label.color = "black";
+		if(typeof this.options.labels.color!=="string") this.options.labels.color = "black";
 		if(typeof this.options.padding!=="number") this.options.padding = 0;
 		if(typeof this.options.xaxis!=="object") this.options.xaxis = {};
 		if(typeof this.options.yaxis!=="object") this.options.yaxis = {};
@@ -1399,6 +1399,7 @@
 			function drawText(txt,p,attr){
 				// Deal with superscript
 				var str,w,b,l,bits;
+				if(!txt) txt = "";
 				str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
 				bits = str.split(/%%/);
 				w = 0;
