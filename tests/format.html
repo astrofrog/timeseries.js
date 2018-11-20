@@ -238,8 +238,8 @@
 					var html = 'Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>';
 					for(var e = 0; e < error.length; e++) html += '<br />'+error[e];
 					summary.html(html);
-					if(good==total) summary.addClass('success').removeClass('fail');
-					else summary.removeClass('success').addClass('fail');
+					if(good==total) summary.addClass('success');
+					else summary.removeClass('success');
 					
 					// Update anchor now that we've updated the page		
 					if(location.hash) document.location = location.hash;
