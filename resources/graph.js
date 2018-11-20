@@ -1148,6 +1148,7 @@
 		var base = Math.floor(Math.log10(this[a].inc));
 		var main = Math.floor(Math.log10(Math.abs(mx)));
 		var precision = Math.floor(Math.round(main - base));
+
 		for(var i = mn; i <= mx; i += this[a].inc){
 			if(this[a].isDate) j = niceDate(i,this[a].spacing);
 			else{
@@ -1221,12 +1222,14 @@
 			if(!this.options.formatLabelX) this.options.formatLabelX = {};
 			// Dates are in milliseconds
 			// Grid line spacings can range from 1 ms to 10000 years
+			// Use Gregorian year length for calendar display
+			// 31557600000
 			steps = [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
 					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
 					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
 					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
-					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
+					{'name': 'years', 'div':365.2425*86400000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
 			steps = (this.options.formatLabelX.steps || steps);
 
 			for(st = 0; st < steps.length ; st++){
@@ -1242,8 +1245,10 @@
 			}
 		}else t_inc = Math.pow(param.base,Math.floor(Math.log(rg)/Math.log(param.base)));
 
-		//t_inc = Math.pow(10,Math.ceil(G.log10(this[axis].range/10)));
-		t_max = (Math.floor(mx/t_inc))*t_inc;
+		t_max = Math.floor(mx/t_inc)*t_inc;
+		// Because the UNIX epoch is in 1970, when we are dealing with century-spanning 
+		// dates the zero needs to be shifted to a century for the labels
+		if(this[axis].isDate && t_inc >= 3000000000000) t_max += 946684800000;
 		if(t_max < mx) t_max += t_inc;
 		t_min = t_max;
 		i = 0;
@@ -1262,11 +1267,13 @@
 			if((t_max - t_inc) >= mx) t_max -= t_inc ;
 			i = i*2;
 		}
+
 		// Set the first/last gridline values as well as the spacing
 		this[axis].gmin = t_min;
 		this[axis].gmax = t_max;
 		this[axis].inc = t_inc;
 		this[axis].grange = this[axis].gmax-this[axis].gmin;
+
 		this.makeLabels(axis);
 
 		return this;
@@ -1360,9 +1367,10 @@
 			mn = Math.ceil(this.y.gmin);
 			mx = Math.floor(this.y.gmax);
 		}
-
-		for(i = mn,j = 0; i <= mx; i += this.y.inc,j++){
-			maxw = Math.max(maxw,ctx.measureText(this['y'].labels[j]).width);
+		if(this.y.labels){
+			for(i = 0; i < this.y.labels.length; i++){
+				maxw = Math.max(maxw,ctx.measureText(this.y.labels[i]).width);
+			}
 		}
 		s = Math.round(fs*1.5);
 		return Math.max(s*2,Math.round(Math.ceil(maxw/s)*s)) + 4;
@@ -1530,8 +1538,7 @@
 				mn = Math.floor(axis.gmin);
 				mx = Math.ceil(axis.gmax);
 			}
-			
-			for(i = mn,k=0; i <= mx; i += axis.inc,k++) {
+			for(var i = mn, ii=0; i <= mx; i += axis.inc,ii++) {
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -1556,7 +1563,7 @@
 								prev = o;
 							}
 						}else{
-							str = this[d].labels[k];
+							str = this[d].labels[ii];
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
