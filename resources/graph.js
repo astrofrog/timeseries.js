@@ -1162,7 +1162,7 @@
 					else j = i.toFixed(precision);
 				}
 			}
-			j = j.replace(/\.0+$/,"").replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
+			j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
 			this[a].labels.push(j);
 		}
 		return this;
