@@ -1146,8 +1146,9 @@
 		// we take the largest tick value, find the nearest integer log value, and
 		// compare this to the 'base' (which is the integer log value of the spacing)
 		var base = Math.floor(Math.log10(this[a].inc));
-		var main = Math.floor(Math.log10(mx));
+		var main = Math.floor(Math.log10(Math.abs(mx)));
 		var precision = Math.floor(Math.round(main - base));
+		console.log(precision,this[a].inc,main)
 		for(var i = mn; i <= mx; i += this[a].inc){
 			if(this[a].isDate) j = niceDate(i,this[a].spacing);
 			else{

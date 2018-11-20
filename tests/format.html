@@ -102,6 +102,10 @@
 						'output':{'min':1e-7,'max':1.5e-7,'inc':1e-8},
 						'labels':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
 					},{
+						'range':{'min':-0.000000145,'max':-0.0000001},
+						'output':{'min':-1.5e-7,'max':-1e-7,'inc':1e-8},
+						'labels':["-1.5e-7","-1.4e-7","-1.3e-7","-1.2e-7","-1.1e-7","-1e-7"]
+					},{
 						'range':{'min':'1542651740796','max':'1542651740811'},
 						'output':{'min':1542651740795,'max':1542651740815,'inc':5},
 						'labels':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
@@ -170,7 +174,7 @@
 					}
 
 					function closeEnough(typ){
-						return Math.abs(output[typ]-tests[t].output[typ]) < tests[t].output[typ]*1e-7;
+						return Math.abs(output[typ]-tests[t].output[typ]) < Math.abs(tests[t].output[typ]*1e-7);
 					}
 					function getClass(typ){
 						if(compare[typ]) return 'success';
