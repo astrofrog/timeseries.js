@@ -1310,16 +1310,15 @@
 		// Calculate the number of decimal places for the increment - helps with rounding errors
 		var prec = ""+inc;
 		var m = prec.match(/e([-0-9]+)/);
-		if(!m) prec = prec.length-prec.indexOf('.')-1;
+		if(!m) prec = prec.replace(/[^0-9]/,"").length;
 		else prec = parseInt(m[1]);
-		console.log(v,inc,prec)
 		function shortest(v,p){
 			var n = v.toFixed(p);
 			var s = v.toPrecision(p);
 			return (n.length > s.length ? s : n);
 		}
 		var j = (this[dir].log) ? v : (typeof v==="number" ? shortest(v,prec) : v);
-		return (this[dir].log ? Math.pow(10, j) : j.replace(/\.0+$/,"").toLocaleString());
+		return (this[dir].log ? Math.pow(10, j) : j.replace(/\.0+$/,"").replace(/0+$/,"").toLocaleString());
 	}
 	
 	// Draw the axes and grid lines for the graph
