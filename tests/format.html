@@ -13,6 +13,7 @@
 	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
 	<style>
+	h4 { margin-bottom: 0px; }
 	.result {
 		margin-bottom: 1em;
 		padding: 1em;
@@ -20,8 +21,15 @@
 	.result:last-child {
 		margin-bottom: 0px;
 	}
+	.result span { padding: 0 0.2em; }
 	#function {
-		width: 100%;height:15em;text-align:left;padding:0.25em;padding-left:2em;font-size:1em;border:0;
+		width: 100%;
+		height:8em;
+		text-align:left;
+		padding:0.25em;
+		padding-left:2em;
+		font-size:1em;
+		border:0;
 		line-height: 1.25em;
 		overflow-x: auto;
 	}
@@ -36,8 +44,8 @@
 	table th { background: #444; color: #dfdfdf; }
 	table th, table td { border: 1px solid #999999; padding: 0.25em 0.5em; width: 25%; }
 	h3 { margin: 0px; }
-	.success td, .success { background-color: rgba(100,255,100,0.1)!important; }
-	.fail td, .fail { background-color: rgba(255,100,100,0.1)!important; }
+	.success td, .success { background-color: rgba(100,255,100,0.25)!important; }
+	.fail td, .fail { background-color: rgba(255,100,100,0.25)!important; }
 	.partial td, .partial { background-color: rgba(255,255,100,0.1)!important; }
 	#summary { text-align: center; padding: 0.5em; background-color: #efefef; }
 	ul.links { list-style: none; margin: 0px; }
@@ -64,22 +72,13 @@
 			<p>This is a test of the <code>graph</code> library tick calculations and label formatting.</p>
 			<div id="summary"></div>
 			<div id="graph"></div>
-			<!--
-			<h2>Formatting function</h2>
+			
+			<h2>Tick calculating and labelling function</h2>
 			<p>Define the Javascript formatting function below. It should take <code>value</code> as an argument and it should return a string.</p>
-			<pre>function(value){</pre>
-			<textarea id="function">
-// Set the precision
-v = value.toPrecision(15);
-
-// Remove trailing spaces
-v = v.replace(/\.([0-9]*?)0+((e[-\+0-9]*)?)$/,function(m,p1,p2){
-	return (p1? '.':'')+p1+p2;
-})
-
-return v;</textarea>
+			<pre>function(min,max){</pre>
+			<textarea id="function"></textarea>
 			<pre>}</pre>
--->			<h2>Output</h2>
+			<h2>Output</h2>
 			<div id="output"></div>
 			<!-- Javascript -->
 			<script>
@@ -88,47 +87,59 @@ return v;</textarea>
 				var tests = [
 					{
 						'range':{'min':'1000000','max':'1004000'},
-						'outputs':["1000000","1000500","1001000","1001500","1002000","1002500","1003000","1003500","1004000","1004500"]
+						'output':{'min':1000000,'max':1004000,'inc':500},
+						'values':["1000000","1000500","1001000","1001500","1002000","1002500","1003000","1003500","1004000","1004500"]
 					},{
-						'range':{'min':'0.91','max':1.42},
-						'outputs':["0.9","1","1.1","1.2","1.3","1.4","1.5"]
+						'range':{'min':0.91,'max':1.42},
+						'output':{'min':0.9,'max':1.5,'inc':0.1},
+						'values':["0.9","1","1.1","1.2","1.3","1.4","1.5"]
 					},{
 						'range':{'min':0.995,'max':1.035},
-						'outputs':["0.99","1","1.01","1.02","1.03","1.04"]
+						'output':{'min':0.99,'max':1.04,'inc':0.01},
+						'values':["0.99","1","1.01","1.02","1.03","1.04"]
 					},{
 						'range':{'min':0.0000001,'max':0.000000145},
-						'outputs':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
+						'output':{'min':1e-7,'max':1.5e-7,'inc':1e-8},
+						'values':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
 					},{
 						'range':{'min':'1542651740796','max':'1542651740811'},
-						'outputs':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
+						'output':{'min':1542651740795,'max':1542651740815,'inc':5},
+						'values':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
 					},{
 						'range':{'min':'1542651740796','max':'1542651740811'},
 						'date': true,
-						'outputs':["20.796","20.798","20.8","20.802","20.804","20.806","20.808","20.81","20.812"]
+						'output':{'min':1542651740796,'max':1542651740812,'inc':2},
+						'values':["20.796","20.798","20.8","20.802","20.804","20.806","20.808","20.81","20.812"]
 					},{
 						'range':{'min':'1542651740796','max':'1542651940811'},
 						'date': true,
-						'outputs':["18:22","18:23","18:24","18:25","18:26"]
+						'output':{'min':1542651720000,'max':1542651960000,'inc':60000},
+						'values':["18:22","18:23","18:24","18:25","18:26"]
 					},{
 						'range':{'min':'1542651740796','max':'1542751740811'},
 						'date': true,
-						'outputs':["18:00","00:00","06:00","12:00","18:00","00:00"]
+						'output':{'min':1542650400000,'max':1542758400000,'inc':21600000},
+						'values':["18:00","00:00","06:00","12:00","18:00","00:00"]
 					},{
 						'range':{'min':'1542651740796','max':'1543651740811'},
 						'date': true,
-						'outputs':["2018-11-19","2018-11-21","2018-11-23","2018-11-25","2018-11-27","2018-11-29","2018-12-01","2018-12-03"]
+						'output':{'min':1542585600000,'max':1543795200000,'inc':172800000},
+						'values':["2018-11-19","2018-11-21","2018-11-23","2018-11-25","2018-11-27","2018-11-29","2018-12-01","2018-12-03"]
 					},{
 						'range':{'min':'1542651740796','max':'1642651740811'},
 						'date': true,
-						'outputs':["2018","2019","2020","2021","2022","2023"]
+						'output':{'min':1514764800000,'max':1672552800000,'inc':31557600000},
+						'values':["2018","2019","2020","2021","2022","2023"]
 					},{
 						'range':{'min':'1542651740796','max':'2542651740811'},
 						'date': true,
-						'outputs':["2010","2020","2030","2040","2050","2060"]
+						'output':{'min':1262304000000,'max':2840184000000,'inc':315576000000},
+						'values':["2010","2020","2030","2040","2050","2060"]
 					},{
 						'range':{'min':'1542651740796','max':'11542651740811'},
 						'date': true,
-						'outputs':["2000","2100","2200","2300","2400"]
+						'output':{'min':946684800000,'max':13569465600000,'inc':3155760000000},
+						'values':["2000","2100","2200","2300","2400"]
 					}
 				];
 
@@ -137,46 +148,96 @@ return v;</textarea>
 				var els = new Array();
 
 				function processFunction(fn_inner){
-					if(fn_inner){
-						var fn = 'function parseValue(v, increment){ var value = v; '+fn_inner+'}'
-						eval(fn);
-					}
+					var customfn = false;
 					var good = 0;
 					var total = 0;
-					var error = "";
+					var error = [];
 					var o = "";
 					var li = "";
+
+					if(fn_inner){
+						var fn = 'function defineAxis(min, max){ '+fn_inner+'}'
+						try {
+							eval(fn);
+							rtn = defineAxis(0,1);
+							if(typeof rtn==="object" && typeof rtn.min==="number" && typeof rtn.max==="number" && typeof rtn.inc=="number" && typeof rtn.values==="object") customfn = true;
+							else{
+								error.push("Function doesn't return a valid structure. Must be in the style {'max':0,'min':0,'inc':1,'values':[]}");
+							}
+						}catch(err){
+							error.push("Can't evaluate the custom function");
+						}
+					}
+
 					for(var t = 0, n = 1; t < tests.length; t++, n++){
 						var ok = 0;
+						var ntest = 0;
 						var table = '';
-						if(tests[t].range){
+						var errs = new Array();
+
+						if(customfn){
+							min = parseFloat(tests[t].range.min);
+							max = parseFloat(tests[t].range.max);
+							output = defineAxis(parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
+							output.isDate = (tests[t].date||false);
+						}else{
 							graph.x.isDate = (tests[t].date||false);
 							graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
-
-							for(var v = graph.x.gmin, i = 0; v <= graph.x.gmax; v += graph.x.inc, i++, total++){
-
-								if(graph.x.isDate){
-									p = graph.formatLabelDate(v);
+							output = {'min':graph.x.gmin,'max':graph.x.gmax,'inc':graph.x.inc,'isDate':graph.x.isDate};
+							output.values = new Array();
+							
+							for(var v = output.min, i = 0; v <= output.max; v += output.inc, i++){
+								if(output.isDate){
+									output.values.push(graph.formatLabelDate(v));
 								}else{
-									try { p = graph.formatLabel('x',v); }
-									catch(err){ error += "parseValue function failed"; }
-								}								
-								s = (tests[t].outputs[i]==p);
-								if(s) ok++;
-								table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].outputs[i]+'</td><td>'+p+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
+									try {
+										output.values.push(graph.formatLabel('x',v));
+									}catch(err){
+										output.values.push('ERROR');
+										errs.push("formatLabel failed on "+v+' due to <code>'+err+'</code>');
+									}
+								}
 							}
-							good += ok;
-							o = '<h3 id="'+n+'">Example '+n+': '+(ok == i ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes '+graph.x.gmin+' &rarr; '+graph.x.gmax+' with an increment of '+graph.x.inc+'. The axis type is <code>'+(graph.x.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
-						}else{
-							o = '<h3 id="'+n+'">Example '+n+': unknown</h3>'
 						}
-						li += '<li class="ex '+(ok == i ? 'success':(ok > 0 ? 'partial':'fail'))+'"><a href="#'+n+'">'+n+'</li>';
+
+
+						compare = {'min':false,'max':false,'inc':false};
+						// See how well we did
+						for(var key in compare){
+							total++;
+							ntest++;
+							if(tests[t].output){
+								if(tests[t].output[key]){
+									if(tests[t].output[key]==output[key]){
+										ok++;
+										compare[key] = true;
+									}
+								}
+							}
+						}
+						if(!output.values) output.values = new Array();
+						for(var i = 0, v = output.min; i < output.values.length; i++, total++, ntest++, v += output.inc){
+							s = (tests[t].values[i] == output.values[i]);
+							if(s) ok++;
+							table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].values[i]+'</td><td>'+output.values[i]+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
+						}
+
+						good += ok;
+						o = '<h3 id="'+n+'">Example '+n+': '+(ok > 0 && ok == ntest ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+(compare.min ? 'success':'fail')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+(compare.max ? 'success':'fail')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+(compare.inc ? 'success':'fail')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+						if(errs.length > 0){
+							o += '<h4>Errors</h4><ul class="errors">';
+							for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
+							o += '</ul>';
+						}
+						li += '<li class="ex '+(ok > 0 ? (ok == ntest ? 'success':'partial'):'fail')+'"><a href="#'+n+'">'+n+'</a></li>';
 						els[t].html(o);
 					}
 
 				
 					var summary = S('#summary');
-					summary.html('Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>');
+					var html = 'Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>';
+					for(var e = 0; e < error.length; e++) html += '<br />'+error[e];
+					summary.html(html);
 					if(good==total) summary.addClass('success').removeClass('fail');
 					else summary.removeClass('success').addClass('fail');
 					
@@ -191,7 +252,11 @@ return v;</textarea>
 					els[t] = S('#output-'+t);
 				}
 
-				processFunction();
+				S('#function').on('keydown',function(){
+					processFunction(this[0].value);
+				});
+
+				processFunction(S('#function')[0].value);
 
 			});
 			</script>
