@@ -1109,22 +1109,14 @@
 	
 	Graph.prototype.makeLabels = function(a){
 
-		// Calculate the number of decimal places for the increment - helps with rounding errors
-		var prec = ""+this[a].inc;
-		var m = prec.match(/e([-0-9]+)/);
-		if(!m) prec = prec.replace(/[^0-9]/,"").length;
-		else prec = parseInt(m[1]);
-		function shortest(v,p){
-			var n = v.toFixed(p);
-			var s = v.toPrecision(p);
-			return (n.length > s.length ? s : n).replace(/\.0+$/,"").replace(/0+$/,"").toLocaleString();
-		}
+		// Get the min/max tick marks
 		var mn = this[a].gmin;
 		var mx = this[a].gmax;
 		if(this[a].log){
 			mn = Math.ceil(mn);
 			mx = Math.floor(mx);
 		}
+		// A function to format the date nicely
 		function niceDate(d,sp){
 			d = new Date((typeof d==="string" ? parseInt(d):d));
 			var hr,mn,sc,dy,mo,yr,n,f;
@@ -1145,12 +1137,31 @@
 			else return hr+":"+mn+":"+sc;
 		}
 		this[a].labels = new Array();
+		// Calculate the number of decimal places for the increment
+		var sci_hi = 10000;
+		var sci_lo = 1e-4;
+		var l = Math.abs(mx);
+		var sci = (l > sci_hi || l < sci_lo);
+		// We now determine the number of decimal places we need to show. To do this
+		// we take the largest tick value, find the nearest integer log value, and
+		// compare this to the 'base' (which is the integer log value of the spacing)
+		var base = Math.floor(Math.log10(this[a].inc));
+		var main = Math.floor(Math.log10(mx));
+		var precision = Math.floor(Math.round(main - base));
 		for(var i = mn; i <= mx; i += this[a].inc){
 			if(this[a].isDate) j = niceDate(i,this[a].spacing);
 			else{
-				j = (this[a].log) ? i : (typeof i==="number" ? shortest(i,Math.abs(prec)) : i);
-				if(this[a].log) j = Math.pow(10, j);
+				if(sci){
+					fmt1 = i.toExponential(precision);
+					fmt2 = ""+i;
+					j = (fmt2.length > fmt1.length ? fmt1 : fmt2);
+				}else{
+					// If the tick spacing is larger than 1, format the values as integers
+					if(this[a].inc > 1) j = Math.round(i);
+					else j = i.toFixed(precision);
+				}
 			}
+			j = j.replace(/\.0+$/,"").replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
 			this[a].labels.push(j);
 		}
 		return this;

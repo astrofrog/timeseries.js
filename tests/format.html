@@ -169,11 +169,18 @@
 						}
 					}
 
+					function closeEnough(typ){
+						return Math.abs(output[typ]-tests[t].output[typ]) < tests[t].output[typ]*1e-7;
+					}
+					function getClass(typ){
+						if(compare[typ]) return 'success';
+						return (closeEnough(typ) ? 'partial' : 'fail');
+					}
+
 					for(var t = 0, n = 1; t < tests.length; t++, n++){
-						var ok = 0;
-						var ntest = 0;
 						var table = '';
 						var errs = new Array();
+						var score = {'ok':0,'bad':0,'partial':0}
 
 						if(customfn){
 							min = parseFloat(tests[t].range.min);
@@ -191,31 +198,35 @@
 						// See how well we did
 						for(var key in compare){
 							total++;
-							ntest++;
 							if(tests[t].output){
 								if(tests[t].output[key]){
 									if(tests[t].output[key]==output[key]){
-										ok++;
+										score.ok++;
 										compare[key] = true;
+									}else{
+										if(closeEnough(key)) score.partial++;
+										score.bad++;
 									}
 								}
 							}
 						}
 						if(!output.labels) output.labels = new Array();
-						for(var i = 0, v = output.min; i < output.labels.length; i++, total++, ntest++, v += output.inc){
+						for(var i = 0, v = output.min; i < output.labels.length; i++, total++, v += output.inc){
 							s = (tests[t].labels[i] == output.labels[i]);
-							if(s) ok++;
+							if(s) score.ok++;
+							else score.bad++;
 							table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].labels[i]+'</td><td>'+output.labels[i]+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
 						}
 
-						good += ok;
-						o = '<h3 id="'+n+'">Example '+n+': '+(ok > 0 && ok == ntest ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+(compare.min ? 'success':'fail')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+(compare.max ? 'success':'fail')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+(compare.inc ? 'success':'fail')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+						good += score.ok;
+						ntest = score.ok + score.partial + score.bad;
+						o = '<h3 id="'+n+'">Example '+n+': '+(score.ok > 0 && score.bad == 0 ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+getClass('min')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+(compare.inc ? 'success':'fail')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
 						if(errs.length > 0){
 							o += '<h4>Errors</h4><ul class="errors">';
 							for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
 							o += '</ul>';
 						}
-						li += '<li class="ex '+(ok > 0 ? (ok == ntest ? 'success':'partial'):'fail')+'"><a href="#'+n+'">'+n+'</a></li>';
+						li += '<li class="ex '+(score.partial > 0 ? 'partial': (score.bad > 0 ? 'fail':'success'))+'"><a href="#'+n+'">'+n+'</a></li>';
 						els[t].html(o);
 					}
 
