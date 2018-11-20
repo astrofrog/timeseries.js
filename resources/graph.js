@@ -1306,11 +1306,13 @@
 	
 	Graph.prototype.formatLabel = function(dir,v,inc){
 		if(!v) return "";
+		if(!inc) inc = this[dir].inc;
 		// Calculate the number of decimal places for the increment - helps with rounding errors
-		var prec = ""+(inc || this[dir].inc);
+		var prec = ""+inc;
 		var m = prec.match(/e([-0-9]+)/);
 		if(!m) prec = prec.length-prec.indexOf('.')-1;
-		else prec = parseInt(m[1])
+		else prec = parseInt(m[1]);
+		console.log(v,inc,prec)
 		function shortest(v,p){
 			var n = v.toFixed(p);
 			var s = v.toPrecision(p);
@@ -1579,12 +1581,12 @@
 	}
 
 	Graph.prototype.formatLabelDate = function(d){
-		d = new Date(parseInt(d));
+		d = new Date((typeof d==="string" ? parseInt(d):d));
 		var hr,mn,sc,dy,mo,yr,n,f;
 		f = this.x.spacing.fract;
 		hr = zeroFill(d.getUTCHours(),2);
 		mn = zeroFill(d.getUTCMinutes(),2);
-		sc = zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2);
+		sc = removeRoundingErrors(zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2));
 		dy = zeroFill(d.getUTCDate(),2);
 		mo = zeroFill(d.getUTCMonth()+1,2);
 		yr = d.getUTCFullYear();
