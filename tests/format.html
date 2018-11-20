@@ -38,6 +38,7 @@
 	h3 { margin: 0px; }
 	.success td, .success { background-color: rgba(100,255,100,0.1)!important; }
 	.fail td, .fail { background-color: rgba(255,100,100,0.1)!important; }
+	.partial td, .partial { background-color: rgba(255,255,100,0.1)!important; }
 	#summary { text-align: center; padding: 0.5em; background-color: #efefef; }
 	ul.links { list-style: none; margin: 0px; }
 	ul.links li { display: inline-block; }
@@ -52,7 +53,7 @@
 		<div class="row">
 			<div class="padded">
 				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
-				<h1 id="project_title">timeseries.js library</h1>
+				<h1 id="project_title">Tick formatting test</h1>
 			</div>
 		</div>
 	</header>
@@ -60,6 +61,7 @@
 	<!-- MAIN CONTENT -->
 	<div class="row">
 		<div class="example">
+			<p>This is a test of the <code>graph</code> library tick calculations and label formatting.</p>
 			<div id="summary"></div>
 			<div id="graph"></div>
 			<!--
@@ -168,17 +170,18 @@ return v;</textarea>
 						}else{
 							o = '<h3 id="'+n+'">Example '+n+': unknown</h3>'
 						}
-						li += '<li class="ex '+(ok == i ? 'success':'fail')+'"><a href="#'+n+'">'+n+'</li>';
+						li += '<li class="ex '+(ok == i ? 'success':(ok > 0 ? 'partial':'fail'))+'"><a href="#'+n+'">'+n+'</li>';
 						els[t].html(o);
 					}
 
 				
 					var summary = S('#summary');
-					summary.html('The <code>graph</code> library passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>');
+					summary.html('Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>');
 					if(good==total) summary.addClass('success').removeClass('fail');
 					else summary.removeClass('success').addClass('fail');
 					
-				
+					// Update anchor now that we've updated the page		
+					if(location.hash) document.location = location.hash;
 				}
 				
 				// Build DOM containers
