@@ -1106,6 +1106,56 @@
 			}
 		}
 	}
+	
+	Graph.prototype.makeLabels = function(a){
+
+		// Calculate the number of decimal places for the increment - helps with rounding errors
+		var prec = ""+this[a].inc;
+		var m = prec.match(/e([-0-9]+)/);
+		if(!m) prec = prec.replace(/[^0-9]/,"").length;
+		else prec = parseInt(m[1]);
+		function shortest(v,p){
+			var n = v.toFixed(p);
+			var s = v.toPrecision(p);
+			return (n.length > s.length ? s : n).replace(/\.0+$/,"").replace(/0+$/,"").toLocaleString();
+		}
+		var mn = this[a].gmin;
+		var mx = this[a].gmax;
+		if(this[a].log){
+			mn = Math.ceil(mn);
+			mx = Math.floor(mx);
+		}
+		function niceDate(d,sp){
+			d = new Date((typeof d==="string" ? parseInt(d):d));
+			var hr,mn,sc,dy,mo,yr,n,f;
+			f = sp.fract
+			hr = zeroFill(d.getUTCHours(),2);
+			mn = zeroFill(d.getUTCMinutes(),2);
+			sc = removeRoundingErrors(zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2));
+			dy = zeroFill(d.getUTCDate(),2);
+			mo = zeroFill(d.getUTCMonth()+1,2);
+			yr = d.getUTCFullYear();
+			n = sp.name;
+			if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc);
+			else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
+			else if(n=="hours") return hr+":"+mn;
+			else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
+			else if(n=="weeks") return yr+"-"+mo+"-"+dy+(hr=="00" ? '' : ' '+Math.round((d.getUTCHours()+(d.getUTCMinutes()/60)))+'h');
+			else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
+			else return hr+":"+mn+":"+sc;
+		}
+		this[a].labels = new Array();
+		for(var i = mn; i <= mx; i += this[a].inc){
+			if(this[a].isDate) j = niceDate(i,this[a].spacing);
+			else{
+				j = (this[a].log) ? i : (typeof i==="number" ? shortest(i,Math.abs(prec)) : i);
+				if(this[a].log) j = Math.pow(10, j);
+			}
+			this[a].labels.push(j);
+		}
+		return this;
+	}
+
 
 	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
 	Graph.prototype.defineAxis = function(axis,min,max){
@@ -1128,6 +1178,8 @@
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
+			this.makeLabels(axis);
+
 			return this;
 		}
 
@@ -1204,6 +1256,7 @@
 		this[axis].gmax = t_max;
 		this[axis].inc = t_inc;
 		this[axis].grange = this[axis].gmax-this[axis].gmin;
+		this.makeLabels(axis);
 
 		return this;
 	}
@@ -1297,33 +1350,16 @@
 			mx = Math.floor(this.y.gmax);
 		}
 
-		for(i = mn; i <= mx; i += this.y.inc){
-			maxw = Math.max(maxw,ctx.measureText(this.formatLabel('y',i)).width);
+		for(i = mn,j = 0; i <= mx; i += this.y.inc,j++){
+			maxw = Math.max(maxw,ctx.measureText(this['y'].labels[j]).width);
 		}
 		s = Math.round(fs*1.5);
 		return Math.max(s*2,Math.round(Math.ceil(maxw/s)*s)) + 4;
 	}
-	
-	Graph.prototype.formatLabel = function(dir,v,inc){
-		if(!v) return "";
-		if(!inc) inc = this[dir].inc;
-		// Calculate the number of decimal places for the increment - helps with rounding errors
-		var prec = ""+inc;
-		var m = prec.match(/e([-0-9]+)/);
-		if(!m) prec = prec.replace(/[^0-9]/,"").length;
-		else prec = parseInt(m[1]);
-		function shortest(v,p){
-			var n = v.toFixed(p);
-			var s = v.toPrecision(p);
-			return (n.length > s.length ? s : n);
-		}
-		var j = (this[dir].log) ? v : (typeof v==="number" ? shortest(v,prec) : v);
-		return (this[dir].log ? Math.pow(10, j) : j.replace(/\.0+$/,"").replace(/0+$/,"").toLocaleString());
-	}
-	
+
 	// Draw the axes and grid lines for the graph
 	Graph.prototype.drawAxes = function(){
-		var grid,tw,c,ctx,rot,axes,r,i,a,o,d,s,p,mn,mx;
+		var grid,tw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -1484,7 +1520,7 @@
 				mx = Math.ceil(axis.gmax);
 			}
 			
-			for(i = mn; i <= mx; i += axis.inc) {
+			for(i = mn,k=0; i <= mx; i += axis.inc,k++) {
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -1509,7 +1545,7 @@
 								prev = o;
 							}
 						}else{
-							str = (axis.isDate) ? this.formatLabelDate(j) : this.formatLabel('x',j);
+							str = this[d].labels[k];
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
@@ -1525,7 +1561,7 @@
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
-						ctx.fillText(this.formatLabel('y',j),(x1 - 3 - tw),(y1).toFixed(1));
+						ctx.fillText(this[d].labels[k],(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
 
@@ -1577,26 +1613,6 @@
 			}
 		}
 		return this;
-	}
-
-	Graph.prototype.formatLabelDate = function(d){
-		d = new Date((typeof d==="string" ? parseInt(d):d));
-		var hr,mn,sc,dy,mo,yr,n,f;
-		f = this.x.spacing.fract;
-		hr = zeroFill(d.getUTCHours(),2);
-		mn = zeroFill(d.getUTCMinutes(),2);
-		sc = removeRoundingErrors(zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2));
-		dy = zeroFill(d.getUTCDate(),2);
-		mo = zeroFill(d.getUTCMonth()+1,2);
-		yr = d.getUTCFullYear();
-		n = this.x.spacing.name;
-		if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc);
-		else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
-		else if(n=="hours") return hr+":"+mn;
-		else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
-		else if(n=="weeks") return yr+"-"+mo+"-"+dy+(hr=="00" ? '' : ' '+Math.round((d.getUTCHours()+(d.getUTCMinutes()/60)))+'h');
-		else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
-		else return hr+":"+mn+":"+sc;
 	}
 
 	// Function to calculate the x,y coordinates for each data point. 
