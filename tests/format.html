@@ -162,10 +162,10 @@
 							rtn = defineAxis(0,1);
 							if(typeof rtn==="object" && typeof rtn.min==="number" && typeof rtn.max==="number" && typeof rtn.inc=="number" && typeof rtn.values==="object") customfn = true;
 							else{
-								error.push("Function doesn't return a valid structure. Must be in the style {'max':0,'min':0,'inc':1,'values':[]}");
+								error.push("Function doesn't return a valid structure. Must be in the form <code>{'max':0,'min':0,'inc':1,'values':[]}</code>");
 							}
 						}catch(err){
-							error.push("Can't evaluate the custom function");
+							error.push("Can't evaluate the custom function. It should return a structure of the form <code>{'max':0,'min':0,'inc':1,'values':[]}</code>");
 						}
 					}
 
