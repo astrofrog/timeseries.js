@@ -39,6 +39,9 @@
 	.success td, .success { background-color: rgba(100,255,100,0.1)!important; }
 	.fail td, .fail { background-color: rgba(255,100,100,0.1)!important; }
 	#summary { text-align: center; padding: 0.5em; background-color: #efefef; }
+	ul.links { list-style: none; margin: 0px; }
+	ul.links li { display: inline-block; }
+	ul.links li.ex a { padding: 0.25em 0.5em; color: inherit; text-decoration: none; }
 	</style>
 </head>
 <body>
@@ -59,6 +62,7 @@
 		<div class="example">
 			<div id="summary"></div>
 			<div id="graph"></div>
+			<!--
 			<h2>Formatting function</h2>
 			<p>Define the Javascript formatting function below. It should take <code>value</code> as an argument and it should return a string.</p>
 			<pre>function(value){</pre>
@@ -73,7 +77,7 @@ v = v.replace(/\.([0-9]*?)0+((e[-\+0-9]*)?)$/,function(m,p1,p2){
 
 return v;</textarea>
 			<pre>}</pre>
-			<h2>Output</h2>
+-->			<h2>Output</h2>
 			<div id="output"></div>
 			<!-- Javascript -->
 			<script>
@@ -81,9 +85,6 @@ return v;</textarea>
 
 				var tests = [
 					{
-						'range':{'min':'1542651740796','max':'1542651740811'},
-						'outputs':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
-					},{
 						'range':{'min':'1000000','max':'1004000'},
 						'outputs':["1000000","1000500","1001000","1001500","1002000","1002500","1003000","1003500","1004000","1004500"]
 					},{
@@ -95,6 +96,37 @@ return v;</textarea>
 					},{
 						'range':{'min':0.0000001,'max':0.000000145},
 						'outputs':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
+					},{
+						'range':{'min':'1542651740796','max':'1542651740811'},
+						'outputs':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
+					},{
+						'range':{'min':'1542651740796','max':'1542651740811'},
+						'date': true,
+						'outputs':["20.796","20.798","20.8","20.802","20.804","20.806","20.808","20.81","20.812"]
+					},{
+						'range':{'min':'1542651740796','max':'1542651940811'},
+						'date': true,
+						'outputs':["18:22","18:23","18:24","18:25","18:26"]
+					},{
+						'range':{'min':'1542651740796','max':'1542751740811'},
+						'date': true,
+						'outputs':["18:00","00:00","06:00","12:00","18:00","00:00"]
+					},{
+						'range':{'min':'1542651740796','max':'1543651740811'},
+						'date': true,
+						'outputs':["2018-11-19","2018-11-21","2018-11-23","2018-11-25","2018-11-27","2018-11-29","2018-12-01","2018-12-03"]
+					},{
+						'range':{'min':'1542651740796','max':'1642651740811'},
+						'date': true,
+						'outputs':["2018","2019","2020","2021","2022","2023"]
+					},{
+						'range':{'min':'1542651740796','max':'2542651740811'},
+						'date': true,
+						'outputs':["2010","2020","2030","2040","2050","2060"]
+					},{
+						'range':{'min':'1542651740796','max':'11542651740811'},
+						'date': true,
+						'outputs':["2000","2100","2200","2300","2400"]
 					}
 				];
 
@@ -103,54 +135,46 @@ return v;</textarea>
 				var els = new Array();
 
 				function processFunction(fn_inner){
-					var fn = 'function parseValue(v, increment){ var value = v; '+fn_inner+'}'
-					eval(fn);
+					if(fn_inner){
+						var fn = 'function parseValue(v, increment){ var value = v; '+fn_inner+'}'
+						eval(fn);
+					}
 					var good = 0;
 					var total = 0;
 					var error = "";
-					for(var t = 0; t < tests.length; t++){
+					var o = "";
+					var li = "";
+					for(var t = 0, n = 1; t < tests.length; t++, n++){
 						var ok = 0;
 						var table = '';
 						if(tests[t].range){
-							graph.defineAxis("y",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
+							graph.x.isDate = (tests[t].date||false);
+							graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
 
-							for(var v = graph.y.gmin, i = 0; v <= graph.y.gmax; v += graph.y.inc, i++, total++){
+							for(var v = graph.x.gmin, i = 0; v <= graph.x.gmax; v += graph.x.inc, i++, total++){
 
-								try { p = parseValue(v); }
-								catch(err){ error += "parseValue function failed"; }
-								
-								s = false;
-								for(var o = 0; o < tests[t].outputs.length; o++){
-									s = (tests[t].outputs[o] == p);
-									if(s){
-										o = tests[t].outputs.length;
-										ok++;
-									}
-								}
-								table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].outputs[i]+'</td><td>'+p+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
-							}
-							good += ok;
-							var o = '<h3>Example '+(t+1)+': '+(ok == i ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' - '+tests[t].range.max+'</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
-						}else{
-							for(var i = 0; i < tests[t].steps; i++,total++){
-								v = (parseFloat(tests[t].value) + i*tests[t].inc);
-								try {
-									p = parseValue(v);
-								}catch(err){
-									error += "parseValue function failed";
-								}
-								s = (p==tests[t].outputs[i]);
+								if(graph.x.isDate){
+									p = graph.formatLabelDate(v);
+								}else{
+									try { p = graph.formatLabel('x',v); }
+									catch(err){ error += "parseValue function failed"; }
+								}								
+								s = (tests[t].outputs[i]==p);
 								if(s) ok++;
 								table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].outputs[i]+'</td><td>'+p+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
 							}
 							good += ok;
-							var o = '<h3>Example '+(t+1)+': '+(ok == tests[t].steps ? 'success':'fail')+'</h3><p>Starting value is '+tests[t].value+'</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+							o = '<h3 id="'+n+'">Example '+n+': '+(ok == i ? 'success':'fail')+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes '+graph.x.gmin+' &rarr; '+graph.x.gmax+' with an increment of '+graph.x.inc+'. The axis type is <code>'+(graph.x.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
+						}else{
+							o = '<h3 id="'+n+'">Example '+n+': unknown</h3>'
 						}
+						li += '<li class="ex '+(ok == i ? 'success':'fail')+'"><a href="#'+n+'">'+n+'</li>';
 						els[t].html(o);
 					}
+
 				
 					var summary = S('#summary');
-					summary.html('The function passes '+(good)+'/'+total+' tests');
+					summary.html('The <code>graph</code> library passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>');
 					if(good==total) summary.addClass('success').removeClass('fail');
 					else summary.removeClass('success').addClass('fail');
 					
@@ -164,13 +188,7 @@ return v;</textarea>
 					els[t] = S('#output-'+t);
 				}
 
-				S('#function').on('keydown',function(){
-					fn = this[0].value;
-					processFunction(fn);
-				
-				});
-				
-				processFunction(S('#function')[0].value);
+				processFunction();
 
 			});
 			</script>
