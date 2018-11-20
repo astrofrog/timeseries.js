@@ -340,11 +340,14 @@
 			this.clipboard = this.ctx.getImageData(0, 0, x, y);
 			this.clipboardData = this.clipboard.data;
 		}
-		return this
+		return this;
 	}
 	Canvas.prototype.pasteFromClipboard = function(){
-		this.clipboard.data = this.clipboardData;
-		this.ctx.putImageData(this.clipboard, 0, 0);
+		if(this.clipboardData){
+			this.clipboard.data = this.clipboardData;
+			this.ctx.putImageData(this.clipboard, 0, 0);
+		}
+		return this;
 	}
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
