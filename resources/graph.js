@@ -1148,7 +1148,6 @@
 		var base = Math.floor(Math.log10(this[a].inc));
 		var main = Math.floor(Math.log10(Math.abs(mx)));
 		var precision = Math.floor(Math.round(main - base));
-		console.log(precision,this[a].inc,main)
 		for(var i = mn; i <= mx; i += this[a].inc){
 			if(this[a].isDate) j = niceDate(i,this[a].spacing);
 			else{
