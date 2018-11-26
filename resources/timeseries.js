@@ -265,7 +265,7 @@
 					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
 					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
-					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}
+					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}
 				],
 				'fn': function(j){
 					var d = new Date(parseInt(j));

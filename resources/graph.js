@@ -1164,10 +1164,11 @@
 				}
 			}
 			try {
-				j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
+				j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString();
 			}catch(err){
 				console.log('ERROR',j,err);
 			}
+			if(typeof j!=="string" || j == "NaN") j = "";
 			this[a].labels[k] = j;
 		}
 		return this;
@@ -1251,9 +1252,12 @@
 		}else t_inc = Math.pow(param.base,Math.floor(Math.log(rg)/Math.log(param.base)));
 
 		t_max = Math.floor(mx/t_inc)*t_inc;
+
 		// Because the UNIX epoch is in 1970, when we are dealing with century-spanning 
-		// dates the zero needs to be shifted to a century for the labels
+		// dates the zero needs to be shifted to a century for the labels (add 30 years)
 		if(this[axis].isDate && t_inc >= 3000000000000) t_max += 946684800000;
+		// For dates spanning tens of thousands of years set the zero differently (add 8000 years)
+		if(this[axis].isDate && t_inc >= 1.5e14) t_max += 252449280000000;
 		if(t_max < mx) t_max += t_inc;
 		t_min = t_max;
 		i = 0;
