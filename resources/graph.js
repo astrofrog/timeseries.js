@@ -608,7 +608,7 @@
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{options:options},function(ev){
-			var oe,g,c,co,f;
+			var oe,g,c,co,f,s;
 			oe = ev.event.originalEvent;
 			if(ev.data.options.scrollWheelZoom){
 				oe.preventDefault();
@@ -622,9 +622,10 @@
 				co = g.coordinates;
 				if(co && co[0] == oe.target){ c.x += co[0].offsetLeft; c.y += co[0].offsetTop; }
 				f = (ev.speed || (1 - Math.min(40,Math.abs(oe.deltaY))/250));
+				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				g.zoom([c.x,c.y],{scale:(oe.deltaY > 0 ? 1/f : f),'update':false});
+				g.zoom([c.x,c.y],{scalex:(oe.layerX > g.chart.left ? s : 1),scaley:(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
 				g.updating = false;
 			}
@@ -881,12 +882,16 @@
 		if(!pos) pos = [];
 		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
+		var s,c,sx,sy;
 		if(pos.length == 2){
-			var s = (attr.scale || 0.8);
+			sx = sy = 0.8;
+			if(attr.scale) sx = sy = attr.scale;
+			if(attr.scalex) sx = attr.scalex;
+			if(attr.scaley) sy = attr.scaley;
 			// Find the center
 			var c = this.pixel2data(pos[0],pos[1]);
 			// Calculate the new zoom range
-			pos = [c.x - s*(c.x-this.x.min), c.x + s*(this.x.max-c.x), c.y - s*(c.y-this.y.min), c.y + s*(this.y.max-c.y)];
+			pos = [c.x - sx*(c.x-this.x.min), c.x + sx*(this.x.max-c.x), c.y - sy*(c.y-this.y.min), c.y + sy*(this.y.max-c.y)];
 		}
 		// Zoom into a defined region [x1,x2,y1,y2]
 		if(pos.length == 4){
