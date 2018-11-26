@@ -1310,7 +1310,7 @@
 		// Set the target
 		
 		if(this.canvas.fullscreen){
-			c.padding = this.canvas.wide/40;
+			c.padding = 36;
 			c.fontsize = this.canvas.wide/80;
 			c.fontfamily = (typeof ff=="string") ? ff : "";
 		}else{
