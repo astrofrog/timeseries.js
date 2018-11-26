@@ -1136,7 +1136,8 @@
 			else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
 			else return hr+":"+mn+":"+sc;
 		}
-		this[a].labels = new Array();
+		var n = Math.round((mx-mn)/this[a].inc);
+		this[a].labels = new Array(n);
 		// Calculate the number of decimal places for the increment
 		var sci_hi = 10000;
 		var sci_lo = 1e-4;
@@ -1147,9 +1148,9 @@
 		// compare this to the 'base' (which is the integer log value of the spacing)
 		var base = Math.floor(Math.log10(this[a].inc));
 		var main = Math.floor(Math.log10(Math.abs(mx)));
-		var precision = Math.floor(Math.round(main - base));
+		var precision = Math.floor(Math.round(main - base))+1;
 
-		for(var i = mn; i <= mx; i += this[a].inc){
+		for(var i = mn, k = 0; i <= mx; i += this[a].inc, k++){
 			if(this[a].isDate) j = niceDate(i,this[a].spacing);
 			else{
 				if(sci){
@@ -1158,12 +1159,16 @@
 					j = (fmt2.length > fmt1.length ? fmt1 : fmt2);
 				}else{
 					// If the tick spacing is larger than 1, format the values as integers
-					if(this[a].inc > 1) j = Math.round(i);
+					if(this[a].inc > 1) j = ""+Math.round(i);
 					else j = i.toFixed(precision);
 				}
 			}
-			j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
-			this[a].labels.push(j);
+			try {
+				j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^0]*)0+$/,function(m,p1){return p1;}).toLocaleString();
+			}catch(err){
+				console.log('ERROR',j,err);
+			}
+			this[a].labels[k] = j;
 		}
 		return this;
 	}
@@ -1579,7 +1584,7 @@
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
-						ctx.fillText(this[d].labels[k],(x1 - 3 - tw),(y1).toFixed(1));
+						ctx.fillText(this[d].labels[ii],(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
 
