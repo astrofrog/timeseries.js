@@ -1119,7 +1119,7 @@
 		var mx = this[a].gmax;
 		if(this[a].log){
 			mn = Math.ceil(mn);
-			mx = Math.floor(mx);
+			mx = Math.ceil(mx);
 		}
 		// A function to format the date nicely
 		function niceDate(d,sp){
@@ -1141,40 +1141,60 @@
 			else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
 			else return hr+":"+mn+":"+sc;
 		}
-		var n = Math.round((mx-mn)/this[a].inc);
-		this[a].labels = new Array(n);
+		//var n = Math.round((mx-mn)/this[a].inc);
+		this[a].labels = new Array();
+
+		var sci_hi,sci_lo,l,sci,base,main,precision,v,fmt,l;
+
 		// Calculate the number of decimal places for the increment
-		var sci_hi = 10000;
-		var sci_lo = 1e-4;
-		var l = Math.abs(mx);
-		var sci = (l > sci_hi || l < sci_lo);
+		sci_hi = 10000;
+		sci_lo = 1e-4;
+		l = Math.abs(mx);
+		sci = (l > sci_hi || l < sci_lo);
+
 		// We now determine the number of decimal places we need to show. To do this
 		// we take the largest tick value, find the nearest integer log value, and
 		// compare this to the 'base' (which is the integer log value of the spacing)
-		var base = Math.floor(Math.log10(this[a].inc));
-		var main = Math.floor(Math.log10(Math.abs(mx)));
-		var precision = Math.floor(Math.round(main - base))+1;
+		base = Math.floor(Math.log10(this[a].inc));
+		main = Math.floor(Math.log10(Math.abs(mx)));
+		precision = Math.floor(Math.round(main - base))+1;
 
-		for(var i = mn, k = 0; i <= mx; i += this[a].inc, k++){
-			if(this[a].isDate) j = niceDate(i,this[a].spacing);
-			else{
-				if(sci){
-					fmt1 = i.toExponential(precision);
-					fmt2 = ""+i;
-					j = (fmt2.length > fmt1.length ? fmt1 : fmt2);
-				}else{
-					// If the tick spacing is larger than 1, format the values as integers
-					if(this[a].inc > 1) j = ""+Math.round(i);
-					else j = i.toFixed(precision);
+		function shortestFormat(fmt){
+			var l = 1e100;
+			var i = "";
+			for(var f in fmt){
+				try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
+				catch(err){ console.log('ERROR',fmt[f],err); }
+				if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
+				if(fmt[f].length < l){
+					l = fmt[f].length;
+					i = f;
 				}
 			}
-			try {
-				j = j.replace(/\.0+((e[+0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString();
-			}catch(err){
-				console.log('ERROR',j,err);
+			return fmt[i];
+		}
+		for(var v = mn; v <= mx; v += this[a].inc){
+
+			i = v;
+			if(this[a].log){
+				i = Math.pow(10,i);
+				sci = (Math.abs(i) > sci_hi || Math.abs(i) < sci_lo)
 			}
-			if(typeof j!=="string" || j == "NaN") j = "";
-			this[a].labels[k] = j;
+			fmt = {};
+
+			if(this[a].isDate) fmt['date'] = niceDate(i,this[a].spacing);
+			else{
+				if(sci){
+					if(this[a].log) precision = (""+v).length;
+					fmt['exp'] = i.toExponential(precision);
+					fmt['normal'] = ""+i;
+				}else{
+					if(this[a].log) precision = Math.abs(v);
+					if(this[a].inc > 1) fmt['round'] = ""+Math.round(i);
+					else fmt['fixed'] = i.toFixed(precision);
+				}
+			}
+			this[a].labels.push(shortestFormat(fmt));
 		}
 		return this;
 	}
@@ -1756,6 +1776,7 @@
 
 		for(sh in this.data){
 			//this.logTime('draw series '+sh+' '+this.data[sh].type);
+
 			if(this.data[sh].show){
 
 				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
@@ -1861,27 +1882,42 @@
 		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
 	}
-
+	Graph.prototype.drawVisibleLineSegment = function(ax,ay,bx,by){
+		// If the two points are both off to the left, right, top, or bottom the line won't be visible
+		if((ax < 0 && bx < 0) || (ax > this.canvas.wide && bx > this.canvas.wide) || (ay < 0 && by < 0) || (ay > this.canvas.tall && by > this.canvas.tall)) return 0;
+		// Truncate left edge of the line
+		if(ax < 0){
+			ay = ay + (by-ay)*(Math.abs(ax)/(bx-ax));
+			ax = 0;
+		}
+		// Truncate right edge of the line
+		if(bx > this.canvas.wide){
+			by = ay + (by-ay)*((this.canvas.wide-ax)/(bx-ax));
+			bx = this.canvas.wide;
+		}
+		// Truncate top edge of the line
+		if(ay < 0){
+			ax = ax + (bx-ax)*(Math.abs(ay)/(by-ay));
+			ay = 0;
+		}
+		// Truncate bottom edge of the line
+		if(by > this.canvas.tall){
+			bx = ax + (bx-ax)*((this.canvas.tall-ay)/(by-ay));
+			by = this.canvas.tall;
+		}
+		this.tempctx.moveTo(ax,ay);
+		this.tempctx.lineTo(bx,by);
+		return 1;
+	}
 	Graph.prototype.drawLine = function(sh,updateLookup){
 		this.clearTemp();
 		this.tempctx.beginPath();
-		var oldp = {};
-		var pad = 10;
-		var gaps = 0;
-		for(var i = 0; i < this.data[sh].marks.length ; i++){
-			p = this.data[sh].marks[i].props;
-			if(p.x && p.y){
-				if(i == 0){
-					this.tempctx.moveTo(p.x,p.y);
-				}else{
-					if(gaps > 0) this.tempctx.moveTo(p.x,p.y);
-					this.tempctx.lineTo(p.x,p.y);
-				}
-				gaps = 0;
-				oldp = p;
-			}else{
-				gaps++;
-			}
+		var ps = this.data[sh].marks;
+		var oldp = ps[0].props;
+		for(var i = 1; i < ps.length ; i++){
+			p = ps[i].props;
+			if(typeof oldp.x==="number" && typeof p.x==="number") this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
+			oldp = p;
 		}
 		this.tempctx.stroke();
 		this.canvas.ctx.drawImage(this.temp,0,0);
