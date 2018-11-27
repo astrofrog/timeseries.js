@@ -1509,7 +1509,6 @@
 				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
 
 				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
-				console.log(p,fs,(this.options[a].titleFontWeight || "bold"),(this.options[a].titleFont || this.chart.fontfamily))
 				this.drawTextLabel(this.options[a].title, p[0], p[1]+fs/2, {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:(this.options[a].titleFontWeight || "bold"), 'font':(this.options[a].titleFont || this.chart.fontfamily)}});
 				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
 				ctx.closePath();
