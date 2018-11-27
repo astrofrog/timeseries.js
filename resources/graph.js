@@ -1916,7 +1916,7 @@
 		var oldp = ps[0].props;
 		for(var i = 1; i < ps.length ; i++){
 			p = ps[i].props;
-			if(typeof oldp.x==="number" && typeof p.x==="number") this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
+			if(!isNaN(oldp.x) && !isNaN(p.x)) this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
 			oldp = p;
 		}
 		this.tempctx.stroke();
