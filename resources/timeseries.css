@@ -67,12 +67,14 @@
 	opacity: 0.85;
 	color: white;
 }
+.timeseries input.hamburger:checked ~ label.hamburger:after {
+	background-color: rgb(0,0,0,0.4);
+}
 .timeseries input.hamburger:checked ~ menu { right: 0px; }
-/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 360px; }*/
 .timeseries .canvasholder { transition: margin-right 0.2s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: right 0.2s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { right: 360px; }
-.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px;  background-color: rgb(0,0,0,0.4); }
+.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px; background-color: rgb(0,0,0,0.4); }
 .timeseries menu ul.submenu li { margin: 0px; display: inline-block; }
 .timeseries menu ul.submenu li button { margin: 0px; width: 36px; height: 36px; color: #dfdfdf; }
 .timeseries menu ul.submenu li button.icon svg { width: 32px; }
