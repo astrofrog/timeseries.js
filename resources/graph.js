@@ -1016,6 +1016,9 @@
 		ctx.lineWidth = (typeof f.strokeWidth==="number" ? f.strokeWidth : 0.8);
 		ctx.lineCap = (f.strokeCap || "square");
 		ctx.setLineDash(f.strokeDash ? f.strokeDash : [1,0]);
+		if(f.fontSize) ctx.font = buildFont(f);
+		if(f.baseline) ctx.textBaseline = f.baseline;
+		if(f.align) ctx.textAlign = f.align;
 		return this;
 	}
 
@@ -1044,7 +1047,7 @@
 					ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 					ctx.clip();
 				}
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule"){
+				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Clone the mark
 					var oldmark = clone(this.data[t].marks[i]);
 					// Update the mark
@@ -1059,8 +1062,9 @@
 				if(typ=="rect") this.drawRect(mark);
 				if(typ=="area") this.drawArea(t);
 				if(typ=="rule") this.drawRule(t);
+				if(typ=="text") this.drawText(mark);
 
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule"){
+				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Put the mark object back to how it was
 					this.data[t].marks[i] = clone(oldmark);
 					this.setCanvasStyles(ctx,this.data[t].marks[i]);
@@ -1490,36 +1494,6 @@
 
 			ctx.lineWidth = 1;
 
-			function drawText(txt,p,attr){
-				// Deal with superscript
-				var str,w,b,l,bits;
-				if(!txt) txt = "";
-				str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
-				bits = str.split(/%%/);
-				w = 0;
-				// Calculate the width of the text
-				for(b = 0; b < bits.length; b++){
-					bits[b] = bits[b].split(":");
-					fs = (bits[b][0]=="NORMAL" ? 1 : 0.8)*attr.fs;
-					attr.ctx.font = attr.font.replace(/%SIZE%/,fs);
-					w += attr.ctx.measureText(bits[b][1]).width;
-				}
-				// Starting x-position
-				l = p[0] - w/2;
-				attr.ctx.textAlign = "left";
-				for(b = 0; b < bits.length; b++){
-					f = (bits[b][0]=="NORMAL" ? 1 : 0.6);
-					fs = f*attr.fs;
-					dy = 0;
-					if(bits[b][0] == "SUP") dy = -(1-f)*attr.fs;
-					if(bits[b][0] == "SUB") dy = (1-f)*attr.fs;
-					attr.ctx.font = attr.font.replace(/%SIZE%/,fs);
-					attr.ctx.fillText(bits[b][1],l,p[1]+dy+attr.fs/2)
-					l += attr.ctx.measureText(bits[b][1]).width;s
-				}
-				return;
-			}
-
 			// Draw label
 			if(this.options[a].title!=""){
 				p = [0,0];
@@ -1535,7 +1509,7 @@
 				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
 
 				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
-				drawText(this.options[a].title, p,{ctx:ctx,axis:d,fs:fs,font:(this.options[a].titleFontWeight || "bold")+' %SIZE%px '+(this.options[a].titleFont || this.chart.fontfamily)});
+				this.drawTextLabel(this.options[a].title, p[0], p[1]+fs/2, {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:(this.options[a].titleFontWeight || "bold"), 'font':(this.options[a].titleFont || this.chart.fontfamily)}});
 				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
 				ctx.closePath();
 			}
@@ -1796,14 +1770,10 @@
 					ctx.beginPath();
 					this.drawArea(sh,updateLookup);
 				}
-				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect"){
+				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect" || this.data[sh].type=="text"){
 					for(i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
 						p = m.props;
-
-						// Update the canvas styles for this dataset
-						// Perhaps this should actually be done for every mark individually rather than just the first
-						//if(i == 0) this.setCanvasStyles(m);
 
 						if(p.x && p.y){
 							if(this.data[sh].type=="symbol"){
@@ -1814,6 +1784,10 @@
 							}
 							if(this.data[sh].type=="rect"){
 								o = this.drawRect(this.data[sh].marks[i]);
+								if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
+							}
+							if(this.data[sh].type=="text"){
+								o = this.drawText(this.data[sh].marks[i]);
 								if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
 							}
 						}
@@ -1982,6 +1956,67 @@
 		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
 		return this;
+	}
+
+	// Draw text
+	Graph.prototype.drawText = function(datum,ctx,x,y){
+		if(!ctx) ctx = this.canvas.ctx;
+		x = (x || datum.props.x);
+		y = (y || datum.props.y);
+		var f = datum.props.format;
+		var o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':ctx,'format':datum.props.format});
+		o.id = datum.id;
+		o.weight = 1;
+		return o;
+	}
+
+	Graph.prototype.drawTextLabel = function(txt,x,y,attr){
+		if(!attr) attr = {};
+		var str,w,b,l,bits,f,fs,s,ctx;
+
+		ctx = (attr.ctx||this.canvas.ctx);
+		f = (attr.format || {});
+		if(!f.font) f.font = this.chart.fontfamily;
+		if(!f.fontSize) f.fontSize = this.chart.fontsize;
+		if(!f.fontWeight) f.fontWeight = "bold";
+		if(!f.align) f.align = "center";
+		if(!f.baseline) f.baseline = "middle";
+
+		// Deal with superscript
+		if(!txt) txt = "";
+		str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
+		bits = str.split(/%%/);
+		w = 0;
+		// Calculate the width of the text
+		for(b = 0; b < bits.length; b++){
+			bits[b] = bits[b].split(":");
+			if(f.fontSize && f.font){
+				fs = (bits[b][0]=="NORMAL" ? 1 : 0.8)*f.fontSize;
+				ctx.font = buildFont(f);
+			}
+			w += ctx.measureText(bits[b][1]).width;
+		}
+		// Starting x-position
+		var xo = x + (f.dx);
+		if(f.align == "center") xo -= w/2;
+		if(f.align == "right") xo -= w;
+		if(f.baseline == "top") ;
+		// We've taken control of the positioning
+		ctx.textAlign = "left";
+		//ctx.textBaseline = attr.baseline;
+
+		
+		for(b=0,l=xo; b < bits.length; b++){
+			s = (bits[b][0]=="NORMAL" ? 1 : 0.6);
+			fs = s*f.fontSize;
+			dy = 0;
+			if(bits[b][0] == "SUP") dy = -(1-s)*f.fontSize;
+			if(bits[b][0] == "SUB") dy = (1-s)*f.fontSize;
+			ctx.font = f.fontWeight+' '+fs+'px '+f.font;
+			ctx.fillText(bits[b][1],l,y+dy);
+			l += ctx.measureText(bits[b][1]).width;
+		}
+		return {xa:Math.floor(xo),xb:Math.ceil(l),ya:Math.floor(y),yb:Math.ceil(y + f.fontSize)};
 	}
 
 	// Draw a shape
@@ -2156,6 +2191,8 @@
 	function removeRoundingErrors(e){
 		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
+	
+	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
 	
 	root.Graph = Graph;
 

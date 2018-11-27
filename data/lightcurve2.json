@@ -149,5 +149,25 @@
 				"tooltip": {"signal":"{'Title': 'Lightcurve', 'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
 			}
 		}
+	},{
+		"type": "text",
+		"description": "Labels",
+		"encode": {
+			"enter": {
+				"x": {"scale": "x", "signal": "(new Date('2018-10-29T13:53:24Z')).getTime()"},
+				"y": {"scale": "y", "value": 0.986},
+				"text": { "value": "A_{5}"},
+				"fill": { "value": "#000000"},
+				"fontWeight": { "value": "normal" },
+				"baseline": { "value": "middle" },
+				"align": { "value": "left" },
+				"angle": { "value": 0 },
+				"dx": { "value": 6 }
+			},
+			"hover": {
+				"fill": { "value": "#0DBC37" },
+				"fontWeight": { "value": "bold" }
+			}
+		}
 	}]
 }

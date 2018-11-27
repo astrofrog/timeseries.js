@@ -438,7 +438,7 @@
 		var ev = function(str,datum){ return eval(str); }
 
 		function updateProperties(d,event){
-			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props'};
+			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
 				console.log('updateProps fail',d,event)
 				return;
@@ -498,6 +498,7 @@
 				else if(mark.type == "line") dataset.lines = {show:true};
 				else if(mark.type == "rule") dataset.rule = {show:true};
 				else if(mark.type == "area") dataset.area = {show:true};
+				else if(mark.type == "text") dataset.text = {show:true};
 
 				if(this.datasets[id]){
 					dataset.data = clone(this.datasets[id].json);
