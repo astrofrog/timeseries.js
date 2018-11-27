@@ -1509,6 +1509,7 @@
 				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
 
 				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
+				console.log(p,fs,(this.options[a].titleFontWeight || "bold"),(this.options[a].titleFont || this.chart.fontfamily))
 				this.drawTextLabel(this.options[a].title, p[0], p[1]+fs/2, {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:(this.options[a].titleFontWeight || "bold"), 'font':(this.options[a].titleFont || this.chart.fontfamily)}});
 				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
 				ctx.closePath();
@@ -1997,22 +1998,20 @@
 			w += ctx.measureText(bits[b][1]).width;
 		}
 		// Starting x-position
-		var xo = x + (f.dx);
+		var xo = x + (f.dx||0);
 		if(f.align == "center") xo -= w/2;
 		if(f.align == "right") xo -= w;
 		if(f.baseline == "top") ;
 		// We've taken control of the positioning
 		ctx.textAlign = "left";
-		//ctx.textBaseline = attr.baseline;
 
-		
 		for(b=0,l=xo; b < bits.length; b++){
 			s = (bits[b][0]=="NORMAL" ? 1 : 0.6);
 			fs = s*f.fontSize;
 			dy = 0;
 			if(bits[b][0] == "SUP") dy = -(1-s)*f.fontSize;
 			if(bits[b][0] == "SUB") dy = (1-s)*f.fontSize;
-			ctx.font = f.fontWeight+' '+fs+'px '+f.font;
+			ctx.font = f.fontWeight+' '+Math.round(fs)+'px '+f.font;
 			ctx.fillText(bits[b][1],l,y+dy);
 			l += ctx.measureText(bits[b][1]).width;
 		}
