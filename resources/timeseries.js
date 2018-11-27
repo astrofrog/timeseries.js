@@ -295,7 +295,7 @@
 		}
 
 		if(el.find('.menuholder').length == 0){
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div><ol class="layers"></ol></menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu"><li><button class="on">L</button></li><li><button class="icon" data="">'+getIcon('fit','white')+'</button></li></ul><div class="menu-panel"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel on"><ol class="layers"></ol></div></menu></div>');
 
 			// Add button events
 			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
@@ -308,6 +308,11 @@
 			el.find('button.fontup').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(+1) });
 			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1) });
 			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0) });
+
+			// 
+			el.find('.submenu button').on('click',function(e){
+				console.log(e)
+			});
 
 			// Build date selector
 			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';

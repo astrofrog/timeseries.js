@@ -406,6 +406,7 @@
 		c.height = h;
 		this.wide = w;
 		this.tall = h;
+		
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvasholder.css({'width':w+'px','height':h+'px'});
@@ -1865,7 +1866,7 @@
 	}
 
 	Graph.prototype.drawRule = function(sh,updateLookup){
-		this.clearTemp();
+		this.clear(this.tempctx);
 		this.tempctx.beginPath();
 		for(var i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
@@ -1910,7 +1911,7 @@
 		return 1;
 	}
 	Graph.prototype.drawLine = function(sh,updateLookup){
-		this.clearTemp();
+		this.clear(this.tempctx);
 		this.tempctx.beginPath();
 		var ps = this.data[sh].marks;
 		var oldp = ps[0].props;
@@ -1928,7 +1929,7 @@
 	}
 	
 	Graph.prototype.drawArea = function(sh,updateLookup){
-		this.clearTemp();
+		this.clear(this.tempctx);
 		this.tempctx.beginPath();
 		var oldp = {};
 		var a,i,j,k;
@@ -2116,13 +2117,8 @@
 	}
 
 	// Clear the canvas
-	Graph.prototype.clear = function(){
-		this.canvas.ctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
-		// Reset lookup BLAH
-		return this;
-	}
-	Graph.prototype.clearTemp = function(){
-		this.tempctx.clearRect(0,0,this.canvas.wide,this.canvas.tall);
+	Graph.prototype.clear = function(ctx){
+		(ctx || this.canvas.ctx).clearRect(0,0,this.canvas.wide,this.canvas.tall);
 		return this;
 	}
 
@@ -2130,7 +2126,7 @@
 	Graph.prototype.draw = function(updateLookup){
 		this.logTime('draw');
 		this.clear();
-		this.clearTemp();
+		this.clear(this.tempctx);
 		this.drawAxes();
 		this.drawData(updateLookup);
 		this.canvas.copyToClipboard();
