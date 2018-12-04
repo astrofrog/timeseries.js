@@ -644,7 +644,7 @@
 				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
-			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },250,{event:oe});
+			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },200,{event:oe});
 		}).on("wheelstop",{options:options},function(ev){
 			var g = _obj;
 			g.updating = false;
@@ -1100,24 +1100,27 @@
 					mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 					// Set the canvas colours
 					this.setCanvasStyles(ctx,mark);
+					this.setCanvasStyles(this.paper.temp.ctx,mark);
 				}
 
-				if(typ=="line") this.drawLine(t,false,ctx);
-				if(typ=="symbol") this.drawShape(mark,false,ctx);
-				if(typ=="rect") this.drawRect(mark,false,ctx);
-				if(typ=="area") this.drawArea(t,false,ctx);
-				if(typ=="rule") this.drawRule(t,false,ctx);
+				if(typ=="line") this.drawLine(t,{'ctx':ctx});
+				if(typ=="symbol") this.drawShape(mark,{'ctx':ctx});
+				if(typ=="rect") this.drawRect(mark,{'ctx':ctx});
+				if(typ=="area") this.drawArea(t,{'ctx':ctx});
+				if(typ=="rule") this.drawRule(t,{'ctx':ctx});
 				if(typ=="text") this.drawText(mark,false,ctx);
 
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Put the mark object back to how it was
 					this.data[t].marks[i] = clone(oldmark);
 					this.setCanvasStyles(ctx,this.data[t].marks[i]);
+					this.setCanvasStyles(this.paper.temp.ctx,this.data[t].marks[i]);
 				}
 
 				// Set the clipping
 				if(clipping) ctx.restore();
 			}
+			
 
 			d = getTopLayer(ds);
 
@@ -1831,18 +1834,18 @@
 				this.setCanvasStyles(this.paper.temp.ctx,this.data[sh].marks[0]);
 
 				// Draw lines
-				if(this.data[sh].type=="line") this.drawLine(sh,updateLookup);
-				if(this.data[sh].type=="rule") this.drawRule(sh,updateLookup);
-				if(this.data[sh].type=="area") this.drawArea(sh,updateLookup);
+				if(this.data[sh].type=="line") this.drawLine(sh,{'update':true});
+				if(this.data[sh].type=="rule") this.drawRule(sh,{'update':true});
+				if(this.data[sh].type=="area") this.drawArea(sh,{'update':true});
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect" || this.data[sh].type=="text"){
 					for(i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
 						p = m.props;
 
 						if(p.x && p.y){
-							if(this.data[sh].type=="symbol") this.drawShape(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
-							if(this.data[sh].type=="rect") this.drawRect(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
-							if(this.data[sh].type=="text") this.drawText(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
+							if(this.data[sh].type=="symbol") this.drawShape(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
+							if(this.data[sh].type=="rect") this.drawRect(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
+							if(this.data[sh].type=="text") this.drawText(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
 						}
 					}
 				}
@@ -1863,9 +1866,10 @@
 		return {};
 	}
 
-	Graph.prototype.drawRect = function(datum,updateLookup,ctx){
-		var x1,y1,x2,y2,dx,dy;
-		if(!ctx) ctx = this.paper.data.ctx;
+	Graph.prototype.drawRect = function(datum,attr){
+		var x1,y1,x2,y2,dx,dy,o;
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		if(datum.props.x2 || datum.props.y2){
 			x1 = (datum.props.x1 || datum.props.x);
 			y1 = (datum.props.y1 || datum.props.y);
@@ -1884,19 +1888,20 @@
 				dy = datum.props.format.height;
 			}
 
-			ctx.beginPath();
-			ctx.rect(x1,y1,dx,dy);
-			ctx.fill();
-			ctx.closePath();
-			var o = {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
-			if(updateLookup) this.addRectToLookup(o);
+			attr.ctx.beginPath();
+			attr.ctx.rect(x1,y1,dx,dy);
+			attr.ctx.fill();
+			attr.ctx.closePath();
+			o = {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
+			if(attr.update) this.addRectToLookup(o);
 			return o;
 		}
 		return "";
 	}
 
-	Graph.prototype.drawRule = function(sh,updateLookup,ctx){
-		if(!ctx) ctx = this.paper.data.ctx;
+	Graph.prototype.drawRule = function(sh,attr){
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
 		for(var i = 0; i < this.data[sh].marks.length ; i++){
@@ -1909,9 +1914,9 @@
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
 		}
 		this.paper.temp.ctx.stroke();
-		ctx.drawImage(this.paper.temp.c,0,0);
+		attr.ctx.drawImage(this.paper.temp.c,0,0);
 
-		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
 	}
 	Graph.prototype.drawVisibleLineSegment = function(ax,ay,bx,by){
@@ -1941,8 +1946,9 @@
 		this.paper.temp.ctx.lineTo(bx,by);
 		return 1;
 	}
-	Graph.prototype.drawLine = function(sh,updateLookup,ctx){
-		if(!ctx) ctx = this.paper.data.ctx;
+	Graph.prototype.drawLine = function(sh,attr){
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
 		var ps = this.data[sh].marks;
@@ -1953,15 +1959,16 @@
 			oldp = p;
 		}
 		this.paper.temp.ctx.stroke();
-		ctx.drawImage(this.paper.temp.c,0,0);
+		attr.ctx.drawImage(this.paper.temp.c,0,0);
 
-		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 
 		return this;
 	}
 	
-	Graph.prototype.drawArea = function(sh,updateLookup,ctx){
-		if(!ctx) ctx = this.paper.data.ctx;
+	Graph.prototype.drawArea = function(sh,attr){
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
 		var oldp = {};
@@ -2010,23 +2017,25 @@
 		this.paper.temp.ctx.fill();
 		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 		
-		ctx.drawImage(this.paper.temp.c,0,0);
+		attr.ctx.drawImage(this.paper.temp.c,0,0);
 
-		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
+		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
 		return this;
 	}
 
 	// Draw text
-	Graph.prototype.drawText = function(datum,updateLookup,ctx,x,y){
-		if(!ctx) ctx = this.paper.data.ctx;
-		x = (x || datum.props.x);
-		y = (y || datum.props.y);
-		var f = datum.props.format;
-		var o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':ctx,'format':datum.props.format});
+	Graph.prototype.drawText = function(datum,attr){
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var f,o,x,y
+		x = (attr.x || datum.props.x);
+		y = (attr.y || datum.props.y);
+		f = datum.props.format;
+		o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':attr.ctx,'format':datum.props.format});
 		o.id = datum.id;
 		o.weight = 1;
-		if(updateLookup) this.addRectToLookup(o);
+		if(attr.update) this.addRectToLookup(o);
 		return o;
 	}
 
@@ -2078,17 +2087,17 @@
 	}
 
 	// Draw a shape
-	// Override the datum.x and datum.y with x,y if provided
-	// Draw to ctx if provided; otherwise to this.canvas.ctx
-	Graph.prototype.drawShape = function(datum,updateLookup,ctx,x,y){
-
-		if(!ctx) ctx = this.paper.data.ctx;
+	// Override the datum.x and datum.y with attr.x,attr.y if provided
+	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
+	Graph.prototype.drawShape = function(datum,attr){
+		if(!attr) attr = {};
+		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var ctx,p,x1,y1,s,w,h,x1,y1,o;
+		ctx = attr.ctx;
 		p = datum.props;
 		
-		var x1,y1,s,w,h;
-
-		var x1 = x || p.x;
-		var y1 = y || p.y;
+		x1 = attr.x || p.x;
+		y1 = attr.y || p.y;
 		
 		ctx.moveTo(x1,y1);
 		ctx.beginPath();
@@ -2159,8 +2168,8 @@
 		}
 		ctx.fill();
 
-		var o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
-		if(updateLookup) this.addRectToLookup(o);
+		o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
+		if(attr.update) this.addRectToLookup(o);
 		return o;
 	}
 
