@@ -1108,7 +1108,7 @@
 				if(typ=="rect") this.drawRect(mark,{'ctx':ctx});
 				if(typ=="area") this.drawArea(t,{'ctx':ctx});
 				if(typ=="rule") this.drawRule(t,{'ctx':ctx});
-				if(typ=="text") this.drawText(mark,false,ctx);
+				if(typ=="text") this.drawText(mark,{'ctx':ctx});
 
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Put the mark object back to how it was
