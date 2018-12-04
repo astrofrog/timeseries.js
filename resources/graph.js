@@ -434,6 +434,7 @@
 		this.options = {};
 		this.selecting = false;
 		this.panning = false;
+		this.updating = false;
 		this.events = [];
 		this.lines = [];
 		this.fontscale = 1;
@@ -626,13 +627,14 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
+				console.log('scroll zoom',g.updating)
 				g.zoom([c.x,c.y],{scalex:(oe.layerX > g.chart.left ? s : 1),scaley:(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
-				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
 			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },250,{event:oe});
 		}).on("wheelstop",{options:options},function(ev){
+console.log('wheelstop')
 			_obj.updating = false;
 			_obj.draw(true);
 			_obj.wheelid = undefined;
@@ -1146,7 +1148,6 @@
 			else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
 			else return hr+":"+mn+":"+sc;
 		}
-		//var n = Math.round((mx-mn)/this[a].inc);
 		this[a].labels = new Array();
 
 		var sci_hi,sci_lo,l,sci,base,main,precision,v,fmt,l;
@@ -1157,12 +1158,7 @@
 		l = Math.abs(mx);
 		sci = (l > sci_hi || l < sci_lo);
 
-		// We now determine the number of decimal places we need to show. To do this
-		// we take the largest tick value, find the nearest integer log value, and
-		// compare this to the 'base' (which is the integer log value of the spacing)
-		base = Math.floor(Math.log10(this[a].inc));
-		main = Math.floor(Math.log10(Math.abs(mx)));
-		precision = Math.floor(Math.round(main - base))+1;
+		precision = this[a].precision;
 
 		function shortestFormat(fmt){
 			var l = 1e100;
@@ -1279,15 +1275,57 @@
 					}
 				}
 			}
-		}else t_inc = Math.pow(param.base,Math.floor(Math.log(rg)/Math.log(param.base)));
+		}else{
 
+			// Start off by finding the exact spacing
+			dv = Math.abs(mx - mn) / (this[axis].isDate ? 3 : 5);
+		
+			// In any given order of magnitude interval, we allow the spacing to be
+			// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
+			// log of the spacing value, then splitting this into the integer and
+			// fractional part (note that for negative values, we consider the base to
+			// be the next value 'down' where down is more negative, so -3.6 would be
+			// split into -4 and 0.4).
+			log10_dv = Math.log10(dv);
+			base = Math.floor(log10_dv);
+			frac = log10_dv - base;
+
+			// We now want to check whether frac falls closest to 1, 2, 5, or 10 (in log
+			// space). There are more efficient ways of doing this in Python but this is
+			// just for clarity.
+			options = [1,2,5,10];
+			distance = new Array(options.length);
+			imin = -1;
+			tmin = 1e100;
+			for(var i = 0; i < options.length; i++){
+				options[i] = Math.log10(options[i]); 
+				distance[i] = Math.abs(frac - options[i]);
+				if(distance[i] < tmin){
+					tmin = distance[i];
+					imin = i;
+				}
+			}
+
+			// Now determine the actual spacing
+			spacing = Math.pow(10,(base + options[imin]));
+			t_inc = spacing;
+		}
+
+		// Determine the number of decimal places to show
+		// Quicker to do it here than in makeLabels.
+		precision = Math.log10(t_inc);
+		if(precision < 0) precision = Math.abs(precision);
+		this[axis].precision = Math.ceil(precision);
+
+		// Normalise the tick mark min/max
 		t_max = Math.floor(mx/t_inc)*t_inc;
-
-		// Because the UNIX epoch is in 1970, when we are dealing with century-spanning 
-		// dates the zero needs to be shifted to a century for the labels (add 30 years)
-		if(this[axis].isDate && t_inc >= 3000000000000) t_max += 946684800000;
-		// For dates spanning tens of thousands of years set the zero differently (add 8000 years)
-		if(this[axis].isDate && t_inc >= 1.5e14) t_max += 252449280000000;
+		if(this[axis].isDate){
+			// Because the UNIX epoch is in 1970, when we are dealing with century-spanning 
+			// dates the zero needs to be shifted to a century for the labels (add 30 years)
+			if(t_inc >= 3000000000000) t_max += 946684800000;
+			// For dates spanning tens of thousands of years set the zero differently (add 8000 years)
+			if(t_inc >= 1.5e14) t_max += 252449280000000;
+		}
 		if(t_max < mx) t_max += t_inc;
 		t_min = t_max;
 		i = 0;
@@ -1295,17 +1333,6 @@
 			i++;
 			t_min -= t_inc;
 		}while(t_min > mn);
-
-		// Test for really tiny values that might mess up the calculation
-		if(Math.abs(t_min) < 1E-15) t_min = 0.0;
-	
-		// Add more tick marks if we only have a few
-		while(i < (this[axis].isDate ? 3 : 5)) {
-			t_inc /= 2.0;
-			if((t_min + t_inc) <= mn) t_min += t_inc;
-			if((t_max - t_inc) >= mx) t_max -= t_inc ;
-			i = i*2;
-		}
 
 		// Set the first/last gridline values as well as the spacing
 		this[axis].gmin = t_min;
