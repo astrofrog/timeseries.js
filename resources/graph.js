@@ -452,12 +452,18 @@
 		opt.logging = this.logging;
 		
 		this.canvas = new Canvas(element,opt);
-		
-		this.temp = document.createElement('canvas');
-		this.temp.width = this.canvas.wide;
-		this.temp.height = this.canvas.tall;
-		this.tempctx = this.temp.getContext('2d');
-
+				
+		// Temporary canvases for drawing to
+		this.paper = {
+			'temp': {'c':document.createElement('canvas'),'ctx':''},  // Create a canvas for temporary work
+			'data': {'c':document.createElement('canvas'),'ctx':''}   // Create a canvas to draw the data to
+		};
+		// Set properties of the temporary canvases
+		for(var p in this.paper){
+			this.paper[p].c.width = this.canvas.wide;
+			this.paper[p].c.height = this.canvas.tall;
+			this.paper[p].ctx = this.paper[p].c.getContext('2d');
+		}
 
 		// Bind events to the canvas
 		var _obj = this;
@@ -468,6 +474,12 @@
 			_obj.temp.width = _obj.canvas.wide;
 			_obj.temp.height = _obj.canvas.tall;
 			_obj.tempctx = _obj.temp.getContext('2d');
+
+			for(var p in _obj.paper){
+				_obj.paper[p].c.width = _obj.canvas.wide;
+				_obj.paper[p].c.height = _obj.canvas.tall;
+				_obj.paper[p].ctx = _obj.paper[p].c.getContext('2d');
+			}
 
 			_obj.setOptions().defineAxis("x").getChartOffset().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
@@ -627,17 +639,18 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				g.zoom([c.x,c.y],{scalex:(oe.layerX > g.chart.left ? s : 1),scaley:(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
+				g.zoom([c.x,c.y],{'quick':true,'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
 				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
 			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },250,{event:oe});
 		}).on("wheelstop",{options:options},function(ev){
-			_obj.updating = false;
-			_obj.draw(true);
-			_obj.wheelid = undefined;
-			_obj.trigger('wheelstop',{event:ev.event});
+			var g = _obj;
+			g.updating = false;
+			g.calculateData().draw(true);
+			g.wheelid = undefined;
+			g.trigger('wheelstop',{event:ev.event});
 		}).on("dblclick",function(ev){
 			var g = _obj;	 // The graph object
 			if(ev.event){
@@ -878,9 +891,14 @@
 		return this;
 	}
 
+	// Zoom the graph.
+	// We can zoom around a point or we can zoom to a defined region.
+	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
+	// than recalculate everything as that can be slow where there's lots of data.
 	Graph.prototype.zoom = function(pos,attr){
 
 		if(!attr) attr = {};
+		if(attr.quick) this.logTime('zoom')
 		if(!pos) pos = [];
 		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
@@ -890,6 +908,14 @@
 			if(attr.scale) sx = sy = attr.scale;
 			if(attr.scalex) sx = attr.scalex;
 			if(attr.scaley) sy = attr.scaley;
+			if(attr.quick){
+				this.paper.data.scale.x *= sx;
+				this.paper.data.scale.y *= sy;
+				var nwide = Math.round(this.canvas.wide/this.paper.data.scale.x);
+				var ntall = Math.round(this.canvas.tall/this.paper.data.scale.y);
+				var x = pos[0] * (1 - nwide/this.canvas.wide);
+				var y = pos[1] * (1 - ntall/this.canvas.tall);
+			}
 			// Find the center
 			var c = this.pixel2data(pos[0],pos[1]);
 			// Calculate the new zoom range
@@ -904,8 +930,9 @@
 				this.defineAxis("y",pos[2],pos[3]);
 			}
 		}
+
 		// No parameters set so reset the view
-		if(pos.length == 0){
+		if(!attr.quick && pos.length == 0){
 			this.x.min = this.x.datamin;
 			this.x.max = this.x.datamax;
 			this.y.min = this.y.datamin;
@@ -913,11 +940,27 @@
 			this.defineAxis("x");
 			this.defineAxis("y");
 		}
+
 		this.getChartOffset();
-		this.calculateData();
-		// Update the graph
+		if(!attr.quick) this.calculateData();
 		this.clear();
-		this.draw(typeof attr.update==="boolean" ? attr.update : true);
+		if(attr.quick){
+			this.clear(this.paper.temp.ctx);
+			var ctx = this.canvas.ctx;
+			// Build the clip path
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
+			ctx.clip();
+			ctx.drawImage(this.paper.data.c,x,y,nwide,ntall);
+			ctx.restore();
+			this.drawAxes();
+		}else{
+			this.draw(typeof attr.update==="boolean" ? attr.update : true);
+		}
+
+		if(attr.quick) this.logTime('zoom')
+
 		return this;
 	}
 
@@ -1025,20 +1068,22 @@
 
 	Graph.prototype.highlight = function(ds){
 		if(this.selecting) return;	// If we are panning we don't want to highlight symbols
-		if(this.lookup && ds){
+		if(this.lookup && ds && ds.length > 0){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
 			this.drawOverlay();
-			var t,i,clipping;
-			var ctx = this.canvas.ctx;
+			var d,t,i,w,clipping,typ,mark,oldmark,ctx,n,s;
+			ctx = this.canvas.ctx;
 
-			for(var s = 0; s < ds.length; s++){
+			// Only highlight the first 10 matches
+			n = Math.min(10,ds.length);
+			for(s = 0; s < n; s++){
 				d = ds[s].split(":");
 				t = d[0];
 				i = d[1];
 				w = d[2];
 				clipping = false;
-				var typ = this.data[t].type;
+				typ = this.data[t].type;
 
 				if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
 					clipping = true;
@@ -1050,20 +1095,19 @@
 				}
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Clone the mark
-					var oldmark = clone(this.data[t].marks[i]);
+					oldmark = clone(this.data[t].marks[i]);
 					// Update the mark
 					mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 					// Set the canvas colours
 					this.setCanvasStyles(ctx,mark);
-					this.setCanvasStyles(this.tempctx,mark);
 				}
 
-				if(typ=="line") this.drawLine(t);
-				if(typ=="symbol") this.drawShape(mark);
-				if(typ=="rect") this.drawRect(mark);
-				if(typ=="area") this.drawArea(t);
-				if(typ=="rule") this.drawRule(t);
-				if(typ=="text") this.drawText(mark);
+				if(typ=="line") this.drawLine(t,false,ctx);
+				if(typ=="symbol") this.drawShape(mark,false,ctx);
+				if(typ=="rect") this.drawRect(mark,false,ctx);
+				if(typ=="area") this.drawArea(t,false,ctx);
+				if(typ=="rule") this.drawRule(t,false,ctx);
+				if(typ=="text") this.drawText(mark,false,ctx);
 
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Put the mark object back to how it was
@@ -1116,6 +1160,7 @@
 				this.drawOverlay();
 			}
 		}
+		return this;
 	}
 	
 	Graph.prototype.makeLabels = function(a){
@@ -1157,6 +1202,7 @@
 		l = Math.abs(mx);
 		sci = (l > sci_hi || l < sci_lo);
 
+		// Get the number of decimal places to show
 		precision = this[a].precision;
 
 		function shortestFormat(fmt){
@@ -1766,7 +1812,7 @@
 
 		// Define an empty pixel-based lookup table
 		if(updateLookup) this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
-
+		this.paper.data.scale = {'x':1,'y':1};
 		var ctx = this.canvas.ctx;
 
 		// Build the clip path
@@ -1775,53 +1821,36 @@
 		ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 		ctx.clip();
 
-		for(sh in this.data){
-			//this.logTime('draw series '+sh+' '+this.data[sh].type);
+		// Clear the data canvas
+		this.clear(this.paper.data.ctx);
 
+		for(sh in this.data){
 			if(this.data[sh].show){
 
-				this.setCanvasStyles(ctx,this.data[sh].marks[0]);
-				this.setCanvasStyles(this.tempctx,this.data[sh].marks[0]);
+				this.setCanvasStyles(this.paper.data.ctx,this.data[sh].marks[0]);
+				this.setCanvasStyles(this.paper.temp.ctx,this.data[sh].marks[0]);
 
 				// Draw lines
-				if(this.data[sh].type=="line"){
-					ctx.beginPath();
-					this.drawLine(sh,updateLookup);
-				}
-				if(this.data[sh].type=="rule"){
-					ctx.beginPath();
-					this.drawRule(sh,updateLookup);
-				}
-				if(this.data[sh].type=="area"){
-					ctx.beginPath();
-					this.drawArea(sh,updateLookup);
-				}
+				if(this.data[sh].type=="line") this.drawLine(sh,updateLookup);
+				if(this.data[sh].type=="rule") this.drawRule(sh,updateLookup);
+				if(this.data[sh].type=="area") this.drawArea(sh,updateLookup);
 				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect" || this.data[sh].type=="text"){
 					for(i = 0; i < this.data[sh].marks.length ; i++){
 						m = this.data[sh].marks[i];
 						p = m.props;
 
 						if(p.x && p.y){
-							if(this.data[sh].type=="symbol"){
-								if(p.x && p.y && m.data.x >= this.x.min && m.data.x <= this.x.max && m.data.y >= this.y.min && m.data.y <= this.y.max && p.y <= this.chart.top+this.chart.height){
-									o = this.drawShape(this.data[sh].marks[i]);
-									if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
-								}
-							}
-							if(this.data[sh].type=="rect"){
-								o = this.drawRect(this.data[sh].marks[i]);
-								if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
-							}
-							if(this.data[sh].type=="text"){
-								o = this.drawText(this.data[sh].marks[i]);
-								if(updateLookup && this.data[sh].hover) this.addRectToLookup(o);
-							}
+							if(this.data[sh].type=="symbol") this.drawShape(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
+							if(this.data[sh].type=="rect") this.drawRect(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
+							if(this.data[sh].type=="text") this.drawText(this.data[sh].marks[i],(updateLookup && this.data[sh].hover));
 						}
 					}
 				}
 			}
-			//this.logTime('draw series '+sh+' '+this.data[sh].type);
 		}
+
+		// Draw the data canvas to the main canvas
+		this.canvas.ctx.drawImage(this.paper.data.c,0,0);
 		
 		// Apply the clipping
 		ctx.restore();
@@ -1834,8 +1863,9 @@
 		return {};
 	}
 
-	Graph.prototype.drawRect = function(datum){
+	Graph.prototype.drawRect = function(datum,updateLookup,ctx){
 		var x1,y1,x2,y2,dx,dy;
+		if(!ctx) ctx = this.paper.data.ctx;
 		if(datum.props.x2 || datum.props.y2){
 			x1 = (datum.props.x1 || datum.props.x);
 			y1 = (datum.props.y1 || datum.props.y);
@@ -1854,31 +1884,32 @@
 				dy = datum.props.format.height;
 			}
 
-			this.canvas.ctx.beginPath();
-			this.canvas.ctx.rect(x1,y1,dx,dy);
-			this.canvas.ctx.fill();
-			this.canvas.ctx.closePath();
-
-			return {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
-
+			ctx.beginPath();
+			ctx.rect(x1,y1,dx,dy);
+			ctx.fill();
+			ctx.closePath();
+			var o = {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
+			if(updateLookup) this.addRectToLookup(o);
+			return o;
 		}
-		return [];
+		return "";
 	}
 
-	Graph.prototype.drawRule = function(sh,updateLookup){
-		this.clear(this.tempctx);
-		this.tempctx.beginPath();
+	Graph.prototype.drawRule = function(sh,updateLookup,ctx){
+		if(!ctx) ctx = this.paper.data.ctx;
+		this.clear(this.paper.temp.ctx);
+		this.paper.temp.ctx.beginPath();
 		for(var i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
 			if(!p.x1) p.x1 = p.x;
 			if(!p.x2) p.x2 = p.x;
 			if(!p.y1) p.y1 = p.y;
 			if(!p.y2) p.y2 = p.y;
-			if(p.x1 && p.y1) this.tempctx.moveTo(p.x1,p.y1);
-			if(p.x2 && p.y2) this.tempctx.lineTo(p.x2,p.y2);
+			if(p.x1 && p.y1) this.paper.temp.ctx.moveTo(p.x1,p.y1);
+			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
 		}
-		this.tempctx.stroke();
-		this.canvas.ctx.drawImage(this.temp,0,0);
+		this.paper.temp.ctx.stroke();
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
@@ -1906,13 +1937,14 @@
 			bx = ax + (bx-ax)*((this.canvas.tall-ay)/(by-ay));
 			by = this.canvas.tall;
 		}
-		this.tempctx.moveTo(ax,ay);
-		this.tempctx.lineTo(bx,by);
+		this.paper.temp.ctx.moveTo(ax,ay);
+		this.paper.temp.ctx.lineTo(bx,by);
 		return 1;
 	}
-	Graph.prototype.drawLine = function(sh,updateLookup){
-		this.clear(this.tempctx);
-		this.tempctx.beginPath();
+	Graph.prototype.drawLine = function(sh,updateLookup,ctx){
+		if(!ctx) ctx = this.paper.data.ctx;
+		this.clear(this.paper.temp.ctx);
+		this.paper.temp.ctx.beginPath();
 		var ps = this.data[sh].marks;
 		var oldp = ps[0].props;
 		for(var i = 1; i < ps.length ; i++){
@@ -1920,17 +1952,18 @@
 			if(!isNaN(oldp.x) && !isNaN(p.x)) this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
 			oldp = p;
 		}
-		this.tempctx.stroke();
-		this.canvas.ctx.drawImage(this.temp,0,0);
+		this.paper.temp.ctx.stroke();
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 
 		return this;
 	}
 	
-	Graph.prototype.drawArea = function(sh,updateLookup){
-		this.clear(this.tempctx);
-		this.tempctx.beginPath();
+	Graph.prototype.drawArea = function(sh,updateLookup,ctx){
+		if(!ctx) ctx = this.paper.data.ctx;
+		this.clear(this.paper.temp.ctx);
+		this.paper.temp.ctx.beginPath();
 		var oldp = {};
 		var a,i,j,k;
 		var areas = new Array();
@@ -1968,16 +2001,16 @@
 		for(a = 0; a < poly.length; a++){
 			if(poly[a]){
 				for(j = 0; j < poly[a].length; j++){
-					if(j==0) this.tempctx.moveTo(poly[a][j][0],poly[a][j][1]);
-					else this.tempctx.lineTo(poly[a][j][0],poly[a][j][1]);
+					if(j==0) this.paper.temp.ctx.moveTo(poly[a][j][0],poly[a][j][1]);
+					else this.paper.temp.ctx.lineTo(poly[a][j][0],poly[a][j][1]);
 				}
 			}
 		}
 
-		this.tempctx.fill();
-		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.tempctx.stroke();
+		this.paper.temp.ctx.fill();
+		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 		
-		this.canvas.ctx.drawImage(this.temp,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(updateLookup) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
@@ -1985,14 +2018,15 @@
 	}
 
 	// Draw text
-	Graph.prototype.drawText = function(datum,ctx,x,y){
-		if(!ctx) ctx = this.canvas.ctx;
+	Graph.prototype.drawText = function(datum,updateLookup,ctx,x,y){
+		if(!ctx) ctx = this.paper.data.ctx;
 		x = (x || datum.props.x);
 		y = (y || datum.props.y);
 		var f = datum.props.format;
 		var o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':ctx,'format':datum.props.format});
 		o.id = datum.id;
 		o.weight = 1;
+		if(updateLookup) this.addRectToLookup(o);
 		return o;
 	}
 
@@ -2046,9 +2080,9 @@
 	// Draw a shape
 	// Override the datum.x and datum.y with x,y if provided
 	// Draw to ctx if provided; otherwise to this.canvas.ctx
-	Graph.prototype.drawShape = function(datum,ctx,x,y){
+	Graph.prototype.drawShape = function(datum,updateLookup,ctx,x,y){
 
-		if(!ctx) ctx = this.canvas.ctx;
+		if(!ctx) ctx = this.paper.data.ctx;
 		p = datum.props;
 		
 		var x1,y1,s,w,h;
@@ -2125,14 +2159,16 @@
 		}
 		ctx.fill();
 
-		return {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
+		var o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
+		if(updateLookup) this.addRectToLookup(o);
+		return o;
 	}
 
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
 	Graph.prototype.addTempToLookup = function(attr){
 		if(!attr.id) return;
 		var a = attr.id+':'+(attr.weight||1);
-		var px = this.tempctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
+		var px = this.paper.temp.ctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
 		for(var i = 0, p = 0, x = 0, y = 0; i < px.data.length; i+=4, p++, x++){
 			if(x == this.canvas.wide){
 				x = 0;
@@ -2185,7 +2221,7 @@
 	Graph.prototype.draw = function(updateLookup){
 		this.logTime('draw');
 		this.clear();
-		this.clear(this.tempctx);
+		this.clear(this.paper.temp.ctx);
 		this.drawAxes();
 		this.drawData(updateLookup);
 		this.canvas.copyToClipboard();
