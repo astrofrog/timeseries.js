@@ -362,7 +362,7 @@
 							}
 							</style>
 							<script>
-								var ex5 = TimeSeries.create("data/OB110462-simple.json",{'logging':true});
+								var ex5 = TimeSeries.create("data/OB110462-simple.json",{});
 								// Add click event to load the interactive graph
 								S('#example5').on("click",{ts:ex5},function(e){
 									// Initialise the TimeSeries
@@ -403,7 +403,7 @@
 							<script>
 							S(document).ready(function(){
 
-								var ex6 = TimeSeries.create("data/OB110462.json",{'logging':true,'fit':true});
+								var ex6 = TimeSeries.create("data/OB110462.json",{'fit':true});
 								// Add click event to load the interactive graph
 								S('#example6').on("click",{ts:ex6},function(e){
 									e.data.ts.initialize(e.currentTarget);
@@ -448,7 +448,7 @@
 							}
 							</style>
 							<script>
-								var ex7 = TimeSeries.create("data/lightcurve.json",{'logging':true,'fit':true,'tooltip':{'theme':'my-theme'}});
+								var ex7 = TimeSeries.create("data/lightcurve.json",{'fit':true,'tooltip':{'theme':'my-theme'}});
 								// Add mouseover event to load the interactive graph
 								S('#example7').on("mouseover",{ts:ex7},function(e){
 									// Initialise the TimeSeries
