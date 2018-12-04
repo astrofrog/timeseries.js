@@ -644,7 +644,7 @@
 				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
-			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },200,{event:oe});
+			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },100,{event:oe});
 		}).on("wheelstop",{options:options},function(ev){
 			var g = _obj;
 			g.updating = false;
