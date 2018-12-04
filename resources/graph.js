@@ -627,14 +627,13 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				console.log('scroll zoom',g.updating)
 				g.zoom([c.x,c.y],{scalex:(oe.layerX > g.chart.left ? s : 1),scaley:(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
+				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
 			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },250,{event:oe});
 		}).on("wheelstop",{options:options},function(ev){
-console.log('wheelstop')
 			_obj.updating = false;
 			_obj.draw(true);
 			_obj.wheelid = undefined;
