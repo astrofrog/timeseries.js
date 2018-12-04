@@ -946,6 +946,7 @@
 		this.clear();
 		if(attr.quick){
 			this.clear(this.paper.temp.ctx);
+			this.drawAxes();
 			var ctx = this.canvas.ctx;
 			// Build the clip path
 			ctx.save();
@@ -954,7 +955,6 @@
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,x,y,nwide,ntall);
 			ctx.restore();
-			this.drawAxes();
 		}else{
 			this.draw(typeof attr.update==="boolean" ? attr.update : true);
 		}
