@@ -1722,19 +1722,22 @@
 		this.log('calculateData');
 		if(typeof update!=="boolean") update = true;
 		
-		var d,n,xpx,ypx,x,y,x2,y2;
+		var d,n,xpx,ypx,x,y,x2,y2,sh,i;
 
 		if(!update) return this;
+
+		// Define an empty pixel-based lookup table
+		this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
 		
-		for(var sh in this.data){
+		for(sh in this.data){
 			if(this.data[sh].show){
-				for(var i = 0; i < this.data[sh].marks.length ; i++){
+				for(i = 0; i < this.data[sh].marks.length ; i++){
 					d = this.data[sh].marks[i];
 					// Process all the series updates here
 					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,d,this.data[sh].encode.update);
 
 					// Store IDs for the layer and the item
-					this.data[sh].marks[i].id = parseInt(sh)+':'+i;
+					if(!this.data[sh].marks[i].id) this.data[sh].marks[i].id = parseInt(sh)+':'+i;
 					
 					x = this.getXPos(d.data.x);
 					y = this.getYPos(d.data.y);
@@ -1743,8 +1746,10 @@
 					this.data[sh].marks[i].props.y = parseFloat(y.toFixed(1));
 
 					// Add properties for rule lines
-					if(this.data[sh].type=="rule" && !d.data.x2) d.data.x2 = d.data.x;
-					if(this.data[sh].type=="rule" && !d.data.y2) d.data.y2 = d.data.y;
+					if(this.data[sh].type=="rule"){
+						if(!d.data.x2) d.data.x2 = d.data.x;
+						if(!d.data.y2) d.data.y2 = d.data.y;
+					}
 
 					if(d.data.x2){
 						this.data[sh].marks[i].props.x2 = this.getXPos(d.data.x2);
@@ -1810,22 +1815,19 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var lo,hi,x,y,ii,l,p,s,sh,o;
+		var lo,hi,x,y,ii,l,p,s,sh,o,ctx;
 		var twopi = Math.PI*2;
 
-		// Define an empty pixel-based lookup table
-		if(updateLookup) this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
+		// Clear the data canvas
+		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
-		var ctx = this.canvas.ctx;
+		ctx = this.canvas.ctx;
 
 		// Build the clip path
 		ctx.save();
 		ctx.beginPath();
 		ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 		ctx.clip();
-
-		// Clear the data canvas
-		this.clear(this.paper.data.ctx);
 
 		for(sh in this.data){
 			if(this.data[sh].show){
@@ -1867,9 +1869,8 @@
 	}
 
 	Graph.prototype.drawRect = function(datum,attr){
-		var x1,y1,x2,y2,dx,dy,o;
-		if(!attr) attr = {};
-		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var x1,y1,x2,y2,dx,dy,o,ctx;
+		ctx = (attr.ctx || this.paper.data.ctx);
 		if(datum.props.x2 || datum.props.y2){
 			x1 = (datum.props.x1 || datum.props.x);
 			y1 = (datum.props.y1 || datum.props.y);
@@ -1888,10 +1889,10 @@
 				dy = datum.props.format.height;
 			}
 
-			attr.ctx.beginPath();
-			attr.ctx.rect(x1,y1,dx,dy);
-			attr.ctx.fill();
-			attr.ctx.closePath();
+			ctx.beginPath();
+			ctx.rect(x1,y1,dx,dy);
+			ctx.fill();
+			ctx.closePath();
 			o = {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
 			if(attr.update) this.addRectToLookup(o);
 			return o;
@@ -1901,10 +1902,11 @@
 
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
-		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var ctx,i;
+		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		for(var i = 0; i < this.data[sh].marks.length ; i++){
+		for(i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
 			if(!p.x1) p.x1 = p.x;
 			if(!p.x2) p.x2 = p.x;
@@ -1914,7 +1916,7 @@
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
 		}
 		this.paper.temp.ctx.stroke();
-		attr.ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
@@ -1947,19 +1949,19 @@
 		return 1;
 	}
 	Graph.prototype.drawLine = function(sh,attr){
-		if(!attr) attr = {};
-		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var ctx,ps,oldp,i;
+		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		var ps = this.data[sh].marks;
-		var oldp = ps[0].props;
-		for(var i = 1; i < ps.length ; i++){
+		ps = this.data[sh].marks;
+		oldp = ps[0].props;
+		for(i = 1; i < ps.length ; i++){
 			p = ps[i].props;
 			if(!isNaN(oldp.x) && !isNaN(p.x)) this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
 			oldp = p;
 		}
 		this.paper.temp.ctx.stroke();
-		attr.ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 
@@ -1967,13 +1969,12 @@
 	}
 	
 	Graph.prototype.drawArea = function(sh,attr){
-		if(!attr) attr = {};
-		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
+		var ctx,oldp,areas,a,i,j,k;
+		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		var oldp = {};
-		var a,i,j,k;
-		var areas = new Array();
+		oldp = {};
+		areas = new Array();
 		// We need to loop across the data first splitting into segments
 		for(i = 0, a = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
@@ -2017,7 +2018,7 @@
 		this.paper.temp.ctx.fill();
 		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 		
-		attr.ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
@@ -2026,13 +2027,12 @@
 
 	// Draw text
 	Graph.prototype.drawText = function(datum,attr){
-		if(!attr) attr = {};
-		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
-		var f,o,x,y
+		var ctx,f,o,x,y;
+		ctx = (attr.ctx || this.paper.data.ctx);
 		x = (attr.x || datum.props.x);
 		y = (attr.y || datum.props.y);
 		f = datum.props.format;
-		o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':attr.ctx,'format':datum.props.format});
+		o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':ctx,'format':datum.props.format});
 		o.id = datum.id;
 		o.weight = 1;
 		if(attr.update) this.addRectToLookup(o);
@@ -2090,7 +2090,6 @@
 	// Override the datum.x and datum.y with attr.x,attr.y if provided
 	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
 	Graph.prototype.drawShape = function(datum,attr){
-		if(!attr) attr = {};
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		var ctx,p,x1,y1,s,w,h,x1,y1,o;
 		ctx = attr.ctx;
@@ -2176,9 +2175,10 @@
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
 	Graph.prototype.addTempToLookup = function(attr){
 		if(!attr.id) return;
-		var a = attr.id+':'+(attr.weight||1);
-		var px = this.paper.temp.ctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
-		for(var i = 0, p = 0, x = 0, y = 0; i < px.data.length; i+=4, p++, x++){
+		var a,px,i,p,x,y
+		a = attr.id+':'+(attr.weight||1);
+		px = this.paper.temp.ctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
+		for(i = p = x = y = 0; i < px.data.length; i+=4, p++, x++){
 			if(x == this.canvas.wide){
 				x = 0;
 				y++;
@@ -2197,9 +2197,9 @@
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.id) return;
-		var x,y,value;
-		var p = 2;
-		var a = i.id+':'+(i.weight||1);
+		var x,y,value,p,a;
+		p = 1;
+		a = i.id+':'+(i.weight||1);
 		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
 		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
 		i.xb += p*2;
@@ -2213,8 +2213,8 @@
 		// Use bounding box to define the lookup area
 		for(x = i.xa; x < i.xb; x++){
 			for(y = i.ya; y < i.yb; y++){
-				if(this.lookup[x][y] == null) this.lookup[x][y] = new Array();
-				this.lookup[x][y].push(a);
+				if(!this.lookup[x][y]) this.lookup[x][y] = [a];
+				else this.lookup[x][y].push(a);
 			}
 		}
 		return this;
@@ -2230,12 +2230,10 @@
 	Graph.prototype.draw = function(updateLookup){
 		this.logTime('draw');
 		this.clear();
-		this.clear(this.paper.temp.ctx);
 		this.drawAxes();
 		this.drawData(updateLookup);
-		this.canvas.copyToClipboard();
+		if(updateLookup) this.canvas.copyToClipboard();
 		this.drawOverlay();
-
 		this.logTime('draw');
 		return this;
 	}
