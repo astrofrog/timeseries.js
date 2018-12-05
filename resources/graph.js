@@ -471,10 +471,6 @@
 			// Attach an event to deal with resizing the <canvas>
 			if(_obj.logging) var d = new Date();
 
-			_obj.temp.width = _obj.canvas.wide;
-			_obj.temp.height = _obj.canvas.tall;
-			_obj.tempctx = _obj.temp.getContext('2d');
-
 			for(var p in _obj.paper){
 				_obj.paper[p].c.width = _obj.canvas.wide;
 				_obj.paper[p].c.height = _obj.canvas.tall;
@@ -1725,9 +1721,6 @@
 		var d,n,xpx,ypx,x,y,x2,y2,sh,i;
 
 		if(!update) return this;
-
-		// Define an empty pixel-based lookup table
-		this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
 		
 		for(sh in this.data){
 			if(this.data[sh].show){
@@ -1818,6 +1811,8 @@
 		var lo,hi,x,y,ii,l,p,s,sh,o,ctx;
 		var twopi = Math.PI*2;
 
+		// Define an empty pixel-based lookup table
+		if(updateLookup) this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
