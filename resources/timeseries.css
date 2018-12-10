@@ -83,7 +83,7 @@
 .timeseries menu .row { margin-bottom: 0em; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
-.timeseries menu ol.layers { padding-left: 0px; padding: 0.5em; background-color: white; color: black; }
+.timeseries menu ol.layers { padding-left: 0px; padding: 0.5em; margin: 0px; background-color: white; color: black; }
 .timeseries menu ol.layers li { list-style: none; margin-bottom: 0.25em; }
 .timeseries menu ol.layers li input[type=checkbox] { display: none; }
 .timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; 

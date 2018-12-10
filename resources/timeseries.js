@@ -586,7 +586,7 @@
 			}
 				
 			// Draw all the pieces that we need to
-			if(draw){
+			if(draw && k[0]){
 				w = k[0].offsetWidth;
 				h = k[0].offsetHeight
 				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
