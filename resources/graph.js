@@ -1255,8 +1255,9 @@
 				sci = (Math.abs(i) > sci_hi || Math.abs(i) < sci_lo)
 			}
 			fmt = {};
-			if(this[a].isDate) fmt['date'] = niceDate(i,this[a].spacing);
-			else{
+			if(this[a].isDate){
+				fmt['date'] = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (i/1000).toFixed(precision+3) : niceDate(i,this[a].spacing);
+			}else{
 				if(sci){
 					if(this[a].log) precision = (""+v).length;
 					fmt['exp'] = i.toExponential(precision);
