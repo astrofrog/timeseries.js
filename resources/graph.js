@@ -547,12 +547,12 @@
 				if(g.within(x,y)){
 					g.selectto = [x,y];
 					if(g.options.zoommode == "x"){
-						g.selectfrom[1] = g.getYPos(g.y.min);
-						g.selectto[1] = g.getYPos(g.y.max);
+						g.selectfrom[1] = g.getPos("y",g.y.min);
+						g.selectto[1] = g.getPos("y",g.y.max);
 					}
 					if(g.options.zoommode == "y"){
-						g.selectfrom[0] = g.getXPos(g.x.min);
-						g.selectto[0] = g.getXPos(g.x.max);
+						g.selectfrom[0] = g.getPos("x",g.x.min);
+						g.selectto[0] = g.getPos("x",g.x.max);
 					}
 					if(g.selecting){
 						g.canvas.pasteFromClipboard();
@@ -1002,14 +1002,9 @@
 		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((max-c)/(ran)) : this.chart.left + this.chart.width*((c-min)/ran));
 	
 	}
-	// For an input data value find the y-pixel location
-	Graph.prototype.getYPos = function(y){ return this.getPos("y",y); }
-	
-	// For an input data value find the x-pixel location
-	Graph.prototype.getXPos = function(x){ return this.getPos("x",x); }
-	
+
 	// For an input data value find the pixel locations
-	Graph.prototype.getPixPos = function(x,y){ return [this.getXPos(x),this.getYPos(y)]; }
+	Graph.prototype.getPixPos = function(x,y){ return [this.getPos("x",x),this.getPos("y",y)]; }
 	
 	// Are the x,y pixel coordinates in the displayed chart area?
 	Graph.prototype.within = function(x,y){
@@ -1273,7 +1268,6 @@
 		return this;
 	}
 
-
 	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
 	Graph.prototype.defineAxis = function(axis,min,max){
 
@@ -1289,14 +1283,12 @@
 		// Sort out what to do for log scales
 		if(this[axis].log){
 			// Adjust the low and high values for log scale
-			this[axis].gmax = G.log10(this[axis].max);//Math.ceil(G.log10(this[axis].max));
-			this[axis].gmin = (this[axis].min <= 0) ? this[axis].gmax-2 : G.log10(this[axis].min);//Math.floor(G.log10(this[axis].min));
-
+			this[axis].gmax = G.log10(this[axis].max);
+			this[axis].gmin = (this[axis].min <= 0) ? this[axis].gmax-2 : G.log10(this[axis].min);
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
 			this.makeLabels(axis);
-
 			return this;
 		}
 
@@ -1766,8 +1758,8 @@
 					// Store IDs for the layer and the item
 					if(!this.data[sh].marks[i].id) this.data[sh].marks[i].id = parseInt(sh)+':'+i;
 					
-					x = this.getXPos(d.data.x);
-					y = this.getYPos(d.data.y);
+					x = this.getPos("x",d.data.x);
+					y = this.getPos("y",d.data.y);
 
 					this.data[sh].marks[i].props.x = parseFloat(x.toFixed(1));
 					this.data[sh].marks[i].props.y = parseFloat(y.toFixed(1));
@@ -1779,12 +1771,12 @@
 					}
 
 					if(d.data.x2){
-						this.data[sh].marks[i].props.x2 = this.getXPos(d.data.x2);
+						this.data[sh].marks[i].props.x2 = this.getPos("x",d.data.x2);
 						this.data[sh].marks[i].props.x1 = x;
 						this.data[sh].marks[i].props.x = x + (this.data[sh].marks[i].props.x2-x)/2;
 					}
 					if(d.data.y2){
-						this.data[sh].marks[i].props.y2 = this.getYPos(d.data.y2);
+						this.data[sh].marks[i].props.y2 = this.getPos("y",d.data.y2);
 						this.data[sh].marks[i].props.y1 = y;
 						this.data[sh].marks[i].props.y = y + (this.data[sh].marks[i].props.y2-y)/2;
 					}
