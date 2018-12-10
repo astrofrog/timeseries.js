@@ -558,7 +558,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1])
+					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':true})
 				}
 			}
 			g.updating = false;
@@ -875,15 +875,32 @@
 		return this;
 	}
 
-	Graph.prototype.panBy = function(dx,dy){
+	Graph.prototype.panBy = function(dx,dy,attr){
 		this.offset.x = dx;
 		this.offset.y = dy;
-		this.getChartOffset();
-		this.calculateData();
-		// Update the graph
-		this.clear();
-		// We don't need to update the lookup whilst panning
-		this.draw(false);
+		this.logTime('panBy');
+		if(!attr) attr = {};
+		if(attr.quick){
+			this.clear();
+			this.clear(this.paper.temp.ctx);
+			this.drawAxes();
+			var ctx = this.canvas.ctx;
+			// Build the clip path
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
+			ctx.clip();
+			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y);
+			ctx.restore();
+		}else{
+			this.getChartOffset();
+			this.calculateData();
+			// Update the graph
+			this.clear();
+			// We don't need to update the lookup whilst panning
+			this.draw(false);
+		}
+		this.logTime('panBy');
 		return this;
 	}
 
