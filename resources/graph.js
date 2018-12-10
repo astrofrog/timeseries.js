@@ -1890,16 +1890,22 @@
 	}
 
 	Graph.prototype.drawRect = function(datum,attr){
-		var x1,y1,x2,y2,dx,dy,o,ctx;
+		var x1,y1,x2,y2,dx,dy,o,ctx,n;
+		n = "number";
 		ctx = (attr.ctx || this.paper.data.ctx);
-		if(datum.props.x2 || datum.props.y2){
-			x1 = (datum.props.x1 || datum.props.x);
-			y1 = (datum.props.y1 || datum.props.y);
-			x2 = (datum.props.x2 || x1);
-			y2 = (datum.props.y2 || y1);
+		if(is(attr.x,n)) datum.props.x = attr.x;
+		if(is(attr.y,n)) datum.props.y = attr.y;
+		if(is(attr.x1,n)) datum.props.x1 = attr.x1;
+		if(is(attr.y1,n)) datum.props.y1 = attr.y1;
+		if(is(attr.x2,n)) datum.props.x2 = attr.x2;
+		if(is(attr.y2,n)) datum.props.y2 = attr.y2;
+		if(is(datum.props.x2,n) || is(datum.props.y2,n)){
+			x1 = is(datum.props.x1,n) ? datum.props.x1 : datum.props.x;
+			y1 = is(datum.props.y1,n) ? datum.props.y1 : datum.props.y;
+			x2 = is(datum.props.x2,n) ? datum.props.x2 : x1;
+			y2 = is(datum.props.y2,n) ? datum.props.y2 : y1;
 			dx = (x2-x1);
 			dy = (y2-y1);
-
 			// Use provided width/height
 			if(datum.props.format.width){
 				x1 = x1+(dx-datum.props.format.width)/2;
@@ -2048,12 +2054,14 @@
 
 	// Draw text
 	Graph.prototype.drawText = function(datum,attr){
-		var ctx,f,o,x,y;
+		var ctx,t,f,o,x,y;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		x = (attr.x || datum.props.x);
 		y = (attr.y || datum.props.y);
+		t = (attr.text || datum.data.text || "Label");
 		f = datum.props.format;
-		o = this.drawTextLabel((datum.data.text || "Label"),x,y,{'ctx':ctx,'format':datum.props.format});
+		if(attr.props) f.extend(attr.props);
+		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':datum.props.format});
 		o.id = datum.id;
 		o.weight = 1;
 		if(attr.update) this.addRectToLookup(o);

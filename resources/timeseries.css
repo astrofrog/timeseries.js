@@ -63,8 +63,7 @@
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:focus ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
-	background-color: #253788;
-	opacity: 0.85;
+	background-color: rgba(37, 55, 136,0.85);
 	color: white;
 }
 .timeseries input.hamburger:checked ~ label.hamburger:after {
@@ -84,7 +83,7 @@
 .timeseries menu .row { margin-bottom: 0em; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
-.timeseries menu ol.layers { padding-left: 0px; }
+.timeseries menu ol.layers { padding-left: 0px; padding: 0.5em; background-color: white; color: black; }
 .timeseries menu ol.layers li { list-style: none; margin-bottom: 0.25em; }
 .timeseries menu ol.layers li input[type=checkbox] { display: none; }
 .timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; 
@@ -96,7 +95,7 @@
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
 }
-.timeseries menu ol.layers li label.inactive { filter: grayscale(1); opacity: 0.5; }
+.timeseries menu ol.layers li label.inactive { filter: grayscale(1); opacity: 0.15; }
 .timeseries menu ol.layers li .key { width: 1.5em; height: 1.5em; display: inline-block; float: left; margin-right: 0.25em; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; right: -75%; }

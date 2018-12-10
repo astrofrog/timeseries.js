@@ -544,28 +544,85 @@
 	}
 	TS.prototype.loaded = function(){
 		this.log('loaded',this.attr.showaswego,this.graph.data);
+		var i,id,layers,l,p,k,w,h,draw,d,key;
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
 		
-		var layers = this.graph.canvas.container.find('.layers');
-		for(var i in this.graph.data){
+		layers = this.graph.canvas.container.find('.layers');
+		keyitems = {};
+		for(i in this.graph.data){
 			id = S(this.el).attr('id')+'_'+i;
+			if(!keyitems[this.graph.data[i].desc]) keyitems[this.graph.data[i].desc] = new Array();
+			keyitems[this.graph.data[i].desc].push(i);
+		}
+		j = 0;
+		for(key in keyitems){
+			id = S(this.el).attr('id')+'_'+j;
+			d = this.graph.data[keyitems[key][0]];
 			// Check if we've already added this
 			if(layers.find('#'+id).length == 0){
-				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" /><label for="'+id+'"><span class="key" style="background-color:'+this.graph.data[i].format.fill+';"></span>'+this.graph.data[i].desc+'</label></li>');
-				layers.find('#'+id).on('change',{me:this,i:i},function(e){
-					i = e.data.i;
+				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+this.graph.data[keyitems[key][0]].desc+'</label></li>');
+				l = layers.find('#'+id);
+				p = l.parent();
+				k = p.find('.key');
+				l.on('change',{me:this,k:keyitems[key]},function(e){
 					g = e.data.me.graph;
-					g.data[i].show = !g.data[i].show;
-					//this.parent().css({'display':(g.data[i].show ? '':'none')});
+					for(i = 0; i < e.data.k.length; i++){
+						j = e.data.k[i];
+						g.data[j].show = !g.data[j].show;
+					}
 					g.calculateData().draw(true);
-				}).parent().find('label').on('click',{me:this,id:id},function(e){
-					//this.parent().find('input')[0].checked = !this.find('input')[0].checked;
+				});
+				p.find('label').on('click',{me:this,id:id},function(e){
 					if(this.parent().find('input')[0].checked) this.addClass('inactive')
 					else this.removeClass('inactive')
 				});
 			}
+			// Do we need to draw key items?
+			draw = false;
+			for(i = 0; i < keyitems[key].length; i++){
+				if(["symbol","rect","line","rule","text"].indexOf(d.type) >= 0) draw = true;
+			}
+				
+			// Draw all the pieces that we need to
+			if(draw){
+				w = k[0].offsetWidth;
+				h = k[0].offsetHeight
+				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
+				var c = k.find('canvas')[0];
+				var ctx = c.getContext('2d');
+				c.width = w;
+				c.height = h;
+				ctx.fillStyle = "#ffffff";
+				ctx.rect(0,0,w,h);
+				ctx.fill();
+				for(i = 0; i < keyitems[key].length; i++){
+					d = this.graph.data[keyitems[key][i]];
+					k.css({'background-color':'none'});
+					// Set the canvas style
+					this.graph.setCanvasStyles(ctx,d.marks[0]);
+					// Draw the different types
+					if(d.type=="symbol"){
+						this.graph.drawShape(d.marks[0],{'ctx':ctx,'x':w/2,'y':h/2});
+					}else if(d.type=="rect"){
+						this.graph.drawRect(d.marks[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+					}else if(d.type=="line"){
+						ctx.beginPath();
+						ctx.moveTo(0,h/2);
+						ctx.lineTo(w,h/2);
+						ctx.stroke();
+					}else if(d.type=="rule"){
+						ctx.beginPath();
+						ctx.moveTo(w/2,0);
+						ctx.lineTo(w/2,h);
+						ctx.stroke();
+					}else if(d.type=="text"){
+						this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
+					}
+				}
+			}
+			j++;
 		}
 		
 		// CALLBACK

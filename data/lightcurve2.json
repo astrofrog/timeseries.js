@@ -44,7 +44,7 @@
 	],
 	"marks":[{
 		"type": "rule",
-		"description": "Event",
+		"description": "Event happened here",
 		"encode": {
 			"enter": {
 				"x": {"scale": "x", "signal": "(new Date('2018-10-29T13:53:22Z')).getTime()"},
@@ -99,7 +99,7 @@
 		}
 	},{
 		"type": "rect",
-		"description": "Error bars",
+		"description": "Data",
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
@@ -124,7 +124,7 @@
 		}
 	},{
 		"type": "symbol",
-		"description": "Data points",
+		"description": "Data",
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
