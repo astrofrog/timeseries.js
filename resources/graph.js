@@ -1193,8 +1193,11 @@
 		}
 		// A function to format the date nicely
 		function niceDate(d,sp){
+		
+			var hr,mn,sc,dy,mo,yr,n,f,fs;
+			fs = "";
+			(removeRoundingErrors(d)+"").replace(/\.([0-9]+)/,function(m,p1){ fs = p1; });
 			d = new Date((typeof d==="string" ? parseInt(d):d));
-			var hr,mn,sc,dy,mo,yr,n,f;
 			f = sp.fract
 			hr = zeroFill(d.getUTCHours(),2);
 			mn = zeroFill(d.getUTCMinutes(),2);
@@ -1203,7 +1206,7 @@
 			mo = zeroFill(d.getUTCMonth()+1,2);
 			yr = d.getUTCFullYear();
 			n = sp.name;
-			if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc);
+			if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc+""+fs);
 			else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
 			else if(n=="hours") return hr+":"+mn;
 			else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
@@ -1246,7 +1249,6 @@
 				sci = (Math.abs(i) > sci_hi || Math.abs(i) < sci_lo)
 			}
 			fmt = {};
-
 			if(this[a].isDate) fmt['date'] = niceDate(i,this[a].spacing);
 			else{
 				if(sci){
@@ -1320,7 +1322,7 @@
 			// Grid line spacings can range from 1 ms to 10000 years
 			// Use Gregorian year length for calendar display
 			// 31557600000
-			steps = [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
+			steps = [{'name': 'seconds','div':1000,'spacings':[1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
 					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
 					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
 					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
