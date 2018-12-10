@@ -875,6 +875,9 @@
 		return this;
 	}
 
+	// Pan the graph.
+	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
+	// than recalculate everything as that can be slow when there is a lot of data.
 	Graph.prototype.panBy = function(dx,dy,attr){
 		this.offset.x = dx;
 		this.offset.y = dy;
@@ -907,7 +910,7 @@
 	// Zoom the graph.
 	// We can zoom around a point or we can zoom to a defined region.
 	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
-	// than recalculate everything as that can be slow where there's lots of data.
+	// than recalculate everything as that can be slow when there is a lot of data.
 	Graph.prototype.zoom = function(pos,attr){
 
 		if(!attr) attr = {};
