@@ -2174,8 +2174,8 @@
 		a = attr.id+':'+(attr.weight||1);
 		w = this.canvas.wide;
 		h = this.canvas.tall;
-		l = px.data.length
 		px = this.paper.temp.ctx.getImageData(0,0,w,h);
+		l = px.data.length;
 		for(i = p = x = y = 0; i < l; i+=4, p++, x++){
 			if(x == w){
 				x = 0;
