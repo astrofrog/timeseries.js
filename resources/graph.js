@@ -128,6 +128,7 @@
 		this.background = "rgb(255,255,255)";
 		this.events = {resize:""};	// Let's add some default events
 		this.logging = false;
+		this.scale = 1;
 
 		// Add options to detect for older IE
 		this.ie = false;
@@ -149,6 +150,7 @@
 		if(is(i.height,n)) this.tall = i.height;
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
+		if(is(i.scale,n)) this.scale = i.scale;
 
 		this.log('Canvas',container,this.wide,this.tall)
 
@@ -193,7 +195,9 @@
 		if(this.c && this.c.getContext){  
 			this.setWH(this.wide,this.tall);
 			this.ctx = this.c.getContext('2d');
-			this.ctx.clearRect(0,0,this.wide,this.tall);
+			// Normalize coordinate system to use css pixels.
+			this.ctx.scale(this.scale, this.scale);
+			this.ctx.clearRect(0,0,this.wide*this.scale,this.tall*this.scale);
 			this.ctx.beginPath();
 			var fs = 16;
 			this.ctx.font = fs+"px sans-serif";
@@ -333,9 +337,9 @@
 		if(o.length > 0) return o;
 	}
 	Canvas.prototype.copyToClipboard = function(){
-		var x = Math.min(this.wide,this.ctx.canvas.clientWidth);
-		var y = Math.min(this.tall,this.ctx.canvas.clientHeight);
-		this.log('copyToClipboard',x,y,this)
+		var x = Math.min(this.wide,this.ctx.canvas.clientWidth)*this.scale;
+		var y = Math.min(this.tall,this.ctx.canvas.clientHeight)*this.scale;
+		this.log('copyToClipboard',x,y,this);
 		if(x > 0 && y > 0){
 			this.clipboard = this.ctx.getImageData(0, 0, x, y);
 			this.clipboardData = this.clipboard.data;
@@ -402,8 +406,8 @@
 		this.log('setWH',w,h)
 		if(!w || !h) return;
 		var c = (typeof ctx=="undefined") ? this.c : ctx;
-		c.width = w;
-		c.height = h;
+		c.width = w*this.scale;
+		c.height = h*this.scale;
 		this.wide = w;
 		this.tall = h;
 		
@@ -450,7 +454,9 @@
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
 		opt.logging = this.logging;
-		
+		// Set canvas scaling for retina-type screens
+		opt.scale = window.devicePixelRatio;
+
 		this.canvas = new Canvas(element,opt);
 				
 		// Temporary canvases for drawing to
@@ -460,8 +466,8 @@
 		};
 		// Set properties of the temporary canvases
 		for(var p in this.paper){
-			this.paper[p].c.width = this.canvas.wide;
-			this.paper[p].c.height = this.canvas.tall;
+			this.paper[p].c.width = this.canvas.wide*opt.scale;
+			this.paper[p].c.height = this.canvas.tall*opt.scale;
 			this.paper[p].ctx = this.paper[p].c.getContext('2d');
 		}
 
@@ -470,10 +476,10 @@
 		this.canvas.on("resize",function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(_obj.logging) var d = new Date();
-
+			var s = _obj.canvas.scale;
 			for(var p in _obj.paper){
-				_obj.paper[p].c.width = _obj.canvas.wide;
-				_obj.paper[p].c.height = _obj.canvas.tall;
+				_obj.paper[p].c.width = _obj.canvas.wide*s;
+				_obj.paper[p].c.height = _obj.canvas.tall*s;
 				_obj.paper[p].ctx = _obj.paper[p].c.getContext('2d');
 			}
 
@@ -969,7 +975,7 @@
 			ctx.beginPath();
 			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
 			ctx.clip();
-			ctx.drawImage(this.paper.data.c,x,y,nwide,ntall);
+			ctx.drawImage(this.paper.data.c,x,y,nwide*this.canvas.scale,ntall*this.canvas.scale);
 			ctx.restore();
 		}else{
 			this.draw(typeof attr.update==="boolean" ? attr.update : true);
@@ -2242,7 +2248,7 @@
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
-		(ctx || this.canvas.ctx).clearRect(0,0,this.canvas.wide,this.canvas.tall);
+		(ctx || this.canvas.ctx).clearRect(0,0,this.canvas.wide*this.canvas.scale,this.canvas.tall*this.canvas.scale);
 		return this;
 	}
 
