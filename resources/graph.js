@@ -1635,8 +1635,12 @@
 				x2 = orient[o].x2;
 			}
 			// Calculate the number of decimal places for the increment - helps with rounding errors
-			prec = ""+axis.inc;
-			prec = prec.length-prec.indexOf('.')-1;
+			if(this[d].precision){
+				prec = this[d].precision;
+			}else{
+				prec = ""+axis.inc;
+				prec = prec.length-prec.indexOf('.')-1;
+			}
 			fshalf = Math.ceil(fs/2);
 			var oldx = 0;
 			var prev = {};
@@ -1672,7 +1676,7 @@
 								prev = o;
 							}
 						}else{
-							str = this[d].labels[ii];
+							str = (ii < this[d].labels.length) ? this[d].labels[ii] : "";
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
@@ -1688,7 +1692,8 @@
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
-						ctx.fillText(this[d].labels[ii],(x1 - 3 - tw),(y1).toFixed(1));
+						str = (ii < this[d].labels.length) ? this[d].labels[ii] : "";
+						ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
 

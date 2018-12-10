@@ -324,7 +324,6 @@
 				cls = me.attr('data');
 				me.addClass('on');
 				e.data.el.find('.menu-panel.'+cls).addClass('on');
-				console.log()
 			});
 
 			// Build date selector
