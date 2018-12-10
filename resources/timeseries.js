@@ -274,8 +274,13 @@
 			},
 			'jd': {
 				'title': 'Julian date',
-				'steps': [{'name': 'days', 'div':86400000,'spacings':[0.00001,0.00005,0.0001,0.0005,0.001,0.005,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}],
-				'fn': function(j){ return {'str':formatDate(parseInt(j),"jd")+''}; }
+				'steps': [
+					{'name': 'milli', 'div':86400,'spacings':[0.001,0.005,0.01,0.05,0.1]},
+					{'name': 'days', 'div':86400000,'spacings':[1e-4,5e-4,0.001,0.005,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}
+				],
+				'fn': function(j){
+					return {'str':formatDate(parseFloat(j),"jd")+''};
+				}
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
@@ -287,8 +292,8 @@
 				'fn': function(j){
 					var mjd = formatDate(parseInt(j),"mjd");
 					var o = {'str':mjd+''};
-					if(this.x.spacing.name == "milli") o.truncated = mjd.toFixed(5)+'';
-					if(this.x.spacing.name == "micro") o.truncated = mjd.toFixed(8)+'';
+					if(this.x.spacing.name == "milli") o.truncated = mjd.toFixed(6)+'';
+					if(this.x.spacing.name == "micro") o.truncated = mjd.toFixed(9)+'';
 					return o;
 				}
 			}
