@@ -1812,7 +1812,7 @@
 		var twopi = Math.PI*2;
 
 		// Define an empty pixel-based lookup table
-		if(updateLookup) this.lookup = Array(this.canvas.wide).fill(0).map(x => Array(this.canvas.tall));
+		if(updateLookup) this.lookup = Array(this.canvas.wide).fill().map(x => Array(this.canvas.tall));
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
@@ -2170,18 +2170,21 @@
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
 	Graph.prototype.addTempToLookup = function(attr){
 		if(!attr.id) return;
-		var a,px,i,p,x,y
+		var a,px,i,p,x,y,l,w,h;
 		a = attr.id+':'+(attr.weight||1);
-		px = this.paper.temp.ctx.getImageData(0,0,this.canvas.wide, this.canvas.tall);
-		for(i = p = x = y = 0; i < px.data.length; i+=4, p++, x++){
-			if(x == this.canvas.wide){
+		w = this.canvas.wide;
+		h = this.canvas.tall;
+		l = px.data.length
+		px = this.paper.temp.ctx.getImageData(0,0,w,h);
+		for(i = p = x = y = 0; i < l; i+=4, p++, x++){
+			if(x == w){
 				x = 0;
 				y++;
 			}
 			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]){
-				if(x < this.canvas.wide && y < this.canvas.tall){
-					if(this.lookup[x][y] == null) this.lookup[x][y] = new Array();
-					this.lookup[x][y].push(a);
+				if(x < w && y < h){
+					if(this.lookup[x][y] == null) this.lookup[x][y] = [a];
+					else this.lookup[x][y].push(a);
 				}
 			}
 		}
