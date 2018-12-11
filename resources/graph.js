@@ -1182,91 +1182,6 @@
 		}
 		return this;
 	}
-	
-	Graph.prototype.makeLabels = function(a){
-
-		// Get the min/max tick marks
-		var mn = this[a].gmin;
-		var mx = this[a].gmax;
-		if(this[a].log){
-			mn = Math.ceil(mn);
-			mx = Math.ceil(mx);
-		}
-		// A function to format the date nicely
-		function niceDate(d,sp){
-		
-			var hr,mn,sc,dy,mo,yr,n,f,fs;
-			fs = "";
-			(removeRoundingErrors(d)+"").replace(/\.([0-9]+)/,function(m,p1){ fs = p1; });
-			d = new Date((typeof d==="string" ? parseInt(d):d));
-			f = sp.fract
-			hr = zeroFill(d.getUTCHours(),2);
-			mn = zeroFill(d.getUTCMinutes(),2);
-			sc = removeRoundingErrors(zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2));
-			dy = zeroFill(d.getUTCDate(),2);
-			mo = zeroFill(d.getUTCMonth()+1,2);
-			yr = d.getUTCFullYear();
-			n = sp.name;
-			if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc+""+fs);
-			else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
-			else if(n=="hours") return hr+":"+mn;
-			else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
-			else if(n=="weeks") return yr+"-"+mo+"-"+dy+(hr=="00" ? '' : ' '+Math.round((d.getUTCHours()+(d.getUTCMinutes()/60)))+'h');
-			else if(n=="years") return (f >= 1 ? ""+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
-			else return hr+":"+mn+":"+sc;
-		}
-		this[a].labels = new Array();
-
-		var sci_hi,sci_lo,l,sci,base,main,precision,v,fmt,l;
-
-		// Calculate the number of decimal places for the increment
-		sci_hi = 10000;
-		sci_lo = 1e-4;
-		l = Math.abs(mx);
-		sci = (l > sci_hi || l < sci_lo);
-
-		// Get the number of decimal places to show
-		precision = this[a].precision;
-
-		function shortestFormat(fmt){
-			var l = 1e100;
-			var i = "";
-			for(var f in fmt){
-				try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
-				catch(err){ console.log('ERROR',fmt[f],err); }
-				if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
-				if(fmt[f].length < l){
-					l = fmt[f].length;
-					i = f;
-				}
-			}
-			return fmt[i];
-		}
-		for(var v = mn; v <= mx; v += this[a].inc){
-
-			i = v;
-			if(this[a].log){
-				i = Math.pow(10,i);
-				sci = (Math.abs(i) > sci_hi || Math.abs(i) < sci_lo)
-			}
-			fmt = {};
-			if(this[a].isDate){
-				fmt['date'] = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (i/1000).toFixed(precision+3) : niceDate(i,this[a].spacing);
-			}else{
-				if(sci){
-					if(this[a].log) precision = (""+v).length;
-					fmt['exp'] = i.toExponential(precision);
-					fmt['normal'] = ""+i;
-				}else{
-					if(this[a].log) precision = Math.abs(v);
-					if(this[a].inc > 1) fmt['round'] = ""+Math.round(i);
-					else fmt['fixed'] = i.toFixed(precision);
-				}
-			}
-			this[a].labels.push(shortestFormat(fmt));
-		}
-		return this;
-	}
 
 	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
 	Graph.prototype.defineAxis = function(axis,min,max){
@@ -1279,6 +1194,7 @@
 		if(typeof min=="number") this[axis].min = min;
 		// Set the range of the data
 		this[axis].range = this[axis].max - this[axis].min;
+		this[axis].ticks = new Array();
 
 		// Sort out what to do for log scales
 		if(this[axis].log){
@@ -1288,10 +1204,9 @@
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
-			this.makeLabels(axis);
+			this.makeTicks(axis);
 			return this;
 		}
-
 		// If we have zero range we need to expand it
 		if(this[axis].range < 0){
 			this[axis].inc = 0.0;
@@ -1305,6 +1220,7 @@
 			this[axis].inc = 1.0;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
+			this.makeTicks(axis);
 			return this;
 		}
 
@@ -1313,7 +1229,6 @@
 		rg = this[axis].range;
 		mx = this[axis].max;
 		mn = this[axis].min;
-		
 		// Calculate reasonable grid line spacings
 		if(this[axis].isDate){
 			if(!this.options.formatLabelX) this.options.formatLabelX = {};
@@ -1321,14 +1236,15 @@
 			// Grid line spacings can range from 1 ms to 10000 years
 			// Use Gregorian year length for calendar display
 			// 31557600000
-			steps = [{'name': 'seconds','div':1000,'spacings':[1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3,2e-3,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
-					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
-					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
-					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
-					{'name': 'years', 'div':365.2425*86400000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000]}];
+			steps = [{'name': 'milliseconds', 'div': 1, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'seconds','div':1000,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'minutes', 'div':60000,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'hours', 'div':3600000,'spacings':[1,2,4,6,12]},
+					{'name': 'days', 'div':86400000,'spacings':[1,2]},
+					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
+					{'name': 'months', 'div': 30*86400000, 'spacings':[1,3,6]},
+					{'name': 'years', 'div':365.2425*86400000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
 			steps = (this.options.formatLabelX.steps || steps);
-
 			for(st = 0; st < steps.length ; st++){
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
 					n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
@@ -1337,9 +1253,15 @@
 						t_div = n;
 						this[axis].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
 						t_inc = (steps[st].div*steps[st].spacings[sp]);
+						this[axis].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp]};
 					}
 				}
 			}
+
+			// Set the min and max values by rounding the dates
+			t_min = (new Date(roundDate(mn,this[axis].datestep.name,this[axis].datestep.spacing,{'method':'floor'}))).valueOf();
+			t_max = (new Date(roundDate(mx,this[axis].datestep.name,this[axis].datestep.spacing,{'method':'ceil'}))).valueOf();
+
 		}else{
 
 			// Start off by finding the exact spacing
@@ -1374,30 +1296,17 @@
 			// Now determine the actual spacing
 			spacing = Math.pow(10,(base + options[imin]));
 			t_inc = spacing;
-		}
+			// Determine the number of decimal places to show
+			// Quicker to do it here than in makeTicks.
+			this[axis].precision = Math.ceil(Math.abs(Math.log10(t_inc)));
+			if(this[axis].precision==0 && Math.abs(mn) > 10) this[axis].precision = Math.floor(Math.log10(mn));
 
-		// Determine the number of decimal places to show
-		// Quicker to do it here than in makeLabels.
-		precision = Math.log10(t_inc);
-		if(precision < 0) precision = Math.abs(precision);
-		this[axis].precision = Math.ceil(precision);
-
-		// Normalise the tick mark min/max
-		t_max = Math.floor(mx/t_inc)*t_inc;
-		if(this[axis].isDate){
-			// Because the UNIX epoch is in 1970, when we are dealing with century-spanning 
-			// dates the zero needs to be shifted to a century for the labels (add 30 years)
-			if(t_inc >= 3000000000000) t_max += 946684800000;
-			// For dates spanning tens of thousands of years set the zero differently (add 8000 years)
-			if(t_inc >= 1.5e14) t_max += 252449280000000;
+			// Normalise the tick mark min/max
+			t_max = Math.ceil(mx/t_inc)*t_inc;
+			if(t_max < mx-t_inc*0.2) t_max += t_inc;
+			t_min = Math.floor(mn/t_inc)*t_inc;
+			if(t_min > mn+t_inc*0.2) t_min -= t_inc;
 		}
-		if(t_max < mx) t_max += t_inc;
-		t_min = t_max;
-		i = 0;
-		do {
-			i++;
-			t_min -= t_inc;
-		}while(t_min > mn);
 
 		// Set the first/last gridline values as well as the spacing
 		this[axis].gmin = t_min;
@@ -1405,11 +1314,130 @@
 		this[axis].inc = t_inc;
 		this[axis].grange = this[axis].gmax-this[axis].gmin;
 
-		this.makeLabels(axis);
+		this.makeTicks(axis);
 
 		return this;
 	}
+
+	Graph.prototype.makeTicks = function(a){
+		// Get the min/max tick marks
+		var mn = this[a].gmin;
+		var mx = this[a].gmax;
+		if(this[a].log){
+			mn = Math.ceil(mn);
+			mx = Math.ceil(mx);
+		}
+		this[a].ticks = new Array();
+		// Because of precision issues we can't rely on exact equality.
+		for(var v = mn; v < mx+this[a].inc*0.2; v += this[a].inc){
+			if(this[a].isDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf(),'label':''});
+			else this[a].ticks.push({'value':v,'label':''});
+		}
+		this.makeLabels(a);
+		return this;
+	}
 	
+	Graph.prototype.makeLabels = function(a){
+
+		mn = this[a].ticks[0].value;
+		mx = this[a].ticks[this[a].ticks.length-1].value;
+		
+		// A function to format the date nicely
+		function niceDate(d,sp){
+		
+			var hr,mn,sc,dy,mo,yr,n,f,fs;
+			fs = "";
+			(removeRoundingErrors(d)+"").replace(/\.([0-9]+)/,function(m,p1){ fs = p1; });
+			d = new Date((typeof d==="string" ? parseInt(d):d));
+			f = sp.fract
+			hr = zeroFill(d.getUTCHours(),2);
+			mn = zeroFill(d.getUTCMinutes(),2);
+			sc = removeRoundingErrors(zeroFill(d.getUTCSeconds()+d.getUTCMilliseconds()/1000,2));
+			dy = zeroFill(d.getUTCDate(),2);
+			mo = zeroFill(d.getUTCMonth()+1,2);
+			yr = d.getUTCFullYear();
+			n = sp.name;
+			if(n=="milliseconds") return sc+""+fs;
+			else if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc+""+fs);
+			else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
+			else if(n=="hours") return hr+":"+mn;
+			else if(n=="days") return (f >= 1 ? yr+"-"+mo+"-"+dy : yr+"-"+mo+"-"+dy+' '+hr+':'+mn);
+			else if(n=="weeks") return yr+"-"+mo+"-"+dy;//+(hr=="00" ? '' : ' '+Math.round((d.getUTCHours()+(d.getUTCMinutes()/60)))+'h');
+			else if(n=="months") return yr+"-"+mo;
+			else if(n=="years") return (f >= 1 ? ''+(d.getUTCFullYear()+Math.round((d.getUTCMonth()+1)/12)) : (Math.round(d.getUTCMonth()+1)==12 ? (d.getUTCFullYear()+1)+"-01-01" : d.getUTCFullYear()+'-'+mo+'-01'));
+			else return hr+':'+mn+':'+sc;
+		}
+
+		var l,sci,base,main,precision,v,fmt,ts;
+
+		// Calculate the number of decimal places for the increment
+		this.sci_hi = 10000;
+		this.sci_lo = 1e-4;
+		l = Math.max(Math.abs(mx),Math.abs(mn));
+		sci = (l > this.sci_hi || l < this.sci_lo);
+
+		// Get the number of decimal places to show
+		precision = this[a].precision;
+
+		function shortestFormat(fmt){
+			var l = 1e100;
+			var i = "";
+			for(var f in fmt){
+				try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
+				catch(err){ console.log('ERROR',fmt[f],err); }
+				if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
+				if(fmt[f].length < l){
+					l = fmt[f].length;
+					i = f;
+				}
+			}
+			return fmt[i];
+		}
+		for(i = 0; i < this[a].ticks.length; i++){
+			v = this[a].ticks[i].value;
+			if(this[a].log){
+				v = Math.pow(10,v);
+				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo)
+			}
+			if(this[a].isDate){
+				d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v/1000).toFixed(precision+3) : niceDate(v,this[a].spacing);
+				this[a].ticks[i].label = d;
+			}else{
+				fmt = {};
+				if(sci){
+					if(this[a].log) precision = (""+i).length;
+					fmt['normal'] = ""+v;
+					fmt['exp'] = v.toExponential(precision).replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; });
+					if(!this[a].log){
+						s = (v<0 ? -1 : 1);
+						if(fmt['normal'].indexOf(/[0]{5}/) > 0) v = s*Math.floor(Math.abs(v));
+						if(fmt['normal'].indexOf(/[9]{5}/) > 0) v = s*Math.ceil(Math.abs(v));
+						this[a].ticks[i].value = v;
+						fmt['normal'] = ""+v;
+					}
+				}else{
+					if(this[a].log) precision = Math.abs(i);
+					if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
+					else fmt['fixed'] = v.toFixed(precision);
+				}
+				// Bug fix for Javascript rounding issues when the range is big
+				if(Math.abs(v/this[a].range) < 1e-12) fmt['fixed'] = "0";
+
+				// Set the label to whichever is shortest
+				this[a].ticks[i].label = shortestFormat(fmt);
+
+				// Because of precision issues, use the label to rebuild the value
+				this[a].ticks[i].calcval = this[a].ticks[i].value+0;
+				this[a].ticks[i].value = parseFloat(this[a].ticks[i].label);
+			}
+		}
+		// Fix precision issues
+		this[a].gmin = this[a].ticks[0].value;
+		this[a].gmax = this[a].ticks[this[a].ticks.length-1].value;
+
+		return this;
+	}
+
 	// A factor to scale the overall font size then redraw the graph
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
@@ -1498,9 +1526,14 @@
 			mn = Math.ceil(this.y.gmin);
 			mx = Math.floor(this.y.gmax);
 		}
-		if(this.y.labels){
-			for(i = 0; i < this.y.labels.length; i++){
-				maxw = Math.max(maxw,ctx.measureText(this.y.labels[i]).width);
+		if(this.y.ticks){
+			if(this.y.range > this.sci_hi || this.y.range < this.sci_lo){
+				// If the range is big we'll just assume scientific notation
+				maxw = ctx.measureText("1.e+"+Math.floor(Math.log10(this.y.range))).width;
+			}else{ 
+				// Chop down the labels so that the length 
+				// doesn't oscillate when we're adding decimal places
+				for(i = 0; i < this.y.ticks.length; i++) maxw = Math.max(maxw,ctx.measureText(this.y.ticks[i].label.replace(/^\-/,"")).width);
 			}
 		}
 		s = Math.round(fs*1.5);
@@ -1643,7 +1676,8 @@
 				mn = Math.floor(axis.gmin);
 				mx = Math.ceil(axis.gmax);
 			}
-			for(var i = mn, ii=0; i <= mx; i += axis.inc,ii++) {
+			for(var ii = 0; ii < axis.ticks.length; ii++) {
+				i = axis.ticks[ii].value;
 				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -1668,14 +1702,14 @@
 								prev = o;
 							}
 						}else{
-							str = (ii < this[d].labels.length) ? this[d].labels[ii] : "";
+							str = axis.ticks[ii].label;
 							prev = {'str':str};
 						}
 						var ds = str.split(/\n/);
 						var maxw = 0;
 						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
 						if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
-							ctx.textAlign = (j == axis.gmax) ? 'end' : 'center';
+							ctx.textAlign = 'center';
 							ctx.fillStyle = this.options.labels.color;
 							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
 							oldx = x1 + (j == axis.gmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
@@ -1684,7 +1718,7 @@
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
-						str = (ii < this[d].labels.length) ? this[d].labels[ii] : "";
+						str = axis.ticks[ii].label;
 						ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 					}
 				}
@@ -1874,9 +1908,8 @@
 				}
 			}
 		}
-
 		// Draw the data canvas to the main canvas
-		this.canvas.ctx.drawImage(this.paper.data.c,0,0);
+		try { this.canvas.ctx.drawImage(this.paper.data.c,0,0); }catch(e){ }
 		
 		// Apply the clipping
 		ctx.restore();
@@ -2293,6 +2326,54 @@
 	
 	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
 	
+	function roundDate(ms,t,n,attr){
+		var d,df,l,a,a2,time,f,months;
+		if(!attr) attr = {};
+		if(!attr.method) attr.method = "round";
+		time = new Date(ms);
+		d = { 'dow': time.getUTCDay(), 'h': time.getUTCHours(), 'm': time.getUTCMinutes(), 's': (time.getUTCSeconds()+time.getUTCMilliseconds()/1000), 'ms': time.getUTCMilliseconds(), 'dd': time.getUTCDate(), 'mm': time.getUTCMonth(), 'yy': time.getUTCFullYear() };
+		if(!n || n < 1) n = 1;
+		df = 0;
+		ly = false;
+		if(d.yy%4==0) ly = true;
+		if(d.yy%100==0) ly = false;
+		if(d.yy%400==0) ly = true;
+		months = [31,(ly ? 29 : 28),31,30,31,30,31,31,30,31,30,31];
+		// Round to nearest block
+		if(t == "years"){
+			a = d.yy + (d.mm + (d.dd + (d.h+((d.m+(d.s/60))/60))/24)/months[d.mm])/12;
+			a2 = Math[attr.method].call([],a/n)*n;
+			// There is no year zero
+			if(a2 == 0) a2 = 1;
+			d2 = new Date(zeroFill(a2,4)+'-01-01');
+			df = d2-time;
+		}else if(t == "months"){
+			a = d.mm + d.dd/months[d.mm];
+			a2 = (Math[attr.method].call([],a/n)*n + 1);
+			if(a2 > 12){
+				d.yy += Math.floor(a2/12);
+				a2 = a2%12;
+			}
+			d2 = new Date(d.yy+'-'+zeroFill(a2,2)+'-01');
+			df = d2-time;
+		}else if(t == "weeks"){
+			a = (d.dow + (d.h+((d.m+(d.s/60))/60))/24);
+			a2 = Math[attr.method].call([],a/(n*7))*(n*7);
+			f = 86400000;
+			df = Math.round((a2-a)*f);
+		}else{
+			f = 1;
+			if(t == "milliseconds"){ a = d.s*1000; f = 1; }
+			else if(t == "seconds"){ a = d.s; f = 1000; }
+			else if(t == "minutes"){ a = d.m + d.s/60; f = 60000; }
+			else if(t == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600000; }
+			else if(t == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400000; }
+			a2 = Math[attr.method].call([],a/n)*n;
+			df = Math.round((a2-a)*f);
+		}
+		if(df != 0) time = new Date(time.valueOf() + df);
+		return time;
+	}
 	root.Graph = Graph;
 
 })(window || this);

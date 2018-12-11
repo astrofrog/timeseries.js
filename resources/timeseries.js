@@ -260,12 +260,14 @@
 			},
 			'locale': {
 				'title': 'Locale',
-				'steps': [{'name': 'seconds','div':1000,'spacings':[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10,15]},
-					{'name': 'minutes', 'div':60000,'spacings':[0.5,1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600000,'spacings':[0.5,1,2,4,6]},
-					{'name': 'days', 'div':86400000,'spacings':[0.5,1,2,7]},
-					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2,4,8]},
-					{'name': 'years', 'div':31557600000,'spacings':[0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}
+				'steps': [{'name': 'milliseconds', 'div': 1, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'seconds','div':1000,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'minutes', 'div':60000,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'hours', 'div':3600000,'spacings':[1,2,4,6]},
+					{'name': 'days', 'div':86400000,'spacings':[1,2]},
+					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
+					{'name': 'months', 'div':30*86400000,'spacings':[1,3,6]},
+					{'name': 'years', 'div':31557600000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5000,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}
 				],
 				'fn': function(j){
 					var d = new Date(parseInt(j));
@@ -586,7 +588,7 @@
 			}
 				
 			// Draw all the pieces that we need to
-			if(draw && k[0]){
+			if(draw && k && k[0]){
 				w = k[0].offsetWidth;
 				h = k[0].offsetHeight
 				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');

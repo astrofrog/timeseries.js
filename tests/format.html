@@ -73,12 +73,7 @@
 			<div id="summary"></div>
 			<div id="graph"></div>
 			
-			<h2>Tick calculating and labelling function</h2>
-			<p>Define the Javascript formatting function below. It should take <code>value</code> as an argument and it should return a string.</p>
-			<pre>function(min,max){</pre>
-			<textarea id="function"></textarea>
-			<pre>}</pre>
-			<h2>Output</h2>
+			<h2>Tick calculating and labelling</h2>
 			<div id="output"></div>
 			<!-- Javascript -->
 			<script>
@@ -88,12 +83,12 @@
 				var tests = [
 					{
 						'range':{'min':'1000000','max':'1004000'},
-						'output':{'min':1000000,'max':1004000,'inc':500},
-						'labels':["1000000","1000500","1001000","1001500","1002000","1002500","1003000","1003500","1004000","1004500"]
+						'output':{'min':1000000,'max':1004000,'inc':1000},
+						'labels':["1000000","1001000","1002000","1003000","1004000"]
 					},{
 						'range':{'min':'1000000','max':'1900000'},
-						'output':{'min':1000000,'max':1900000,'inc':100000},
-						'labels':["1e+6","1.1e+6","1.2e+6","1.3e+6","1.4e+6","1.5e+6","1.6e+6","1.7e+6","1.8e+6","1.9e+6"]
+						'output':{'min':1000000,'max':2000000,'inc':200000},
+						'labels':["1e+6","1.2e+6","1.4e+6","1.6e+6","1.8e+6","2e+6"]
 					},{
 						'range':{'min':0.91,'max':1.42},
 						'output':{'min':0.9,'max':1.5,'inc':0.1},
@@ -116,8 +111,12 @@
 						'labels':["-1.5e-7","-1e-7","-5e-8","0","5e-8","1e-7"]
 					},{
 						'range':{'min':'1542651740796','max':'1542651740811'},
-						'output':{'min':1542651740795,'max':1542651740815,'inc':5},
-						'labels':["1542651740795","1542651740800","1542651740805","1542651740810","1542651740815"]
+						'output':{'min':1542651740796,'max':1542651740812,'inc':2},
+						'labels':["1542651740796","1542651740798","1542651740800","1542651740802","1542651740804","1542651740806","1542651740808","1542651740810","1542651740812"]
+					},{
+						'range':{'min':-1.456789e15,'max':1.456789e15},
+						'output':{'min':-1.5e15,'max':1.5e15,'inc':5e14},
+						'labels':["-1.5e+15","-1e+15","-5e+14","0","5e+14","1e+15","1.5e+15"]
 					},{
 						'range':{'min':'1542651740796','max':'1542651740811'},
 						'date': true,
@@ -146,12 +145,12 @@
 					},{
 						'range':{'min':'1542651740796','max':'1642651740811'},
 						'date': true,
-						'output':{'min':1514764800000,'max':1672552800000,'inc':31556952000},
+						'output':{'min':1514764800000,'max':1672531200000,'inc':31556952000},
 						'labels':["2018","2019","2020","2021","2022","2023"]
 					},{
 						'range':{'min':'1542651740796','max':'2542651740811'},
 						'date': true,
-						'output':{'min':1262304000000,'max':2840184000000,'inc':315569520000},
+						'output':{'min':1262304000000,'max':2840140800000,'inc':315569520000},
 						'labels':["2010","2020","2030","2040","2050","2060"]
 					},{
 						'range':{'min':'1542651740796','max':'11542651740811'},
@@ -161,105 +160,9 @@
 					}
 				];
 
-
 				graph = new Graph(S('#graph')[0], [], {});
 				var els = new Array();
 
-				function processFunction(fn_inner){
-					var customfn = false;
-					var good = 0;
-					var total = 0;
-					var error = [];
-					var o = "";
-					var li = "";
-
-					if(fn_inner){
-						var fn = 'function defineAxis(min, max){ '+fn_inner+'}'
-						try {
-							eval(fn);
-							rtn = defineAxis(0,1);
-							if(typeof rtn==="object" && typeof rtn.min==="number" && typeof rtn.max==="number" && typeof rtn.inc=="number" && typeof rtn.labels==="object") customfn = true;
-							else{
-								error.push("Function doesn't return a valid structure. Must be in the form <code>{'max':0,'min':0,'inc':1,'labels':[]}</code>");
-							}
-						}catch(err){
-							error.push("Can't evaluate the custom function. It should return a structure of the form <code>{'max':0,'min':0,'inc':1,'labels':[]}</code>");
-						}
-					}
-
-					function closeEnough(typ){
-						return Math.abs(output[typ]-tests[t].output[typ]) < Math.abs(tests[t].output[typ]*1e-7);
-					}
-					function getClass(typ){
-						if(compare[typ]) return 'success';
-						return (closeEnough(typ) ? 'partial' : 'fail');
-					}
-
-					for(var t = 0, n = 1; t < tests.length; t++, n++){
-						var table = '';
-						var errs = new Array();
-						var score = {'ok':0,'bad':0,'partial':0}
-
-						if(customfn){
-							min = parseFloat(tests[t].range.min);
-							max = parseFloat(tests[t].range.max);
-							output = defineAxis(parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
-							output.isDate = (tests[t].date||false);
-						}else{
-							graph.x.isDate = (tests[t].date||false);
-							graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
-							output = {'min':graph.x.gmin,'max':graph.x.gmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'labels':graph.x.labels};
-						}
-
-
-						compare = {'min':false,'max':false,'inc':false};
-						// See how well we did
-						for(var key in compare){
-							total++;
-							if(tests[t].output){
-								if(tests[t].output[key]){
-									if(tests[t].output[key]==output[key]){
-										score.ok++;
-										compare[key] = true;
-									}else{
-										if(closeEnough(key)) score.partial++;
-										score.bad++;
-									}
-								}
-							}
-						}
-						if(!output.labels) output.labels = new Array();
-						for(var i = 0, v = output.min; i < output.labels.length; i++, total++, v += output.inc){
-							s = (tests[t].labels[i] == output.labels[i]);
-							if(s) score.ok++;
-							else score.bad++;
-							table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+'</td><td>'+tests[t].labels[i]+'</td><td>'+output.labels[i]+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
-						}
-
-						good += score.ok;
-						ntest = score.ok + score.partial + score.bad;
-						o = '<h3 id="'+n+'">Example '+n+': '+(score.partial > 0 ? 'PARTIAL SUCCESS': (score.bad > 0 ? 'ERRORS':'SUCCESS'))+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+getClass('min')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+(compare.inc ? 'success':'fail')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected</th><th>Result</th><th>Success</th></tr>'+table+'</table>';
-						if(errs.length > 0){
-							o += '<h4>Errors</h4><ul class="errors">';
-							for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
-							o += '</ul>';
-						}
-						li += '<li class="ex '+(score.partial > 0 ? 'partial': (score.bad > 0 ? 'fail':'success'))+'"><a href="#'+n+'">'+n+'</a></li>';
-						els[t].html(o);
-					}
-
-				
-					var summary = S('#summary');
-					var html = 'Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>';
-					for(var e = 0; e < error.length; e++) html += '<br />'+error[e];
-					summary.html(html);
-					if(good==total) summary.addClass('success');
-					else summary.removeClass('success');
-					
-					// Update anchor now that we've updated the page		
-					if(location.hash) document.location = location.hash;
-				}
-				
 				// Build DOM containers
 				var el = S('#output');
 				for(var t = 0; t < tests.length; t++){
@@ -267,12 +170,84 @@
 					els[t] = S('#output-'+t);
 				}
 
-				S('#function').on('keydown',function(){
-					processFunction(this[0].value);
-				});
+				var good = 0;
+				var total = 0;
+				var error = [];
+				var o = "";
+				var li = "";
 
-				processFunction(S('#function')[0].value);
+				function closeEnough(typ){
+					return Math.abs(output[typ]-tests[t].output[typ]) < Math.abs(tests[t].output[typ]*1e-7);
+				}
+				function getClass(typ){
+					if(compare[typ]) return 'success';
+					return (closeEnough(typ) ? 'partial' : 'fail');
+				}
 
+				for(var t = 0, n = 1; t < tests.length; t++, n++){
+					var table = '';
+					var errs = new Array();
+					var score = {'ok':0,'bad':0,'partial':0}
+
+					graph.x.isDate = (tests[t].date||false);
+					graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
+					output = {'min':graph.x.gmin,'max':graph.x.gmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
+
+
+					compare = {'min':false,'max':false,'inc':false};
+					// See how well we did
+					for(var key in compare){
+						total++;
+						if(tests[t].output){
+							if(tests[t].output[key]){
+								if(tests[t].output[key]==output[key]){
+									score.ok++;
+									compare[key] = true;
+								}else{
+									if(closeEnough(key)) score.partial++;
+									else score.bad++;
+								}
+							}
+						}
+					}
+					if(!output.ticks) output.ticks = new Array();
+					//for(var i = 0, v = output.min; i < output.ticks.length; i++, total++, v += output.inc){
+					var mx = Math.max(output.ticks.length,tests[t].labels.length);
+					var l,i,e,s,v,v2;
+					for(i = 0; i < mx; i++, total++){
+						v = (i < output.ticks.length) ? output.ticks[i].value : "";
+						v2 = (i < output.ticks.length) ? output.ticks[i].calcval : "";
+						e = (i < tests[t].labels.length) ? tests[t].labels[i] : "?";
+						l = (i < output.ticks.length) ? output.ticks[i].label : "?";
+						s = (e == l);
+						if(s) score.ok++;
+						else score.bad++;
+						table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+' ('+v2+' '+graph.x.precision+')</td><td>'+e+'</td><td>'+l+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
+					}
+
+					good += score.ok;
+					ntest = score.ok + score.partial + score.bad;
+					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+getClass('min')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
+					if(errs.length > 0){
+						o += '<h4>Errors</h4><ul class="errors">';
+						for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
+						o += '</ul>';
+					}
+					li += '<li class="ex '+(score.bad > 0 ? 'fail': (score.partial > 0 ? 'partial':'success'))+'"><a href="#'+n+'">'+n+'</a></li>';
+					els[t].html(o);
+				}
+
+			
+				var summary = S('#summary');
+				var html = 'Passes '+(good)+'/'+total+' tests <ul class="links">'+li+'</ul>';
+				for(var e = 0; e < error.length; e++) html += '<br />'+error[e];
+				summary.html(html);
+				if(good==total) summary.addClass('success');
+				else summary.removeClass('success');
+				
+				// Update anchor now that we've updated the page		
+				if(location.hash) document.location = location.hash;
+				
 			});
 			</script>
 		</div>
