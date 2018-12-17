@@ -11,6 +11,7 @@
 	<link rel="stylesheet" href="resources/timeseries.css">
 	<link rel="stylesheet" href="resources/highlight/highlight.css">
 	<script type="text/javascript" src="resources/highlight/highlight.pack.js"></script>
+	<script>var ex1, ex2, ex3, ex4, ex5, ex6, ex7</script>
 </head>
 <body>
 
@@ -175,7 +176,7 @@
 									}]
 								};
 
-								var ex1 = TimeSeries.create(json);
+								ex1 = TimeSeries.create(json);
 								ex1.initialize(document.getElementById('example1'));
 
 							});
@@ -211,6 +212,19 @@
 										"name": "Model",
 										"url": "data/OB110462-model.csv",
 										"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+									}],
+									"scales": [{
+										"name": "xscale",
+										"type": "time",
+										"range": "width",
+										"zero": false,
+										"domain": {"data": "Danish 1.54m", "field": "x"}
+									},{
+										"name": "yscale",
+										"type": "linear",
+										"range": "height",
+										"zero": false,
+										"domain": {"data": "Danish 1.54m", "field": "value"}
 									}],
 									"axes": [
 										{
@@ -290,7 +304,7 @@
 									}]
 								};
 
-								var ex2 = TimeSeries.create(json);
+								ex2 = TimeSeries.create(json);
 								ex2.initialize(document.getElementById('example2'));
 
 							});
@@ -310,7 +324,7 @@
 							<script>
 							S(document).ready(function(){
 								// Create a new TimeSeries object
-								var ex3 = TimeSeries.create("data/OB110462-simple.json",{fit:true});
+								ex3 = TimeSeries.create("data/OB110462-simple.json",{fit:true});
 								ex3.initialize(document.getElementById('example3'));
 							});
 							</script>
@@ -329,7 +343,7 @@
 							<script>
 							S(document).ready(function(){
 								// Create a new TimeSeries object
-								var ex4 = TimeSeries.create("data/OB110462-simple.json",{'fit':true});
+								ex4 = TimeSeries.create("data/OB110462-simple.json",{'fit':true});
 								ex4.initialize(document.getElementById('example4'));
 							});
 							</script>
@@ -362,7 +376,7 @@
 							}
 							</style>
 							<script>
-								var ex5 = TimeSeries.create("data/OB110462-simple.json",{});
+								ex5 = TimeSeries.create("data/OB110462-simple.json",{});
 								// Add click event to load the interactive graph
 								S('#example5').on("click",{ts:ex5},function(e){
 									// Initialise the TimeSeries
@@ -403,7 +417,7 @@
 							<script>
 							S(document).ready(function(){
 
-								var ex6 = TimeSeries.create("data/OB110462.json",{'fit':true});
+								ex6 = TimeSeries.create("data/OB110462.json",{'fit':true});
 								// Add click event to load the interactive graph
 								S('#example6').on("click",{ts:ex6},function(e){
 									e.data.ts.initialize(e.currentTarget);
@@ -448,7 +462,7 @@
 							}
 							</style>
 							<script>
-								var ex7 = TimeSeries.create("data/lightcurve.json",{'fit':true,'tooltip':{'theme':'my-theme'}});
+								ex7 = TimeSeries.create("data/lightcurve.json",{'fit':true,'tooltip':{'theme':'my-theme'}});
 								// Add mouseover event to load the interactive graph
 								S('#example7').on("mouseover",{ts:ex7},function(e){
 									// Initialise the TimeSeries

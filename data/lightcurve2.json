@@ -47,9 +47,9 @@
 		"description": "Event happened here",
 		"encode": {
 			"enter": {
-				"x": {"scale": "x", "signal": "(new Date('2018-10-29T13:53:22Z')).getTime()"},
-				"y": {"scale": "y", "value": 0},
-				"y2": {"scale": "y", "value": 2 },
+				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
+				"y": {"scale": "yscale", "value": 0},
+				"y2": {"scale": "yscale", "value": 2 },
 				"stroke": {"value": "#000"},
 				"strokeWidth": {"value": 2}
 			}
@@ -61,10 +61,9 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
-				"y1": {"scale": "yscale", "field": "y1"},
+				"y": {"scale": "yscale", "field": "y"},
 				"y2": {"scale": "yscale", "field": "y2"},
-				"strokeWidth": {"value": 0},
-				"tooltip": {"field": "tooltip"}
+				"strokeWidth": {"value": 0}
 			},
 			"update": {
 				"stroke": {"value": "#999999"},
@@ -133,10 +132,9 @@
 				"shape": {"value": "circle"}
 			},
 			"update": {
-				"shape": "cross",
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
-				"shape": {"value": "circle"},
+				"shape": {"value": "cross"},
 				"size": {"value": 36},
 				"zindex": {"value": 0}
 			},
@@ -154,8 +152,8 @@
 		"description": "Labels",
 		"encode": {
 			"enter": {
-				"x": {"scale": "x", "signal": "(new Date('2018-10-29T13:53:24Z')).getTime()"},
-				"y": {"scale": "y", "value": 0.986},
+				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,24)"},
+				"y": {"scale": "yscale", "value": 0.986},
 				"text": { "value": "A_{5}"},
 				"fill": { "value": "#000000"},
 				"fontWeight": { "value": "normal" },
