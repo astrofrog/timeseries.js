@@ -12,6 +12,7 @@
 	<!-- StuQuery for DOM manipulation -->
 	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
 	<style>
 	h4 { margin-bottom: 0px; }
 	.result {
@@ -140,8 +141,8 @@
 					},{
 						'range':{'min':'1542651740796','max':'1543651740811'},
 						'date': true,
-						'output':{'min':1542585600000,'max':1543795200000,'inc':172800000},
-						'labels':["2018-11-19","2018-11-21","2018-11-23","2018-11-25","2018-11-27","2018-11-29","2018-12-01","2018-12-03"]
+						'output':{'min':1542499200000,'max':1543708800000,'inc':172800000},
+						'labels':["2018-11-18","2018-11-20","2018-11-22","2018-11-24","2018-11-26","2018-11-28","2018-11-30","2018-12-02"]
 					},{
 						'range':{'min':'1542651740796','max':'1642651740811'},
 						'date': true,
@@ -157,10 +158,36 @@
 						'date': true,
 						'output':{'min':946684800000,'max':13569465600000,'inc':3155695200000},
 						'labels':["2000","2100","2200","2300","2400"]
+					},{
+						'range':{'min':'1540821198000','max':'1540821208800'},
+						'date': true,
+						'dateformat':'jd',
+						'output':{'min':1540821195360,'max':1540821212640,'inc':4320},
+						'labels':["2458421.07865","2458421.0787","2458421.07875","2458421.0788","2458421.07885"]
+					},{
+						'range':{'min':'1540799726830.911','max':'1540855448010.9622'},
+						'date': true,
+						'dateformat':'mjd',
+						'output':{'min':1540788480000,'max':1540857600000,'inc':17280000},
+						'labels':["58420.2","58420.4","58420.6","58420.8","58421"]
+					},{
+						'range':{'min':'1540821194075.5989','max':'1540821214804.8894'},
+						'date': true,
+						'dateformat':'mjd',
+						'output':{'min':1540821191040,'max':1540821216960 ,'inc':8640},
+						'labels':["58420.5786","58420.5787","58420.5788","58420.5789"]
+					},{
+						'range':{'min':'1540818628787.0164','max':'1540825233449.4124'},
+						'date': true,
+						'dateformat':'mjd',
+						'output':{'min':1540817856000,'max':1540826496000,'inc':1728000},
+						'labels':["58420.54","58420.56","58420.58","58420.6","58420.62","58420.64"]
 					}
 				];
 
 				graph = new Graph(S('#graph')[0], [], {});
+				ts = TimeSeries.create({});
+				console.log(ts,ts.dateformats)
 				var els = new Array();
 
 				// Build DOM containers
@@ -190,6 +217,9 @@
 					var score = {'ok':0,'bad':0,'partial':0}
 
 					graph.x.isDate = (tests[t].date||false);
+					var fmt = (graph.x.isDate) ? ts.dateformats[(tests[t].dateformat || "default")] : {};
+					graph.x.labelopts = fmt;
+					console.log('opts',graph.x.labelopts);
 					graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
 					output = {'min':graph.x.gmin,'max':graph.x.gmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
 
@@ -227,7 +257,7 @@
 
 					good += score.ok;
 					ntest = score.ok + score.partial + score.bad;
-					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+getClass('min')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
+					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3><p>Data range is '+tests[t].range.min+' &rarr; '+tests[t].range.max+' which becomes <span class="'+getClass('min')+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting '+tests[t].output.min+')')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>'+(output.isDate ? ' and the date format is <code>'+fmt.title+'</code>':'')+'.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
 					if(errs.length > 0){
 						o += '<h4>Errors</h4><ul class="errors">';
 						for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';

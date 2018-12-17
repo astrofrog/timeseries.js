@@ -1229,9 +1229,15 @@
 		rg = this[axis].range;
 		mx = this[axis].max;
 		mn = this[axis].min;
+		if(!this[axis].labelopts) this[axis].labelopts = {};
+		// Set the label scaling
+		var scale = (axis=="x" && this[axis].labelopts.scale) ? this[axis].labelopts.scale : 1;
+
 		// Calculate reasonable grid line spacings
-		if(this[axis].isDate){
-			if(!this.options.formatLabelX) this.options.formatLabelX = {};
+		if(this[axis].isDate && scale==1){
+
+			this[axis].showAsDate = true;
+
 			// Dates are in milliseconds
 			// Grid line spacings can range from 1 ms to 10000 years
 			// Use Gregorian year length for calendar display
@@ -1244,7 +1250,7 @@
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
 					{'name': 'months', 'div': 30*86400000, 'spacings':[1,3,6]},
 					{'name': 'years', 'div':365.2425*86400000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
-			steps = (this.options.formatLabelX.steps || steps);
+			steps = (this[axis].labelopts.steps || steps);
 			for(st = 0; st < steps.length ; st++){
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
 					n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
@@ -1263,6 +1269,14 @@
 			t_max = (new Date(roundDate(mx,this[axis].datestep.name,this[axis].datestep.spacing,{'method':'ceil'}))).valueOf();
 
 		}else{
+			this[axis].showAsDate = false;
+			this[axis].spacing = null;
+
+			// Scale the range before we work out the spacings
+			if(scale!=1){
+				mn = mn/scale;
+				mx = mx/scale;
+			}
 
 			// Start off by finding the exact spacing
 			dv = Math.abs(mx - mn) / (this[axis].isDate ? 3 : 5);
@@ -1278,15 +1292,13 @@
 			frac = log10_dv - base;
 
 			// We now want to check whether frac falls closest to 1, 2, 5, or 10 (in log
-			// space). There are more efficient ways of doing this in Python but this is
-			// just for clarity.
+			// space). There are more efficient ways of doing this but this is just for clarity.
 			options = [1,2,5,10];
 			distance = new Array(options.length);
 			imin = -1;
 			tmin = 1e100;
 			for(var i = 0; i < options.length; i++){
-				options[i] = Math.log10(options[i]); 
-				distance[i] = Math.abs(frac - options[i]);
+				distance[i] = Math.abs(frac - Math.log10(options[i]));
 				if(distance[i] < tmin){
 					tmin = distance[i];
 					imin = i;
@@ -1294,18 +1306,35 @@
 			}
 
 			// Now determine the actual spacing
-			spacing = Math.pow(10,(base + options[imin]));
+			spacing = Math.pow(10,(base))*options[imin];
 			t_inc = spacing;
-			// Determine the number of decimal places to show
-			// Quicker to do it here than in makeTicks.
-			this[axis].precision = Math.ceil(Math.abs(Math.log10(t_inc)));
-			if(this[axis].precision==0 && Math.abs(mn) > 10) this[axis].precision = Math.floor(Math.log10(mn));
 
 			// Normalise the tick mark min/max
 			t_max = Math.ceil(mx/t_inc)*t_inc;
 			if(t_max < mx-t_inc*0.2) t_max += t_inc;
 			t_min = Math.floor(mn/t_inc)*t_inc;
 			if(t_min > mn+t_inc*0.2) t_min -= t_inc;
+			
+			// Determine the number of decimal places to show
+			// Quicker to do it here than in makeTicks.
+			this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc)));
+			if(this[axis].precisionlabel==0 && Math.abs(t_min) > 10) this[axis].precisionlabel = Math.floor(Math.log10(Math.abs(t_min)));
+
+			// If we are dealing with dates we set the precision that way
+			if(this[axis].isDate){
+				this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)))
+			}
+
+			// Now scale the range back
+			if(scale!=1){
+				t_min = t_min*scale;
+				t_max = t_max*scale;
+				t_inc = t_inc*scale;
+			}
+
+			// Round to nearest t_inc (because of precision issues)
+			t_min = Math.round(t_min/t_inc)*t_inc;
+			t_max = Math.round(t_max/t_inc)*t_inc;
 		}
 
 		// Set the first/last gridline values as well as the spacing
@@ -1313,6 +1342,7 @@
 		this[axis].gmax = t_max;
 		this[axis].inc = t_inc;
 		this[axis].grange = this[axis].gmax-this[axis].gmin;
+		this[axis].precision = this[axis].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
 
 		this.makeTicks(axis);
 
@@ -1330,14 +1360,9 @@
 		this[a].ticks = new Array();
 		// Because of precision issues we can't rely on exact equality.
 		for(var v = mn; v < mx+this[a].inc*0.2; v += this[a].inc){
-			if(this[a].isDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf(),'label':''});
+			if(this[a].showAsDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf(),'label':''});
 			else this[a].ticks.push({'value':v,'label':''});
 		}
-		this.makeLabels(a);
-		return this;
-	}
-	
-	Graph.prototype.makeLabels = function(a){
 
 		mn = this[a].ticks[0].value;
 		mx = this[a].ticks[this[a].ticks.length-1].value;
@@ -1378,7 +1403,6 @@
 
 		// Get the number of decimal places to show
 		precision = this[a].precision;
-
 		function shortestFormat(fmt){
 			var l = 1e100;
 			var i = "";
@@ -1393,13 +1417,16 @@
 			}
 			return fmt[i];
 		}
+		function tidy(v){
+			return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+)0$/g,function(m,p1){ return "."+p1; });
+		}
 		for(i = 0; i < this[a].ticks.length; i++){
 			v = this[a].ticks[i].value;
 			if(this[a].log){
 				v = Math.pow(10,v);
 				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo)
 			}
-			if(this[a].isDate){
+			if(this[a].showAsDate){
 				d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v/1000).toFixed(precision+3) : niceDate(v,this[a].spacing);
 				this[a].ticks[i].label = d;
 			}else{
@@ -1407,7 +1434,7 @@
 				if(sci){
 					if(this[a].log) precision = (""+i).length;
 					fmt['normal'] = ""+v;
-					fmt['exp'] = v.toExponential(precision).replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; });
+					fmt['exp'] = tidy(v.toExponential(precision));
 					if(!this[a].log){
 						s = (v<0 ? -1 : 1);
 						if(fmt['normal'].indexOf(/[0]{5}/) > 0) v = s*Math.floor(Math.abs(v));
@@ -1429,6 +1456,17 @@
 				// Because of precision issues, use the label to rebuild the value
 				this[a].ticks[i].calcval = this[a].ticks[i].value+0;
 				this[a].ticks[i].value = parseFloat(this[a].ticks[i].label);
+			}
+		}
+		for(i = 0; i < this[a].ticks.length; i++){
+			if(typeof this[a].labelopts.formatLabel==="function"){
+				var str = '';
+				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value);
+				if(o){
+					str = tidy(o.truncated || o.str);
+					prev = o;
+				}
+				this[a].ticks[i].label = str;
 			}
 		}
 		// Fix precision issues
@@ -1694,17 +1732,8 @@
 				// Draw tick labels
 				if(show.labels){
 					if(d=="x"){
-						var str = "";
-						if(typeof this.options.formatLabelX.fn==="function"){
-							var o = this.options.formatLabelX.fn.call(this,j,prev);
-							if(o){
-								str = (o.truncated || o.str);
-								prev = o;
-							}
-						}else{
-							str = axis.ticks[ii].label;
-							prev = {'str':str};
-						}
+						var str = axis.ticks[ii].label;
+						if(!str) str = "";
 						var ds = str.split(/\n/);
 						var maxw = 0;
 						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
@@ -1714,7 +1743,6 @@
 							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
 							oldx = x1 + (j == axis.gmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 						}
-						if(x1-maxw/2 < 0) prev = null;
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
 						if(j==this.y.gmax) ctx.textBaseline = 'top';
@@ -2368,6 +2396,7 @@
 			else if(t == "minutes"){ a = d.m + d.s/60; f = 60000; }
 			else if(t == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600000; }
 			else if(t == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400000; }
+			else{ a = d.s*1000; f = 1; }
 			a2 = Math[attr.method].call([],a/n)*n;
 			df = Math.round((a2-a)*f);
 		}

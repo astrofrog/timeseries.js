@@ -164,7 +164,7 @@
 		this.logging = opt.logging || false;
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 
-		this.log('TS',json)
+		this.log('TS',json);
 
 		// Set some defaults
 		this.options = {
@@ -175,6 +175,47 @@
 			fit: false,
 			tooltip: {'theme':'aas-theme'},
 			showaswego: opt.showaswego
+		}
+		this.dateformats = {
+			'default': {
+				'title': 'Default'
+			},
+			'locale': {
+				'title': 'Locale',
+				'formatLabel': function(j){
+					var d = new Date(parseInt(j));
+					return {'str':d.toLocaleString()};
+				}
+			},
+			'jd': {
+				'title': 'Julian date',
+				'scale': 86400000,
+				'formatLabel': function(j){
+					return {'str':formatDate(parseFloat(j),"jd")+''};
+				}
+			},
+			'mjd': {
+				'title': 'Modified Julian date',
+				'scale': 86400000,
+				'formatLabel': function(j){
+					var mjd = formatDate(parseInt(j),"mjd");
+					var o = {'str':mjd+''};
+					console.log('here',this.x.spacing,this.x.inc,this.x.precisionlabel);
+					o.truncated = mjd.toPrecision(this.x.precisionlabel+1);
+					return o;
+				}
+			},
+			'tjd': {
+				'title': 'Truncated Julian date',
+				'scale': 86400000,
+				'formatLabel': function(j){
+					var tjd = formatDate(parseInt(j),"tjd");
+					var o = {'str':tjd+''};
+					if(this.x.spacing.name == "milli") o.truncated = tjd.toFixed(6)+'';
+					if(this.x.spacing.name == "micro") o.truncated = tjd.toFixed(9)+'';
+					return o;
+				}
+			}
 		}
 		this.datasets = [];
 		this.directory = "";
@@ -254,52 +295,6 @@
 	TS.prototype.makeMenu = function(){
 		var el = S(this.el);
 		var id = el.attr('id');
-		var formats = {
-			'default': {
-				'title': 'Default'
-			},
-			'locale': {
-				'title': 'Locale',
-				'steps': [{'name': 'milliseconds', 'div': 1, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'seconds','div':1000,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'minutes', 'div':60000,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600000,'spacings':[1,2,4,6]},
-					{'name': 'days', 'div':86400000,'spacings':[1,2]},
-					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
-					{'name': 'months', 'div':30*86400000,'spacings':[1,3,6]},
-					{'name': 'years', 'div':31557600000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5000,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}
-				],
-				'fn': function(j){
-					var d = new Date(parseInt(j));
-					return {'str':d.toLocaleString()};
-				}
-			},
-			'jd': {
-				'title': 'Julian date',
-				'steps': [
-					{'name': 'milli', 'div':86400,'spacings':[0.001,0.005,0.01,0.05,0.1]},
-					{'name': 'days', 'div':86400000,'spacings':[1e-4,5e-4,0.001,0.005,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}
-				],
-				'fn': function(j){
-					return {'str':formatDate(parseFloat(j),"jd")+''};
-				}
-			},
-			'mjd': {
-				'title': 'Modified Julian date',
-				'steps': [
-					{'name': 'micro', 'div':864,'spacings':[0.00001,0.00005,0.0001,0.0005,0.001,0.005,0.01,0.05,0.1]},
-					{'name': 'milli', 'div':86400,'spacings':[0.001,0.005,0.01,0.05,0.1]},
-					{'name': 'days', 'div':86400000,'spacings':[0.0005,0.001,0.005,0.01,0.01,0.05,0.1,0.5,1,2,7,10,20,30,50,100,200,500,1000,2000,5000,10000]}
-				],
-				'fn': function(j){
-					var mjd = formatDate(parseInt(j),"mjd");
-					var o = {'str':mjd+''};
-					if(this.x.spacing.name == "milli") o.truncated = mjd.toFixed(6)+'';
-					if(this.x.spacing.name == "micro") o.truncated = mjd.toFixed(9)+'';
-					return o;
-				}
-			}
-		}
 
 		if(el.find('.menuholder').length == 0){
 			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
@@ -331,11 +326,12 @@
 
 			// Build date selector
 			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
-			for(var k in formats) html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+formats[k].title+'</option>';
+			for(var k in this.dateformats) html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
 			html += '</select></div>';
 			el.find('.menu-panel.submenu-config').append(html);
-			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:formats},function(e){
-				e.data.graph.options.formatLabelX = e.data.formats[this[0].value];
+			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:this.dateformats},function(e){
+				e.data.graph.x.labelopts = e.data.formats[this[0].value];
+				console.log('labelopts',e.data.graph.x.labelopts)
 				e.data.graph.defineAxis("x").calculateData().draw(true);
 			});
 		}
@@ -829,6 +825,7 @@
 		var d = new JD(dt,"unix");
 		if(t=="jd") return d.valueOf();
 		else if(t=="mjd") return d.toMJD();
+		else if(t=="tjd") return d.toTJD();
 		else if(t=="iso") return d.toISOString();
 		else return d;
 	}
@@ -848,6 +845,7 @@
 				if(t=="unix") this.val = u2jd(jd);
 				else if(t=="epoch" && offs) this.val = u2jd((new Date(offs)).getTime() + jd*1000);
 				else if(t=="mjd") jd += 2400000.5;
+				else if(t=="tjd") jd += 2440000.5;
 			}
 			if(!this.val){
 				var days = Math.floor(jd);
@@ -859,6 +857,7 @@
 		this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
 		this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
 		this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
+		this.toTJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2440000.5); }
 		this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); }
 
 		// Deal with Julian Date in two parts to avoid rounding errors
