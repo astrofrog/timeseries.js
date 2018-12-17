@@ -305,7 +305,7 @@
 			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
 			var str = '';
 			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div></menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="savepng">Save as PNG</button></div></menu></div>');
 
 			// Add button events
 			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
@@ -318,8 +318,9 @@
 			el.find('button.fontup').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(+1) });
 			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1) });
 			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0) });
+			el.find('button.savevega').on('click',{me:this},function(e){ e.data.me.save("vega"); });
+			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png"); });
 
-			// 
 			el.find('.submenu button').on('click',{el:el},function(e){
 				e.data.el.find('.on').removeClass('on');
 				me = S(e.currentTarget);
@@ -404,7 +405,7 @@
 		var files = [];
 		var fn = function(csv,attr){
 			var json = CSV2JSON(csv,attr.dataset.format.parse);
-			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
+			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse,'csv':csv};
 			this.update(attr.dataset.name);
 			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
 		}
@@ -457,31 +458,24 @@
 						if(d.props.symbol) d.props.symbol[p] = event[p].value;
 						if(d.props.format) d.props.format[p] = event[p].value;
 					}
-					if(event[p].signal){
-						if(event[p].signal){
-							try { d.props[p] = looseJsonParse(event[p].signal); }
-							catch(e) { _obj.log('Error',d.data,event[p]); }
-					
-							// If we now have an object we build a string
-							if(p=="tooltip" && typeof d.props[p]==="object"){
-								str = "<table>";
-								for(var i in d.props[p]){
-									if(typeof d.props[p][i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
-								}
-								d.props[p] = str+"</table>";
-							}
-						}
-					}
 				}else{
-					if(event[p].field && datum[event[p].field]) datum[p] = datum[event[p].field];
+					if(event[p].field && datum[event[p].field]) d.data[p] = datum[event[p].field];
 					if(typeof event[p].value!=="undefined") datum[p] = event[p].value;
-					if(event[p].signal){
-						try { datum[p] = ev.call(datum,event[p].signal,datum); }
-						catch(e) { _obj.log('Error',datum,event[p]); }
+				}
+				if(event[p].signal){
+					to = dest[p] || "data";
+					try { d[to][p] = looseJsonParse(event[p].signal); }
+					catch(e) { _obj.log('Error',d.data,event[p]); }
+					// If we now have an object we build a string
+					if(p=="tooltip" && typeof d.props[p]==="object"){
+						str = "<table>";
+						for(var i in d.props[p]){
+							if(typeof d.props[p][i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+						}
+						d.props[p] = str+"</table>";
 					}
 				}
 			}
-
 			return d;
 		}
 
@@ -551,6 +545,7 @@
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
 		
+		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
 		keyitems = {};
 		for(i in this.graph.data){
@@ -629,6 +624,54 @@
 		
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
+		return this;
+	}
+	
+	TS.prototype.save = function(type){
+
+		// Bail out if there is no Blob function to save with
+		if(typeof Blob!=="function") return this;
+		var opts = { 'type': 'text/text', 'file': (this.file ?  this.file.replace(/.*\//g,"") : "timeseries.json") };
+
+		function save(content){
+			var asBlob = new Blob([content], {type:opts.type});
+			function destroyClickedElement(event){ document.body.removeChild(event.target); }
+
+			var dl = document.createElement("a");
+			dl.download = opts.file;
+			dl.innerHTML = "Download File";
+			if(window.webkitURL != null){
+				// Chrome allows the link to be clicked
+				// without actually adding it to the DOM.
+				dl.href = window.webkitURL.createObjectURL(asBlob);
+			}else{
+				// Firefox requires the link to be added to the DOM
+				// before it can be clicked.
+				dl.href = window.URL.createObjectURL(asBlob);
+				dl.onclick = destroyClickedElement;
+				dl.style.display = "none";
+				document.body.appendChild(dl);
+			}
+			dl.click();
+		
+		}
+
+		if(type == "vega"){
+			output = clone(this.json);
+			for(var i = 0; i < output.data.length; i++){
+				delete output.data[i].url;
+				output.data[i].values = this.datasets[output.data[i].name].csv;
+			}
+			var txt = JSON.stringify(output);
+			opts.type = "text/json";
+			opts.file = (this.file ?  this.file.replace(/.*\//g,"") : "timeseries.json");
+			save(txt)
+		}else{
+			opts.type = "image/png";
+			opts.file = "timeseries.png"
+			this.graph.canvas.c.toBlob(save,opts.type);
+		}
+
 		return this;
 	}
 
@@ -716,7 +759,10 @@
 			if(!data[i] || data[i] == "") continue;
 			datum = {};
 			// Loop over each column in the line
-			for(var j=0; j < data[i].length; j++) datum[header[j]] = data[i][j];
+			for(var j=0; j < data[i].length; j++){
+				if(formats[j]=="number") datum[header[j]] = parseFloat(data[i][j]);
+				else datum[header[j]] = data[i][j];
+			}
 			newdata.push(datum);
 		}
 
@@ -725,7 +771,8 @@
 	}
 
 	function looseJsonParse(obj){
-		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };function timeFormat(t,f){ var d = new Date(t); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);}";
+		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
+		fns += "function timeFormat(t,f){ var d = new Date(t); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);};";
 		//YES %a - abbreviated weekday name.*
 		//YES %A - full weekday name.*
 		//YES %b - abbreviated month name.*
@@ -755,6 +802,10 @@
 		//YES %Y - year with century as a decimal number.
 		// %Z - time zone offset, such as -0700, -07:00, -07, or Z.
 		// %% - a literal percent sign (%).
+
+		// The month is zero-based for compatibility with VEGA
+		// https://vega.github.io/vega/docs/expressions/#datetime
+		fns += "function datetime(y,m,d,h,mn,sc,ms){ return new Date(y+'-'+zeroPad(m+1,2)+'-'+(d ? zeroPad(d,2):'01')+(h ? 'T'+(zeroPad(h,2)+':'+(mn ? zeroPad(mn,2)+(sc ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':'')); }";
 
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
