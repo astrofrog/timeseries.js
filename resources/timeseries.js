@@ -200,7 +200,6 @@
 				'formatLabel': function(j){
 					var mjd = formatDate(parseInt(j),"mjd");
 					var o = {'str':mjd+''};
-					console.log('here',this.x.spacing,this.x.inc,this.x.precisionlabel);
 					o.truncated = mjd.toPrecision(this.x.precisionlabel+1);
 					return o;
 				}
