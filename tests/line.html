@@ -60,7 +60,9 @@
 				ctx.beginPath();
 				ctx.moveTo(0,y);
 				ctx.lineTo(w,y);
+				ctx.lineTo(0,0);
 				ctx.stroke();
+				ctx.beginPath();
 				ctx.fillText("Text and line at "+y+"px",w/2,y);
 				ctx.fill();
 			}
