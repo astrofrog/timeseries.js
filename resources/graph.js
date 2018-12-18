@@ -1322,7 +1322,9 @@
 
 			// If we are dealing with dates we set the precision that way
 			if(this[axis].isDate){
-				this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)))
+				p = Math.log10(t_inc);
+				this[axis].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
+				this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
 			}
 
 			// Now scale the range back
@@ -1330,6 +1332,8 @@
 				t_min = t_min*scale;
 				t_max = t_max*scale;
 				t_inc = t_inc*scale;
+				// Fix precision errors introduced by the multiplication
+				t_inc = parseFloat(t_inc.toPrecision(this[axis].precisionlabel));
 			}
 
 			// Round to nearest t_inc (because of precision issues)
@@ -1357,6 +1361,7 @@
 			mn = Math.ceil(mn);
 			mx = Math.ceil(mx);
 		}
+		if(isNaN(mn) || isNaN(mx)) return this;
 		this[a].ticks = new Array();
 		// Because of precision issues we can't rely on exact equality.
 		for(var v = mn; v < mx+this[a].inc*0.2; v += this[a].inc){
@@ -1417,9 +1422,6 @@
 			}
 			return fmt[i];
 		}
-		function tidy(v){
-			return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+)0$/g,function(m,p1){ return "."+p1; });
-		}
 		for(i = 0; i < this[a].ticks.length; i++){
 			v = this[a].ticks[i].value;
 			if(this[a].log){
@@ -1447,6 +1449,7 @@
 					if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
 					else fmt['fixed'] = v.toFixed(precision);
 				}
+
 				// Bug fix for Javascript rounding issues when the range is big
 				if(Math.abs(v/this[a].range) < 1e-12) fmt['fixed'] = "0";
 
@@ -1461,7 +1464,7 @@
 		for(i = 0; i < this[a].ticks.length; i++){
 			if(typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
-				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value);
+				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,this[a].precisionlabeldp);
 				if(o){
 					str = tidy(o.truncated || o.str);
 					prev = o;
@@ -2346,6 +2349,10 @@
 			delete this.times[key];
 		}
 		return this;
+	}
+
+	function tidy(v){
+		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+)0$/g,function(m,p1){ return "."+p1; });
 	}
 
 	function removeRoundingErrors(e){

@@ -207,11 +207,10 @@
 			'tjd': {
 				'title': 'Truncated Julian date',
 				'scale': 86400000,
-				'formatLabel': function(j){
+				'formatLabel': function(j,dp){
 					var tjd = formatDate(parseInt(j),"tjd");
+					if(dp > 0) tjd = tjd.toFixed(dp);
 					var o = {'str':tjd+''};
-					if(this.x.spacing.name == "milli") o.truncated = tjd.toFixed(6)+'';
-					if(this.x.spacing.name == "micro") o.truncated = tjd.toFixed(9)+'';
 					return o;
 				}
 			}
@@ -299,6 +298,7 @@
 			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
 			var str = '';
 			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
+			str += '<li></li>'
 			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="savepng">Save as PNG</button></div></menu></div>');
 
 			// Add button events

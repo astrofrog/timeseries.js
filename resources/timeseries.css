@@ -62,23 +62,19 @@
 .timeseries menu select { font-size: 1em; display: inline-block; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; tab-index: -1; }
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
-.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:focus ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu {
-	background-color: rgba(37, 55, 136,0.85);
-	color: white;
-}
-.timeseries input.hamburger:checked ~ label.hamburger:after {
-	background-color: rgb(0,0,0,0.4);
-}
+.timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:hover ~ label.hamburger:after, .timeseries input.hamburger:focus ~ label.hamburger:after, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu { background-color: rgba(37, 55, 136,0.85); color: white; }
+.timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu ul.submenu li button,.timeseries menu ul.submenu li:last-child { background-color: rgb(0,0,0,0.4); }
 .timeseries input.hamburger:checked ~ menu { right: 0px; }
 .timeseries .canvasholder { transition: margin-right 0.2s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: right 0.2s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { right: 360px; }
-.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px; background-color: rgb(0,0,0,0.4); }
+.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px; height: 2em; display: flex; }
 .timeseries menu ul.submenu li { margin: 0px; display: inline-block; }
 .timeseries menu ul.submenu li button { margin: 0px; width: 36px; height: 36px; color: #dfdfdf; }
 .timeseries menu ul.submenu li button.icon svg { width: 32px; }
-.timeseries menu ul.submenu li button:hover, .timeseries menu ul.submenu li button.on { background-color: #253788; color: inherit; }
-.timeseries menu .menu-panel { padding: 1em; display: none; }
+.timeseries menu ul.submenu li button:hover, .timeseries menu ul.submenu li button.on { background-color: inherit; color: inherit; }
+.timeseries menu ul.submenu li:last-child { flex-grow: 1; right: 0px; height: 2em; left: 0px; position: relative; }
+.timeseries menu .menu-panel { padding: 1em; display: none; min-height: calc(100% - 2em); }
 .timeseries menu .menu-panel.on { display: block; }
 .timeseries menu .row { margin-bottom: 0em; }
 .timeseries menu button.icon { line-height: 0px;  }
