@@ -63,6 +63,7 @@
 				ctx.stroke();
 				ctx.beginPath();
 				ctx.fillText("Text and line at "+y+"px",w/2,y);
+				ctx.arc((w/3)*Math.random(), y+10, Math.max(1,10*Math.random()), 0, 2*Math.PI, false);
 				ctx.fill();
 			}
 
