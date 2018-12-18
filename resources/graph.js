@@ -1464,7 +1464,7 @@
 		for(i = 0; i < this[a].ticks.length; i++){
 			if(typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
-				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,this[a].precisionlabeldp);
+				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
 				if(o){
 					str = tidy(o.truncated || o.str);
 					prev = o;
@@ -2352,6 +2352,8 @@
 	}
 
 	function tidy(v){
+		if(typeof v!=="string") return "";
+		if(v=="0") return v;
 		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+)0$/g,function(m,p1){ return "."+p1; });
 	}
 

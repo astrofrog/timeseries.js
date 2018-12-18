@@ -180,6 +180,40 @@
 			'default': {
 				'title': 'Default'
 			},
+			'relative': {
+				'title': 'Relative date',
+				'formatLabel': function(val,attr){
+					var sign = (val < 0) ? -1 : 1;
+					val = Math.abs(val);
+					var s = val*1;
+					if(val == 0) return {'str':'0'};
+					var b = ['y','d','h','m','s','ms'];
+					var sec = {
+						'y':86400*365.25*1000,
+						'd':86400*1000,
+						'h':3600*1000,
+						'm':60*1000,
+						's':1000,
+						'ms':1
+					}
+					if(val < sec.ms) return {'str':(sign < 0 ? '-':'')+(val/1000)};
+					var str = '';
+					var inc = {};
+					for(var i = 0,k=0; i < b.length; i++){
+						k = 0;
+						ds = sec[b[i]];
+						if(s >= ds && s > 0) k = Math.floor(s/ds);
+						if(b[i]=="y" && val >= ds) str += k+'y';
+						if(b[i]=="d" && val >= ds && k > 0) str += (str ? ' ':'')+k+'d';
+						if(b[i]=="h" && val >= sec.m && s > 0){ str += (str ? ' ':'')+zeroPad(k,2)+':'; inc.m = true; }
+						if(b[i]=="m" && inc.m) str += zeroPad(k,2);
+						if(b[i]=="s" && s > 0) str += (val < sec.m ? k : ':'+zeroPad(k,2));
+						if(b[i]=="ms" && s > 0 && k > 0) str += '.'+zeroPad(k,3).replace(/0+$/,"");
+						s -= k*ds;
+					}
+					return {'str':(sign < 0 ? '-':'')+str};
+				}
+			},
 			'locale': {
 				'title': 'Locale',
 				'formatLabel': function(j){
@@ -207,9 +241,9 @@
 			'tjd': {
 				'title': 'Truncated Julian date',
 				'scale': 86400000,
-				'formatLabel': function(j,dp){
+				'formatLabel': function(j,attr){
 					var tjd = formatDate(parseInt(j),"tjd");
-					if(dp > 0) tjd = tjd.toFixed(dp);
+					if(attr.dp > 0) tjd = tjd.toFixed(attr.dp);
 					var o = {'str':tjd+''};
 					return o;
 				}
@@ -770,6 +804,8 @@
 		return newdata;
 	}
 
+	function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };
+	
 	function looseJsonParse(obj){
 		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
 		fns += "function timeFormat(t,f){ var d = new Date(t); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);};";
