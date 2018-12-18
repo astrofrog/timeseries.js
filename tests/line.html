@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+	<link rel="stylesheet" href="../resources/aas.css">
+	<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+				<p>Last updated: 18 December 2018</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+	    <canvas id="myCanvas" style="border:1px solid red;width:100%;height: 250px;"></canvas>
+		<script>
+			var el = S('#myCanvas');
+			var w = el[0].offsetWidth;
+			var h = el[0].offsetHeight;
+			var canvas = document.getElementById('myCanvas');
+			var ctx = canvas.getContext('2d');
+			window.devicePixelRatio = 2;
+			scale = window.devicePixelRatio;
+			canvas.style.width = w + "px";
+			canvas.style.height = h + "px";
+			canvas.width = scale * w;
+			canvas.height = scale * h;
+			ctx.scale(scale, scale);
+		
+			var start = new Date();
+
+			dh = 16;
+			ctx.lineWidth = 1;
+			ctx.fillColor = "black";
+			ctx.font = dh+"px sans-serif";
+			ctx.textBaseline = "bottom";
+			ctx.textAlign = "center";
+
+			for(var i = 0; i < 3; i++){
+				y = Math.random()*h;
+				while(y < dh || y > h-dh) y = Math.random()*h;
+				ctx.beginPath();
+				ctx.moveTo(0,y);
+				ctx.lineTo(w,y);
+				ctx.stroke();
+				ctx.fillText("Text and line at "+y+"px",w/2,y);
+				ctx.fill();
+			}
+
+			var now = new Date();
+			console.log(now-start,'ms')
+		</script>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+
+</body>
+</html>
