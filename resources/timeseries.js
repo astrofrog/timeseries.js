@@ -485,7 +485,7 @@
 			}
 
 			if(!id || this.datasets[id]){
-				var desc = mark.description || "";
+				var desc = mark.description || "Markers "+(m+1);
 				var dataset = { title: id, id: id, desc: desc, type: mark.type, clickable: true, css:{'background-color':'#000000'} };
 
 				if(mark.type == "symbol") dataset.symbol = {show:true};
@@ -542,11 +542,16 @@
 		
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
+		// Remove any buttons we've already added
+		layers.find('li').remove();
 		keyitems = {};
+		j = 1;
 		for(i in this.graph.data){
 			id = S(this.el).attr('id')+'_'+i;
-			if(!keyitems[this.graph.data[i].desc]) keyitems[this.graph.data[i].desc] = new Array();
-			keyitems[this.graph.data[i].desc].push(i);
+			key = this.graph.data[i].desc;
+			if(!keyitems[key]) keyitems[key] = new Array();
+			keyitems[key].push(i);
+			j++;
 		}
 		j = 0;
 		for(key in keyitems){
@@ -554,7 +559,7 @@
 			d = this.graph.data[keyitems[key][0]];
 			// Check if we've already added this
 			if(layers.find('#'+id).length == 0){
-				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+this.graph.data[keyitems[key][0]].desc+'</label></li>');
+				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
 				l = layers.find('#'+id);
 				p = l.parent();
 				k = p.find('.key');

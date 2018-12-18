@@ -93,6 +93,7 @@
 }
 .timeseries menu ol.layers li label.inactive { filter: grayscale(1); opacity: 0.15; }
 .timeseries menu ol.layers li .key { width: 1.5em; height: 1.5em; display: inline-block; float: left; margin-right: 0.25em; }
+.timeseries menu ol.layers li label:after { content: ''; position: relative; clear: both; }
 @media only screen and (max-width: 520px) {
 	.timeseries menu { width: 75%; right: -75%; }
 	/*.timeseries input.hamburger:checked ~ .canvasholder { margin-left: 75%; }*/
