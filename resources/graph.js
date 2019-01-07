@@ -456,8 +456,6 @@
 		if(options.width) opt.width = options.width;
 		if(options.height) opt.height = options.height;
 		opt.logging = this.logging;
-		// Set canvas scaling for retina-type screens
-		opt.scale = window.devicePixelRatio;
 
 		this.canvas = new Canvas(element,opt);
 				
@@ -472,8 +470,10 @@
 			p.ctx = p.c.getContext('2d');
 			return p;
 		}
+		// Set canvas scaling for retina-type screens
+		var s = window.devicePixelRatio;
 		// Set properties of the temporary canvases
-		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide*opt.scale,this.canvas.tall*opt.scale);
+		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide*s,this.canvas.tall*s);
 
 		// Bind events to the canvas
 		var _obj = this;
@@ -2124,9 +2124,9 @@
 		x = (attr.x || datum.props.x);
 		y = (attr.y || datum.props.y);
 		t = (attr.text || datum.data.text || "Label");
-		f = datum.props.format;
+		f = JSON.parse(JSON.stringify(datum.props.format));
 		if(attr.props) f.extend(attr.props);
-		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':datum.props.format});
+		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':f});
 		o.id = datum.id;
 		o.weight = 1;
 		if(attr.update) this.addRectToLookup(o);
@@ -2140,7 +2140,7 @@
 		ctx = (attr.ctx||this.canvas.ctx);
 		f = (attr.format || {});
 		if(!f.font) f.font = this.chart.fontfamily;
-		if(!f.fontSize) f.fontSize = this.chart.fontsize;
+		if(!f.fontSize) f.fontSize = this.chart.fontsize*this.fontscale;
 		if(!f.fontWeight) f.fontWeight = "bold";
 		if(!f.align) f.align = "center";
 		if(!f.baseline) f.baseline = "middle";
