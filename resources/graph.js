@@ -1069,8 +1069,6 @@
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
 		if(!datum) return this;
 		var f = datum.props.format;
-		// Scale the font
-		if(f.fontSize) f.fontSize *= this.fontsize;
 		var fill = (typeof f.fill==="string" ? f.fill : (typeof f.fill==="number" ? this.colours[f.fill % this.colours.length]:'#000000'));
 		if(datum.props.format.fillOpacity) fill = hex2rgba(fill,f.fillOpacity);
 		ctx.fillStyle = fill;
@@ -1612,7 +1610,7 @@
 		}
 
 		ctx.beginPath();
-		ctx.font = Math.round(this.chart.fontsize*this.fontscale)+'px '+this.chart.fontfamily;
+		ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
 		ctx.textBaseline = 'middle';
 
 		// Draw main rectangle
@@ -2142,7 +2140,7 @@
 		ctx = (attr.ctx||this.canvas.ctx);
 		f = (attr.format || {});
 		if(!f.font) f.font = this.chart.fontfamily;
-		if(!f.fontSize) f.fontSize = Math.round(this.chart.fontsize*this.fontscale);
+		if(!f.fontSize) f.fontSize = this.chart.fontsize;
 		if(!f.fontWeight) f.fontWeight = "bold";
 		if(!f.align) f.align = "center";
 		if(!f.baseline) f.baseline = "middle";

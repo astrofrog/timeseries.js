@@ -77,16 +77,8 @@
 					},
 					"error": function(err,attr){
 						var cb = this.load.data.files[attr.file].callbacks;
-						// Replace spinner with error message
-						for(var i = 0; i < cb.length; i++){
-							el = S(cb[i].attr.this.el).find('.loader');
-							this.log('ERROR','Failed to load data',attr.file,err)
-							if(el.find('.spinner').length > 0){
-								el.html('&#9888; Failed to load data');
-								cb[i].attr.this.remove();
-							}
-							el.append('<br />'+attr.file+'');
-						}
+						// Throw an error for each callback
+						for(var i = 0; i < cb.length; i++) cb[i].attr.this.error('Failed to load',attr.file,err);
 					}
 				});
 			}else{
@@ -274,7 +266,7 @@
 	}
 
 	TS.prototype.log = function(){
-		if(this.logging){
+		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function") console.log('TS',args);
 		}
@@ -419,6 +411,7 @@
 				// Load the Vega-JSON file
 				var idx = this.file.lastIndexOf("/");
 				this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
+				console.log(this.file)
 				S().ajax(this.file,{
 					"dataType": "json",
 					"this": this,
@@ -427,6 +420,9 @@
 						this.processJSON(d);
 						this.postProcess();
 						return this;
+					},
+					"error": function(err){
+						this.error("Unable to load configuration",this.file,err);
 					}
 				});
 			}else{
@@ -723,6 +719,21 @@
 		return this;
 	}
 	
+	TS.prototype.error = function(msg,extra,err){
+		this.log('ERROR',msg,err)
+		if(S(this.el).find('.loader').length == 0){
+			S(this.el).html('<div class="loader"><div class="spinner"></div></div>').css({'position':'relative','width':'100%','height':'200px'});
+		}
+		// Replace spinner with error message
+		if(S(this.el).find('.spinner').length > 0){
+			S(this.el).find('.loader').html('&#9888; '+msg);
+			this.remove();
+		}
+		S(this.el).find('.loader').append('<br />'+extra+'');
+
+		return this;	
+	}
+
 	TS.prototype.remove = function(){
 		S(this.el).find('.menuholder').remove();
 		S(this.el).find('.canvasholder').remove();
