@@ -194,9 +194,6 @@
 	
 		if(this.c && this.c.getContext){  
 			this.setWH(this.wide,this.tall);
-			this.ctx = this.c.getContext('2d');
-			// Normalize coordinate system to use css pixels.
-			this.ctx.scale(this.scale, this.scale);
 			this.ctx.clearRect(0,0,this.wide*this.scale,this.tall*this.scale);
 			this.ctx.beginPath();
 			var fs = 16;
@@ -410,7 +407,11 @@
 		c.height = h*this.scale;
 		this.wide = w;
 		this.tall = h;
-		
+
+		this.ctx = this.c.getContext('2d');
+		// Normalize coordinate system to use css pixels.
+		this.ctx.scale(this.scale, this.scale);
+	
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvasholder.css({'width':w+'px','height':h+'px'});
@@ -465,24 +466,23 @@
 			'temp': {'c':document.createElement('canvas'),'ctx':''},  // Create a canvas for temporary work
 			'data': {'c':document.createElement('canvas'),'ctx':''}   // Create a canvas to draw the data to
 		};
-		// Set properties of the temporary canvases
-		for(var p in this.paper){
-			this.paper[p].c.width = Math.round(this.canvas.wide*opt.scale);
-			this.paper[p].c.height = Math.round(this.canvas.tall*opt.scale);
-			this.paper[p].ctx = this.paper[p].c.getContext('2d');
+		function setWH(p,w,h){
+			p.c.width = Math.round(w);
+			p.c.height = Math.round(h);
+			p.ctx = p.c.getContext('2d');
+			return p;
 		}
+		// Set properties of the temporary canvases
+		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide*opt.scale,this.canvas.tall*opt.scale);
 
 		// Bind events to the canvas
 		var _obj = this;
 		this.canvas.on("resize",function(ev){
 			// Attach an event to deal with resizing the <canvas>
 			if(_obj.logging) var d = new Date();
-			var s = _obj.canvas.scale;
-			for(var p in _obj.paper){
-				_obj.paper[p].c.width = Math.round(_obj.canvas.wide*s);
-				_obj.paper[p].c.height = Math.round(_obj.canvas.tall*s);
-				_obj.paper[p].ctx = _obj.paper[p].c.getContext('2d');
-			}
+			var s = window.devicePixelRatio;
+			// Resize all the temporary canvases
+			for(var p in _obj.paper) _obj.paper[p] = setWH(_obj.paper[p],_obj.canvas.wide*s,_obj.canvas.tall*s);
 
 			_obj.setOptions().defineAxis("x").getChartOffset().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
