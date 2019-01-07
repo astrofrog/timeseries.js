@@ -467,8 +467,8 @@
 		};
 		// Set properties of the temporary canvases
 		for(var p in this.paper){
-			this.paper[p].c.width = this.canvas.wide*opt.scale;
-			this.paper[p].c.height = this.canvas.tall*opt.scale;
+			this.paper[p].c.width = Math.round(this.canvas.wide*opt.scale);
+			this.paper[p].c.height = Math.round(this.canvas.tall*opt.scale);
 			this.paper[p].ctx = this.paper[p].c.getContext('2d');
 		}
 
@@ -479,8 +479,8 @@
 			if(_obj.logging) var d = new Date();
 			var s = _obj.canvas.scale;
 			for(var p in _obj.paper){
-				_obj.paper[p].c.width = _obj.canvas.wide*s;
-				_obj.paper[p].c.height = _obj.canvas.tall*s;
+				_obj.paper[p].c.width = Math.round(_obj.canvas.wide*s);
+				_obj.paper[p].c.height = Math.round(_obj.canvas.tall*s);
 				_obj.paper[p].ctx = _obj.paper[p].c.getContext('2d');
 			}
 
@@ -976,7 +976,7 @@
 			ctx.beginPath();
 			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
 			ctx.clip();
-			ctx.drawImage(this.paper.data.c,x,y,nwide*this.canvas.scale,ntall*this.canvas.scale);
+			ctx.drawImage(this.paper.data.c,x,y,Math.round(nwide*this.canvas.scale),Math.round(ntall*this.canvas.scale));
 			ctx.restore();
 		}else{
 			this.draw(typeof attr.update==="boolean" ? attr.update : true);
@@ -2319,7 +2319,7 @@
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
-		(ctx || this.canvas.ctx).clearRect(0,0,this.canvas.wide*this.canvas.scale,this.canvas.tall*this.canvas.scale);
+		(ctx || this.canvas.ctx).clearRect(0,0,Math.round(this.canvas.wide),Math.round(this.canvas.tall));
 		return this;
 	}
 
