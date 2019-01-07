@@ -2319,7 +2319,9 @@
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
-		(ctx || this.canvas.ctx).clearRect(0,0,Math.round(this.canvas.wide),Math.round(this.canvas.tall));
+		w = ctx ? ctx.canvas.width : this.canvas.wide;
+		h = ctx ? ctx.canvas.height : this.canvas.tall;
+		(ctx || this.canvas.ctx).clearRect(0,0,w,h);
 		return this;
 	}
 
