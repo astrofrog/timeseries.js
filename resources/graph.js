@@ -1205,7 +1205,6 @@
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
-		console.log(axis,this[axis].min,this[axis].max,this[axis].gmin,this[axis].gmax)
 			this.makeTicks(axis);
 			return this;
 		}
@@ -1730,7 +1729,6 @@
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
 				p = this.getPos(d,i);
-			console.log(ii,i,axis.log,p,this[d].grange,this[d].gmin,this[d].gmax,i)
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
 				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
