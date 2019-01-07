@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+	<link rel="stylesheet" href="../resources/aas.css">
+	<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<!-- Graphing library -->
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<!-- TimeSeries library -->
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+				<p>Last updated: 7 January 2019</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<div class="example">
+			<figure>
+				<div id="example1">
+					<img src="data/lightcurve.png" />
+				</div>
+				<figcaption>This plot represents a simulated lightcurve.</figcaption>
+			</figure>
+			<!-- Javascript -->
+			<script>
+			var ts;
+			S(document).ready(function(){
+			
+				var json = {
+					"$schema": "https://vega.github.io/schema/vega/v4.json",
+					"width": 800,
+					"height": 450,
+					"padding": 0,
+					"autosize": {"type": "fit", "resize": true},
+					"data": [{
+						"name": "Danish 1.54m",
+						"url": "nodata.csv",
+						"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+					},{
+						"name": "Faulkes Telescope North",
+						"url": "nodata2.csv",
+						"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+					},{
+						"name": "Model",
+						"url": "data/OB110462-model.csv",
+						"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
+					}],
+					"scales": [{
+						"name": "xscale",
+						"type": "time",
+						"range": "width",
+						"zero": false,
+						"domain": {"data": "Danish 1.54m", "field": "x"}
+					},{
+						"name": "yscale",
+						"type": "linear",
+						"range": "height",
+						"zero": false,
+						"domain": {"data": "Danish 1.54m", "field": "value"}
+					}],
+					"axes": [
+						{
+							"orient": "bottom",
+							"scale": "xscale",
+							"title": "Observation time"
+						},{
+							"orient": "left",
+							"scale": "yscale",
+							"title": "Intensity"
+						}
+					],
+					"marks":[{
+						"type": "line",
+						"description": "Model",
+						"from": {"data": "Model"},
+						"encode": {
+							"enter": {
+								"x": {"scale": "xscale", "field": "HJD"},
+								"y": {"scale": "yscale", "field": "dmag"},
+								"strokeWidth": {"value": 2},
+								"strokeDash": {"value":[8,8]},
+								"tooltip": {"field": "tooltip"}
+							},
+							"update": {
+								"stroke": {"value": "#999999"},
+								"fillOpacity": {"value": 1},
+								"zindex": {"value": 0}
+							}
+						}
+					},{
+						"type": "rect",
+						"description": "Data",
+						"from": {"data": "Danish 1.54m"},
+						"encode": {
+							"enter": {
+							"x": {"scale": "xscale", "field": "x"},
+								"x": {"scale": "xscale", "field": "HJD"},
+								"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
+								"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
+								"width": {"value": 1},
+								"fill": {"value": "#FF7F00"},
+								"fillOpacity": {"value": 0.5}
+							},
+							"update": {
+								"fillOpacity": {"value": 1},
+								"fill": {"value": "#FF7F00"}
+							},
+							"hover": {
+								"fill": {"value": "#D60303"}
+							}
+						}
+					},{
+						"type": "symbol",
+						"description": "Data",
+						"from": {"data": "Danish 1.54m"},
+						"encode": {
+							"enter": {
+								"x": {"scale": "xscale", "field": "HJD"},
+								"y": {"scale": "yscale", "field": "dmag"},
+								"shape": {"value": "circle"},
+								"tooltip": {"signal": "'Time: ' + datum.x + '<br />Dmag: ' + datum.dmag + '<br />Error: ' + datum.err"}
+							},
+							"update": {
+								"shape": "cross",
+								"fill": {"value": "#FF7F00"},
+								"fillOpacity": {"value": 1},
+								"shape": {"value": "circle"},
+								"size": {"value": 16},
+								"zindex": {"value": 0}
+							},
+							"hover": {
+								"fill": {"value": "#D60303"},
+								"fillOpacity": {"value": 1},
+								"shape": {"value": "cross"},
+								"size": {"value": 100},
+								"zindex": {"value": 1}
+							}
+						}
+					}]
+				};
+
+
+				ts = TimeSeries.create(json,{});
+				ts.initialize(document.getElementById('example1'));
+
+			});
+			</script>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+
+</body>
+</html>

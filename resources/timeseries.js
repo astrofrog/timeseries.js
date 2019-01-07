@@ -28,7 +28,7 @@
 		var _obj = this;
 		
 		this.log = function(){
-			if(this.logging){
+			if(this.logging || arguments[0]=="ERROR"){
 				var args = Array.prototype.slice.call(arguments, 0);
 				if(console && typeof console.log==="function") console.log('TimeSeries',args);
 			}
@@ -73,6 +73,19 @@
 							this.load.data.files[cb[i].attr.file].loaded = true;
 
 							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr['this'],this.load.data.files[cb[i].attr.file].data,cb[i].attr);
+						}
+					},
+					"error": function(err,attr){
+						var cb = this.load.data.files[attr.file].callbacks;
+						// Replace spinner with error message
+						for(var i = 0; i < cb.length; i++){
+							el = S(cb[i].attr.this.el).find('.loader');
+							this.log('ERROR','Failed to load data',attr.file,err)
+							if(el.find('.spinner').length > 0){
+								el.html('&#9888; Failed to load data');
+								cb[i].attr.this.remove();
+							}
+							el.append('<br />'+attr.file+'');
 						}
 					}
 				});
@@ -567,6 +580,7 @@
 
 		return this;
 	}
+
 	TS.prototype.loaded = function(){
 		this.log('loaded',this.attr.showaswego,this.graph.data);
 		var i,id,layers,l,p,k,w,h,draw,d,key;
@@ -707,6 +721,12 @@
 		}
 
 		return this;
+	}
+	
+	TS.prototype.remove = function(){
+		S(this.el).find('.menuholder').remove();
+		S(this.el).find('.canvasholder').remove();
+		return {};
 	}
 
 	function getIcon(icon,colour){

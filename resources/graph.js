@@ -1949,7 +1949,7 @@
 	}
 
 	Graph.prototype.remove = function(){
-		this.canvas.container.replaceWith(this.canvas.origcontainer);
+		this.canvas.canvasholder.remove();
 		return {};
 	}
 
