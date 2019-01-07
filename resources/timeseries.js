@@ -411,7 +411,6 @@
 				// Load the Vega-JSON file
 				var idx = this.file.lastIndexOf("/");
 				this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
-				console.log(this.file)
 				S().ajax(this.file,{
 					"dataType": "json",
 					"this": this,
