@@ -424,7 +424,7 @@
 	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
 	//   options (object) contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
 	//     type: symbol, rect, line, area
-	Graph = function(element, data, options){
+	function Graph(element, data, options){
 
 		if(!options) options = {};
 		if(options.logging) this.logging = true;
@@ -441,6 +441,7 @@
 		this.updating = false;
 		this.events = [];
 		this.lines = [];
+		this.metrics = {};
 		this.fontscale = 1;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
@@ -564,7 +565,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':true})
+					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':(g.metrics.draw.av >= 100)})
 				}
 			}
 			g.updating = false;
@@ -641,7 +642,7 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				g.zoom([c.x,c.y],{'quick':true,'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
+				g.zoom([c.x,c.y],{'quick':(g.metrics.draw.av >= 100),'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
 				g.updating = false;
 			}
@@ -2342,11 +2343,31 @@
 
 	Graph.prototype.logTime = function(key){
 	
-		if(!this.times) this.times = {};
-		if(!this.times[key]) this.times[key] = new Date();
+		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
+		if(!this.metrics[key].start) this.metrics[key].start = new Date();
 		else{
-			console.log('Time ('+key+'): '+((new Date())-this.times[key])+'ms')
-			delete this.times[key];
+			var t,w,v,tot,l,i;
+			t = ((new Date())-this.metrics[key].start);
+			ts = this.metrics[key].times;
+			// Define the weights for each time in the array
+			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
+			// Add this time to the start of the array
+			ts.unshift(t);
+			// Remove old times from the end
+			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
+			// Work out the weighted average
+			l = ts.length;
+			this.metrics[key].av = 0;
+			if(l > 0){
+				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
+					v += ts[i]*w[i];
+					tot += w[i];
+				}
+				this.metrics[key].av = v/tot;
+			}
+			this.metrics[key].times = ts.splice(0);
+			console.log('Time ('+key+'): '+t+'ms',this.metrics[key]);
+			delete this.metrics[key].start;
 		}
 		return this;
 	}
