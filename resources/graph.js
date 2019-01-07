@@ -1205,6 +1205,7 @@
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
 			this[axis].grange = this[axis].gmax-this[axis].gmin;
+		console.log(axis,this[axis].min,this[axis].max,this[axis].gmin,this[axis].gmax)
 			this.makeTicks(axis);
 			return this;
 		}
@@ -1370,6 +1371,10 @@
 			else this[a].ticks.push({'value':v,'label':''});
 		}
 
+		if(this[a].ticks.length == 0){
+			console.log('no ticks')
+			return this;
+		}
 		mn = this[a].ticks[0].value;
 		mx = this[a].ticks[this[a].ticks.length-1].value;
 		
@@ -1406,7 +1411,6 @@
 		this.sci_lo = 1e-4;
 		l = Math.max(Math.abs(mx),Math.abs(mn));
 		sci = (l > this.sci_hi || l < this.sci_lo);
-
 		// Get the number of decimal places to show
 		precision = this[a].precision;
 		function shortestFormat(fmt){
@@ -1463,7 +1467,7 @@
 			}
 		}
 		for(i = 0; i < this[a].ticks.length; i++){
-			if(typeof this[a].labelopts.formatLabel==="function"){
+			if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
 				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
 				if(o){
@@ -1474,8 +1478,13 @@
 			}
 		}
 		// Fix precision issues
-		this[a].gmin = this[a].ticks[0].value;
-		this[a].gmax = this[a].ticks[this[a].ticks.length-1].value;
+		if(this[a].log){
+			this[a].gmin = G.log10(this[a].ticks[0].value);
+			this[a].gmax = G.log10(this[a].ticks[this[a].ticks.length-1].value);
+		}else{
+			this[a].gmin = this[a].ticks[0].value;
+			this[a].gmax = this[a].ticks[this[a].ticks.length-1].value;
+		}
 
 		return this;
 	}
@@ -1720,7 +1729,8 @@
 			}
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
-				p = this.getPos(d,(axis.log ? Math.pow(10, i) : i));
+				p = this.getPos(d,i);
+			console.log(ii,i,axis.log,p,this[d].grange,this[d].gmin,this[d].gmax,i)
 				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
 				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
