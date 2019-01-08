@@ -440,9 +440,14 @@
 		var n = data.length;
 		var f = "";
 		var files = [];
-		var fn = function(csv,attr){
-			var json = CSV2JSON(csv,attr.dataset.format.parse);
-			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse,'csv':csv};
+		var fn = function(data,attr){
+			var json;
+			typ = "json";
+			if(attr && attr.dataset && attr.dataset.format && attr.dataset.format.type=="csv") typ = "csv";
+			if(typ == "csv") json = CSV2JSON(data,attr.dataset.format.parse);
+			else if(typ == "json") json = data[0];
+			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
+			this.datasets[attr.dataset.name][typ] = data;
 			this.update(attr.dataset.name);
 			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
 		}
@@ -497,7 +502,10 @@
 					}
 				}else{
 					if(event[p].field && datum[event[p].field]) d.data[p] = datum[event[p].field];
-					if(typeof event[p].value!=="undefined") datum[p] = event[p].value;
+					if(typeof event[p].value!=="undefined"){
+						if(event[p].format && event[p].format=="date") datum[p] = (new Date(event[p].value)).getTime();
+						else datum[p] = event[p].value;
+					}
 				}
 				if(event[p].signal){
 					to = dest[p] || "data";
@@ -704,7 +712,9 @@
 			output = clone(this.json);
 			for(var i = 0; i < output.data.length; i++){
 				delete output.data[i].url;
-				output.data[i].values = this.datasets[output.data[i].name].csv;
+				typ = "json";
+				if(this.datasets[output.data[i].name].csv) typ = "csv";
+				output.data[i].values = this.datasets[output.data[i].name][typ];
 			}
 			var txt = JSON.stringify(output);
 			opts.type = "text/json";
@@ -873,7 +883,7 @@
 		// The month is zero-based for compatibility with VEGA
 		// https://vega.github.io/vega/docs/expressions/#datetime
 		fns += "function datetime(y,m,d,h,mn,sc,ms){ return new Date(y+'-'+zeroPad(m+1,2)+'-'+(d ? zeroPad(d,2):'01')+(h ? 'T'+(zeroPad(h,2)+':'+(mn ? zeroPad(mn,2)+(sc ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':'')); }";
-
+		fns += "function date(d){ return (new Date(d)).getTime(); }";
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
 

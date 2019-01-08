@@ -8,6 +8,14 @@
 		"name": "lightcurve",
 		"url": "goes_xrs_timeseries.csv",
 		"format": {"type": "csv", "parse": {"time":"date", "xrsa":"number", "xrsb":"number"}}
+	},{
+		"name": "events",
+		"format": {"type": "json", "parse": {"when":"date"}},
+		"values": [{"name":"event","when":"2011-06-07T05:40Z"}]
+	},{
+		"name": "ranges",
+		"format": {"type": "json", "parse": {"from":"date","to":"date"}},
+		"values": [{"name":"a","from":"2011-06-07 05:20Z","to":"2011-06-07 06:00Z"}]
 	}],
 	"scales": [{
 		"name": "xscale",
@@ -36,11 +44,12 @@
 	"marks":[{
 		"type": "rule",
 		"description": "M2.5",
+		"from": {"data": "events"},
 		"encode": {
 			"enter": {
-				"x": {"scale": "x", "signal": "(new Date('2011-06-07 05:40Z')).getTime()"},
-				"y": {"scale": "y", "value": 1e-9},
-				"y2": {"scale": "y", "value": 1e-3 },
+				"x": {"scale": "xscale", "signal": "datum.when" },
+				"y": {"scale": "yscale", "value": 1e-9},
+				"y2": {"scale": "yscale", "value": 1e-3 },
 				"stroke": {"value": "#1f77b4"},
 				"strokeWidth": {"value": 1}
 			}
@@ -48,12 +57,13 @@
 	},{
 		"type": "rect",
 		"description": "M2.5",
+		"from": {"data": "ranges"},
 		"encode": {
 			"enter": {
-				"x": {"scale": "x", "signal": "(new Date('2011-06-07 05:20Z')).getTime()"},
-				"x2": {"scale": "x", "signal": "(new Date('2011-06-07 06:00Z')).getTime()"},
-				"y": {"scale": "y", "value": 1e-9},
-				"y2": {"scale": "y", "value": 1e-3 },
+				"x": {"scale": "xscale", "signal": "datum.from"},
+				"x2": {"scale": "xscale", "signal": "datum.to"},
+				"y": {"scale": "yscale", "value": 1e-20},
+				"y2": {"scale": "yscale", "value": 1 },
 				"fill": {"value": "#1f77b4"},
 				"fillOpacity": {"value": 0.2}
 			}
