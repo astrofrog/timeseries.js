@@ -1626,13 +1626,7 @@
 			'bottom': {'textBaseline': 'top','y1': r.ymax,'y2': r.ymin}
 		};
 
-		if(!this.subgrid){
-			v = [2,3,4,5,6,7,8,9]
-			this.subgrid = []
-			for(i = 0 ; i < v.length ; i++){
-				this.subgrid[i] = G.log10(v[i]);
-			}
-		}
+		if(!this.subgrid) this.subgrid = [2,3,4,5,6,7,8,9];
 
 		ctx.beginPath();
 		ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
@@ -1814,12 +1808,17 @@
 					ctx.strokeStyle = (sub.color ? sub.color : 'rgba(0,0,0,0.2)');
 					ctx.lineWidth = (sub.width ? sub.width : 0.5);
 					for(var j = 0; j < this.subgrid.length ; j++){
-						di = i+this.subgrid[j];
-						if(di < axis.gridmax){
-							p = this.getPos(d,Math.pow(10,di));
+						di = i*this.subgrid[j];
+						if(di < axis.max){
+							p = this.getPos(d,di);
 							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-							ctx.moveTo(p,y2);
-							ctx.lineTo(p,y1);
+							if(d=="x"){
+								ctx.moveTo(p,y1);
+								ctx.lineTo(p,y1+tw);
+							}else if(d=="y"){
+								ctx.moveTo(x1,p);
+								ctx.lineTo(x1-tw,p);
+							}
 						}
 					}
 					ctx.stroke();
