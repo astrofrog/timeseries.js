@@ -167,8 +167,10 @@
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
-		if(typeof json==="object") this.json = json;
-		else if(typeof json==="string") this.file = json;
+		if(typeof json==="object"){
+			this.json = json;
+			this.vega = JSON.parse(JSON.stringify(json));
+		}else if(typeof json==="string") this.file = json;
 		this.logging = opt.logging || false;
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 
@@ -281,6 +283,7 @@
 
 	TS.prototype.processJSON = function(d){
 		this.json = d;
+		this.vega = JSON.parse(JSON.stringify(d));
 		this.log('processJSON',d,this.json)
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
@@ -715,7 +718,7 @@
 		}
 
 		if(type == "vega" || type == "vegaeditor"){
-			output = clone(this.json);
+			output = clone(this.vega);
 			for(var i = 0; i < output.data.length; i++){
 				delete output.data[i].url;
 				typ = "json";
