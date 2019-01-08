@@ -1421,6 +1421,8 @@
 		this.sci_lo = 1e-4;
 		l = Math.max(Math.abs(mx),Math.abs(mn));
 		sci = (l > this.sci_hi || l < this.sci_lo);
+		// Check if the data range is within our scientific bounds
+		if(mx-mn < this.sci_hi && mx-mn > this.sci_lo) sci = false;
 		// Get the number of decimal places to show
 		precision = this[a].precision;
 		function shortestFormat(fmt){
