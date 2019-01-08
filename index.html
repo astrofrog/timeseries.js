@@ -100,6 +100,19 @@
 										"values": "HJD,dmag\n5650,3\n5730,3\n5750,\n5800,3\n5850,3\n",
 										"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 									}],
+									"scales": [{
+										"name": "xscale",
+										"type": "time",
+										"range": "width",
+										"zero": false,
+										"domain": {"data": "Danish 1.54m", "field": "HJD"}
+									},{
+										"name": "yscale",
+										"type": "linear",
+										"range": "height",
+										"zero": false,
+										"domain": {"data": "Danish 1.54m", "field": "dmag"}
+									}],
 									"axes": [
 										{
 											"orient": "bottom",
@@ -220,13 +233,13 @@
 										"type": "time",
 										"range": "width",
 										"zero": false,
-										"domain": {"data": "Danish 1.54m", "field": "x"}
+										"domain": {"data": "Danish 1.54m", "field": "HJD"}
 									},{
 										"name": "yscale",
 										"type": "linear",
 										"range": "height",
 										"zero": false,
-										"domain": {"data": "Danish 1.54m", "field": "value"}
+										"domain": {"data": "Danish 1.54m", "field": "dmag"}
 									}],
 									"axes": [
 										{

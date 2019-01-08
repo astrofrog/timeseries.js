@@ -65,6 +65,19 @@
 		"url": "OB110462-model.csv",
 		"format": {"type": "csv", "parse": {"HJD":"number", "dmag":"number", "err":"number"}}
 	}],
+	"scales": [{
+		"name": "xscale",
+		"type": "time",
+		"range": "width",
+		"zero": false,
+		"domain": {"data": "Model", "field": "HJD"}
+	},{
+		"name": "yscale",
+		"type": "linear",
+		"range": "height",
+		"zero": false,
+		"domain": {"data": "Model", "field": "dmag"}
+	}],
 	"axes": [
 		{
 			"orient": "bottom",
