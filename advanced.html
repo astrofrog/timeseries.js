@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+	<link rel="stylesheet" href="resources/aas.css">
+	<link rel="stylesheet" href="resources/style.css">
+	<link rel="stylesheet" href="resources/timeseries.css">
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="resources/stuquery.js"></script>
+	<!-- Graphing library -->
+	<script language="javascript" type="text/javascript" src="resources/graph.js"></script>
+	<!-- TimeSeries library -->
+	<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+				<p>Last updated: 8 January 2018</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<div class="example">
+			<figure>
+				<div id="example1">
+					<img src="data/lightcurve.png" />
+				</div>
+				<figcaption>This plot represents a simulated lightcurve.</figcaption>
+			</figure>
+			<!-- Javascript -->
+			<script>
+			var ex1;
+			//window.devicePixelRatio = 2;
+			S(document).ready(function(){
+
+				ex1 = TimeSeries.create("data/OB110462.json");
+				ex1.initialize(document.getElementById('example1'));
+
+			});
+			</script>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+
+</body>
+</html>
