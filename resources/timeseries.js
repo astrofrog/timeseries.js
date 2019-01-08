@@ -735,16 +735,18 @@
 		if(type == "vegaeditor"){
 			// Open in VEGA editor
 			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
-			vegaeditor.postMessage({
-			  "mode": "vega",
-			  "spec": txt,
-			  "config": {
-				"axisY": {
-				  "minExtent": 30
-				}
-			  },
-			  "renderer": "svg"
-			}, "https://vega.github.io");
+			setTimeout(function(){
+				vegaeditor.postMessage({
+				  "mode": "vega",
+				  "spec": txt,
+				  "config": {
+					"axisY": {
+					  "minExtent": 30
+					}
+				  },
+				  "renderer": "svg"
+				}, "https://vega.github.io");
+			},1000);
 		}
 		if(type == "png"){
 			opts.type = "image/png";
