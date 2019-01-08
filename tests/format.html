@@ -182,6 +182,12 @@
 						'dateformat':'mjd',
 						'output':{'min':1540817856000,'max':1540826496000,'inc':1728000},
 						'labels':["58420.54","58420.56","58420.58","58420.6","58420.62","58420.64"]
+					},{
+						'range':{'min':'1540821199509.9182','max':'1540821206118.4883'},
+						'date': true,
+						'dateformat':'tjd',
+						'output':{'min':1540821197952,'max':1540821206592,'inc':1728},
+						'labels':["18420.57868","18420.5787","18420.57872","18420.57874","18420.57876","18420.57878"]
 					}
 				];
 
@@ -221,7 +227,7 @@
 					graph.x.labelopts = fmt;
 					console.log('opts',graph.x.labelopts);
 					graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
-					output = {'min':graph.x.gmin,'max':graph.x.gmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
+					output = {'min':graph.x.gridmin,'max':graph.x.gridmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
 
 
 					compare = {'min':false,'max':false,'inc':false};

@@ -192,7 +192,8 @@
 		// For excanvas we need to initialise the newly created <canvas>
 		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
 	
-		if(this.c && this.c.getContext){  
+		if(this.c && this.c.getContext){
+			this.ctx = this.c.getContext('2d');
 			this.setWH(this.wide,this.tall);
 			this.ctx.clearRect(0,0,this.wide*this.scale,this.tall*this.scale);
 			this.ctx.beginPath();
@@ -408,9 +409,8 @@
 		this.wide = w;
 		this.tall = h;
 
-		this.ctx = this.c.getContext('2d');
 		// Normalize coordinate system to use css pixels.
-		this.ctx.scale(this.scale, this.scale);
+		if(this.ctx) this.ctx.scale(this.scale, this.scale);
 	
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
