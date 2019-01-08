@@ -286,10 +286,9 @@
 				var dim = "";
 				if(d.axes[a].orient=="bottom") dim = "xaxis";
 				if(d.axes[a].orient=="left") dim = "yaxis";
-				if(dim) for(var p in d.axes[a]) this.options[dim][p] = d.axes[a][p];
+				if(dim) this.options[dim] = d.axes[a];
 			}
 		}
-		
 		this.options.logging = true;
 		return this;
 	}

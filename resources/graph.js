@@ -1668,11 +1668,11 @@
 				ctx.strokeStyle = (this.options[a].domainColor || this.options.grid.color || 'rgb(0,0,0)');
 				ctx.lineWidth = (this.options[a].domainWidth || this.options.grid.border);
 				if(o=="left"){
-					ctx.moveTo(c.left,c.top);
-					ctx.lineTo(c.left,c.top+c.height);
+					ctx.moveTo(c.left+0.5,c.top);
+					ctx.lineTo(c.left+0.5,c.top+c.height);
 				}else if(o=="bottom"){
-					ctx.moveTo(c.left,c.top+c.height);
-					ctx.lineTo(c.left+c.width,c.top+c.height);
+					ctx.moveTo(c.left,c.top+c.height+0.5);
+					ctx.lineTo(c.left+c.width,c.top+c.height+0.5);
 				}
 				ctx.stroke();
 				ctx.closePath();
@@ -1777,6 +1777,7 @@
 				ctx.stroke();
 								
 				// Draw grid lines
+				ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
 				if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
 					ctx.beginPath();
 					ctx.lineWidth = (this.options[a].gridWidth || 0.5);
@@ -1786,7 +1787,8 @@
 				}
 				
 				// Draw tick marks lines
-				if(show.ticks && j >= axis.gridmin && j <= axis.gridmax){
+				ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+				if(show.ticks && i > axis.min && i < axis.max){
 					ctx.beginPath();
 					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
 					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
@@ -1804,12 +1806,11 @@
 				// Draw sub grid for log scale
 				if(show.grid && axis.log){
 					ctx.beginPath();
-					sub = (this.options.grid.sub) ? this.options.grid.sub : {};
-					ctx.strokeStyle = (sub.color ? sub.color : 'rgba(0,0,0,0.2)');
-					ctx.lineWidth = (sub.width ? sub.width : 0.5);
+					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
+					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
 					for(var j = 0; j < this.subgrid.length ; j++){
 						di = i*this.subgrid[j];
-						if(di < axis.max){
+						if(di < axis.max && di > axis.min){
 							p = this.getPos(d,di);
 							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
 							if(d=="x"){

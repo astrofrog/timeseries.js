@@ -35,13 +35,19 @@
 			"orient": "bottom",
 			"scale": "xscale",
 			"title": "2011-06-06",
-			"titleFontWeight": "normal"
+			"titleFontWeight": "normal",
+			"gridColor": "black",
+			"domainColor": "black",
+			"tickColor": "black"
 		},{
 			"orient": "left",
 			"scale": "yscale",
 			"grid": true,
 			"title": "Watts m^{-2}",
-			"titleFontWeight": "normal"
+			"titleFontWeight": "normal",
+			"gridColor": "black",
+			"domainColor": "black",
+			"tickColor": "black"
 		}
 	],
 	"marks":[{
