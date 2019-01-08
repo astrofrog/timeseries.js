@@ -299,7 +299,7 @@
 	Canvas.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && is(console.log,"function")) console.log('Canvas',args);
+			if(console && is(console.log,"function")) console.log('%cCanvas%c','font-weight:bold;','',args);
 		}
 		return this;
 	}
@@ -684,7 +684,7 @@
 	Graph.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && is(console.log,"function")) console.log('Graph',args);
+			if(console && is(console.log,"function")) console.log('%cGraph%c','font-weight:bold;','',args);
 		}
 		return this;
 	}
@@ -2393,7 +2393,7 @@
 				this.metrics[key].av = v/tot;
 			}
 			this.metrics[key].times = ts.splice(0);
-			console.log('Time ('+key+'): '+t+'ms (av = '+this.metrics[key].av.toFixed(1)+'ms)');
+			console.log('%cGraph%c'+key+': '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;');
 			delete this.metrics[key].start;
 		}
 		return this;
