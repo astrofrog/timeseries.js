@@ -444,6 +444,7 @@
 		this.lines = [];
 		this.metrics = {};
 		this.fontscale = 1;
+		this.quicktime = 75;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
 
@@ -565,7 +566,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':(g.metrics.draw.av >= 100)})
+					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':(g.metrics.draw.av >= g.quicktime)})
 				}
 			}
 			g.updating = false;
@@ -642,7 +643,7 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				g.zoom([c.x,c.y],{'quick':(g.metrics.draw.av >= 100),'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
+				g.zoom([c.x,c.y],{'quick':(g.metrics.draw.av >= g.quicktime),'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
 				g.updating = false;
 			}
@@ -932,17 +933,28 @@
 			if(attr.scalex) sx = attr.scalex;
 			if(attr.scaley) sy = attr.scaley;
 			if(attr.quick){
+				// Scale the top left location
 				this.paper.data.scale.x *= sx;
 				this.paper.data.scale.y *= sy;
 				var nwide = Math.round(this.canvas.wide/this.paper.data.scale.x);
 				var ntall = Math.round(this.canvas.tall/this.paper.data.scale.y);
+				// We use x,y below to draw the scaled image
 				var x = pos[0] * (1 - nwide/this.canvas.wide);
 				var y = pos[1] * (1 - ntall/this.canvas.tall);
 			}
 			// Find the center
 			var c = this.pixel2data(pos[0],pos[1]);
+			pos = new Array(4);
 			// Calculate the new zoom range
-			pos = [c.x - sx*(c.x-this.x.min), c.x + sx*(this.x.max-c.x), c.y - sy*(c.y-this.y.min), c.y + sy*(this.y.max-c.y)];
+			pos[0] = c.x - sx*(c.x-this.x.min);
+			pos[1] = c.x + sx*(this.x.max-c.x);
+			if(this.y.log){
+				pos[2] = Math.pow(10,G.log10(c.y) - sy*(G.log10(c.y) - G.log10(this.y.min)));
+				pos[3] = Math.pow(10,G.log10(c.y) + sy*(G.log10(this.y.max) - G.log10(c.y)));
+			}else{
+				pos[2] = c.y - sy*(c.y-this.y.min);
+				pos[3] = c.y + sy*(this.y.max-c.y);
+			}
 		}
 		// Zoom into a defined region [x1,x2,y1,y2]
 		if(pos.length == 4){
@@ -989,19 +1001,15 @@
 
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
-		if(this[t].log){
-			c = G.log10(c);
-			var min = this[t].gmin;
-			var max = this[t].gmax;
-			var ran = this[t].grange;
-		}else{
-			var min = this[t].min;
-			var max = this[t].max;
-			var ran = this[t].range;
-		}
-		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((c-min)/ran));
-		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((max-c)/(ran)) : this.chart.left + this.chart.width*((c-min)/ran));
-	
+		var k,mn,mx,rn;
+		k = (this[t].log) ? 'log':'';
+		if(this[t].log) c = G.log10(c);
+		mn = this[t][k+'min'];
+		mx = this[t][k+'max'];
+		rn = this[t][k+'range'];
+		
+		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((c-mn)/rn));
+		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((mx-c)/(rn)) : this.chart.left + this.chart.width*((c-mn)/rn));
 	}
 
 	// For an input data value find the pixel locations
@@ -1018,7 +1026,7 @@
 		// x-axis
 		x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
 		// y-axis
-		if(this.y.log) y = Math.pow(10,this.y.gmin + (1-(y-this.chart.top)/this.chart.height)*this.y.grange);
+		if(this.y.log) y = Math.pow(10,this.y.logmin + (1-(y-this.chart.top)/this.chart.height)*this.y.logrange);
 		else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
 		return {x:x,y:y};
 	}
@@ -1200,27 +1208,30 @@
 		// Sort out what to do for log scales
 		if(this[axis].log){
 			// Adjust the low and high values for log scale
-			this[axis].gmax = G.log10(this[axis].max);
-			this[axis].gmin = (this[axis].min <= 0) ? this[axis].gmax-2 : G.log10(this[axis].min);
+			this[axis].logmax = G.log10(this[axis].max);
+			this[axis].logmin = (this[axis].min <= 0) ? this[axis].logmax-2 : G.log10(this[axis].min);
+			this[axis].logrange = this[axis].logmax-this[axis].logmin;
+			this[axis].gridmin = this[axis].logmin+0;
+			this[axis].gridmax = this[axis].logmax+0;
 			this[axis].inc = 1;
 			this[axis].range = this[axis].max-this[axis].min;
-			this[axis].grange = this[axis].gmax-this[axis].gmin;
+			this[axis].gridrange = this[axis].logrange+0;
 			this.makeTicks(axis);
 			return this;
 		}
 		// If we have zero range we need to expand it
 		if(this[axis].range < 0){
 			this[axis].inc = 0.0;
-			this[axis].grange = 0.0;
+			this[axis].gridrange = 0.0;
 			return this;
 		}else if(this[axis].range == 0){
-			this[axis].gmin = Math.ceil(this[axis].max)-1;
-			this[axis].gmax = Math.ceil(this[axis].max);
-			this[axis].min = this[axis].gmin;
-			this[axis].max = this[axis].gmax;
+			this[axis].gridmin = Math.ceil(this[axis].max)-1;
+			this[axis].gridmax = Math.ceil(this[axis].max);
+			this[axis].min = this[axis].gridmin;
+			this[axis].max = this[axis].gridmax;
 			this[axis].inc = 1.0;
 			this[axis].range = this[axis].max-this[axis].min;
-			this[axis].grange = this[axis].gmax-this[axis].gmin;
+			this[axis].gridrange = this[axis].gridmax-this[axis].gridmin;
 			this.makeTicks(axis);
 			return this;
 		}
@@ -1343,10 +1354,10 @@
 		}
 
 		// Set the first/last gridline values as well as the spacing
-		this[axis].gmin = t_min;
-		this[axis].gmax = t_max;
+		this[axis].gridmin = t_min;
+		this[axis].gridmax = t_max;
 		this[axis].inc = t_inc;
-		this[axis].grange = this[axis].gmax-this[axis].gmin;
+		this[axis].gridrange = this[axis].gridmax-this[axis].gridmin;
 		this[axis].precision = this[axis].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
 
 		this.makeTicks(axis);
@@ -1356,10 +1367,10 @@
 
 	Graph.prototype.makeTicks = function(a){
 		// Get the min/max tick marks
-		var mn = this[a].gmin;
-		var mx = this[a].gmax;
+		var mn = this[a].gridmin;
+		var mx = this[a].gridmax;
 		if(this[a].log){
-			mn = Math.ceil(mn);
+			mn = Math.floor(mn);
 			mx = Math.ceil(mx);
 		}
 		if(isNaN(mn) || isNaN(mx)) return this;
@@ -1476,14 +1487,18 @@
 				this[a].ticks[i].label = str;
 			}
 		}
+		// Final tidy
+		for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].label = tidy(this[a].ticks[i].label);
+
 		// Fix precision issues
 		if(this[a].log){
-			this[a].gmin = G.log10(this[a].ticks[0].value);
-			this[a].gmax = G.log10(this[a].ticks[this[a].ticks.length-1].value);
+			this[a].gridmin = G.log10(this[a].ticks[0].value);
+			this[a].gridmax = G.log10(this[a].ticks[this[a].ticks.length-1].value);
 		}else{
-			this[a].gmin = this[a].ticks[0].value;
-			this[a].gmax = this[a].ticks[this[a].ticks.length-1].value;
+			this[a].gridmin = this[a].ticks[0].value;
+			this[a].gridmax = this[a].ticks[this[a].ticks.length-1].value;
 		}
+		this[a].gridrange = this[a].gridmax - this[a].gridmin;
 
 		return this;
 	}
@@ -1570,11 +1585,11 @@
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 
-		mn = this.y.gmin;
-		mx = this.y.gmax;
+		mn = this.y.gridmin;
+		mx = this.y.gridmax;
 		if(this.y.log){
-			mn = Math.ceil(this.y.gmin);
-			mx = Math.floor(this.y.gmax);
+			mn = Math.ceil(this.y.gridmin);
+			mx = Math.floor(this.y.gridmax);
 		}
 		if(this.y.ticks){
 			if(this.y.range > this.sci_hi || this.y.range < this.sci_lo){
@@ -1720,11 +1735,11 @@
 			var oldx = 0;
 			var prev = {};
 			
-			mn = axis.gmin;
-			mx = axis.gmax;
+			mn = axis.gridmin;
+			mx = axis.gridmax;
 			if(axis.log){
-				mn = Math.floor(axis.gmin);
-				mx = Math.ceil(axis.gmax);
+				mn = Math.floor(axis.gridmin);
+				mx = Math.ceil(axis.gridmax);
 			}
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
@@ -1735,7 +1750,7 @@
 				if(d=="y") y1 = y2 = p;
 				else if(d=="x") x1 = x2 = p;
 
-				j = (axis.log) ? i : i.toFixed(prec);
+				j = (axis.log) ? G.log10(i) : i.toFixed(prec);
 
 				ctx.beginPath();
 				ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
@@ -1753,11 +1768,11 @@
 							ctx.textAlign = 'center';
 							ctx.fillStyle = this.options.labels.color;
 							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
-							oldx = x1 + (j == axis.gmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
+							oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 						}
 					}else if(d=="y"){
 						ctx.textAlign = 'end';
-						if(j==this.y.gmax) ctx.textBaseline = 'top';
+						if(j==this.y.gridmax) ctx.textBaseline = 'top';
 						str = axis.ticks[ii].label;
 						ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 					}
@@ -1766,7 +1781,7 @@
 				ctx.stroke();
 								
 				// Draw grid lines
-				if(show.grid && j >= axis.gmin && j <= axis.gmax){
+				if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
 					ctx.beginPath();
 					ctx.lineWidth = (this.options[a].gridWidth || 0.5);
 					ctx.moveTo(x1,y1);
@@ -1775,7 +1790,7 @@
 				}
 				
 				// Draw tick marks lines
-				if(show.ticks && j >= axis.gmin && j <= axis.gmax){
+				if(show.ticks && j >= axis.gridmin && j <= axis.gridmax){
 					ctx.beginPath();
 					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
 					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
@@ -1798,7 +1813,7 @@
 					ctx.lineWidth = (sub.width ? sub.width : 0.5);
 					for(var j = 0; j < this.subgrid.length ; j++){
 						di = i+this.subgrid[j];
-						if(di < axis.gmax){
+						if(di < axis.gridmax){
 							p = this.getPos(d,Math.pow(10,di));
 							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
 							ctx.moveTo(p,y2);
@@ -2376,7 +2391,7 @@
 				this.metrics[key].av = v/tot;
 			}
 			this.metrics[key].times = ts.splice(0);
-			console.log('Time ('+key+'): '+t+'ms',this.metrics[key]);
+			console.log('Time ('+key+'): '+t+'ms (av = '+this.metrics[key].av.toFixed(1)+'ms)');
 			delete this.metrics[key].start;
 		}
 		return this;
@@ -2385,7 +2400,7 @@
 	function tidy(v){
 		if(typeof v!=="string") return "";
 		if(v=="0") return v;
-		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+)0$/g,function(m,p1){ return "."+p1; });
+		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+?)0+$/g,function(m,p1){ return "."+p1; });
 	}
 
 	function removeRoundingErrors(e){
