@@ -72,16 +72,17 @@
 .timeseries menu ul.submenu li { margin: 0px; display: inline-block; }
 .timeseries menu ul.submenu li button { margin: 0px; width: 36px; height: 36px; color: #dfdfdf; }
 .timeseries menu ul.submenu li button.icon svg { width: 32px; }
-.timeseries menu ul.submenu li button:hover, .timeseries menu ul.submenu li button.on { background-color: inherit; color: inherit; }
+.timeseries menu ul.submenu li button:hover, .timeseries menu ul.submenu li button:focus, .timeseries menu ul.submenu li button.on { background-color: inherit; color: inherit; }
 .timeseries menu ul.submenu li:last-child { flex-grow: 1; right: 0px; height: 2em; left: 0px; position: relative; }
 .timeseries menu .menu-panel { padding: 1em; display: none; min-height: calc(100% - 2em); }
 .timeseries menu .menu-panel.on { display: block; }
 .timeseries menu .row { margin-bottom: 0em; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
-.timeseries menu ol.layers { padding-left: 0px; padding: 0.5em; margin: 0px; background-color: white; color: black; }
-.timeseries menu ol.layers li { list-style: none; margin-bottom: 0.25em; }
-.timeseries menu ol.layers li input[type=checkbox] { display: none; }
+.timeseries menu ol.layers { padding-left: 0px; margin: 0px; background-color: white; color: black; }
+.timeseries menu ol.layers li { list-style: none; padding: 0.5em; }
+.timeseries menu ol.layers li.on, .timeseries menu ol.layers li:hover { background-color: #efefef; }
+.timeseries menu ol.layers li input[type=checkbox] { opacity: 0.01; float:left; position: absolute; }
 .timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; 
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
@@ -91,7 +92,7 @@
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
 }
-.timeseries menu ol.layers li label.inactive { filter: grayscale(1); opacity: 0.15; }
+.timeseries menu ol.layers li.inactive label { filter: grayscale(1); opacity: 0.15; }
 .timeseries menu ol.layers li .key { width: 1.5em; height: 1.5em; display: inline-block; float: left; margin-right: 0.25em; }
 .timeseries menu ol.layers li label:after { content: ''; position: relative; clear: both; }
 @media only screen and (max-width: 520px) {

@@ -613,10 +613,11 @@
 						g.data[j].show = !g.data[j].show;
 					}
 					g.calculateData().draw(true);
-				});
-				p.find('label').on('click',{me:this,id:id},function(e){
-					if(this.parent().find('input')[0].checked) this.addClass('inactive')
-					else this.removeClass('inactive')
+					if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+					else this.parent().addClass('inactive');
+				}).on('focus',{layers:layers},function(e){
+					e.data.layers.find('li').removeClass('on');
+					this.parent().addClass('on');
 				});
 			}
 			// Do we need to draw key items?
