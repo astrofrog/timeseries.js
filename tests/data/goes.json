@@ -34,11 +34,14 @@
 		{
 			"orient": "bottom",
 			"scale": "xscale",
-			"title": "2011-06-06"
+			"title": "2011-06-06",
+			"titleFontWeight": "normal"
 		},{
 			"orient": "left",
 			"scale": "yscale",
-			"title": "Watts m^{-2}"
+			"grid": true,
+			"title": "Watts m^{-2}",
+			"titleFontWeight": "normal"
 		}
 	],
 	"marks":[{
@@ -76,7 +79,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "time"},
 				"y": {"scale": "yscale", "field": "xrsa"},
-				"shape": {"value": "circle"}
+				"strokeWidth": {"value": 1}
 			},
 			"update": {
 				"stroke": {"value": "#0000ff"},
@@ -95,7 +98,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "time"},
-				"y": {"scale": "yscale", "field": "xrsb"}
+				"y": {"scale": "yscale", "field": "xrsb"},
+				"strokeWidth": {"value": 2}
 			},
 			"update": {
 				"shape": "cross",
@@ -104,7 +108,7 @@
 			},
 			"hover": {
 				"stroke": {"value":"#0DBC37"},
-				"strokeWidth": {"value": 2},
+				"strokeWidth": {"value": 3},
 				"zindex": {"value": 1}
 			}
 		}
