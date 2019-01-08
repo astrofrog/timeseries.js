@@ -30,7 +30,10 @@
 		this.log = function(){
 			if(this.logging || arguments[0]=="ERROR"){
 				var args = Array.prototype.slice.call(arguments, 0);
-				if(console && typeof console.log==="function") console.log('TimeSeries',args);
+				if(console && typeof console.log==="function"){
+					if(arguments[0] == "ERROR") console.log('%cERROR%c %cTimeSeries%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',args.splice(2,));
+					else console.log('%cTimeseries%c','font-weight:bold;','',args);
+				}
 			}
 			return this;
 		}
@@ -268,7 +271,10 @@
 	TS.prototype.log = function(){
 		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function") console.log('TS',args);
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',args.splice(2,));
+				else console.log('TS',args);
+			}
 		}
 		return this;
 	}
@@ -337,7 +343,7 @@
 			var str = '';
 			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
 			str += '<li></li>'
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="savepng">Save as PNG</button></div></menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="editvega">Open in VEGA Editor</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="savepng">Save as PNG</button></div></menu></div>');
 
 			// Add button events
 			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
@@ -351,6 +357,7 @@
 			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1) });
 			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0) });
 			el.find('button.savevega').on('click',{me:this},function(e){ e.data.me.save("vega"); });
+			el.find('button.editvega').on('click',{me:this},function(e){ e.data.me.save("vegaeditor"); });
 			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png"); });
 
 			el.find('.submenu button').on('click',{el:el},function(e){
@@ -707,7 +714,7 @@
 		
 		}
 
-		if(type == "vega"){
+		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.json);
 			for(var i = 0; i < output.data.length; i++){
 				delete output.data[i].url;
@@ -716,10 +723,27 @@
 				output.data[i].values = this.datasets[output.data[i].name][typ];
 			}
 			var txt = JSON.stringify(output);
+		}
+		if(type == "vega"){
 			opts.type = "text/json";
 			opts.file = (this.file ?  this.file.replace(/.*\//g,"") : "timeseries.json");
-			save(txt)
-		}else{
+			save(txt);
+		}
+		if(type == "vegaeditor"){
+			// Open in VEGA editor
+			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
+			vegaeditor.postMessage({
+			  "mode": "vega",
+			  "spec": txt,
+			  "config": {
+				"axisY": {
+				  "minExtent": 30
+				}
+			  },
+			  "renderer": "svg"
+			}, "https://vega.github.io");
+		}
+		if(type == "png"){
 			opts.type = "image/png";
 			opts.file = "timeseries.png"
 			this.graph.canvas.c.toBlob(save,opts.type);
