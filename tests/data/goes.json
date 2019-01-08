@@ -58,7 +58,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "signal": "datum.when" },
 				"y": {"scale": "yscale", "value": 1e-9},
-				"y2": {"scale": "yscale", "value": 1e-3 },
+				"y2": {"scale": "yscale", "value": 1e-2 },
 				"stroke": {"value": "#1f77b4"},
 				"strokeWidth": {"value": 1}
 			}
@@ -71,8 +71,8 @@
 			"enter": {
 				"x": {"scale": "xscale", "signal": "datum.from"},
 				"x2": {"scale": "xscale", "signal": "datum.to"},
-				"y": {"scale": "yscale", "value": 1e-20},
-				"y2": {"scale": "yscale", "value": 1 },
+				"y": {"scale": "yscale", "value": 1e-9},
+				"y2": {"scale": "yscale", "value": 1e-2 },
 				"fill": {"value": "#1f77b4"},
 				"fillOpacity": {"value": 0.2}
 			}
