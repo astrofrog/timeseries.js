@@ -1569,7 +1569,10 @@
 
 		// Set font for labels
 		fs = this.getFontHeight('y','label');
+		var mn,mx,maxw,maxdp,maxi;
 		maxw = 0;
+		maxdp = 0;
+		maxi = 0;
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 
@@ -1580,13 +1583,24 @@
 			mx = Math.floor(this.y.gridmax);
 		}
 		if(this.y.ticks){
-			if(this.y.range > this.sci_hi || this.y.range < this.sci_lo){
-				// If the range is big we'll just assume scientific notation
+			// Chop down the labels so that the length doesn't oscillate when we're adding decimal places
+			// Loop over and find the length of the decimal portion and length of the integer portion 
+			for(i = 0; i < this.y.ticks.length; i++){
+				if(this.y.ticks[i].label.indexOf("e") < 0){
+					if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
+					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^([0-9]+).*$/,function(m,p1){ return p1; }).length);
+				}
+			}
+			// If none of the labels were exponential maxdp and maxi will be zero
+			if(maxdp > 0 || maxi > 0){
+				// Build a dummy label using the lengths we found
+				var label = '';
+				if(maxi > 0) label += Array(Math.ceil(maxi/3)*3).join('1')+'1';
+				if(maxdp > 0) label += '.'+Array(Math.ceil(maxdp/3)*3).join('1')+'1';
+				maxw = Math.max(maxw,ctx.measureText(label).width);
+			}else{
+				// Calculate the length of the exponential labels
 				maxw = ctx.measureText("1.e+"+Math.floor(Math.log10(this.y.range))).width;
-			}else{ 
-				// Chop down the labels so that the length 
-				// doesn't oscillate when we're adding decimal places
-				for(i = 0; i < this.y.ticks.length; i++) maxw = Math.max(maxw,ctx.measureText(this.y.ticks[i].label.replace(/^\-/,"")).width);
 			}
 		}
 		s = Math.round(fs*1.5);
