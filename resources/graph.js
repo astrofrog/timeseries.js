@@ -378,14 +378,13 @@
 			if(this.fullscreen) this.container.css({'background':'white'});
 			else this.container.css({'background':this.containerbg});
 			
+			// We have to zap the width of the canvas to let it take the width of the container
+			this.canvas.css({'width':'','height':'','max-width':'100%'});
 			if(this.fullwindow){
-				this.canvas.css({'width':'','height':''});
 				w = window.outerWidth;
 				h = window.outerHeight;
 				S(document).css({'width':w+'px','height':h+'px'});
 			}else{
-				// We have to zap the width of the canvas to let it take the width of the container
-				this.canvas.css({'width':'','height':''});
 				// Set a max-width so that it can shrink
 				this.container.css({'max-width':'100%'});
 				w = this.container.outerWidth();
