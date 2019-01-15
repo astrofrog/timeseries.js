@@ -465,16 +465,19 @@
 			'temp': {'c':document.createElement('canvas'),'ctx':''},  // Create a canvas for temporary work
 			'data': {'c':document.createElement('canvas'),'ctx':''}   // Create a canvas to draw the data to
 		};
-		function setWH(p,w,h){
-			p.c.width = Math.round(w);
-			p.c.height = Math.round(h);
+		function setWH(p,w,h,s){
+			p.width = w;
+			p.height = h;
+			p.c.width = Math.round(w*s);
+			p.c.height = Math.round(h*s);
 			p.ctx = p.c.getContext('2d');
+			p.ctx.scale(s, s);
 			return p;
 		}
 		// Set canvas scaling for retina-type screens
 		var s = window.devicePixelRatio;
 		// Set properties of the temporary canvases
-		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide*s,this.canvas.tall*s);
+		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
 
 		// Bind events to the canvas
 		var _obj = this;
@@ -483,7 +486,7 @@
 			if(_obj.logging) var d = new Date();
 			var s = window.devicePixelRatio;
 			// Resize all the temporary canvases
-			for(var p in _obj.paper) _obj.paper[p] = setWH(_obj.paper[p],_obj.canvas.wide*s,_obj.canvas.tall*s);
+			for(var p in _obj.paper) _obj.paper[p] = setWH(_obj.paper[p],_obj.canvas.wide,_obj.canvas.tall,s);
 
 			_obj.setOptions().defineAxis("x").getChartOffset().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
@@ -883,7 +886,7 @@
 			ctx.beginPath();
 			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
 			ctx.clip();
-			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y);
+			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y,this.paper.data.width,this.paper.data.height);
 			ctx.restore();
 		}else{
 			this.getChartOffset();
@@ -1986,7 +1989,7 @@
 			}
 		}
 		// Draw the data canvas to the main canvas
-		try { this.canvas.ctx.drawImage(this.paper.data.c,0,0); }catch(e){ }
+		try { this.canvas.ctx.drawImage(this.paper.data.c,0,0,this.paper.data.width,this.paper.data.height); }catch(e){ }
 		
 		// Apply the clipping
 		ctx.restore();
@@ -2053,7 +2056,7 @@
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
 		}
 		this.paper.temp.ctx.stroke();
-		ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
@@ -2098,7 +2101,7 @@
 			oldp = p;
 		}
 		this.paper.temp.ctx.stroke();
-		ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 
@@ -2155,7 +2158,7 @@
 		this.paper.temp.ctx.fill();
 		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 		
-		ctx.drawImage(this.paper.temp.c,0,0);
+		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
