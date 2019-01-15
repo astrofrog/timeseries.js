@@ -207,7 +207,6 @@
 		}
 
 		// Bind events
-		this.canvas.on("dblclick", {me:this}, function(e){ e.data.me.trigger("dblclick",{event:e}); });
 		this.canvas.on("mousedown",{me:this}, function(e){ e.data.me.trigger("mousedown",{event:e}); });
 		this.canvas.on("mousemove",{me:this}, function(e){ e.data.me.trigger("mousemove",{event:e}); });
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
@@ -359,14 +358,13 @@
 		if(this.fullscreen){
 			if(document.exitFullscreen) document.exitFullscreen();
 			else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
-			else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+			else if(document.webkitCancelFullScreen) document.webkitCancelFullScreen();
 		}else{
 			if(this.elem.requestFullscreen) this.elem.requestFullscreen();
 			else if(this.elem.mozRequestFullScreen) this.elem.mozRequestFullScreen();
 			else if(this.elem.webkitRequestFullscreen) this.elem.webkitRequestFullscreen();
 			else if(this.elem.msRequestFullscreen) this.elem.msRequestFullscreen();
 		}
-
 		this.fullscreen = !this.fullscreen;
 		return this;
 	}
@@ -381,13 +379,13 @@
 			else this.container.css({'background':this.containerbg});
 			
 			if(this.fullwindow){
-				this.canvas.css({'width':0,'height':0});
+				this.canvas.css({'width':'','height':''});
 				w = window.outerWidth;
 				h = window.outerHeight;
 				S(document).css({'width':w+'px','height':h+'px'});
 			}else{
 				// We have to zap the width of the canvas to let it take the width of the container
-				this.canvas.css({'width':0,'height':0});
+				this.canvas.css({'width':'','height':''});
 				// Set a max-width so that it can shrink
 				this.container.css({'max-width':'100%'});
 				w = this.container.outerWidth();
@@ -428,7 +426,8 @@
 	function Graph(element, data, options){
 
 		if(!options) options = {};
-		if(options.logging) this.logging = true;
+		if(typeof options.logging==="boolean") this.logging = options.logging;
+		if(typeof options.logtime==="boolean") this.logtime = options.logtime;
 
 		// Define some variables
 		this.version = "0.2.5";
@@ -655,14 +654,6 @@
 			g.calculateData().draw(true);
 			g.wheelid = undefined;
 			g.trigger('wheelstop',{event:ev.event});
-		}).on("dblclick",function(ev){
-			var g = _obj;	 // The graph object
-			if(ev.event){
-				var event = ev.event.originalEvent;
-				g.toggleFullScreen();
-				// Bind events
-				g.canvas.trigger('dblclick',{event:event});
-			}
 		});
 
 		// Extend the options with those provided by the user
@@ -677,14 +668,13 @@
 
 	Graph.prototype.toggleFullScreen = function(){
 		this.canvas.toggleFullScreen();
-		this.getChartOffset().calculateData().draw(true);
 		return this;
 	}
 
 	Graph.prototype.log = function(){
 		if(this.logging){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && is(console.log,"function")) console.log('%cGraph%c','font-weight:bold;','',args);
+			if(console && is(console.log,"function")) console.log('%cGraph%c ','font-weight:bold;','',args);
 		}
 		return this;
 	}
@@ -1530,15 +1520,9 @@
 		var current = clone(c.left);
 		// Set the target
 		
-		if(this.canvas.fullscreen){
-			c.padding = 36;
-			c.fontsize = this.canvas.wide/80;
-			c.fontfamily = (typeof ff=="string") ? ff : "";
-		}else{
-			c.padding = 0;
-			c.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
-			c.fontfamily = (typeof ff=="string") ? ff : "";
-		}
+		c.padding = (this.canvas.fullscreen) ? 36 : 0;
+		c.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
+		c.fontfamily = (typeof ff=="string") ? ff : "";
 
 		// Correct for sub-pixel positioning
 		b = o.grid.border*0.5;
@@ -2369,7 +2353,7 @@
 	}
 
 	Graph.prototype.logTime = function(key){
-	
+
 		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
 		if(!this.metrics[key].start) this.metrics[key].start = new Date();
 		else{
@@ -2393,7 +2377,7 @@
 				this.metrics[key].av = v/tot;
 			}
 			this.metrics[key].times = ts.splice(0);
-			console.log('%cGraph%c'+key+': '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;');
+			if(this.logtime) console.log('%cGraph%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
 			delete this.metrics[key].start;
 		}
 		return this;

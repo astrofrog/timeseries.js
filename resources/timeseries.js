@@ -13,11 +13,15 @@
 
 	// Main object to coordinate data loading
 	TimeSeries = new function(){
-		this.version = "0.0.8";
-		this.create = function(json,opt){ return new TS(json,opt); }
+		this.version = "0.0.9";
+		this.create = function(json,opt){
+			if(!opt) opt = {};
+			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
+			return new TS(json,opt);
+		}
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
 		this.callback = "";
-		this.logging = false;
+		this.logging = (location.search.indexOf('logging=true')>0);
 		
 		// Work out the file path to this code to use for further resources
 		var scripts = document.getElementsByTagName('script');
@@ -37,7 +41,8 @@
 			}
 			return this;
 		}
-
+		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
+		
 		/* Have we loaded all the data files necessary? */
 		this.filesLoaded = function(fs){
 			this.log('filesLoaded',fs,this.load.data)
@@ -173,7 +178,6 @@
 		}else if(typeof json==="string") this.file = json;
 		this.logging = opt.logging || false;
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
-
 		this.log('TS',json);
 
 		// Set some defaults
@@ -275,7 +279,7 @@
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
 				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',args.splice(2,));
-				else console.log('TS',args);
+				else console.log('%cTS%c','font-weight:bold;','',args);
 			}
 		}
 		return this;
@@ -312,6 +316,7 @@
 			this.options.height = this.initializedValues.h;
 		}
 		this.options.logging = this.logging;
+		this.options.logtime = (location.search.indexOf('logtime=true')>0)
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 		if(this.json.scales){
