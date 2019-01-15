@@ -402,6 +402,8 @@
 		this.log('setWH',w,h)
 		if(!w || !h) return;
 		var c = (typeof ctx=="undefined") ? this.c : ctx;
+		// Set virtual pixel scale
+		this.scale = window.devicePixelRatio;
 		c.width = w*this.scale;
 		c.height = h*this.scale;
 		this.wide = w;
