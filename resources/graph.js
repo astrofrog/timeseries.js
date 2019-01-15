@@ -974,7 +974,7 @@
 			ctx.beginPath();
 			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
 			ctx.clip();
-			ctx.drawImage(this.paper.data.c,x,y,Math.round(nwide*this.canvas.scale),Math.round(ntall*this.canvas.scale));
+			ctx.drawImage(this.paper.data.c,x,y,Math.round(this.canvas.wide/this.paper.data.scale.x),Math.round(this.canvas.tall/this.paper.data.scale.y));
 			ctx.restore();
 		}else{
 			this.draw(typeof attr.update==="boolean" ? attr.update : true);
