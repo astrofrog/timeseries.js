@@ -468,6 +468,7 @@
 		function setWH(p,w,h,s){
 			p.width = w;
 			p.height = h;
+			p.scale = s;
 			p.c.width = Math.round(w*s);
 			p.c.height = Math.round(h*s);
 			p.ctx = p.c.getContext('2d');
@@ -1029,7 +1030,9 @@
 		var idx = 0;
 		var max = 0;
 		var l,i,s;
-		if(x >= 0 && y >= 0 && x < this.canvas.wide && y < this.canvas.tall && this.lookup[x][y]) return this.lookup[x][y];
+		x = Math.round(x*this.canvas.scale);
+		y = Math.round(y*this.canvas.scale);
+		if(x >= 0 && y >= 0 && x < this.canvas.c.width && y < this.canvas.c.height && this.lookup[x] && this.lookup[x][y]) return this.lookup[x][y];
 		else this.canvas.canvas.css({'cursor':''});
 		return [];
 	}
@@ -1952,7 +1955,7 @@
 		var twopi = Math.PI*2;
 
 		// Define an empty pixel-based lookup table
-		if(updateLookup) this.lookup = Array(this.canvas.wide).fill().map(x => Array(this.canvas.tall));
+		if(updateLookup) this.lookup = Array(this.canvas.c.width).fill().map(x => Array(this.canvas.c.height));
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
@@ -2319,8 +2322,8 @@
 		if(!attr.id) return;
 		var a,px,i,p,x,y,l,w,h;
 		a = attr.id+':'+(attr.weight||1);
-		w = this.canvas.wide;
-		h = this.canvas.tall;
+		w = this.canvas.c.width;
+		h = this.canvas.c.height;
 		px = this.paper.temp.ctx.getImageData(0,0,w,h);
 		l = px.data.length;
 		for(i = p = x = y = 0; i < l; i+=4, p++, x++){
@@ -2347,14 +2350,22 @@
 		a = i.id+':'+(i.weight||1);
 		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
 		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
+
+		for(var dir in {'x':'','y':''}){
+			for(var bit in {'a':'','b':''}){
+				i[dir+''+bit] *= this.canvas.scale;
+				i[dir+''+bit] = (bit == "a") ? Math.floor(i[dir+''+bit]) : Math.ceil(i[dir+''+bit]);
+			}
+		}
+
 		i.xb += p*2;
-		i.xb = Math.min(i.xb,this.canvas.wide-1);
+		i.xb = Math.min(i.xb,this.canvas.c.width-1);
 		i.ya -= p;
 		i.yb += p;
 		if(i.xa < 0) i.xa = 0;
 		if(i.ya < 0) i.ya = 0;
 		// Clip to chart
-		i.yb = Math.min(i.yb,this.chart.top+this.chart.height);
+		i.yb = Math.min(i.yb,(this.chart.top+this.chart.height)*this.canvas.scale);
 		// Use bounding box to define the lookup area
 		for(x = i.xa; x < i.xb; x++){
 			for(y = i.ya; y < i.yb; y++){
