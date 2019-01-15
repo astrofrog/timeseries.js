@@ -99,6 +99,14 @@
 						'output':{'min':0.99,'max':1.04,'inc':0.01},
 						'labels':["0.99","1","1.01","1.02","1.03","1.04"]
 					},{
+						'range':{'min':5.6881e16,'max':5.701e16},
+						'output':{'min':5.688e+16,'max':5.702e+16,'inc':2e13},
+						'labels':["5.688e+16","5.69e+16","5.692e+16","5.694e+16","5.696e+16","5.698e+16","5.7e+16","5.702e+16"]
+					},{
+						'range':{'min':-1071142847431880800,'max':-807611025643724300},
+						'output':{'min':-1.1e18,'max':-8e17,'inc':5e16},
+						'labels':["-1.1e+18","-1.05e+18","-1e+18","-9.5e+17","-9e+17","-8.5e+17","-8e+17"]
+					},{
 						'range':{'min':0.0000001,'max':0.000000145},
 						'output':{'min':1e-7,'max':1.5e-7,'inc':1e-8},
 						'labels':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
@@ -193,7 +201,7 @@
 
 				graph = new Graph(S('#graph')[0], [], {});
 				ts = TimeSeries.create({});
-				console.log(ts,ts.dateformats)
+				//console.log(ts,ts.dateformats)
 				var els = new Array();
 
 				// Build DOM containers
@@ -225,7 +233,7 @@
 					graph.x.isDate = (tests[t].date||false);
 					var fmt = (graph.x.isDate) ? ts.dateformats[(tests[t].dateformat || "default")] : {};
 					graph.x.labelopts = fmt;
-					console.log('opts',graph.x.labelopts);
+					//console.log('opts',graph.x.labelopts);
 					graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
 					output = {'min':graph.x.gridmin,'max':graph.x.gridmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
 

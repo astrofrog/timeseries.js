@@ -1429,40 +1429,57 @@
 			}
 			return fmt[i];
 		}
-		for(i = 0; i < this[a].ticks.length; i++){
-			v = this[a].ticks[i].value;
-			if(this[a].log){
-				v = Math.pow(10,v);
-				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo)
-			}
-			if(this[a].showAsDate){
-				d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v/1000).toFixed(precision+3) : niceDate(v,this[a].spacing);
-				this[a].ticks[i].label = d;
-			}else{
-				fmt = {};
+		
+		if(this[a].log){
+			// Format labels for log scale
+			for(i = 0; i < this[a].ticks.length; i++){
+				v = Math.pow(10,this[a].ticks[i].value);
+				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo);
 				if(sci){
-					if(this[a].log) precision = (""+i).length;
+					precision = (""+v).length;
 					fmt['normal'] = ""+v;
 					fmt['exp'] = tidy(v.toExponential(precision));
-					if(!this[a].log){
-						s = (v<0 ? -1 : 1);
-						if(fmt['normal'].indexOf(/[0]{5}/) > 0) v = s*Math.floor(Math.abs(v));
-						if(fmt['normal'].indexOf(/[9]{5}/) > 0) v = s*Math.ceil(Math.abs(v));
-						this[a].ticks[i].value = v;
-						fmt['normal'] = ""+v;
-					}
 				}else{
-					if(this[a].log) precision = Math.abs(this[a].ticks[i].value);
+					precision = Math.abs(this[a].ticks[i].value);
 					if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
-					else fmt['fixed'] = v.toFixed(precision);
+					else fmt['fixed'] = (Math.abs(v/this[a].range) < 1e-12) ? "0" : v.toFixed(precision);
 				}
-
-				// Bug fix for Javascript rounding issues when the range is big
-				if(Math.abs(v/this[a].range) < 1e-12) fmt['fixed'] = "0";
 
 				// Set the label to whichever is shortest
 				this[a].ticks[i].label = shortestFormat(fmt);
+			}
+		}else{
+			// Format labels for linear scale
+			for(i = 0; i < this[a].ticks.length; i++){
+				v = this[a].ticks[i].value;
+				if(this[a].showAsDate){
+					d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v/1000).toFixed(precision+3) : niceDate(v,this[a].spacing);
+					this[a].ticks[i].label = d;
+				}else{
+					fmt = {};
+					precision = this[a].precision;
+					// Find the differential precision
+					if(v > this.sci_hi || v < this.sci_lo) precision = Math.floor(Math.log10(Math.abs(v))) - Math.floor(Math.log10(Math.abs(this[a].inc)));
+					if(this[a].isDate) precision = 1;
+					if(precision < 1) precision = this[a].precisionlabel;
+					if(sci){
+						if(this[a].isDate) fmt['date'] = ""+v;
+						else fmt['exp'] = v.toExponential(precision);
+					}else{
+						if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
+						else fmt['fixed'] = v.toFixed(precision);
+					}
 
+					// Bug fix for Javascript rounding issues when the range is big
+					if(Math.abs(v/this[a].range) < 1e-12) fmt['fixed'] = "0";
+
+					// Set the label to whichever is shortest
+					this[a].ticks[i].label = shortestFormat(fmt);
+				}
+			}
+		}
+		if(!this[a].showAsDate){
+			for(i = 0; i < this[a].ticks.length; i++){
 				// Because of precision issues, use the label to rebuild the value
 				this[a].ticks[i].calcval = this[a].ticks[i].value+0;
 				this[a].ticks[i].value = parseFloat(this[a].ticks[i].label);
