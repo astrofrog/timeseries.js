@@ -1586,9 +1586,9 @@
 			// Chop down the labels so that the length doesn't oscillate when we're adding decimal places
 			// Loop over and find the length of the decimal portion and length of the integer portion 
 			for(i = 0; i < this.y.ticks.length; i++){
-				if(this.y.ticks[i].label.indexOf("e") < 0){
+				if(this.y.ticks[i].label.indexOf("e") < 0 && this.y.ticks[i].label != "0"){
 					if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
-					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^([0-9]+).*$/,function(m,p1){ return p1; }).length);
+					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+?]([0-9]+).*$/,function(m,p1){ return p1; }).length);
 				}
 			}
 			// If none of the labels were exponential maxdp and maxi will be zero
