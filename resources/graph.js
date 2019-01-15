@@ -1454,7 +1454,7 @@
 						fmt['normal'] = ""+v;
 					}
 				}else{
-					if(this[a].log) precision = Math.abs(i);
+					if(this[a].log) precision = Math.abs(this[a].ticks[i].value);
 					if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
 					else fmt['fixed'] = v.toFixed(precision);
 				}
@@ -1740,7 +1740,7 @@
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
 				p = this.getPos(d,i);
-				if(!p) continue;
+				if(!p || !isFinite(p)) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
 				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
 				if(d=="y") y1 = y2 = p;
