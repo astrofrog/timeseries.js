@@ -873,8 +873,6 @@
 		this.offset.y = dy;
 		this.logTime('panBy');
 		if(!attr) attr = {};
-		var g = this;
-		var r = g.getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
 		if(attr.quick){
 			this.clear();
 			this.clear(this.paper.temp.ctx);
