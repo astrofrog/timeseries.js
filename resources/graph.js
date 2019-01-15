@@ -1595,8 +1595,8 @@
 			if(maxdp > 0 || maxi > 0){
 				// Build a dummy label using the lengths we found
 				var label = '';
-				if(maxi > 0) label += Array(Math.ceil(maxi/3)*3).join('1')+'1';
-				if(maxdp > 0) label += '.'+Array(Math.ceil(maxdp/3)*3).join('1')+'1';
+				label += Array(Math.ceil((maxi+maxdp)/3)*3).join('1')+'1';
+				if(maxdp > 0) label += '.';
 				maxw = Math.max(maxw,ctx.measureText(label).width);
 			}else{
 				// Calculate the length of the exponential labels
