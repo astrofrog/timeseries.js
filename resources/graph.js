@@ -583,17 +583,8 @@
 		}).on("mouseup",function(ev){
 			var g = _obj;	 // The graph object
 			var event = ev.event.originalEvent;
-			function getDataRange(x1,x2,y1,y2){
-				var c1 = g.pixel2data(x1,y1);
-				var c2 = g.pixel2data(x2,y2);
-				var xlo = (c1.x < c2.x) ? c1.x : c2.x;
-				var xhi = (c1.x < c2.x) ? c2.x : c1.x;
-				var ylo = (c1.y < c2.y) ? c1.y : c2.y;
-				var yhi = (c1.y < c2.y) ? c2.y : c1.y;
-				return [xlo,xhi,ylo,yhi];
-			}
 			if(g.selecting){
-				var r = getDataRange(g.selectfrom[0],g.selectto[0],g.selectfrom[1],g.selectto[1]);
+				var r = g.getDataRange(g.selectfrom[0],g.selectto[0],g.selectfrom[1],g.selectto[1]);
 
 				// No difference between points - reset view
 				if(r[0]==r[1] && r[2]==r[3]) g.zoom();
@@ -614,7 +605,7 @@
 			}
 			if(g.panning){
 				// Work out the new range
-				var r = getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
+				var r = g.getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
 				// Reset the offsets
 				g.offset.x = 0;
 				g.offset.y = 0;
@@ -883,6 +874,8 @@
 		this.offset.y = dy;
 		this.logTime('panBy');
 		if(!attr) attr = {};
+		var g = this;
+		var r = g.getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
 		if(attr.quick){
 			this.clear();
 			this.clear(this.paper.temp.ctx);
@@ -990,7 +983,15 @@
 
 		return this;
 	}
-
+	Graph.prototype.getDataRange = function(x1,x2,y1,y2){
+		var c1 = this.pixel2data(x1,y1);
+		var c2 = this.pixel2data(x2,y2);
+		var xlo = (c1.x < c2.x) ? c1.x : c2.x;
+		var xhi = (c1.x < c2.x) ? c2.x : c1.x;
+		var ylo = (c1.y < c2.y) ? c1.y : c2.y;
+		var yhi = (c1.y < c2.y) ? c2.y : c1.y;
+		return [xlo,xhi,ylo,yhi];
+	}
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
 		var k,mn,mx,rn;
@@ -1588,7 +1589,7 @@
 			for(i = 0; i < this.y.ticks.length; i++){
 				if(this.y.ticks[i].label.indexOf("e") < 0 && this.y.ticks[i].label != "0"){
 					if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
-					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+?]([0-9]+).*$/,function(m,p1){ return p1; }).length);
+					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+]?([0-9]+).*$/,function(m,p1){ return p1; }).length);
 				}
 			}
 			// If none of the labels were exponential maxdp and maxi will be zero
@@ -1740,7 +1741,7 @@
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
 				p = this.getPos(d,i);
-				if(!p || p < r[d+'min'] || p > r[d+'max']) continue;
+				if(!p) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
 				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
 				if(d=="y") y1 = y2 = p;
@@ -1748,63 +1749,65 @@
 
 				j = (axis.log) ? G.log10(i) : i.toFixed(prec);
 
-				ctx.beginPath();
-				ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-				ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
+				if(p >= r[d+'min'] && p < r[d+'max']){
+					ctx.beginPath();
+					ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
+					ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
 
-				// Draw tick labels
-				if(show.labels){
-					if(d=="x"){
-						var str = axis.ticks[ii].label;
-						if(!str) str = "";
-						var ds = str.split(/\n/);
-						var maxw = 0;
-						for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
-						if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
-							ctx.textAlign = 'center';
-							ctx.fillStyle = this.options.labels.color;
-							for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
-							oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
+					// Draw tick labels
+					if(show.labels){
+						if(d=="x"){
+							var str = axis.ticks[ii].label;
+							if(!str) str = "";
+							var ds = str.split(/\n/);
+							var maxw = 0;
+							for(var k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
+							if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
+								ctx.textAlign = 'center';
+								ctx.fillStyle = this.options.labels.color;
+								for(var k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
+								oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
+							}
+						}else if(d=="y"){
+							ctx.textAlign = 'end';
+							if(j==this.y.gridmax) ctx.textBaseline = 'top';
+							str = axis.ticks[ii].label;
+							ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 						}
-					}else if(d=="y"){
-						ctx.textAlign = 'end';
-						if(j==this.y.gridmax) ctx.textBaseline = 'top';
-						str = axis.ticks[ii].label;
-						ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
+					}
+
+					ctx.stroke();
+								
+					// Draw grid lines
+					ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
+					if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
+						ctx.beginPath();
+						ctx.lineWidth = (this.options[a].gridWidth || 0.5);
+						ctx.moveTo(x1,y1);
+						ctx.lineTo(x2,y2);
+						ctx.stroke();
+					}
+				
+					// Draw tick marks lines
+					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+					if(show.ticks && i > axis.min && i < axis.max){
+						ctx.beginPath();
+						ctx.lineWidth = (this.options[a].tickWidth || 0.5);
+						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+						if(d=="x"){
+							ctx.moveTo(x1,y1);
+							ctx.lineTo(x2,y1+tw);
+						}else if(d=="y"){
+							ctx.moveTo(x1,y1);
+							ctx.lineTo(x1-tw,y2);					
+						}
+						ctx.stroke();
+						ctx.closePath();
 					}
 				}
 
-				ctx.stroke();
-								
-				// Draw grid lines
-				ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-				if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
-					ctx.beginPath();
-					ctx.lineWidth = (this.options[a].gridWidth || 0.5);
-					ctx.moveTo(x1,y1);
-					ctx.lineTo(x2,y2);
-					ctx.stroke();
-				}
-				
-				// Draw tick marks lines
-				ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
-				if(show.ticks && i > axis.min && i < axis.max){
-					ctx.beginPath();
-					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
-					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
-					if(d=="x"){
-						ctx.moveTo(x1,y1);
-						ctx.lineTo(x2,y1+tw);
-					}else if(d=="y"){
-						ctx.moveTo(x1,y1);
-						ctx.lineTo(x1-tw,y2);					
-					}
-					ctx.stroke();
-					ctx.closePath();
-				}
-				
 				// Draw sub grid for log scale
-				if(show.grid && axis.log){
+				if(axis.log && show.grid){
 					ctx.beginPath();
 					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
 					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
@@ -1813,12 +1816,14 @@
 						if(di < axis.max && di > axis.min){
 							p = this.getPos(d,di);
 							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-							if(d=="x"){
-								ctx.moveTo(p,y1);
-								ctx.lineTo(p,y1+tw);
-							}else if(d=="y"){
-								ctx.moveTo(x1,p);
-								ctx.lineTo(x1-tw,p);
+							if(p >= r[d+'min'] && p < r[d+'max']){
+								if(d=="x"){
+									ctx.moveTo(p,y1);
+									ctx.lineTo(p,y1+tw);
+								}else if(d=="y"){
+									ctx.moveTo(x1,p);
+									ctx.lineTo(x1-tw,p);
+								}
 							}
 						}
 					}
