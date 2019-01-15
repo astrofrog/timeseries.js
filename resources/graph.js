@@ -1435,6 +1435,7 @@
 			for(i = 0; i < this[a].ticks.length; i++){
 				v = Math.pow(10,this[a].ticks[i].value);
 				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo);
+				fmt = {};
 				if(sci){
 					precision = (""+v).length;
 					fmt['normal'] = ""+v;
@@ -1584,10 +1585,11 @@
 
 		// Set font for labels
 		fs = this.getFontHeight('y','label');
-		var mn,mx,maxw,maxdp,maxi;
+		var mn,mx,maxw,maxdp,maxi,maxe;
 		maxw = 0;
 		maxdp = 0;
 		maxi = 0;
+		maxe = 0;
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 
@@ -1601,21 +1603,20 @@
 			// Chop down the labels so that the length doesn't oscillate when we're adding decimal places
 			// Loop over and find the length of the decimal portion and length of the integer portion 
 			for(i = 0; i < this.y.ticks.length; i++){
-				if(this.y.ticks[i].label.indexOf("e") < 0 && this.y.ticks[i].label != "0"){
-					if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
-					maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+]?([0-9]+).*$/,function(m,p1){ return p1; }).length);
-				}
+				if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
+				if(this.y.ticks[i].label != "0") maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+]?([0-9]+).*$/,function(m,p1){ return p1; }).length);
+				if(this.y.ticks[i].label.indexOf("e") > 0) maxe = Math.max(maxi,this.y.ticks[i].label.replace(/.*e([\-\+0-9]+)$/,function(m,p1){ return p1; }).length);
 			}
-			// If none of the labels were exponential maxdp and maxi will be zero
-			if(maxdp > 0 || maxi > 0){
+			if(maxe > 0){
+				// Calculate the length of the exponential labels
+				if(maxdp == 0) maxdp = 1;
+				maxw = ctx.measureText("1."+(maxdp > 0 ? Array(Math.ceil(maxdp/3)*3).join('1')+'1' : '')+"e+"+Math.floor(Math.log10(this.y.range))).width;
+			}else{
 				// Build a dummy label using the lengths we found
 				var label = '';
 				label += Array(Math.ceil((maxi+maxdp)/3)*3).join('1')+'1';
 				if(maxdp > 0) label += '.';
 				maxw = Math.max(maxw,ctx.measureText(label).width);
-			}else{
-				// Calculate the length of the exponential labels
-				maxw = ctx.measureText("1.e+"+Math.floor(Math.log10(this.y.range))).width;
 			}
 		}
 		s = Math.round(fs*1.5);
