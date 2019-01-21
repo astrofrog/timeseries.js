@@ -110,13 +110,13 @@
 			// Store the callback for when we've loaded everything
 			this.load.resources.callbacks.push({'callback':callback,'attr':attr});
 
-			function checkAndGo(files,t){
+			function checkAndGo(fs,t){
 				var got = 0;
-				for(var f = 0; f < files.length; f++){
-					if(TimeSeries.load[t].files[files[f]].loaded) got++;
+				for(var f = 0; f < fs.length; f++){
+					if(TimeSeries.load[t].files[fs[f]].loaded) got++;
 				}
-				_obj.log('checkAndGo',got,files.length,TimeSeries.load[t].callbacks);
-				if(got==files.length){
+				_obj.log('checkAndGo',got,fs.length,TimeSeries.load[t].callbacks);
+				if(got==fs.length){
 					for(var c = TimeSeries.load[t].callbacks.length-1; c >= 0; c--){
 						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks)
 						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr['this'] || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
