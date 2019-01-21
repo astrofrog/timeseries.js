@@ -12,14 +12,14 @@
 	var basedir = "";
 
 	// Main object to coordinate data loading
-	TimeSeries = new function(){
+	function TimeSeriesMaster(){
 		this.version = "0.0.9";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
 			return new TS(json,opt);
-		}
-		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} }
+		};
+		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
 		this.callback = "";
 		this.logging = (location.search.indexOf('logging=true')>0);
 		
@@ -45,13 +45,13 @@
 		
 		/* Have we loaded all the data files necessary? */
 		this.filesLoaded = function(fs){
-			this.log('filesLoaded',fs,this.load.data)
+			this.log('filesLoaded',fs,this.load.data);
 			var n = 0;
 			for(var d = 0; d < fs.length; d++){
 				if(this.load.data.files[fs[d]] && this.load.data.files[fs[d]].loaded) n++;
 			}
 			return (n==fs.length);
-		}
+		};
 
 		this.loadFromDataFile = function(f,attr,fn){
 		
@@ -63,7 +63,7 @@
 				this.load.data.files[f] = {'loaded':false,'callbacks':[]};
 				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
 
-				this.log('loading data',f)
+				this.log('loading data',f);
 				// Now grab the data
 				S().ajax(f,{
 					"dataType": "text",
@@ -98,7 +98,7 @@
 					if(typeof fn==="function") fn.call(attr['this'],this.load.data.files[f].data,attr);
 				}
 			}
-		}
+		};
 
 		this.loadResources = function(files,attr,callback){
 
@@ -118,7 +118,7 @@
 				_obj.log('checkAndGo',got,fs.length,TimeSeries.load[t].callbacks);
 				if(got==fs.length){
 					for(var c = TimeSeries.load[t].callbacks.length-1; c >= 0; c--){
-						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks)
+						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks);
 						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr['this'] || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
 						// Remove the callback
 						TimeSeries.load[t].callbacks.pop();
@@ -128,7 +128,7 @@
 
 			for(var i = 0; i < files.length; i++){
 				if(!_obj.load.resources.files[files[i]]){
-					_obj.log('loading resource',files[i])
+					_obj.log('loading resource',files[i]);
 
 					_obj.log('start loading '+files[i]+' is ',_obj.load.resources.files[files[i]]);
 					_obj.load.resources.files[files[i]] = {'loaded':false};
@@ -137,14 +137,14 @@
 						_obj.load.resources.files[e.url].loaded = true;
 						_obj.log('loaded resource '+e.url);
 						checkAndGo(files,"resources");
-					})
+					});
 				}else{
 					_obj.log('current state of '+files[i]+' is ',_obj.load.resources.files[files[i]]);
 				}
 			}
 
 			return _obj;
-		}
+		};
 
 		this.loadCode = function(url,callback){
 			var el;
@@ -164,9 +164,11 @@
 				document.getElementsByTagName('head')[0].appendChild(el);
 			}
 			return _obj;
-		}
+		};
 		return this;
 	}
+
+  TimeSeries = new TimeSeriesMaster();
 
 	// Object for each individual timeseries
 	function TS(json,opt){
@@ -189,7 +191,7 @@
 			fit: false,
 			tooltip: {'theme':'aas-theme'},
 			showaswego: opt.showaswego
-		}
+		};
 		this.dateformats = {
 			'default': {
 				'title': 'Default'
@@ -209,7 +211,7 @@
 						'm':60*1000,
 						's':1000,
 						'ms':1
-					}
+					};
 					if(val < sec.ms) return {'str':(sign < 0 ? '-':'')+(val/1000)};
 					var str = '';
 					var inc = {};
@@ -262,7 +264,7 @@
 					return o;
 				}
 			}
-		}
+		};
 		this.datasets = [];
 		this.directory = "";
 		for(var o in opt){
@@ -283,12 +285,12 @@
 			}
 		}
 		return this;
-	}
+	};
 
 	TS.prototype.processJSON = function(d){
 		this.json = d;
 		this.vega = JSON.parse(JSON.stringify(d));
-		this.log('processJSON',d,this.json)
+		this.log('processJSON',d,this.json);
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
@@ -304,11 +306,12 @@
 		}
 		this.options.logging = true;
 		return this;
-	}
+	};
 
 	TS.prototype.postProcess = function(){
 
-		this.log('postProcess',this)
+		this.log('postProcess',this);
+    var i,a;
 
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
@@ -316,12 +319,12 @@
 			this.options.height = this.initializedValues.h;
 		}
 		this.options.logging = this.logging;
-		this.options.logtime = (location.search.indexOf('logtime=true')>0)
+		this.options.logtime = (location.search.indexOf('logtime=true')>0);
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 		if(this.json.scales){
-			for(var a = 0; a < this.json.axes.length; a++){
-				for(var i = 0; i < this.json.scales.length; i++){
+			for(a = 0; a < this.json.axes.length; a++){
+				for(i = 0; i < this.json.scales.length; i++){
 					if(this.json.axes[a].scale == this.json.scales[i].name){
 						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
 						if(this.json.scales[i].type=="log") this.options[axis].log = true;
@@ -333,11 +336,11 @@
 		}
 
 		// Build the graph object
-		this.graph = new Graph(this.el, [], this.options)	
+		this.graph = new Graph(this.el, [], this.options);
 
 		var el = S(this.el);
 		var str = '<div class="loader"><div class="spinner">';
-		for(var i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
+		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
 		str += '</div></div>';
 		el.addClass('timeseries').append(str);
 
@@ -347,7 +350,7 @@
 		if(this.json) this.loadDatasets(this.json.data);
 
 		return this;
-	}
+	};
 	
 	TS.prototype.makeMenu = function(){
 		var el = S(this.el);
@@ -357,7 +360,7 @@
 			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
 			var str = '';
 			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
-			str += '<li></li>'
+			str += '<li></li>';
 			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savepng">Save as PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button></div></menu></div>');
 
 			// Add button events
@@ -368,9 +371,9 @@
 			});
 			el.find('button.fullscreen').on('click',{g:this.graph},function(e){ e.data.g.toggleFullScreen(); });
 			el.find('button.autozoom').on('click',{g:this.graph},function(e){ e.data.g.zoom(); });
-			el.find('button.fontup').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(+1) });
-			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1) });
-			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0) });
+			el.find('button.fontup').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(+1); });
+			el.find('button.fontdn').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(-1); });
+			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0); });
 			el.find('button.savevega').on('click',{me:this},function(e){ e.data.me.save("vega"); });
 			el.find('button.editvega').on('click',{me:this},function(e){ e.data.me.save("vegaeditor"); });
 			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png"); });
@@ -385,7 +388,9 @@
 
 			// Build date selector
 			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
-			for(var k in this.dateformats) html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+			for(var k in this.dateformats){
+				html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+			}
 			html += '</select></div>';
 			el.find('.menu-panel.submenu-config').append(html);
 			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:this.dateformats},function(e){
