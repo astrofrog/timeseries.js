@@ -2051,6 +2051,14 @@
 		this.paper.temp.ctx.beginPath();
 		for(i = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
+			if(isNaN(p.x)){
+				p.x1 = this.chart.left;
+				p.x2 = this.chart.width+this.chart.left;
+			}
+			if(isNaN(p.y)){
+				p.y1 = this.chart.top;
+				p.y2 = this.chart.height+this.chart.top;
+			}
 			if(!p.x1) p.x1 = p.x;
 			if(!p.x2) p.x2 = p.x;
 			if(!p.y1) p.y1 = p.y;

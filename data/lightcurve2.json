@@ -48,10 +48,18 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
-				"y": {"scale": "yscale", "value": 0},
-				"y2": {"scale": "yscale", "value": 2 },
 				"stroke": {"value": "#000"},
 				"strokeWidth": {"value": 2}
+			}
+		}
+	},{
+		"type": "rule",
+		"description": "Nominal",
+		"encode": {
+			"enter": {
+				"y": {"value": 1},
+				"stroke": {"value": "#000"},
+				"strokeWidth": {"value": 1}
 			}
 		}
 	},{
