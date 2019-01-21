@@ -915,7 +915,7 @@
 
 		// The month is zero-based for compatibility with VEGA
 		// https://vega.github.io/vega/docs/expressions/#datetime
-		fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(d ? zeroPad(d,2):'01')+(h ? 'T'+(zeroPad(h,2)+':'+(mn ? zeroPad(mn,2)+(sc ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf(); }";
+		fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf(); }";
 		fns += "function date(d){ return (new Date(d)).getTime(); }";
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
