@@ -278,7 +278,7 @@
 		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',args.splice(2,));
+				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',(args.splice(2).length > 0 ? args.splice(2):""));
 				else console.log('%cTS%c','font-weight:bold;','',args);
 			}
 		}
@@ -458,10 +458,11 @@
 		this.log('loadDatasets',data)
 		if(!data) return this;
 		this.datasets = {};
-		var n = data.length;
-		var f = "";
-		var files = [];
-		var fn = function(data,attr){
+		var n,f,files,fn,i,j;
+		n = data.length;
+		f = "";
+		files = [];
+		fn = function(data,attr){
 			var json;
 			typ = "json";
 			if(attr && attr.dataset && attr.dataset.format && attr.dataset.format.type=="csv") typ = "csv";
@@ -474,18 +475,18 @@
 		}
 
 		// Build an array of files to load
-		for(var i = 0; i < n; i++){
+		for(i = 0; i < n; i++){
 			if(data[i].url) files.push(this.directory + data[i].url);
 		}
 
 		this.log('files',files,TimeSeries.filesLoaded(files))
 
 		// Process any inline values
-		for(var i = 0; i < n; i++){
+		for(i = 0; i < n; i++){
 			if(data[i].values) fn.call(this,data[i].values,{'dataset':data[i],'files':files});
 		}
 
-		for(var j = 0; j < n; j++){
+		for(j = 0; j < n; j++){
 			// Load data and store it in datasets.
 			// Update the graph if necessary
 			// If we've loaded all data we then call loaded()
