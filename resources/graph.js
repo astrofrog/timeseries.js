@@ -734,13 +734,53 @@
 		return this;
 	};
 
+	function parseData(data){
+		var i,key,v,format,s;
+		// Parse the data
+		for(key in data.parse){
+			var format = data.parse[key];
+			for(i = 0 ; i < data.data.length; i++){
+			// Loop over each column in the line
+				v = data.data[i][key];
+				if(format!="string"){
+					// "number", "boolean" or "date"
+					if(format=="number"){
+						v = parseFloat(v);
+					}else if(format=="date"){
+						// Convert to milliseconds since the epoch
+						s = new Date(v.replace(/^"/,"").replace(/"$/,"")).getTime();
+						// Extract anything less than milliseconds
+						var m = v.match(/\.[0-9]{3}([0-9]+)/);
+						// Add it back
+						if(m && m.length == 2) s += parseFloat('0.'+m[1]);
+						v = s;
+					}else if(format=="boolean"){
+						if(v=="1" || v=="true" || v=="Y") v = true;
+						else if(v=="0" || v=="false" || v=="N") v = false;
+						else v = null;
+					}
+				}
+				data.data[i][key] = v;
+			}
+		}
+		return data;
+	}
+
+	Graph.prototype.addDatasets = function(datasets){
+		if(!this.datasets) this.datasets = {};
+		for(var id in datasets){
+			if(!this.datasets[id]) this.datasets[id] = parseData(clone(datasets[id]));
+		}
+		return this;
+	}
+
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
-	Graph.prototype.addDataset = function(data,idx){
+	Graph.prototype.addMarks = function(data,idx,original){
 		var i,j,t;
 
-		this.log('addDataset',idx);
+		this.log('addMarks',idx);
 		if(typeof idx!=="number"){
 			if(typeof idx==="undefined"){
 				// Create an idx
@@ -752,38 +792,11 @@
 				}
 			}
 		}
+		this.originaldata = original;
 
-		if(this.data[idx]) this.log('addDataset error','refusing to overwrite existing dataset at '+idx,this.data[idx],data);
+		if(this.data[idx]) this.log('addMarks error','refusing to overwrite existing dataset at '+idx,this.data[idx],data);
 		else {
-			// Parse the data
-			for(var key in data.parse){
-				var format = data.parse[key];
-				for(i = 0 ; i < data.data.length; i++){
-				// Loop over each column in the line
-					v = data.data[i][key];
-					if(format!="string"){
-						// "number", "boolean" or "date"
-						if(format=="number"){
-							v = parseFloat(v);
-						}else if(format=="date"){
-							// Convert to milliseconds since the epoch
-							s = new Date(v.replace(/^"/,"").replace(/"$/,"")).getTime();
-							// Extract anything less than milliseconds
-							var m = v.match(/\.[0-9]{3}([0-9]+)/);
-							// Add it back
-							if(m && m.length == 2) s += parseFloat('0.'+m[1]);
-							v = s;
-						}else if(format=="boolean"){
-							if(v=="1" || v=="true" || v=="Y") v = true;
-							else if(v=="0" || v=="false" || v=="N") v = false;
-							else v = null;
-						}
-					}
-					data.data[i][key] = v;
-				}
-			}
-
-			this.data[idx] = data;
+			this.data[idx] = parseData(data);
 
 			// Set the default to show the dataset
 			if(typeof this.data[idx].show!=="boolean") this.data[idx].show = true;
@@ -829,7 +842,7 @@
 
 		if(this.data.length <= 0) return this;
 
-		var d,i,j,max,axes,axis;
+		var d,i,j,max,axes,axis,vs,v;
 
 		function calc(out,vs){
 			out.min = Math.min(out.min);
@@ -841,7 +854,6 @@
 					if(v < out.min) out.min = v;
 					if(v > out.max) out.max = v;
 				}
-				//console.log(v)
 			}
 			return out;
 		}
@@ -850,20 +862,43 @@
 			'xaxis':'x',
 			'yaxis':'y'
 		};
-	
 		for(axis in axes){
 			if(this.options[axis].range == "width" || this.options[axis].range == "height"){
 				// Loop over the datasets
+				for(i in this.datasets){
+					// If no domain is provided or one is and this is the correct dataset
+					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==i)){
+						if(this.datasets[i].data){
+							max = this.datasets[i].data.length;
+							for(j = 0; j < max ; j++){
+								d = this.datasets[i].data[j];
+								// Work out the values to include in the min/max calculation
+								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
+								else v = d[axes[axis]];
+								if(v) vs = [v];
+								this[axes[axis]] = calc(this[axes[axis]],vs);
+							}
+						}else{
+							console.log('no marks')
+						}
+					}
+				}
+				// Loop over the data
 				for(i in this.data){
 					// If no domain is provided or one is and this is the correct dataset
 					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==this.data[i].id)){
-						max = this.data[i].marks.length;
-						for(j = 0; j < max ; j++){
-							d = this.data[i].marks[j].data;
-							// Work out the values to include in the min/max calculation
-							if(this.options[axis].domain && d[this.options[axis].domain.field]) vs = [d[this.options[axis].domain.field]];
-							else vs = [d[axes[axis]]];
-							this[axes[axis]] = calc(this[axes[axis]],vs);
+						if(this.data[i].marks){
+							max = this.data[i].marks.length;
+							for(j = 0; j < max ; j++){
+								d = this.data[i].marks[j].data;
+								// Work out the values to include in the min/max calculation
+								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
+								else v = d[axes[axis]];
+								if(v) vs = [v];
+								this[axes[axis]] = calc(this[axes[axis]],vs);
+							}
+						}else{
+							console.log('no marks')
 						}
 					}
 				}

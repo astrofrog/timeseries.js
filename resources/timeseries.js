@@ -556,6 +556,11 @@
 			return d;
 		}
 
+		for(var id in this.datasets){
+			if(!this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
+		}
+		this.graph.addDatasets(this.datasets);
+
 		var _obj = this;
 
 		for(var m = 0; m < this.json.marks.length; m++){
@@ -601,7 +606,8 @@
 					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
 
 					// Now we add this mark-based dataset
-					this.graph.addDataset(dataset,m);
+					this.graph.addMarks(dataset,m);
+					if(this.datasets[id]) this.datasets[id].added = true;
 
 				}else{
 					this.log('No dataset built for '+id,mark);
