@@ -1,0 +1,21 @@
+version: 2
+
+jobs:
+  jshint:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - run:
+          name: Installing jshint
+          command: sudo npm install -g jshint
+      - run:
+          name: Running jshint
+          command: jshint resources/timeseries.js resources/stuquery.js resources/graph.js
+
+
+workflows:
+  version: 2
+  tests_and_docs:
+    jobs:
+      - jshint
