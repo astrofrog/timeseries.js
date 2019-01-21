@@ -136,34 +136,34 @@
 						<thead>
 							<tr>
 								<th>Property</th>
-								<th style="text-align: center">Type</th>
+								<th>Type</th>
 								<th>Description</th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-							<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-							<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-							<tr><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-							<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-							<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-							<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-							<tr><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-							<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-							<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-							<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-							<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-							<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-							<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-							<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-							<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-							<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-							<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-							<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-							<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+							<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+							<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+							<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+							<tr><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+							<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+							<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+							<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+							<tr><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+							<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+							<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+							<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+							<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+							<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+							<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+							<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+							<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+							<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+							<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+							<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+							<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
@@ -250,34 +250,34 @@
 						<thead>
 							<tr>
 								<th>Property</th>
-								<th style="text-align: center">Type</th>
+								<th>Type</th>
 								<th>Description</th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-							<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-							<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-							<tr><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-							<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-							<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-							<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-							<tr><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-							<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-							<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-							<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-							<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-							<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-							<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-							<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-							<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-							<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-							<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-							<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-							<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+							<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+							<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+							<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+							<tr><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+							<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+							<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+							<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+							<tr><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+							<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+							<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+							<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+							<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+							<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+							<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+							<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+							<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+							<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+							<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+							<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+							<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
@@ -369,34 +369,34 @@
 						<thead>
 							<tr>
 								<th>Property</th>
-								<th style="text-align: center">Type</th>
+								<th>Type</th>
 								<th>Description</th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-							<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-							<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-							<tr><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-							<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-							<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-							<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-							<tr><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-							<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-							<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-							<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-							<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-							<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-							<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-							<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-							<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-							<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-							<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-							<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-							<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-							<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+							<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+							<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+							<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+							<tr><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+							<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+							<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+							<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+							<tr><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+							<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+							<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+							<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+							<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+							<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+							<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+							<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+							<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+							<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+							<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+							<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+							<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+							<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
@@ -482,34 +482,34 @@
 					<thead>
 						<tr>
 							<th>Property</th>
-							<th style="text-align: center">Type</th>
+							<th>Type</th>
 							<th>Description</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-						<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-						<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-						<tr class="notsupported"><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-						<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-						<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-						<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-						<tr class="notsupported"><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-						<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-						<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-						<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-						<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-						<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-						<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-						<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-						<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-						<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-						<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-						<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-						<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+						<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+						<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+						<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+						<tr class="notsupported"><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+						<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+						<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+						<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+						<tr class="notsupported"><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+						<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+						<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+						<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+						<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+						<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+						<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+						<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+						<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+						<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+						<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+						<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+						<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
@@ -655,36 +655,36 @@
 					<thead>
 						<tr>
 							<th>Property</th>
-							<th style="text-align: center">Type</th>
+							<th>Type</th>
 							<th>Description</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr><td>size</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The area in pixels of the symbols bounding box. Note that this value sets the area of the symbol; the side lengths will increase with the square root of this value.</td></tr>
-						<tr><td>shape</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The symbol shape. One of <code class="highlighter-rouge">circle</code> (default), <code class="highlighter-rouge">square</code>, <code class="highlighter-rouge">cross</code>, <code class="highlighter-rouge">diamond</code>, <code class="highlighter-rouge">triangle-up</code>, <code class="highlighter-rouge">triangle-down</code>, <code class="highlighter-rouge">triangle-right</code>, <code class="highlighter-rouge">triangle-left</code>. A custom <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths">SVG path string</a> is not supported.</td></tr>
-						<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-						<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-						<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-						<tr class="notsupported"><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-						<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-						<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-						<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-						<tr class="notsupported"><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-						<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-						<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-						<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-						<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-						<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-						<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-						<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-						<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-						<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-						<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-						<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-						<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+						<tr><td>size</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The area in pixels of the symbols bounding box. Note that this value sets the area of the symbol; the side lengths will increase with the square root of this value.</td></tr>
+						<tr><td>shape</td><td><a href="/vega/docs/types/#String">String</a></td><td>The symbol shape. One of <code class="highlighter-rouge">circle</code> (default), <code class="highlighter-rouge">square</code>, <code class="highlighter-rouge">cross</code>, <code class="highlighter-rouge">diamond</code>, <code class="highlighter-rouge">triangle-up</code>, <code class="highlighter-rouge">triangle-down</code>, <code class="highlighter-rouge">triangle-right</code>, <code class="highlighter-rouge">triangle-left</code>. A custom <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths">SVG path string</a> is not supported.</td></tr>
+						<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+						<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+						<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+						<tr class="notsupported"><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+						<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+						<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+						<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+						<tr class="notsupported"><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+						<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+						<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+						<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+						<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+						<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+						<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+						<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+						<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+						<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+						<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+						<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+						<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
@@ -765,41 +765,55 @@
 						</script>
 					</div>
 					
-					<h2 id="text-mark-properties">Supported <code>symbol</code> mark properties</h2>
+					<h2 id="text-mark-properties">Supported <code>text</code> mark properties</h2>
 					<table class="properties">
 					<thead>
 						<tr>
 							<th>Property</th>
-							<th style="text-align: center">Type</th>
+							<th>Type</th>
 							<th>Description</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr><td>size</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The area in pixels of the symbols bounding box. Note that this value sets the area of the symbol; the side lengths will increase with the square root of this value.</td></tr>
-						<tr><td>shape</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The symbol shape. One of <code class="highlighter-rouge">circle</code> (default), <code class="highlighter-rouge">square</code>, <code class="highlighter-rouge">cross</code>, <code class="highlighter-rouge">diamond</code>, <code class="highlighter-rouge">triangle-up</code>, <code class="highlighter-rouge">triangle-down</code>, <code class="highlighter-rouge">triangle-right</code>, <code class="highlighter-rouge">triangle-left</code>. A custom <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths">SVG path string</a> is not supported.</td></tr>
-						<tr><td>x</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
-						<tr><td>x2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
-						<tr><td>xc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
-						<tr class="notsupported"><td>width</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
-						<tr><td>y</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
-						<tr><td>y2</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
-						<tr><td>yc</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
-						<tr class="notsupported"><td>height</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
-						<tr><td>opacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>fill</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
-						<tr><td>fillOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>stroke</td><td style="text-align: center"><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
-						<tr><td>strokeOpacity</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
-						<tr><td>strokeWidth</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
-						<tr><td>strokeCap</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
-						<tr><td>strokeDash</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
-						<tr class="notsupported"><td>strokeDashOffset</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
-						<tr class="notsupported"><td>strokeJoin</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
-						<tr class="notsupported"><td>strokeMiterLimit</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
-						<tr class="notsupported"><td>cursor</td><td style="text-align: center"><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
-						<tr class="notsupported"><td>href</td><td style="text-align: center"><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
-						<tr><td>tooltip</td><td style="text-align: center"><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
-						<tr class="notsupported"><td>zindex</td><td style="text-align: center"><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+						<tr><td>align</td><td><a href="/vega/docs/types/#String">String</a></td><td>The horizontal text alignment. One of <code class="highlighter-rouge">left</code> (default), <code class="highlighter-rouge">center</code>, or <code class="highlighter-rouge">right</code>.</td></tr>
+						<tr><td>angle</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The rotation angle of the text in degrees (default <code class="highlighter-rouge">0</code>).</td></tr>
+						<tr><td>baseline</td><td><a href="/vega/docs/types/#String">String</a></td><td>The vertical text baseline. One of <code class="highlighter-rouge">alphabetic</code> (default), <code class="highlighter-rouge">top</code>, <code class="highlighter-rouge">middle</code>, <code class="highlighter-rouge">bottom</code>.</td></tr>
+						<tr class="notsupported"><td>dir</td><td><a href="/vega/docs/types/#String">String</a></td><td>The direction of the text. One of <code class="highlighter-rouge">ltr</code> (left-to-right, default) or <code class="highlighter-rouge">rtl</code> (right-to-left). This property determines on which side is truncated in response to the <em>limit</em> parameter.</td></tr>
+						<tr><td>dx</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The horizontal offset in pixels (before rotation), between the text and anchor point.</td></tr>
+						<tr><td>dy</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The vertical offset in pixels (before rotation), between the text and anchor point.</td></tr>
+						<tr class="notsupported"><td>ellipsis</td><td><a href="/vega/docs/types/#String">String</a></td><td>The ellipsis string for text truncated in response to the <em>limit</em> parameter (default “…”).</td></tr>
+						<tr><td>font</td><td><a href="/vega/docs/types/#String">String</a></td><td>The typeface to set the text in (e.g., <code class="highlighter-rouge">Helvetica Neue</code>).</td></tr>
+						<tr><td>fontSize</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The font size in pixels.</td></tr>
+						<tr><td>fontWeight</td><td><a href="/vega/docs/types/#String">String</a> | <a href="/vega/docs/types/#Number">Number</a></td><td>The font weight (e.g., <code class="highlighter-rouge">normal</code> or <code class="highlighter-rouge">bold</code>).</td></tr>
+						<tr><td>fontStyle</td><td><a href="/vega/docs/types/#String">String</a></td><td>The font style (e.g., <code class="highlighter-rouge">normal</code> or <code class="highlighter-rouge">italic</code>).</td></tr>
+						<tr class="notsupported"><td>limit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The maximum length of the text mark in pixels (default <code class="highlighter-rouge">0</code>, indicating no limit). The <em>text</em> value will be automatically truncated if the rendered size exceeds the limit.</td></tr>
+						<tr class="notsupported"><td>radius</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>Polar coordinate radial offset in pixels, relative to the origin determined by the <em>x</em> and <em>y</em> properties (default <code class="highlighter-rouge">0</code>).</td></tr>
+						<tr><td>text</td><td><a href="/vega/docs/types/#String">String</a></td><td>The text to display. <span class="notsupported">This text may be truncated if the rendered length of the text exceeds the <em>limit</em> parameter.</span></td></tr>
+						<tr class="notsupported"><td>theta</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>Polar coordinate angle in radians, relative to the origin determined by the <em>x</em> and <em>y</em> properties (default <code class="highlighter-rouge">0</code>). Values for <code class="highlighter-rouge">theta</code> follow the same convention of <code class="highlighter-rouge">arc</code> marks: angles are measured in radians, with <code class="highlighter-rouge">0</code> indicating up or “north”.</td></tr>
+
+						<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+						<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+						<tr><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+						<tr class="notsupported"><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+						<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+						<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+						<tr><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+						<tr class="notsupported"><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+						<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+						<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+						<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+						<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+						<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+						<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+						<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+						<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+						<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+						<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+						<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+						<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
 						</tbody>
 					</table>
 				</li>
