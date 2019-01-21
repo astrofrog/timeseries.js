@@ -168,7 +168,7 @@
 		return this;
 	}
 
-  TimeSeries = new TimeSeriesMaster();
+	TimeSeries = new TimeSeriesMaster();
 
 	// Object for each individual timeseries
 	function TS(json,opt){
@@ -268,8 +268,10 @@
 		this.datasets = [];
 		this.directory = "";
 		for(var o in opt){
-			if(o=="directory") this[o] = opt[o];
-			if(o=="fit" || o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
+			if(opt[o]){
+				if(o=="directory") this[o] = opt[o];
+				if(o=="fit" || o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
+			}
 		}
 		if(this.json) this.processJSON(json);
 
@@ -311,7 +313,7 @@
 	TS.prototype.postProcess = function(){
 
 		this.log('postProcess',this);
-    var i,a;
+		var i,a;
 
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
@@ -429,7 +431,6 @@
 		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
 
 		// Load any necessary extra js/css
-		var _obj = this;
 		// Do we need to load some extra Javascript?
 		if(typeof Graph==="undefined" && typeof Graph!=="function"){
 			// Load the Javascript and, once done, call this function again
@@ -513,7 +514,7 @@
 		
 		// This is much quicker than looseJsonParse
 		// We'll use it for coordinates despite the eval()
-		var ev = function(str,datum){ return eval(str); };
+		//var ev = function(str,datum){ return eval(str); };
 
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
@@ -629,39 +630,39 @@
 		keyitems = {};
 		j = 1;
 		for(i in this.graph.data){
-      if(this.graph.data[i]){
-        id = S(this.el).attr('id')+'_'+i;
-        key = this.graph.data[i].desc;
-        if(!keyitems[key]) keyitems[key] = [];
-        keyitems[key].push(i);
-        j++;
-      }
+		if(this.graph.data[i]){
+			id = S(this.el).attr('id')+'_'+i;
+			key = this.graph.data[i].desc;
+			if(!keyitems[key]) keyitems[key] = [];
+				keyitems[key].push(i);
+				j++;
+			}
 		}
 		j = 0;
 		for(key in keyitems){
-      if(keyitems[key]){
-        id = S(this.el).attr('id')+'_'+j;
-        d = this.graph.data[keyitems[key][0]];
-        // Check if we've already added this
-        if(layers.find('#'+id).length == 0){
-          layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
-          l = layers.find('#'+id);
-          p = l.parent();
-          k = p.find('.key');
-          l.on('change',{me:this,k:keyitems[key]},function(e){
-            g = e.data.me.graph;
-            for(i = 0; i < e.data.k.length; i++){
-              j = e.data.k[i];
-              g.data[j].show = !g.data[j].show;
-            }
-            g.calculateData().draw(true);
-            if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
-            else this.parent().addClass('inactive');
-          }).on('focus',{layers:layers},function(e){
-            e.data.layers.find('li').removeClass('on');
-            this.parent().addClass('on');
-          });
-        }
+			if(keyitems[key]){
+				id = S(this.el).attr('id')+'_'+j;
+				d = this.graph.data[keyitems[key][0]];
+				// Check if we've already added this
+				if(layers.find('#'+id).length == 0){
+					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
+					l = layers.find('#'+id);
+					p = l.parent();
+					k = p.find('.key');
+					l.on('change',{me:this,k:keyitems[key]},function(e){
+						g = e.data.me.graph;
+						for(i = 0; i < e.data.k.length; i++){
+							j = e.data.k[i];
+							g.data[j].show = !g.data[j].show;
+						}
+						g.calculateData().draw(true);
+						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+						else this.parent().addClass('inactive');
+					}).on('focus',{layers:layers},function(e){
+						e.data.layers.find('li').removeClass('on');
+						this.parent().addClass('on');
+					});
+				}
 			}
 			// Do we need to draw key items?
 			draw = false;
@@ -718,7 +719,7 @@
 
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
-		var opts = { 'type': 'text/text', 'file': (this.file ?  this.file.replace(/.*\//g,"") : "timeseries.json") };
+		var opts = { 'type': 'text/text', 'file': (this.file ?	this.file.replace(/.*\//g,"") : "timeseries.json") };
 
 		function save(content){
 			var asBlob = new Blob([content], {type:opts.type});
@@ -742,7 +743,7 @@
 			dl.click();
 		
 		}
-    var txt;
+		var txt;
 
 		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.vega);
@@ -756,7 +757,7 @@
 		}
 		if(type == "vega"){
 			opts.type = "text/json";
-			opts.file = (this.file ?  this.file.replace(/.*\//g,"") : "timeseries.json");
+			opts.file = (this.file ?	this.file.replace(/.*\//g,"") : "timeseries.json");
 			save(txt);
 		}
 		if(type == "vegaeditor"){
@@ -764,14 +765,14 @@
 			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
 			setTimeout(function(){
 				vegaeditor.postMessage({
-				  "mode": "vega",
-				  "spec": txt,
-				  "config": {
+					"mode": "vega",
+					"spec": txt,
+					"config": {
 					"axisY": {
-					  "minExtent": 30
+						"minExtent": 30
 					}
-				  },
-				  "renderer": "svg"
+					},
+					"renderer": "svg"
 				}, "https://vega.github.io");
 			},1000);
 		}
@@ -835,7 +836,7 @@
 			), "gi"
 		);
 
-		var rows = [[]];  // array to hold our data. First row is column headers.
+		var rows = [[]];	// array to hold our data. First row is column headers.
 		// array to hold our individual pattern matching groups:
 		var matches = false; // false if we don't find any matches
 		// Loop until we no longer find a regular expression match
@@ -871,7 +872,7 @@
 		// Split by the end of line characters
 		if(typeof data==="string") data = CSVToArray(data);
 
-		var line,datum,formats,header,types,rows,j,i;
+		var datum,formats,header,j,i;
 		var newdata = [];
 
 		formats = new Array(data[0].length);
@@ -965,11 +966,11 @@
 	}
 
 	// Can provide as:
-	//   1) (ms,"unix") - milliseconds since the UNIX epoch
-	//   2) (days,"mjd") - days since the MJD epoch
-	//   3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
-	//   4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
-	//   5) <undefined> - uses the current time
+	//	 1) (ms,"unix") - milliseconds since the UNIX epoch
+	//	 2) (days,"mjd") - days since the MJD epoch
+	//	 3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
+	//	 4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
+	//	 5) <undefined> - uses the current time
 	function JD(jd,t,offs){
 		epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
 		var secs = 86400;
@@ -996,14 +997,14 @@
 
 		// Deal with Julian Date in two parts to avoid rounding errors
 		// Input is either:
-		//    1) the number of milliseconds since 1970-01-01
-		//    2) the ISO8601 date string (can go to microseconds)
-		//    3) <undefined> - uses the current time
+		//		1) the number of milliseconds since 1970-01-01
+		//		2) the ISO8601 date string (can go to microseconds)
+		//		3) <undefined> - uses the current time
 		function u2jd(today) {
 			// The Julian Date of the Unix Time epoch is 2440587.5
 			var days = 0;
-      var rem = 0;
-      var ms = 0;
+			var rem = 0;
+			var ms = 0;
 			if(typeof today==="undefined"){
 				today = new Date();
 				ms = today.getTime();
@@ -1020,14 +1021,6 @@
 			return [days + epoch - 0.5,rem];
 		}
 		return this;
-	}
-
-	function Te(e, t, n, r) {
-		var i = '<html><head>' + t + '</head><body><pre><code class="json">',
-		o = '</code></pre>' + n + '</body></html>',
-		a = window.open('');
-		a.document.write(i + e + o),
-		a.document.title = Ae[r] + ' JSON Source';
 	}
 
 	root.TimeSeries = TimeSeries;
