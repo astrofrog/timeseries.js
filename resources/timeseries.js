@@ -35,12 +35,12 @@
 			if(this.logging || arguments[0]=="ERROR"){
 				var args = Array.prototype.slice.call(arguments, 0);
 				if(console && typeof console.log==="function"){
-					if(arguments[0] == "ERROR") console.log('%cERROR%c %cTimeSeries%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',args.splice(2,));
+					if(arguments[0] == "ERROR") console.log('%cERROR%c %cTimeSeries%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
 					else console.log('%cTimeseries%c','font-weight:bold;','',args);
 				}
 			}
 			return this;
-		}
+		};
 		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
 		
 		/* Have we loaded all the data files necessary? */
