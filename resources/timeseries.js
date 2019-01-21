@@ -320,8 +320,15 @@
 		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 		if(this.json.scales){
-			for(var i = 0; i < this.json.scales.length; i++){
-				if(this.json.scales[i].name=="yscale" && this.json.scales[i].type=="log") this.options.yaxis.log = true;
+			for(var a = 0; a < this.json.axes.length; a++){
+				for(var i = 0; i < this.json.scales.length; i++){
+					if(this.json.axes[a].scale == this.json.scales[i].name){
+						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
+						if(this.json.scales[i].type=="log") this.options[axis].log = true;
+						if(this.json.scales[i].range) this.options[axis].range = this.json.scales[i].range;
+						if(this.json.scales[i].domain) this.options[axis].domain = this.json.scales[i].domain;
+					}
+				}
 			}
 		}
 

@@ -828,35 +828,48 @@
 
 		if(this.data.length <= 0) return this;
 
-		var d,i,j,max;
+		var d,i,j,max,axes,axis;
 
-		function calc(){
-			out = arguments[0];
+		function calc(out,vs){
 			out.min = Math.min(out.min);
 			out.max = Math.max(out.max);
-			for(var i = 1; i < arguments.length; i++){
-				v = arguments[i];
+			for(var i = 0; i < vs.length; i++){
+				v = vs[i];
 				if(typeof v!=="undefined"){
-					if(typeof v==="object") v = arguments[i].valueOf();
-					if(arguments[i] < out.min) out.min = v;
-					if(arguments[i] > out.max) out.max = v;
+					if(typeof v==="object") v = v.valueOf();
+					if(v < out.min) out.min = v;
+					if(v > out.max) out.max = v;
 				}
+				//console.log(v)
 			}
 			return out;
 		}
 
-		for(i in this.data){
-			max = this.data[i].marks.length
-
-			// Only calculate range based on symbols or lines
-			if(this.data[i].type=="symbol" || this.data[i].type=="line"){
-				for(j = 0; j < max ; j++){
-					d = this.data[i].marks[j].data;
-					this.x = calc(this.x,d.x,d.x1,d.x2);
-					this.y = calc(this.y,d.y,d.y1,d.y2);
+		axes = {
+			'xaxis':'x',
+			'yaxis':'y'
+		};
+	
+		for(axis in axes){
+			if(this.options[axis].range == "width" || this.options[axis].range == "height"){
+				// Loop over the datasets
+				for(i in this.data){
+					// If no domain is provided or one is and this is the correct dataset
+					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==this.data[i].id)){
+						max = this.data[i].marks.length
+						for(j = 0; j < max ; j++){
+							d = this.data[i].marks[j].data;
+							// Work out the values to include in the min/max calculation
+							if(this.options[axis].domain && d[this.options[axis].domain.field]) vs = [d[this.options[axis].domain.field]];
+							else vs = [d[axes[axis]]];
+							this[axes[axis]] = calc(this[axes[axis]],vs);
+						}
+					}
 				}
 			}
 		}
+
+
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;
