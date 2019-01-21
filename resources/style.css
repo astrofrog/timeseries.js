@@ -85,7 +85,7 @@ figure figcaption {
 	margin-bottom: 1em;
 }
 
-table.properties { border-collapse: collapse; }
+table.properties { border-collapse: collapse; text-align: left; }
 table.properties th, table.properties td { border: 1px solid #cccccc; padding: 6px 12px; }
 table.properties tbody tr:nth-child(2n+1) { background-color: #f8f8f8; }
 .notsupported { opacity: 0.1; text-decoration: line-through; }
