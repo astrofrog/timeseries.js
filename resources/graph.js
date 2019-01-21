@@ -1972,7 +1972,7 @@
 	Graph.prototype.remove = function(){
 		this.canvas.canvasholder.remove();
 		return {};
-	}
+	};
 
 	Graph.prototype.drawRect = function(datum,attr){
 		var x1,y1,x2,y2,dx,dy,o,ctx,n;
@@ -2010,7 +2010,7 @@
 			return o;
 		}
 		return "";
-	}
+	};
 
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
@@ -2040,7 +2040,8 @@
 
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 		return this;
-	}
+	};
+
 	Graph.prototype.drawVisibleLineSegment = function(ax,ay,bx,by){
 		// If the two points are both off to the left, right, top, or bottom the line won't be visible
 		if((ax < 0 && bx < 0) || (ax > this.canvas.wide && bx > this.canvas.wide) || (ay < 0 && by < 0) || (ay > this.canvas.tall && by > this.canvas.tall)) return 0;
@@ -2067,7 +2068,8 @@
 		this.paper.temp.ctx.moveTo(ax,ay);
 		this.paper.temp.ctx.lineTo(bx,by);
 		return 1;
-	}
+	};
+
 	Graph.prototype.drawLine = function(sh,attr){
 		var ctx,ps,oldp,i;
 		ctx = (attr.ctx || this.paper.data.ctx);
@@ -2086,7 +2088,7 @@
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
 
 		return this;
-	}
+	};
 	
 	Graph.prototype.drawArea = function(sh,attr){
 		var ctx,oldp,areas,a,i,j,k;
@@ -2094,14 +2096,14 @@
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
 		oldp = {};
-		areas = new Array();
+		areas = [];
 		// We need to loop across the data first splitting into segments
 		for(i = 0, a = 0; i < this.data[sh].marks.length ; i++){
 			p = this.data[sh].marks[i].props;
 			y1 = (p.y1 || p.y);
 			y2 = p.y2;
 			if(p.x && y1 && y2){
-				if(!areas[a]) areas[a] = new Array();
+				if(!areas[a]) areas[a] = [];
 				areas[a].push(i);
 			}else a++;
 		}
@@ -2143,7 +2145,7 @@
 		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
 
 		return this;
-	}
+	};
 
 	// Draw text
 	Graph.prototype.drawText = function(datum,attr){
@@ -2159,7 +2161,7 @@
 		o.weight = 1;
 		if(attr.update) this.addRectToLookup(o);
 		return o;
-	}
+	};
 
 	Graph.prototype.drawTextLabel = function(txt,x,y,attr){
 		if(!attr) attr = {};
@@ -2175,7 +2177,7 @@
 
 		// Deal with superscript
 		if(!txt) txt = "";
-		str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; })
+		str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; });
 		bits = str.split(/%%/);
 		w = 0;
 		// Calculate the width of the text
@@ -2206,14 +2208,14 @@
 			l += ctx.measureText(bits[b][1]).width;
 		}
 		return {xa:Math.floor(xo),xb:Math.ceil(l),ya:Math.floor(y),yb:Math.ceil(y + f.fontSize)};
-	}
+	};
 
 	// Draw a shape
 	// Override the datum.x and datum.y with attr.x,attr.y if provided
 	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
-		var ctx,p,x1,y1,s,w,h,x1,y1,o;
+		var ctx,p,x1,y1,s,w,h,o;
 		ctx = attr.ctx;
 		p = datum.props;
 		
@@ -2292,7 +2294,7 @@
 		o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
 		if(attr.update) this.addRectToLookup(o);
 		return o;
-	}
+	};
 
 	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
 	Graph.prototype.addTempToLookup = function(attr){
@@ -2316,20 +2318,19 @@
 			}
 		}
 		return this;
-	}
-
+	};
 
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.id) return;
-		var x,y,value,p,a;
+		var x,y,value,p,a,t,dir,bit;
 		p = 1;
 		a = i.id+':'+(i.weight||1);
-		if(i.xb < i.xa){ var t = i.xa; i.xa = i.xb; i.xb = t; }
-		if(i.yb < i.ya){ var t = i.ya; i.ya = i.yb; i.yb = t; }
+		if(i.xb < i.xa){ t = i.xa; i.xa = i.xb; i.xb = t; }
+		if(i.yb < i.ya){ t = i.ya; i.ya = i.yb; i.yb = t; }
 
-		for(var dir in {'x':'','y':''}){
-			for(var bit in {'a':'','b':''}){
+		for(dir in {'x':'','y':''}){
+			for(bit in {'a':'','b':''}){
 				i[dir+''+bit] *= this.canvas.scale;
 				i[dir+''+bit] = (bit == "a") ? Math.floor(i[dir+''+bit]) : Math.ceil(i[dir+''+bit]);
 			}
@@ -2351,7 +2352,7 @@
 			}
 		}
 		return this;
-	}
+	};
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
@@ -2359,7 +2360,7 @@
 		h = ctx ? ctx.canvas.height : this.canvas.tall;
 		(ctx || this.canvas.ctx).clearRect(0,0,w,h);
 		return this;
-	}
+	};
 
 	// Draw everything
 	Graph.prototype.draw = function(updateLookup){
@@ -2371,13 +2372,13 @@
 		this.drawOverlay();
 		this.logTime('draw');
 		return this;
-	}
+	};
 
 	Graph.prototype.drawOverlay = function(){
 		// Potentially draw things afterwards
 		
 		return this;
-	}
+	};
 
 	Graph.prototype.logTime = function(key){
 
@@ -2408,7 +2409,7 @@
 			delete this.metrics[key].start;
 		}
 		return this;
-	}
+	};
 
 	function tidy(v){
 		if(typeof v!=="string") return "";
