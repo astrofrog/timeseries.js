@@ -389,17 +389,19 @@
 			// Build date selector
 			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
 			for(var k in this.dateformats){
-				html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+				if(this.dateformats[k]){
+					html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+				}
 			}
 			html += '</select></div>';
 			el.find('.menu-panel.submenu-config').append(html);
 			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:this.dateformats},function(e){
 				e.data.graph.x.labelopts = e.data.formats[this[0].value];
-				console.log('labelopts',e.data.graph.x.labelopts)
+				console.log('labelopts',e.data.graph.x.labelopts);
 				e.data.graph.defineAxis("x").calculateData().draw(true);
 			});
 		}
-	}
+	};
 
 	/*
 		Render a TimeSeries from an HTML element 
@@ -407,12 +409,12 @@
 	*/
 	TS.prototype.initialize = function(e,callback){
 
-		this.log('initialize',e)
+		this.log('initialize',e);
 
 		// Store the callback function
 		if(typeof callback==="function") this.callback = callback;
 
-		if(!e) console.log('ERROR',e,callback)
+		if(!e) console.log('ERROR',e,callback);
 
 		var el = S(e);
 		if(el.length == 0) return this;
@@ -454,13 +456,13 @@
 				this.postProcess();
 				return this;
 			}
-		};
+		}
 
 		return this;
-	}
+	};
 	
 	TS.prototype.loadDatasets = function(data){
-		this.log('loadDatasets',data)
+		this.log('loadDatasets',data);
 		if(!data) return this;
 		this.datasets = {};
 		var n,f,files,fn,i,j;
@@ -477,14 +479,14 @@
 			this.datasets[attr.dataset.name][typ] = data;
 			this.update(attr.dataset.name);
 			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
-		}
+		};
 
 		// Build an array of files to load
 		for(i = 0; i < n; i++){
 			if(data[i].url) files.push(this.directory + data[i].url);
 		}
 
-		this.log('files',files,TimeSeries.filesLoaded(files))
+		this.log('files',files,TimeSeries.filesLoaded(files));
 
 		// Process any inline values
 		for(i = 0; i < n; i++){
@@ -499,7 +501,7 @@
 		}
 
 		return this;
-	}
+	};
 
 	TS.prototype.update = function(datasetID){
 
@@ -507,44 +509,46 @@
 		this.olddatasetsused = this.datasetsused;
 		this.datasetsused = "";
 
-		this.log('update',datasetID)
+		this.log('update',datasetID);
 		
 		// This is much quicker than looseJsonParse
 		// We'll use it for coordinates despite the eval()
-		var ev = function(str,datum){ return eval(str); }
+		var ev = function(str,datum){ return eval(str); };
 
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
-				console.log('updateProps fail',d,event)
+				console.log('updateProps fail',d,event);
 				return;
 			}
 			datum = d.data;
 
 			for(var p in event){
-				if(dest[p] && dest[p]=="props"){
-					if(typeof event[p].value !== "undefined"){
-						if(d.props.symbol) d.props.symbol[p] = event[p].value;
-						if(d.props.format) d.props.format[p] = event[p].value;
-					}
-				}else{
-					if(event[p].field && datum[event[p].field]) d.data[p] = datum[event[p].field];
-					if(typeof event[p].value!=="undefined"){
-						if(event[p].format && event[p].format=="date") datum[p] = (new Date(event[p].value)).getTime();
-						else datum[p] = event[p].value;
-					}
-				}
-				if(event[p].signal){
-					to = dest[p] || "data";
-					try { d[to][p] = looseJsonParse(event[p].signal); }
-					catch(e) { _obj.log('Error',d.data,event[p]); }
-					// If we now have an object we build a string
-					if(p=="tooltip" && typeof d.props[p]==="object"){
-						str = "<table>";
-						for(var i in d.props[p]){
-							if(typeof d.props[p][i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+				if(event[p]){
+					if(dest[p] && dest[p]=="props"){
+						if(typeof event[p].value !== "undefined"){
+							if(d.props.symbol) d.props.symbol[p] = event[p].value;
+							if(d.props.format) d.props.format[p] = event[p].value;
 						}
-						d.props[p] = str+"</table>";
+					}else{
+						if(event[p].field && datum[event[p].field]) d.data[p] = datum[event[p].field];
+						if(typeof event[p].value!=="undefined"){
+							if(event[p].format && event[p].format=="date") datum[p] = (new Date(event[p].value)).getTime();
+							else datum[p] = event[p].value;
+						}
+					}
+					if(event[p].signal){
+						to = dest[p] || "data";
+						try { d[to][p] = looseJsonParse(event[p].signal); }
+						catch(e) { _obj.log('Error',d.data,event[p]); }
+						// If we now have an object we build a string
+						if(p=="tooltip" && typeof d.props[p]==="object"){
+							str = "<table>";
+							for(var i in d.props[p]){
+								if(typeof d.props[p][i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p][i]+"</td></tr>";
+							}
+							d.props[p] = str+"</table>";
+						}
 					}
 				}
 			}
@@ -591,9 +595,9 @@
 					dataset.encode = mark.encode;
 
 					// Add callbacks
-					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); }
-					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); }
-					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); }
+					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); };
+					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); };
+					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
 
 					// Now we add this mark-based dataset
 					this.graph.addDataset(dataset,m);
@@ -609,7 +613,7 @@
 		if(this.datasetsused != this.olddatasetsused && this.attr.showaswego) this.graph.updateData();
 
 		return this;
-	}
+	};
 
 	TS.prototype.loaded = function(){
 		this.log('loaded',this.attr.showaswego,this.graph.data);
@@ -625,35 +629,39 @@
 		keyitems = {};
 		j = 1;
 		for(i in this.graph.data){
-			id = S(this.el).attr('id')+'_'+i;
-			key = this.graph.data[i].desc;
-			if(!keyitems[key]) keyitems[key] = new Array();
-			keyitems[key].push(i);
-			j++;
+      if(this.graph.data[i]){
+        id = S(this.el).attr('id')+'_'+i;
+        key = this.graph.data[i].desc;
+        if(!keyitems[key]) keyitems[key] = [];
+        keyitems[key].push(i);
+        j++;
+      }
 		}
 		j = 0;
 		for(key in keyitems){
-			id = S(this.el).attr('id')+'_'+j;
-			d = this.graph.data[keyitems[key][0]];
-			// Check if we've already added this
-			if(layers.find('#'+id).length == 0){
-				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
-				l = layers.find('#'+id);
-				p = l.parent();
-				k = p.find('.key');
-				l.on('change',{me:this,k:keyitems[key]},function(e){
-					g = e.data.me.graph;
-					for(i = 0; i < e.data.k.length; i++){
-						j = e.data.k[i];
-						g.data[j].show = !g.data[j].show;
-					}
-					g.calculateData().draw(true);
-					if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
-					else this.parent().addClass('inactive');
-				}).on('focus',{layers:layers},function(e){
-					e.data.layers.find('li').removeClass('on');
-					this.parent().addClass('on');
-				});
+      if(keyitems[key]){
+        id = S(this.el).attr('id')+'_'+j;
+        d = this.graph.data[keyitems[key][0]];
+        // Check if we've already added this
+        if(layers.find('#'+id).length == 0){
+          layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
+          l = layers.find('#'+id);
+          p = l.parent();
+          k = p.find('.key');
+          l.on('change',{me:this,k:keyitems[key]},function(e){
+            g = e.data.me.graph;
+            for(i = 0; i < e.data.k.length; i++){
+              j = e.data.k[i];
+              g.data[j].show = !g.data[j].show;
+            }
+            g.calculateData().draw(true);
+            if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+            else this.parent().addClass('inactive');
+          }).on('focus',{layers:layers},function(e){
+            e.data.layers.find('li').removeClass('on');
+            this.parent().addClass('on');
+          });
+        }
 			}
 			// Do we need to draw key items?
 			draw = false;
@@ -664,7 +672,7 @@
 			// Draw all the pieces that we need to
 			if(draw && k && k[0]){
 				w = k[0].offsetWidth;
-				h = k[0].offsetHeight
+				h = k[0].offsetHeight;
 				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
 				var c = k.find('canvas')[0];
 				var ctx = c.getContext('2d');
@@ -704,7 +712,7 @@
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
-	}
+	};
 	
 	TS.prototype.save = function(type){
 
@@ -734,6 +742,7 @@
 			dl.click();
 		
 		}
+    var txt;
 
 		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.vega);
@@ -743,7 +752,7 @@
 				if(this.datasets[output.data[i].name].csv) typ = "csv";
 				output.data[i].values = this.datasets[output.data[i].name][typ];
 			}
-			var txt = JSON.stringify(output);
+			txt = JSON.stringify(output);
 		}
 		if(type == "vega"){
 			opts.type = "text/json";
@@ -768,15 +777,15 @@
 		}
 		if(type == "png"){
 			opts.type = "image/png";
-			opts.file = "timeseries.png"
+			opts.file = "timeseries.png";
 			this.graph.canvas.c.toBlob(save,opts.type);
 		}
 
 		return this;
-	}
+	};
 	
 	TS.prototype.error = function(msg,extra,err){
-		this.log('ERROR',msg,err)
+		this.log('ERROR',msg,err);
 		if(S(this.el).find('.loader').length == 0){
 			S(this.el).html('<div class="loader"><div class="spinner"></div></div>').css({'position':'relative','width':'100%','height':'200px'});
 		}
@@ -788,13 +797,13 @@
 		S(this.el).find('.loader').append('<br />'+extra+'');
 
 		return this;	
-	}
+	};
 
 	TS.prototype.remove = function(){
 		S(this.el).find('.menuholder').remove();
 		S(this.el).find('.canvasholder').remove();
 		return {};
-	}
+	};
 
 	function getIcon(icon,colour){
 		var icons = {
@@ -802,7 +811,7 @@
 			'layers': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,6 l 12,6.5 -12,6.5 -12,-6.5Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,10.5 l 12,6.5 -12,6.5 -12,-6.5 Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,15 l 12,6.5 -12,6.5 -12,-6.5 Z" />',
 			'config': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 13.971 4.5996 L 13.377 7.6992 L 13.453 7.6992 A 8.661 8.661 0 0 0 12.008 8.291 L 9.4785 6.5 L 6.5781 9.4004 L 8.3926 11.865 A 8.661 8.661 0 0 0 7.707 13.551 L 7.707 13.4 L 4.6074 13.9 L 4.6074 18 L 7.707 18.5 L 7.707 18.361 A 8.661 8.661 0 0 0 8.3945 20.033 L 6.5781 22.5 L 9.4785 25.4 L 12.01 23.609 A 8.661 8.661 0 0 0 13.395 24.189 L 13.971 27.199 L 18.033 27.199 L 18.547 24.215 A 8.661 8.661 0 0 0 20.014 23.621 L 22.529 25.4 L 25.43 22.5 L 23.635 20.059 A 8.661 8.661 0 0 0 24.289 18.496 L 27.369 18 L 27.369 13.9 L 24.283 13.402 A 8.661 8.661 0 0 0 23.631 11.848 L 25.43 9.4004 L 22.529 6.5 L 20.01 8.2832 A 8.661 8.661 0 0 0 18.564 7.6836 L 18.033 4.5996 L 13.971 4.5996 z M 15.988 10.828 A 5.0719 5.0719 0 0 1 21.061 15.9 A 5.0719 5.0719 0 0 1 15.988 20.973 A 5.0719 5.0719 0 0 1 10.916 15.9 A 5.0719 5.0719 0 0 1 15.988 10.828 z" />',
 			'save': '<path style="fill:%COLOUR%;fill-opacity: 0.8;" d="M 6,26 l 20,0 0,-6 -6,0 -4,3 -4,-3 -6,0 Z M 16,20 l 8,-8 -5,0 0,-6 -6,0 0,6 -5,0" />'
-		}
+		};
 		return '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">'+(icons[icon]||"").replace(/%COLOUR%/g,(colour||"black"))+'</svg>';
 	}
 
@@ -862,25 +871,23 @@
 		// Split by the end of line characters
 		if(typeof data==="string") data = CSVToArray(data);
 
-		var line,datum,header,types,rows;
-		var newdata = new Array();
-		var formats = new Array();
-		var header = new Array();
+		var line,datum,formats,header,types,rows,j,i;
+		var newdata = [];
 
-		formats = new Array(data[0].length)
-		header = new Array(data[0].length)
+		formats = new Array(data[0].length);
+		header = new Array(data[0].length);
 		// Loop over each column in the line to find headers
-		for(var j=0; j < data[0].length; j++){
+		for(j=0; j < data[0].length; j++){
 			header[j] = data[0][j];
 			formats[j] = parse[header[j]] || "string";
 		}
 
-		for(var i = 1 ; i < data.length; i++){
+		for(i = 1 ; i < data.length; i++){
 			// If there is no content on this line we skip it
 			if(!data[i] || data[i] == "") continue;
 			datum = {};
 			// Loop over each column in the line
-			for(var j=0; j < data[i].length; j++){
+			for(j=0; j < data[i].length; j++){
 				if(formats[j]=="number") datum[header[j]] = parseFloat(data[i][j]);
 				else datum[header[j]] = data[i][j];
 			}
@@ -891,7 +898,7 @@
 		return newdata;
 	}
 
-	function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };
+	function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; }
 	
 	function looseJsonParse(obj){
 		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
@@ -944,7 +951,7 @@
 		var ts = TimeSeries.create(json,opt);
 		ts.initialize(S(el)[0]);
 		return;
-	}
+	};
 
 	// Convert dates
 	function formatDate(dt,t){
@@ -981,11 +988,11 @@
 		}else this.val = u2jd(jd);
 		var _obj = this;
 
-		this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; }
-		this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; }	// Milliseconds
-		this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); }
-		this.toTJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2440000.5); }
-		this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); }
+		this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; };
+		this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; };	// Milliseconds
+		this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); };
+		this.toTJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2440000.5); };
+		this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); };
 
 		// Deal with Julian Date in two parts to avoid rounding errors
 		// Input is either:
@@ -994,7 +1001,9 @@
 		//    3) <undefined> - uses the current time
 		function u2jd(today) {
 			// The Julian Date of the Unix Time epoch is 2440587.5
-			var days = rem = ms = 0;
+			var days = 0;
+      var rem = 0;
+      var ms = 0;
 			if(typeof today==="undefined"){
 				today = new Date();
 				ms = today.getTime();
@@ -1018,7 +1027,7 @@
 		o = '</code></pre>' + n + '</body></html>',
 		a = window.open('');
 		a.document.write(i + e + o),
-		a.document.title = Ae[r] + ' JSON Source'
+		a.document.title = Ae[r] + ' JSON Source';
 	}
 
 	root.TimeSeries = TimeSeries;
