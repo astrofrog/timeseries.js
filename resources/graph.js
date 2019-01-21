@@ -905,7 +905,6 @@
 			}
 		}
 
-
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;

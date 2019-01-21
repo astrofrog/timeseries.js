@@ -14,7 +14,7 @@
 }
 .timeseries { position: relative; }
 .timeseries .menuholder { position: absolute; overflow: hidden; width: 100%; height: 100%; }
-.timeseries .timeseries-actions-wrapper { height: 100%; overflow-y: auto; }
+.timeseries .timeseries-actions-wrapper { height: auto; overflow-y: auto; max-height: 100%; }
 .timeseries .hamburger {
 	cursor: pointer;
 	display: block;
