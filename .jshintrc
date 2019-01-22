@@ -1,4 +1,8 @@
 {
+  "-W082": false,
   "asi": true,
-  "sub": true
+  "sub": true,
+  "loopfunc": true,
+  "evil": true,
+  "boss": true
 }
