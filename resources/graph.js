@@ -1226,7 +1226,7 @@
 					var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
 					if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
 					var y = Math.max(0,Math.min(this.data[t].marks[i].props.y,this.canvas.tall-this.coordinates.outerHeight())); 
-					this.coordinates.css({'display':'','left':Math.round(x)+'px','top':Math.round(y)+'px'});
+					this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
 				}else{
 					this.coordinates.css({'display':'none'});
 				}
