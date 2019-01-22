@@ -4,6 +4,7 @@
 	"height": 350,
 	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
+	"_date": "relative",
 	"data": [{
 		"name": "lightcurve",
 		"url": "lightcurve2.csv",
@@ -19,7 +20,7 @@
 	}],
 	"scales": [{
 		"name": "xscale",
-		"type": "time",
+		"type": "linear",
 		"range": "width",
 		"zero": false,
 		"domain": {"data": "lightcurve", "field": "x"}

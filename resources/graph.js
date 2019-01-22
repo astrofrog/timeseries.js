@@ -831,18 +831,21 @@
 
 		return this;
 	};
+
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log('updateData',this.data);
 		this.getGraphRange().getChartOffset().calculateData().draw(true);
 	};
+
 	Graph.prototype.getGraphRange = function(){
-		this.x = { min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit };
-		this.y = { min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit };
+		var d,i,j,max,axes,axis,vs,v;
+		if(!this.x) this.x = {};
+		if(!this.y) this.y = {};
+		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		this.y = G.extend(this.y,{ min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
 		if(this.data.length <= 0) return this;
-
-		var d,i,j,max,axes,axis,vs,v;
 
 		function calc(out,vs){
 			out.min = Math.min(out.min);

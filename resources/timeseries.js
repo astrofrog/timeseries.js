@@ -355,13 +355,14 @@
 	};
 	
 	TS.prototype.makeMenu = function(){
-		var el = S(this.el);
-		var id = el.attr('id');
+		var el,id,k,i,tab,html,a;
+		el = S(this.el);
+		id = el.attr('id');
 
 		if(el.find('.menuholder').length == 0){
 			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
 			var str = '';
-			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
+			for(i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
 			str += '<li></li>';
 			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;"></div></menu></div>');
 
@@ -389,18 +390,21 @@
 			});
 
 			// Build date selector
-			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
-			for(var k in this.dateformats){
+			html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
+			for(k in this.dateformats){
 				if(this.dateformats[k]){
-					html += '<option value="'+k+'"'+(k=="default" ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+					f = (this.json._date||this.json._dateformat||"default");
+					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+					if(f && this.dateformats[f]) this.graph.x.labelopts = this.dateformats[f];
 				}
 			}
 			html += '</select></div>';
 			el.find('.menu-panel.submenu-config').append(html);
 			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:this.dateformats},function(e){
-				e.data.graph.x.labelopts = e.data.formats[this[0].value];
-				console.log('labelopts',e.data.graph.x.labelopts);
-				e.data.graph.defineAxis("x").calculateData().draw(true);
+				if(e.data.formats[this[0].value]){
+					e.data.graph.x.labelopts = e.data.formats[this[0].value];
+					e.data.graph.defineAxis("x").calculateData().draw(true);
+				}
 			});
 		}
 	};
@@ -737,6 +741,7 @@
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
 		var opts = { 'type': 'text/text', 'file': (this.file ?	this.file.replace(/.*\//g,"") : "timeseries.json") };
+		if(!attr) attr = {};
 
 		function save(content){
 			var asBlob = new Blob([content], {type:opts.type});
@@ -774,7 +779,7 @@
 		}
 		if(type == "vega"){
 			opts.type = "text/json";
-			opts.file = (this.file ?	this.file.replace(/.*\//g,"") : "timeseries.json");
+			opts.file = (this.file ? this.file.replace(/.*\//g,"") : (attr.file||"timeseries.json"));
 			save(txt);
 		}
 		if(type == "vegaeditor"){
@@ -794,12 +799,12 @@
 			},1000);
 		}
 		if(type == "png"){
-			if(attr){
-				this.graph.background = attr;
+			if(attr && attr.background){
+				this.graph.background = attr.background;
 				this.graph.draw();
 			}
 			opts.type = "image/png";
-			opts.file = "timeseries.png";
+			opts.file = (attr.file||"timeseries.png");
 			this.graph.canvas.c.toBlob(save,opts.type);
 			if(attr){
 				this.graph.background = "";
