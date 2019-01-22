@@ -552,12 +552,14 @@
 						try { d[to][p].value = looseJsonParse(event[p].signal); }
 						catch(e) { _obj.log('Error',d.data,event[p]); }
 						// If we now have an object we build a string
-						if(p=="tooltip" && typeof d.props[p].value==="object"){
-							str = "<table>";
-							for(var i in d.props[p].value){
-								if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
-							}
-							d.props[p] = str+"</table>";
+						if(p=="tooltip"){
+							if(typeof d.props[p].value==="object"){
+								str = "<table>";
+								for(var i in d.props[p].value){
+									if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
+								}
+								d.props[p] = str+"</table>";
+							}else d.props[p] = d.props[p].value;
 						}
 					}
 				}
