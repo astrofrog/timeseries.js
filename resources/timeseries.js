@@ -363,7 +363,7 @@
 			var str = '';
 			for(var i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
 			str += '<li></li>';
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savepng">Save as PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;"></div></menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;"></div></menu></div>');
 
 			// Add button events
 			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
@@ -378,7 +378,7 @@
 			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0); });
 			el.find('button.savevega').on('click',{me:this},function(e){ e.data.me.save("vega"); });
 			el.find('button.editvega').on('click',{me:this},function(e){ e.data.me.save("vegaeditor"); });
-			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png"); });
+			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png",S(e.currentTarget).attr('data')); });
 
 			el.find('.submenu button').on('click',{el:el},function(e){
 				e.data.el.find('.on').removeClass('on');
@@ -730,7 +730,7 @@
 		return this;
 	};
 	
-	TS.prototype.save = function(type){
+	TS.prototype.save = function(type,attr){
 
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
@@ -792,9 +792,17 @@
 			},1000);
 		}
 		if(type == "png"){
+			if(attr){
+				this.graph.background = attr;
+				this.graph.draw();
+			}
 			opts.type = "image/png";
 			opts.file = "timeseries.png";
 			this.graph.canvas.c.toBlob(save,opts.type);
+			if(attr){
+				this.graph.background = "";
+				this.graph.draw();
+			}
 		}
 
 		return this;

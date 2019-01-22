@@ -2398,9 +2398,18 @@
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
+		var w,h,b;
 		w = ctx ? ctx.canvas.width : this.canvas.wide;
 		h = ctx ? ctx.canvas.height : this.canvas.tall;
-		(ctx || this.canvas.ctx).clearRect(0,0,w,h);
+		ctx = (ctx || this.canvas.ctx);
+		ctx.clearRect(0,0,w,h);
+		if(this.background){
+			ctx.beginPath();
+			ctx.fillStyle = this.background;
+			ctx.rect(0,0,w,h);
+			ctx.fill();
+			ctx.fillStyle = "";
+		}
 		return this;
 	};
 
