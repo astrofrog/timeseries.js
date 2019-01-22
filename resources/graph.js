@@ -1524,15 +1524,15 @@
 					if(this[a].isDate) precision = 1;
 					if(precision < 1) precision = this[a].precisionlabel;
 					if(sci){
-						if(this[a].isDate) fmt['date'] = ""+v;
-						else fmt['exp'] = v.toExponential(precision);
+						if(this[a].isDate) fmt.date = ""+v;
+						else fmt.exp = v.toExponential(precision);
 					}else{
-						if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
-						else fmt['fixed'] = v.toFixed(precision);
+						if(this[a].inc > 1) fmt.round = ""+Math.round(v);
+						else fmt.fixed = v.toFixed(precision);
 					}
 
 					// Bug fix for Javascript rounding issues when the range is big
-					if(Math.abs(v/this[a].range) < 1e-12) fmt['fixed'] = "0";
+					if(Math.abs(v/this[a].range) < 1e-12) fmt.fixed = "0";
 
 					// Set the label to whichever is shortest
 					this[a].ticks[i].label = shortestFormat(fmt);
