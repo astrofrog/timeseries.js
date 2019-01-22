@@ -543,7 +543,7 @@
 						g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
 					}
 				}
-				if(g.events["mousemove"]){
+				if(g.events.mousemove){
 					var pos = g.pixel2data(x,y);
 					g.trigger("mousemove",{event:event,x:pos.x,y:pos.y});
 				}
@@ -738,7 +738,7 @@
 		var i,key,v,format,s;
 		// Parse the data
 		for(key in data.parse){
-			var format = data.parse[key];
+			format = data.parse[key];
 			for(i = 0 ; i < data.data.length; i++){
 			// Loop over each column in the line
 				v = data.data[i][key];
@@ -772,7 +772,7 @@
 			if(!this.datasets[id]) this.datasets[id] = parseData(clone(datasets[id]));
 		}
 		return this;
-	}
+	};
 
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
@@ -879,7 +879,7 @@
 								this[axes[axis]] = calc(this[axes[axis]],vs);
 							}
 						}else{
-							console.log('no marks')
+							console.log('no marks');
 						}
 					}
 				}
@@ -898,7 +898,7 @@
 								this[axes[axis]] = calc(this[axes[axis]],vs);
 							}
 						}else{
-							console.log('no marks')
+							console.log('no marks');
 						}
 					}
 				}
@@ -1498,12 +1498,12 @@
 				fmt = {};
 				if(sci){
 					precision = (""+v).length;
-					fmt['normal'] = ""+v;
-					fmt['exp'] = tidy(v.toExponential(precision));
+					fmt.normal = ""+v;
+					fmt.exp = tidy(v.toExponential(precision));
 				}else{
 					precision = Math.abs(this[a].ticks[i].value);
-					if(this[a].inc > 1) fmt['round'] = ""+Math.round(v);
-					else fmt['fixed'] = (Math.abs(v/this[a].range) < 1e-12) ? "0" : v.toFixed(precision);
+					if(this[a].inc > 1) fmt.round = ""+Math.round(v);
+					else fmt.fixed = (Math.abs(v/this[a].range) < 1e-12) ? "0" : v.toFixed(precision);
 				}
 
 				// Set the label to whichever is shortest

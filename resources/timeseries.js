@@ -565,7 +565,7 @@
 			return d;
 		}
 
-		for(var id in this.datasets){
+		for(id in this.datasets){
 			if(!this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
 		}
 		this.graph.addDatasets(this.datasets);
