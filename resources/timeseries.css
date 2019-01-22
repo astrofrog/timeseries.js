@@ -19,8 +19,8 @@
 	cursor: pointer;
 	display: block;
 	opacity: 0.5;
-	width: 2em;
-	height: 2em;
+	width: 36px;
+	height: 36px;
 	position: absolute;
 	right: 0px;
 	top: 0px;
@@ -32,7 +32,7 @@
 .timeseries input.hamburger { z-index: 1005; opacity: 0.01; box-sizing: border-box; }
 .timeseries label.hamburger:after {
 	position: absolute;
-	padding: 0.25em 0;
+	padding: 0;
 	width: 100%;
 	height: 100%;
 	top: 0px;
@@ -40,7 +40,7 @@
 	content:"\2261";
 	font-size: 2em;
 	text-align: center;
-	line-height: 0.65em;
+	line-height: 36px;
 	background: transparent;
 	color: black; 
 }
@@ -68,22 +68,22 @@
 .timeseries .canvasholder { transition: margin-right 0.2s ease-in; margin-left: 0px; z-index: 1; }
 .timeseries .hamburger, .timeseries menu { transition: right 0.2s ease-in; }
 .timeseries input.hamburger:checked, .timeseries input.hamburger:checked + label.hamburger { right: 360px; }
-.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px; height: 2em; display: flex; }
+.timeseries menu ul.submenu { margin: 0px; padding: 0px; line-height: 0px; height: 36px; display: flex; }
 .timeseries menu ul.submenu li { margin: 0px; display: inline-block; }
 .timeseries menu ul.submenu li button { margin: 0px; width: 36px; height: 36px; color: #dfdfdf; }
 .timeseries menu ul.submenu li button.icon svg { width: 32px; }
 .timeseries menu ul.submenu li button:hover, .timeseries menu ul.submenu li button:focus, .timeseries menu ul.submenu li button.on { background-color: inherit; color: inherit; }
-.timeseries menu ul.submenu li:last-child { flex-grow: 1; right: 0px; height: 2em; left: 0px; position: relative; }
+.timeseries menu ul.submenu li:last-child { flex-grow: 1; right: 0px; height: 36px; left: 0px; position: relative; }
 .timeseries menu .menu-panel { padding: 1em; display: none; min-height: calc(100% - 2em); }
 .timeseries menu .menu-panel.on { display: block; }
-.timeseries menu .row { margin-bottom: 0em; }
+.timeseries menu .row { margin-bottom: 0em; clear: both; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
 .timeseries menu ol.layers { padding-left: 0px; margin: 0px; background-color: white; color: black; }
-.timeseries menu ol.layers li { list-style: none; padding: 0.5em; }
+.timeseries menu ol.layers li { list-style: none; padding: 0.5em; margin: 0px; }
 .timeseries menu ol.layers li.on, .timeseries menu ol.layers li:hover { background-color: #efefef; }
 .timeseries menu ol.layers li input[type=checkbox] { opacity: 0.01; float:left; position: absolute; }
-.timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; 
+.timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; margin: 0px; color: white;
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
      -khtml-user-select: none; /* Konqueror HTML */
