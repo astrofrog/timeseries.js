@@ -532,16 +532,25 @@
 							if(d.props.format) d.props.format[p] = event[p].value;
 						}
 					}else{
-						if(event[p].field && datum[event[p].field]) d.data[p] = datum[event[p].field];
+						if(!datum[p]) datum[p] = clone(event[p]);
+						if(event[p].field){
+							if(typeof event[p].field==="string"){
+								if(datum[event[p].field]) d.data[p] = datum[event[p].field];
+							}else if(typeof event[p].field==="object"){
+								d.data[p] = clone(event[p]);
+							}
+						}
 						if(typeof event[p].value!=="undefined"){
-							if(event[p].format && event[p].format=="date") datum[p] = (new Date(event[p].value)).getTime();
-							else datum[p] = event[p].value;
+							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime();
+							else datum[p].value = event[p].value;
 						}
 					}
 					if(event[p].signal){
 						to = dest[p] || "data";
-						try { d[to][p] = looseJsonParse(event[p].signal); }
+						if(!d[to][p]) d[to][p] = {};
+						try { d[to][p].value = looseJsonParse(event[p].signal); }
 						catch(e) { _obj.log('Error',d.data,event[p]); }
+						//console.log('to',to,p,d[to][p])
 						// If we now have an object we build a string
 						if(p=="tooltip" && typeof d.props[p]==="object"){
 							str = "<table>";

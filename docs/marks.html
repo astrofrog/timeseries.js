@@ -221,8 +221,8 @@
 									"from": {"data": "model"},
 									"encode": {
 										"enter": {
-											"x": {"scale": "xscale", "field": "x"},
-											"y": {"scale": "yscale", "field": "value"},
+											"x": { "scale": "xscale", "field": "x" },
+											"y": { "scale": "yscale", "field": "value" },
 											"strokeWidth": {"value": 2},
 											"tooltip": {"signal":"'Model'"}
 										},
@@ -452,9 +452,11 @@
 									"description": "Event happened here",
 									"encode": {
 										"enter": {
-											"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
-											"stroke": {"value": "#000"},
-											"strokeWidth": {"value": 2}
+											"x": { "scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)" },
+											"y": { "value": 0 },
+											"y2": { "field": { "group": "height" }},
+											"stroke": { "value": "#000" },
+											"strokeWidth": { "value": 2 }
 										}
 									}
 								},{
@@ -462,9 +464,11 @@
 									"description": "Nominal",
 									"encode": {
 										"enter": {
-											"y": {"value": 1},
-											"stroke": {"value": "#396bad"},
-											"strokeWidth": {"value": 3}
+											"y": { "scale":"yscale", "value": 1 },
+											"x": { "value": 0 },
+											"x2": { "field": {"group":"width"} },
+											"stroke": { "value": "#396bad" },
+											"strokeWidth": { "value": 3 }
 										}
 									}
 								}]

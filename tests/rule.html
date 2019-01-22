@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+		<link rel="stylesheet" href="../resources/aas.css">
+		<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<link rel="stylesheet" href="../resources/highlight/highlight.css">
+	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<!-- Graphing library -->
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<!-- TimeSeries library -->
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+	<script>
+
+	var area,line,rect,rule,symbol,text;
+
+	</script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+				<p>Last updated: 21 January 2018</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<h2>Rule</h2>
+	</div>
+	<div class="bkg-tint">
+		<div class="row">
+			<section id="examples">
+				<ol>
+				<li id="rule">
+					<h2>Rule</h2>
+					<p>Rule marks are simply a line from (x, y) to (x2, y2). These are useful for adding horizontal or vertical lines. See <a href="#rule-mark-properties">which VEGA properties are supported</a> below.</p>
+					<div class="example">
+						<figure>
+							<div id="example-rule">
+							</div>
+							<figcaption>Example of rule marks.</figcaption>
+						</figure>
+						<!-- Javascript -->
+						<script>
+						S(document).ready(function(){
+
+							var json = {
+								"$schema": "https://vega.github.io/schema/vega/v4.json",
+								"width": 800,
+								"height": 300,
+								"padding": 0,
+								"autosize": {"type": "fit", "resize": true},
+								"data": [{
+									"name": "lightcurve",
+									"values": "x,value,error,note\n2018-10-29T13:53:18.0Z,0.999,0.022,Note 1\n2018-10-29T13:53:18.1Z,1.002,0.012,A second note\n2018-10-29T13:53:18.2Z,0.999,0.012,This point has a note\n2018-10-29T13:53:18.3Z,0.997,0.013,\n2018-10-29T13:53:18.4Z,0.999,0.03,\n2018-10-29T13:53:18.5Z,0.997,0.013,\n2018-10-29T13:53:18.6Z,0.99,0.022,\n2018-10-29T13:53:18.7Z,0.995,0.017,\n2018-10-29T13:53:18.8Z,0.996,0.009,\n2018-10-29T13:53:18.9Z,1.001,0.404,\n2018-10-29T13:53:19.0Z,1.004,0.021,\n2018-10-29T13:53:19.1Z,0.995,0.012,\n2018-10-29T13:53:19.2Z,0.997,0.022,\n2018-10-29T13:53:19.3Z,0.993,0.03,\n2018-10-29T13:53:19.4Z,0.994,0.016,\n2018-10-29T13:53:19.5Z,0.997,0.02,\n2018-10-29T13:53:19.6Z,0.993,0.026,\n2018-10-29T13:53:19.7Z,0.999,0.022,\n2018-10-29T13:53:19.8Z,0.993,0.015,\n2018-10-29T13:53:19.9Z,1.002,0.011,\n2018-10-29T13:53:20.0Z,1,0.033,\n2018-10-29T13:53:20.1Z,0.995,0.02,\n2018-10-29T13:53:20.2Z,0.997,0.011,\n2018-10-29T13:53:20.3Z,0.995,0.022,\n2018-10-29T13:53:20.4Z,0.999,0.015,\n2018-10-29T13:53:20.5Z,0.997,0.018,\n2018-10-29T13:53:20.6Z,0.996,0.008,\n2018-10-29T13:53:20.7Z,0.988,0.021,\n2018-10-29T13:53:20.8Z,0.992,0.015,\n2018-10-29T13:53:20.9Z,0.987,0.03,\n2018-10-29T13:53:21.0Z,0.994,0.025,\n2018-10-29T13:53:21.1Z,0.99,0.022,\n2018-10-29T13:53:21.2Z,0.985,0.024,\n2018-10-29T13:53:21.3Z,0.986,0.011,\n2018-10-29T13:53:21.4Z,0.985,0.014,\n2018-10-29T13:53:21.5Z,0.963,0.045,This point is low due to an error\n2018-10-29T13:53:21.6Z,0.969,0.047,\n2018-10-29T13:53:21.7Z,0.974,0.032,\n2018-10-29T13:53:21.8Z,0.975,0.014,\n2018-10-29T13:53:21.9Z,0.99,0.082,\n2018-10-29T13:53:22.0Z,0.976,0.019,\n2018-10-29T13:53:22.1Z,0.985,0.012,\n2018-10-29T13:53:22.2Z,0.976,0.017,\n2018-10-29T13:53:22.3Z,0.974,0.025,\n2018-10-29T13:53:22.4Z,0.982,0.007,\n2018-10-29T13:53:22.5Z,0.986,0.025,\n2018-10-29T13:53:22.6Z,0.978,0.018,\n2018-10-29T13:53:22.7Z,0.976,0.014,\n2018-10-29T13:53:22.8Z,0.974,0.027,\n2018-10-29T13:53:22.9Z,0.979,0.014,\n2018-10-29T13:53:23.0Z,0.978,0.019,\n2018-10-29T13:53:23.1Z,0.976,0.021,\n2018-10-29T13:53:23.2Z,0.978,0.016,\n2018-10-29T13:53:23.3Z,0.974,0.028,\n2018-10-29T13:53:23.4Z,0.976,0.019,\n2018-10-29T13:53:23.5Z,0.974,0.023,\n2018-10-29T13:53:23.6Z,0.977,0.025,\n2018-10-29T13:53:23.7Z,0.98,0.012,\n2018-10-29T13:53:23.8Z,0.975,0.012,\n2018-10-29T13:53:23.9Z,0.977,0.013,\n2018-10-29T13:53:24.0Z,0.986,0.022,\n2018-10-29T13:53:24.1Z,0.974,0.021,\n2018-10-29T13:53:24.2Z,0.972,0.023,\n2018-10-29T13:53:24.3Z,0.98,0.01,\n2018-10-29T13:53:24.4Z,0.98,0.024,\n2018-10-29T13:53:24.5Z,0.976,0.02,\n2018-10-29T13:53:24.6Z,0.974,0.036,\n2018-10-29T13:53:24.7Z,0.983,0.022,\n2018-10-29T13:53:24.8Z,0.975,0.021,\n2018-10-29T13:53:24.9Z,0.982,0.015,\n2018-10-29T13:53:25.0Z,0.981,0.029,\n2018-10-29T13:53:25.1Z,0.982,0.018,\n2018-10-29T13:53:25.2Z,0.98,0.019,\n2018-10-29T13:53:25.3Z,0.976,0.034,\n2018-10-29T13:53:25.4Z,0.985,0.012,\n2018-10-29T13:53:25.5Z,0.977,0.047,\n2018-10-29T13:53:25.6Z,0.985,0.016,\n2018-10-29T13:53:25.7Z,0.993,0.01,\n2018-10-29T13:53:25.8Z,0.987,0.027,\n2018-10-29T13:53:25.9Z,0.992,0.016,\n2018-10-29T13:53:26.0Z,0.995,0.022,\n2018-10-29T13:53:26.1Z,0.99,0.023,\n2018-10-29T13:53:26.2Z,0.998,0.027,\n2018-10-29T13:53:26.3Z,0.996,0.022,\n2018-10-29T13:53:26.4Z,0.993,0.02,\n2018-10-29T13:53:26.5Z,0.995,0.018,\n2018-10-29T13:53:26.6Z,0.995,0.015,\n2018-10-29T13:53:26.7Z,1.001,0.031,\n2018-10-29T13:53:26.8Z,1.004,0.029,\n2018-10-29T13:53:26.9Z,0.998,0.019,\n2018-10-29T13:53:27.0Z,1,0.011,\n2018-10-29T13:53:27.1Z,0.993,0.012,\n2018-10-29T13:53:27.2Z,0.987,0.022,\n2018-10-29T13:53:27.3Z,0.994,0.017,\n2018-10-29T13:53:27.4Z,0.978,0.038,\n2018-10-29T13:53:27.5Z,1.002,0.014,\n2018-10-29T13:53:27.6Z,0.989,0.023,\n2018-10-29T13:53:27.7Z,1.003,0.022,\n2018-10-29T13:53:27.8Z,0.998,0.013,\n2018-10-29T13:53:27.9Z,0.993,0.023,\n2018-10-29T13:53:28.0Z,0.994,0.013,\n2018-10-29T13:53:28.1Z,1.01,0.046,\n2018-10-29T13:53:28.2Z,0.998,0.013,\n2018-10-29T13:53:28.3Z,1.007,0.037,\n2018-10-29T13:53:28.4Z,0.992,0.044,\n2018-10-29T13:53:28.5Z,1.004,0.031,\n2018-10-29T13:53:28.6Z,0.992,0.013,\n2018-10-29T13:53:28.7Z,1,0.01,\n2018-10-29T13:53:28.8Z,1.008,0.025,",
+									"format": {"type": "csv", "parse": {"x":"date", "value":"number", "error":"number", "note":"string"}}
+								}],
+								"scales": [{
+									"name": "xscale",
+									"type": "time",
+									"range": "width",
+									"zero": false,
+									"domain": {"data": "lightcurve", "field": "x"},
+								},{
+									"name": "yscale",
+									"type": "linear",
+									"range": "height",
+									"zero": false,
+									"domain": {"data": "lightcurve", "field": "value"}
+								}],
+								"axes": [{
+									"orient": "bottom",
+									"scale": "xscale",
+									"title": "Observation time"
+								},{
+									"orient": "left",
+									"scale": "yscale",
+									"title": "Intensity",
+									"grid": true
+								}],
+								"marks":[{
+									"type": "rule",
+									"description": "Event happened here",
+									"encode": {
+										"enter": {
+											"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
+											"y": {"value": 0 },
+											"y2": { "field": { "group": "height" }},
+											"stroke": {"value": "#000"},
+											"strokeWidth": {"value": 2}
+										}
+									}
+								},{
+									"type": "rule",
+									"description": "Nominal",
+									"encode": {
+										"enter": {
+											"y": { "scale": "yscale", "value": 1 },
+											"x": { "value": 0},
+											"x2": { "field": { "group": "width" }},
+											"stroke": {"value": "#396bad"},
+											"strokeWidth": {"value": 3}
+										}
+									}
+								}]
+							};
+
+							rule = TimeSeries.create(json);
+							rule.initialize(document.getElementById('example-rule'));
+
+						});
+						</script>
+					</div>
+					<h2 id="rule-mark-properties">Supported <code>rule</code> mark properties</h2>
+
+					<table class="properties">
+					<thead>
+						<tr>
+							<th>Property</th>
+							<th>Type</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><td>x</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary x-coordinate in pixels.</td></tr>
+						<tr><td>x2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary x-coordinate in pixels.</td></tr>
+						<tr class="notsupported"><td>xc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center x-coordinate. Incompatible with <code class="highlighter-rouge">x</code> and <code class="highlighter-rouge">x2</code>.</td></tr>
+						<tr class="notsupported"><td>width</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The width of the mark in pixels, if supported.</td></tr>
+						<tr><td>y</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The primary y-coordinate in pixels.</td></tr>
+						<tr><td>y2</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The secondary y-coordinate in pixels.</td></tr>
+						<tr class="notsupported"><td>yc</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The center y-coordinate. Incompatible with <code class="highlighter-rouge">y</code> and <code class="highlighter-rouge">y2</code>.</td></tr>
+						<tr class="notsupported"><td>height</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The height of the mark in pixels, if supported.</td></tr>
+						<tr><td>opacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The mark opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>fill</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The fill color.</td></tr>
+						<tr><td>fillOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The fill opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>stroke</td><td><a href="/vega/docs/types/#Color">Color</a></td><td>The stroke color.</td></tr>
+						<tr><td>strokeOpacity</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke opacity from 0 (transparent) to 1 (opaque).</td></tr>
+						<tr><td>strokeWidth</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The stroke width in pixels.</td></tr>
+						<tr><td>strokeCap</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke cap for line ending style. One of <code class="highlighter-rouge">butt</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">square</code>.</td></tr>
+						<tr><td>strokeDash</td><td><a href="/vega/docs/types/#Number">Number</a>[ ]</td><td>An array of [stroke, space] lengths for creating dashed or dotted lines.</td></tr>
+						<tr class="notsupported"><td>strokeDashOffset</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The pixel offset at which to start the stroke dash array.</td></tr>
+						<tr class="notsupported"><td>strokeJoin</td><td><a href="/vega/docs/types/#String">String</a></td><td>The stroke line join method. One of <code class="highlighter-rouge">miter</code> (default), <code class="highlighter-rouge">round</code> or <code class="highlighter-rouge">bevel</code>.</td></tr>
+						<tr class="notsupported"><td>strokeMiterLimit</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>The miter limit at which to bevel a line join.</td></tr>
+						<tr class="notsupported"><td>cursor</td><td><a href="/vega/docs/types/#String">String</a></td><td>The mouse cursor used over the mark. Any valid <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/cursor#Values">CSS cursor type</a> can be used.</td></tr>
+						<tr class="notsupported"><td>href</td><td><a href="/vega/docs/types/#URL">URL</a></td><td>A URL to load upon mouse click. If defined, the mark acts as a hyperlink.</td></tr>
+						<tr><td>tooltip</td><td><a href="/vega/docs/types/#Any">Any</a></td><td>The tooltip text to show upon mouse hover. If the value is an object (other than a Date or an array), then all key-value pairs in the object will be shown in the tooltip, one per line (e.g., <code class="highlighter-rouge">"key1: value1\nkey2: value2"</code>). Array values will be shown in brackets <code class="highlighter-rouge">[value1, value2, ...]</code>.	Other values will be coerced to strings. Nested object values will <em>not</em> be recursively printed.</td></tr>
+						<tr class="notsupported"><td>zindex</td><td><a href="/vega/docs/types/#Number">Number</a></td><td>An integer z-index indicating the layering order of sibling mark items. The default value is <code class="highlighter-rouge">0</code>. Higher values (<code class="highlighter-rouge">1</code>) will cause marks to be drawn on top of those with lower z-index values. Setting the z-index as an encoding property only affects ordering among sibling mark items; it will not change the layering relative to other mark definitions. Unlike the mark-level <em>sort</em> property, <em>zindex</em> changes the rendering order only; it does not otherwise change mark item order (such as line or area point order). The most common use of <em>zindex</em> is to ensure that a mark is drawn over its siblings when selected, such as by mouse hover.</td></tr>
+						</tbody>
+					</table>
+				</li>
+				</ol>
+			</section>
+		</div>
+	</div>
+	
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; 2018 Aperio Software / AAS
+		</footer>
+	</div>
+
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
+
+</body>
+</html>

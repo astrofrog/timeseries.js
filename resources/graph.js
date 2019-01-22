@@ -458,7 +458,7 @@
 		opt.logging = this.logging;
 
 		this.canvas = new Canvas(element,opt);
-				
+
 		// Temporary canvases for drawing to
 		this.paper = {
 			'temp': {'c':document.createElement('canvas'),'ctx':''},  // Create a canvas for temporary work
@@ -1043,15 +1043,22 @@
 	};
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
-		var k,mn,mx,rn;
+		var k,mn,mx,rn,v;
+		if(typeof c==="object"){
+			if(!c.scale){
+				v = 0;
+				if(c.field && c.field.group && (c.field.group=="width" || c.field.group=="height")) v = this[t].max; 
+				if(c.value == 0) v = this[t].min;
+			}else v = c.value;
+		}else v = c;
 		k = (this[t].log) ? 'log':'';
-		if(this[t].log) c = G.log10(c);
+		if(this[t].log) v = G.log10(v);
 		mn = this[t][k+'min'];
 		mx = this[t][k+'max'];
 		rn = this[t][k+'range'];
 		
-		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((c-mn)/rn));
-		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((mx-c)/(rn)) : this.chart.left + this.chart.width*((c-mn)/rn));
+		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((v-mn)/rn));
+		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((mx-v)/(rn)) : this.chart.left + this.chart.width*((v-mn)/rn));
 	};
 
 	// For an input data value find the pixel locations
@@ -1932,8 +1939,8 @@
 
 					// Add properties for rule lines
 					if(this.data[sh].type=="rule"){
-						if(!d.data.x2) d.data.x2 = d.data.x;
-						if(!d.data.y2) d.data.y2 = d.data.y;
+						if(!d.data.x2 && d.data.x) d.data.x2 = clone(d.data.x);
+						if(!d.data.y2 && d.data.y) d.data.y2 = clone(d.data.y);
 					}
 
 					if(d.data.x2){
@@ -2211,7 +2218,8 @@
 
 		// Deal with superscript
 		if(!txt) txt = "";
-		str = 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; });
+		if(typeof txt==="object" && txt.value) txt = txt.value;
+		str = (typeof txt==="string" ? 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; }):'');
 		bits = str.split(/%%/);
 		w = 0;
 		// Calculate the width of the text
