@@ -2411,8 +2411,10 @@
 			ctx.fillStyle = this.background;
 			ctx.rect(0,0,w,h);
 			ctx.fill();
+			ctx.closePath();
 			ctx.fillStyle = "";
 		}
+
 		return this;
 	};
 

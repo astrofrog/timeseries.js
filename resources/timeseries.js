@@ -379,7 +379,7 @@
 			el.find('button.fontreset').on('click',{g:this.graph},function(e){ e.data.g.scaleFont(0); });
 			el.find('button.savevega').on('click',{me:this},function(e){ e.data.me.save("vega"); });
 			el.find('button.editvega').on('click',{me:this},function(e){ e.data.me.save("vegaeditor"); });
-			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png",S(e.currentTarget).attr('data')); });
+			el.find('button.savepng').on('click',{me:this},function(e){ e.data.me.save("png",{'background':S(e.currentTarget).attr('data')}); });
 
 			el.find('.submenu button').on('click',{el:el},function(e){
 				e.data.el.find('.on').removeClass('on');
