@@ -1989,11 +1989,19 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var lo,hi,x,y,ii,l,p,s,sh,o,ctx;
+		var lo,hi,x,y,ii,l,p,s,sh,o,ctx,i,j;
 		var twopi = Math.PI*2;
 
 		// Define an empty pixel-based lookup table
-		if(updateLookup) this.lookup = Array(this.canvas.c.width).fill().map(x => Array(this.canvas.c.height));
+		if(updateLookup){
+			//EMCA6
+			//this.lookup = Array(this.canvas.c.width).fill().map(x => Array(this.canvas.c.height));
+			this.lookup = [];
+			for(i = 0; i < this.canvas.c.width; i++) {
+				this.lookup[i] = [];
+				for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
+			}
+		}
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
