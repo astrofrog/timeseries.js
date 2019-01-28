@@ -480,19 +480,19 @@
 		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
 
 		// Bind events to the canvas
-		var _obj = this;
-		this.canvas.on("resize",function(ev){
+		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
+			var g = ev.data.me;
 			var d = new Date();
 			var s = window.devicePixelRatio;
 			// Resize all the temporary canvases
-			for(var p in _obj.paper) _obj.paper[p] = setWH(_obj.paper[p],_obj.canvas.wide,_obj.canvas.tall,s);
+			for(var p in g.paper) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
 
-			_obj.setOptions().defineAxis("x").getChartOffset().calculateData().draw(true).trigger("resize",{event:ev.event});
+			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
-		}).on("mousedown",function(ev){
+		}).on("mousedown",{me:this},function(ev){
 			var event = ev.event.originalEvent;
-			var g = _obj;	// The graph object
+			var g = ev.data.me;	// The graph object
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
 			var x = event.layerX;
@@ -521,10 +521,10 @@
 				}
 			}
 			return true;
-		}).on("mousemove",function(ev){
+		}).on("mousemove",{me:this},function(ev){
 			var event = ev.event.originalEvent;
 			if(!event) return;
-			var g = _obj;	// The graph object
+			var g = ev.data.me;	// The graph object
 			if(g.updating) return;
 			g.updating = true;
 			var x = event.layerX;
@@ -574,16 +574,17 @@
 			}
 			g.updating = false;
 			return true;
-		}).on("mouseleave",function(ev){
+		}).on("mouseleave",{me:this},function(ev){
+			var g = ev.data.me;
 			var event = ev.event.originalEvent;
-			if(event.offsetX >= _obj.options.width) event.layerX = _obj.options.width;
+			if(event.offsetX >= g.options.width) event.layerX = g.options.width;
 			if(event.offsetX <= 0) event.layerX = 0;
-			if(event.offsetY >= _obj.options.height) event.layerY = _obj.options.height;
+			if(event.offsetY >= g.options.height) event.layerY = g.options.height;
 			if(event.offsetY <= 0) event.layerY = 0;
-			_obj.canvas.trigger('mousemove',{event:event});
-			_obj.canvas.trigger('mouseup',{event:event});
-		}).on("mouseup",function(ev){
-			var g = _obj;	 // The graph object
+			g.canvas.trigger('mousemove',{event:event});
+			g.canvas.trigger('mouseup',{event:event});
+		}).on("mouseup",{me:this},function(ev){
+			var g = ev.data.me;	 // The graph object
 			var event = ev.event.originalEvent;
 			var r;
 			if(g.selecting){
@@ -620,14 +621,14 @@
 			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
 			return true;
-		}).on("wheel",{options:options},function(ev){
+		}).on("wheel",{me:this,options:options},function(ev){
 			var oe,g,c,co,f,s;
 			oe = ev.event.originalEvent;
 			if(ev.data.options.scrollWheelZoom){
 				oe.preventDefault();
 				oe.stopPropagation();
 			}
-			g = _obj;
+			g = ev.data.me;
 			if(g.wheelid) clearTimeout(g.wheelid);
 			if(!g.updating){
 				g.updating = true;
@@ -644,10 +645,10 @@
 			}
 			// Set a timeout to trigger a wheelstop event
 			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },100,{event:oe});
-		}).on("wheelstop",{options:options},function(ev){
-			var g = _obj;
+		}).on("wheelstop",{me:this,options:options},function(ev){
+			var g = ev.data.me;
 			g.updating = false;
-			g.calculateData().draw(true);
+			g.resetDataStyles().calculateData().draw(true);
 			g.wheelid = undefined;
 			g.trigger('wheelstop',{event:ev.event});
 		});
@@ -835,7 +836,7 @@
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log('updateData',this.data);
-		this.getGraphRange().getChartOffset().calculateData().draw(true);
+		this.getGraphRange().getChartOffset().resetDataStyles().calculateData().draw(true);
 	};
 
 	Graph.prototype.getGraphRange = function(){
@@ -941,8 +942,7 @@
 			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y,this.paper.data.width,this.paper.data.height);
 			ctx.restore();
 		}else{
-			this.getChartOffset();
-			this.calculateData();
+			this.getChartOffset().resetDataStyles().calculateData();
 			// Update the graph
 			this.clear();
 			// We don't need to update the lookup whilst panning
@@ -1014,7 +1014,7 @@
 		}
 
 		this.getChartOffset();
-		if(!attr.quick) this.calculateData();
+		if(!attr.quick) this.resetDataStyles().calculateData();
 		this.clear();
 		if(attr.quick){
 			this.clear(this.paper.temp.ctx);
@@ -1177,7 +1177,7 @@
 					// Clone the mark
 					oldmark = clone(this.data[t].marks[i]);
 					// Update the mark
-					mark = (this.data[t].hover ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
+					mark = (typeof this.data[t].hover==="function" ? this.data[t].hover.call(this,this.data[t].marks[i],this.data[t].encode.hover) : this.data[t].marks[i]);
 					// Set the canvas colours
 					this.setCanvasStyles(ctx,mark);
 					this.setCanvasStyles(this.paper.temp.ctx,mark);
@@ -1580,7 +1580,7 @@
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
 		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
-		this.getChartOffset().calculateData().draw(true);
+		this.getChartOffset().resetDataStyles().calculateData().draw(true);
 		return this;
 	};
 	
@@ -1707,6 +1707,14 @@
 		};
 
 		if(!this.subgrid) this.subgrid = [2,3,4,5,6,7,8,9];
+
+		if(typeof this.background==="string"){
+			ctx.beginPath();
+			ctx.fillStyle = (this.background||"transparent");
+			ctx.rect(0,0,this.canvas.wide,this.canvas.tall);
+			ctx.fill();
+			ctx.closePath();
+		}
 
 		ctx.beginPath();
 		ctx.font = this.chart.fontsize+'px '+this.chart.fontfamily;
@@ -1915,7 +1923,23 @@
 		return this;
 	};
 
-	// Function to calculate the x,y coordinates for each data point. 
+
+	// Reset all the styles for the datasets
+	Graph.prototype.resetDataStyles = function(){
+		var sh,i;
+		for(sh in this.data){
+			if(this.data[sh].update && this.data[sh].show){
+				for(i = 0; i < this.data[sh].marks.length ; i++){
+					// Process all the series updates here
+					this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i],this.data[sh].encode.update);
+				}
+			}
+		}
+		return this;
+	};
+	
+	// Function to calculate the x,y coordinates for each data point.
+	// It also resets any mark styles
 	Graph.prototype.calculateData = function(update){
 		this.log('calculateData');
 		if(typeof update!=="boolean") update = true;
@@ -1924,12 +1948,13 @@
 
 		if(!update) return this;
 		
+		// Process all the series updates here
+		this.resetDataStyles();
+		
 		for(sh in this.data){
 			if(this.data[sh].show){
 				for(i = 0; i < this.data[sh].marks.length ; i++){
 					d = this.data[sh].marks[i];
-					// Process all the series updates here
-					if(this.data[sh].update) this.data[sh].marks[i] = this.data[sh].update.call(this,d,this.data[sh].encode.update);
 
 					// Store IDs for the layer and the item
 					if(!this.data[sh].marks[i].id) this.data[sh].marks[i].id = parseInt(sh)+':'+i;
@@ -1996,9 +2021,9 @@
 						p = m.props;
 
 						if(p.x && p.y){
-							if(this.data[sh].type=="symbol") this.drawShape(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
-							if(this.data[sh].type=="rect") this.drawRect(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
-							if(this.data[sh].type=="text") this.drawText(this.data[sh].marks[i],{'update':(updateLookup && this.data[sh].hover)});
+							if(this.data[sh].type=="symbol") this.drawShape(this.data[sh].marks[i],{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
+							if(this.data[sh].type=="rect") this.drawRect(this.data[sh].marks[i],{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
+							if(this.data[sh].type=="text") this.drawText(this.data[sh].marks[i],{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
 						}
 					}
 				}
@@ -2406,15 +2431,6 @@
 		h = ctx ? ctx.canvas.height : this.canvas.tall;
 		ctx = (ctx || this.canvas.ctx);
 		ctx.clearRect(0,0,w,h);
-		if(this.background){
-			ctx.beginPath();
-			ctx.fillStyle = this.background;
-			ctx.rect(0,0,w,h);
-			ctx.fill();
-			ctx.closePath();
-			ctx.fillStyle = "";
-		}
-
 		return this;
 	};
 

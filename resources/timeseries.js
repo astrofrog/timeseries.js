@@ -801,14 +801,14 @@
 		if(type == "png"){
 			if(attr && attr.background){
 				this.graph.background = attr.background;
-				this.graph.draw();
+				this.graph.clear().drawAxes().resetDataStyles().drawData(false);
 			}
 			opts.type = "image/png";
 			opts.file = (attr.file||"timeseries.png");
 			this.graph.canvas.c.toBlob(save,opts.type);
 			if(attr){
 				this.graph.background = "";
-				this.graph.draw();
+				this.graph.clear().drawAxes().resetDataStyles().drawData(false);
 			}
 		}
 
