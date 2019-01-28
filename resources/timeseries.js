@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.9";
+		this.version = "0.0.10";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
@@ -623,6 +623,9 @@
 					// Now we add this mark-based dataset
 					this.graph.addMarks(dataset,m);
 					if(this.datasets[id]) this.datasets[id].added = true;
+					
+					// Is this marker layer clipped?
+					dataset.clip = (mark.clip || false);
 
 				}else{
 					this.log('No dataset built for '+id,mark);

@@ -46,6 +46,7 @@
 	"marks":[{
 		"type": "rule",
 		"description": "Event happened here",
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
@@ -58,6 +59,7 @@
 	},{
 		"type": "rule",
 		"description": "Nominal",
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": { "value": 0},
@@ -71,6 +73,7 @@
 		"type": "area",
 		"description": "Shadow",
 		"from": {"data": "shadow"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
@@ -92,6 +95,7 @@
 	},{
 		"type": "line",
 		"description": "Baseline",
+		"clip": true,
 		"from": {"data": "threshold"},
 		"encode": {
 			"enter": {
@@ -112,6 +116,7 @@
 	},{
 		"type": "rect",
 		"description": "Data",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
@@ -137,6 +142,7 @@
 	},{
 		"type": "symbol",
 		"description": "Data",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {

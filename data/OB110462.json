@@ -92,6 +92,7 @@
 	"marks":[{
 		"type": "rect",
 		"description": "OGLE",
+		"clip": true,
 		"from": {"data": "OGLE"},
 		"encode": {
 			"enter": {
@@ -111,6 +112,7 @@
 	},{
 		"type": "symbol",
 		"description": "OGLE",
+		"clip": true,
 		"from": {"data": "OGLE"},
 		"encode": {
 			"enter": {
@@ -133,6 +135,7 @@
 	},{
 		"type": "rect",
 		"description": "MOA",
+		"clip": true,
 		"from": {"data": "MOA"},
 		"encode": {
 			"enter": {
@@ -152,6 +155,7 @@
 	},{
 		"type": "symbol",
 		"description": "MOA",
+		"clip": true,
 		"from": {"data": "MOA"},
 		"encode": {
 			"enter": {
@@ -174,6 +178,7 @@
 	},{
 		"type": "rect",
 		"description": "Danish 1.54m",
+		"clip": true,
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
@@ -193,6 +198,7 @@
 	},{
 		"type": "symbol",
 		"description": "Danish 1.54m",
+		"clip": true,
 		"from": {"data": "Danish 1.54m"},
 		"encode": {
 			"enter": {
@@ -215,6 +221,7 @@
 	},{
 		"type": "rect",
 		"description": "Faulkes North 2.0m",
+		"clip": true,
 		"from": {"data": "Faulkes North 2.0m"},
 		"encode": {
 			"enter": {
@@ -234,6 +241,7 @@
 	},{
 		"type": "symbol",
 		"description": "Faulkes North 2.0m",
+		"clip": true,
 		"from": {"data": "Faulkes North 2.0m"},
 		"encode": {
 			"enter": {
@@ -256,6 +264,7 @@
 	},{
 		"type": "rect",
 		"description": "Faulkes South 2.0m",
+		"clip": true,
 		"from": {"data": "Faulkes South 2.0m"},
 		"encode": {
 			"enter": {
@@ -275,6 +284,7 @@
 	},{
 		"type": "symbol",
 		"description": "Faulkes South 2.0m",
+		"clip": true,
 		"from": {"data": "Faulkes South 2.0m"},
 		"encode": {
 			"enter": {
@@ -297,6 +307,7 @@
 	},{
 		"type": "rect",
 		"description": "Liverpool 2.0m",
+		"clip": true,
 		"from": {"data": "Liverpool 2.0m"},
 		"encode": {
 			"enter": {
@@ -316,6 +327,7 @@
 	},{
 		"type": "symbol",
 		"description": "Liverpool 2.0m",
+		"clip": true,
 		"from": {"data": "Liverpool 2.0m"},
 		"encode": {
 			"enter": {
@@ -338,6 +350,7 @@
 	},{
 		"type": "rect",
 		"description": "MONET North 1.2m",
+		"clip": true,
 		"from": {"data": "MONET North 1.2m"},
 		"encode": {
 			"enter": {
@@ -357,6 +370,7 @@
 	},{
 		"type": "symbol",
 		"description": "MONET North 1.2m",
+		"clip": true,
 		"from": {"data": "MONET North 1.2m"},
 		"encode": {
 			"enter": {
@@ -379,6 +393,7 @@
 	},{
 		"type": "rect",
 		"description": "UTas 1.0m",
+		"clip": true,
 		"from": {"data": "UTas 1.0m"},
 		"encode": {
 			"enter": {
@@ -398,6 +413,7 @@
 	},{
 		"type": "symbol",
 		"description": "UTas 1.0m",
+		"clip": true,
 		"from": {"data": "UTas 1.0m"},
 		"encode": {
 			"enter": {
@@ -420,6 +436,7 @@
 	},{
 		"type": "rect",
 		"description": "SAAO 1.0m",
+		"clip": true,
 		"from": {"data": "SAAO 1.0m"},
 		"encode": {
 			"enter": {
@@ -439,6 +456,7 @@
 	},{
 		"type": "symbol",
 		"description": "SAAO 1.0m",
+		"clip": true,
 		"from": {"data": "SAAO 1.0m"},
 		"encode": {
 			"enter": {
@@ -461,6 +479,7 @@
 	},{
 		"type": "rect",
 		"description": "CTIO 1.3m",
+		"clip": true,
 		"from": {"data": "CTIO 1.3m"},
 		"encode": {
 			"enter": {
@@ -480,6 +499,7 @@
 	},{
 		"type": "symbol",
 		"description": "CTIO 1.3m",
+		"clip": true,
 		"from": {"data": "CTIO 1.3m"},
 		"encode": {
 			"enter": {
@@ -502,6 +522,7 @@
 	},{
 		"type": "rect",
 		"description": "Auckland 0.4m",
+		"clip": true,
 		"from": {"data": "Auckland 0.4m"},
 		"encode": {
 			"enter": {
@@ -521,6 +542,7 @@
 	},{
 		"type": "symbol",
 		"description": "Auckland 0.4m",
+		"clip": true,
 		"from": {"data": "Auckland 0.4m"},
 		"encode": {
 			"enter": {
@@ -543,6 +565,7 @@
 	},{
 		"type": "rect",
 		"description": "Farm Cove 0.35m",
+		"clip": true,
 		"from": {"data": "Farm Cove 0.35m"},
 		"encode": {
 			"enter": {
@@ -562,6 +585,7 @@
 	},{
 		"type": "symbol",
 		"description": "Farm Cove 0.35m",
+		"clip": true,
 		"from": {"data": "Farm Cove 0.35m"},
 		"encode": {
 			"enter": {
@@ -584,6 +608,7 @@
 	},{
 		"type": "rect",
 		"description": "Kumeu Obs 0.35m",
+		"clip": true,
 		"from": {"data": "Kumeu Obs 0.35m"},
 		"encode": {
 			"enter": {
@@ -603,6 +628,7 @@
 	},{
 		"type": "symbol",
 		"description": "Kumeu Obs 0.35m",
+		"clip": true,
 		"from": {"data": "Kumeu Obs 0.35m"},
 		"encode": {
 			"enter": {
@@ -625,6 +651,7 @@
 	},{
 		"type": "rect",
 		"description": "Vintage Lane 0.4m",
+		"clip": true,
 		"from": {"data": "Vintage Lane 0.4m"},
 		"encode": {
 			"enter": {
@@ -644,6 +671,7 @@
 	},{
 		"type": "symbol",
 		"description": "Vintage Lane 0.4m",
+		"clip": true,
 		"from": {"data": "Vintage Lane 0.4m"},
 		"encode": {
 			"enter": {
@@ -666,6 +694,7 @@
 	},{
 		"type": "line",
 		"description": "Model fit",
+		"clip": true,
 		"from": {"data": "Model"},
 		"encode": {
 			"enter": {
