@@ -80,6 +80,7 @@
 	},{
 		"type": "line",
 		"description": "xrsa",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
@@ -100,6 +101,7 @@
 	},{
 		"type": "line",
 		"description": "xrsb",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
