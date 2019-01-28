@@ -840,7 +840,7 @@
 	};
 
 	Graph.prototype.getGraphRange = function(){
-		var d,i,j,max,axes,axis,vs,v;
+		var d,i,j,k,f,max,axes,axis,vs,v;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
@@ -877,8 +877,16 @@
 							for(j = 0; j < max ; j++){
 								d = this.datasets[i].data[j];
 								// Work out the values to include in the min/max calculation
-								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
-								else v = d[axes[axis]];
+								if(this.options[axis].domain){
+									f = (this.options[axis].domain.field||"");
+									if(!f && this.options[axis].domain.fields){
+										for(k = 0; k < this.options[axis].domain.fields.length; k++){
+											f = this.options[axis].domain.fields[k];
+											if(d[f]) continue;
+										}
+									}
+									if(d[f]) v = d[f];
+								}else v = d[axes[axis]];
 								if(v) vs = [v];
 								this[axes[axis]] = calc(this[axes[axis]],vs);
 							}
