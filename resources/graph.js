@@ -478,7 +478,9 @@
 		// Set canvas scaling for retina-type screens
 		var s = window.devicePixelRatio;
 		// Set properties of the temporary canvases
-		for(var p in this.paper) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
+		for(var p in this.paper){
+			if(this.paper[p]) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
+		}
 
 		// Bind events to the canvas
 		this.canvas.on("resize",{me:this},function(ev){
@@ -487,8 +489,9 @@
 			var d = new Date();
 			var s = window.devicePixelRatio;
 			// Resize all the temporary canvases
-			for(var p in g.paper) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
-
+			for(var p in g.paper){
+				if(g.paper[p]) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
+			}
 			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){

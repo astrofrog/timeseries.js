@@ -127,27 +127,28 @@
 			}
 
 			for(var i = 0; i < files.length; i++){
-				if(!_obj.load.resources.files[files[i]]){
-					_obj.log('loading resource',files[i]);
+				if(!this.load.resources.files[files[i]]){
+					this.log('loading resource',files[i]);
 
-					_obj.log('start loading '+files[i]+' is ',_obj.load.resources.files[files[i]]);
-					_obj.load.resources.files[files[i]] = {'loaded':false};
+					this.log('start loading '+files[i]+' is ',this.load.resources.files[files[i]]);
+					this.load.resources.files[files[i]] = {'loaded':false};
 
-					_obj.loadCode(files[i],function(e){
-						_obj.load.resources.files[e.url].loaded = true;
-						_obj.log('loaded resource '+e.url);
-						checkAndGo(files,"resources");
+					this.loadCode(files[i],{me:this,files:files,callback:checkAndGo},function(e){
+						e.data.me.load.resources.files[e.url].loaded = true;
+						e.data.me.log('loaded resource '+e.url);
+						e.data.callback.call(this,e.data.files,"resources");
 					});
 				}else{
-					_obj.log('current state of '+files[i]+' is ',_obj.load.resources.files[files[i]]);
+					this.log('current state of '+files[i]+' is ',this.load.resources.files[files[i]]);
 				}
 			}
 
-			return _obj;
+			return this;
 		};
 
-		this.loadCode = function(url,callback){
+		this.loadCode = function(url,attr,callback){
 			var el;
+			if(typeof attr==="function" && !callback) callback = attr;
 			this.log('loadCode',url,callback);
 			if(url.indexOf(".js")>= 0){
 				el = document.createElement("script");
@@ -160,7 +161,7 @@
 				el.setAttribute('href',url);
 			}
 			if(el){
-				el.onload = function(){ callback.call(_obj,{'url':url}); };
+				el.onload = function(){ callback.call(_obj,{'url':url,'data':(attr||{})}); };
 				document.getElementsByTagName('head')[0].appendChild(el);
 			}
 			return _obj;
@@ -572,7 +573,7 @@
 		}
 
 		for(id in this.datasets){
-			if(!this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
+			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
 		}
 		this.graph.addDatasets(this.datasets);
 
@@ -674,6 +675,7 @@
 					p = l.parent();
 					k = p.find('.key');
 					l.on('change',{me:this,k:keyitems[key]},function(e){
+						var g,i,j;
 						g = e.data.me.graph;
 						for(i = 0; i < e.data.k.length; i++){
 							j = e.data.k[i];
