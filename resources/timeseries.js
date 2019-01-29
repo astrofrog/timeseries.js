@@ -618,13 +618,13 @@
 					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); };
 					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
 
+					// Is this marker layer clipped?
+					dataset.clip = (mark.clip || false);
+
 					// Now we add this mark-based dataset
 					this.graph.addMarks(dataset,m);
 					if(this.datasets[id]) this.datasets[id].added = true;
 					
-					// Is this marker layer clipped?
-					dataset.clip = (mark.clip || false);
-
 				}else{
 					this.log('No dataset built for '+id,mark);
 				}
@@ -640,7 +640,7 @@
 
 	TS.prototype.loaded = function(){
 		this.log('loaded',this.attr.showaswego,this.graph.marks);
-		var i,id,layers,l,p,k,w,h,draw,d,key;
+		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup;
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
@@ -650,6 +650,7 @@
 		// Remove any buttons we've already added
 		layers.find('li').remove();
 		keyitems = {};
+		lookup = {};
 		j = 1;
 		for(i in this.graph.marks){
 		if(this.graph.marks[i]){
@@ -660,6 +661,7 @@
 				j++;
 			}
 		}
+
 		j = 0;
 		for(key in keyitems){
 			if(keyitems[key]){
@@ -681,9 +683,13 @@
 						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
 						else this.parent().addClass('inactive');
 					}).on('focus',{layers:layers},function(e){
-						e.data.layers.find('li').removeClass('on');
+						e.data.layers.find('li').removeClass('on').removeClass('selected');
 						this.parent().addClass('on');
 					});
+					layers.on('mouseover',{layers:layers},function(e){
+						e.data.layers.find('.selected').removeClass('selected');
+					});
+					lookup[keyitems[key][0]] = l.parent();
 				}
 			}
 			// Do we need to draw key items?
@@ -731,6 +737,16 @@
 			}
 			j++;
 		}
+
+		// Add hover event to marks
+		this.graph.on('hoverpoint',{lookup:lookup,layers:layers},function(e){
+			// Remove selected class from all li elements
+			e.data.layers.find('li').removeClass('selected');
+			if(e.matches.length == 0) return;
+			for(var m = 0; m < e.matches.length; m++){
+				if(e.data.lookup[e.matches[m].series]) e.data.lookup[e.matches[m].series].addClass('selected');
+			}
+		});
 		
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);

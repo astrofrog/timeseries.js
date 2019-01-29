@@ -492,12 +492,13 @@
 			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
-			var event = ev.event.originalEvent;
-			var g = ev.data.me;	// The graph object
+			var event,g,x,y,s,d,t,i,ii,a,m;
+			event = ev.event.originalEvent;
+			g = ev.data.me;	// The graph object
 			if(event.which!=1) return;	// Only zoom on left click
 			// Check if there is a data point at the position that the user clicked.
-			var x = event.layerX;
-			var y = event.layerY;
+			x = event.layerX;
+			y = event.layerY;
 			ds = g.dataAtMousePosition(x,y);
 
 			// No data (but the alt key is pressed) so we'll start the zoom selection
@@ -510,40 +511,43 @@
 			}
 
 			// Loop over the series that match
-			for(var s = 0; s < ds.length; s++){
+			m = [];
+			for(s = 0; s < ds.length; s++){
 				d = ds[s].split(":");
 				if(d && d.length == 3){
 					// This is a data point so we'll trigger the clickpoint event
-					t = parseInt(d[0]);
+					t = (d[0]);
 					i = parseInt(d[1]);
-					d = g.marks[t];
 					ii = g.getPixPos(x,y);
-					a = g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
+					m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
 				}
 			}
+			a = g.trigger("clickpoint",{event:event,matches:m});
 			return true;
 		}).on("mousemove",{me:this},function(ev){
-			var event = ev.event.originalEvent;
+			var event,g,x,y,d,t,i,ii,a,m;
+			event = ev.event.originalEvent;
 			if(!event) return;
-			var g = ev.data.me;	// The graph object
+			g = ev.data.me;	// The graph object
 			if(g.updating) return;
 			g.updating = true;
-			var x = event.layerX;
-			var y = event.layerY;
+			x = event.layerX;
+			y = event.layerY;
 			// Attach hover event
 			if(!g.selecting && !g.panning && !g.wheelid){
 				ds = g.dataAtMousePosition(event.offsetX,event.offsetY);
 				g.highlight(ds);
+				m = [];
 				for(var s = 0; s < ds.length; s++){
 					d = ds[s].split(":");
 					if(d && d.length == 3){
 						t = d[0];
-						i = d[1];
-						d = g.marks[t];
+						i = parseInt(d[1]);
 						ii = g.getPixPos(x,y);
-						g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
+						m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
 					}
 				}
+				a = g.trigger("hoverpoint",{event:event,matches:m});
 				if(g.events.mousemove){
 					var pos = g.pixel2data(x,y);
 					g.trigger("mousemove",{event:event,x:pos.x,y:pos.y});
@@ -1702,7 +1706,7 @@
 
 	// Draw the axes and grid lines for the graph
 	Graph.prototype.drawAxes = function(){
-		var grid,tw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx;
+		var grid,tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -1734,9 +1738,11 @@
 		ctx.textBaseline = 'middle';
 
 		// Draw main rectangle
-		ctx.strokeStyle = (this.options.grid.color || 'rgb(0,0,0)');
-		ctx.lineWidth = this.options.grid.border;
-		ctx.setLineDash([1,0]);
+		if(this.options.grid.border > 0){
+			ctx.strokeStyle = (this.options.grid.color || 'rgb(0,0,0)');
+			ctx.lineWidth = this.options.grid.border;
+			ctx.setLineDash([1,0]);
+		}
 
 		if(typeof this.options.grid.background=="string"){
 			ctx.fillStyle = this.options.grid.background;
@@ -1768,12 +1774,13 @@
 				ctx.beginPath();
 				ctx.strokeStyle = (this.options[a].domainColor || this.options.grid.color || 'rgb(0,0,0)');
 				ctx.lineWidth = (this.options[a].domainWidth || this.options.grid.border);
+				lw = 0.5;
 				if(o=="left"){
-					ctx.moveTo(c.left+0.5,c.top);
-					ctx.lineTo(c.left+0.5,c.top+c.height);
+					ctx.moveTo(c.left+lw,c.top);
+					ctx.lineTo(c.left+lw,c.top+c.height);
 				}else if(o=="bottom"){
-					ctx.moveTo(c.left,c.top+c.height+0.5);
-					ctx.lineTo(c.left+c.width,c.top+c.height+0.5);
+					ctx.moveTo(c.left,c.top+c.height+lw);
+					ctx.lineTo(c.left+c.width,c.top+c.height+lw);
 				}
 				ctx.stroke();
 				ctx.closePath();
