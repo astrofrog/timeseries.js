@@ -510,7 +510,7 @@
 
 	TS.prototype.update = function(datasetID){
 
-		var id,mark;
+		var id,mark,m,_obj;
 		this.olddatasetsused = this.datasetsused;
 		this.datasetsused = "";
 
@@ -576,20 +576,17 @@
 		}
 		this.graph.addDatasets(this.datasets);
 
-		var _obj = this;
-
-		for(var m = 0; m < this.json.marks.length; m++){
+		for(m = 0; m < this.json.marks.length; m++){
 			mark = this.json.marks[m];
-			id = (mark.name||"");
+			id = "";
 			if(mark.from && mark.from.data){
 				id = mark.from.data;
 				if(this.datasets[id]) this.datasetsused += id;
 			}
-
 			// Only bother building this dataset if it hasn't already been added
 			if((!id || this.datasets[id]) && !this.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { 'title': id, 'id': id, 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'} };
+				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'} };
 
 				if(mark.type == "symbol") dataset.symbol = {show:true};
 				else if(mark.type == "rect") dataset.rect = {show:true};
