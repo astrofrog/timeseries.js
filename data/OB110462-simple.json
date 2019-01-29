@@ -41,6 +41,7 @@
 		"type": "line",
 		"description": "Model fit",
 		"from": {"data": "Model"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
@@ -59,6 +60,7 @@
 		"type": "rect",
 		"description": "Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
@@ -78,6 +80,7 @@
 		"type": "symbol",
 		"description": "Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},

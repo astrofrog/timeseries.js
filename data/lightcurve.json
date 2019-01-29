@@ -37,6 +37,7 @@
 		"type": "rect",
 		"description": "Lightcurve",
 		"from": {"data": "lightcurve"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
@@ -63,6 +64,7 @@
 		"type": "symbol",
 		"description": "Lightcurve",
 		"from": {"data": "lightcurve"},
+		"clip": true,
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
