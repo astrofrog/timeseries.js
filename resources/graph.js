@@ -882,7 +882,7 @@
 				for(i in this.datasets){
 					// If no domain is provided or one is and this is the correct dataset
 					if(!domain || (domain && domain.data==i) || (domain.length && domain.length==2)){
-						if(domain.length==2){
+						if(domain && domain.length && domain.length==2){
 							this[axes[axis]].min = domain[0];
 							this[axes[axis]].max = domain[1];
 						}else{
