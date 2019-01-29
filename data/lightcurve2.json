@@ -161,8 +161,8 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
-				"y": {"scale": "yscale", "signal": "datum['value'] - datum['error']"},
-				"y2": {"scale": "yscale", "signal": "datum['value'] + datum['error']"},
+				"y": {"scale": "yscale", "signal": "datum['value'] - datum['error']/2"},
+				"y2": {"scale": "yscale", "signal": "datum['value'] + datum['error']/2"},
 				"width": {"value": 1},
 				"fill": {"value": "#000000"}
 			},
