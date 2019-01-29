@@ -852,7 +852,7 @@
 	};
 
 	Graph.prototype.getGraphRange = function(){
-		var d,i,j,k,f,max,axes,axis,vs,v;
+		var d,i,j,k,f,max,axes,axis,v;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
@@ -861,6 +861,7 @@
 		if(this.marks.length <= 0) return this;
 
 		function calc(out,vs){
+			if(typeof vs==="undefined") out;
 			out.min = Math.min(out.min);
 			out.max = Math.max(out.max);
 			for(var i = 0; i < vs.length; i++){
@@ -899,8 +900,7 @@
 									}
 									if(d[f]) v = d[f];
 								}else v = d[axes[axis]];
-								if(v) vs = [v];
-								this[axes[axis]] = calc(this[axes[axis]],vs);
+								this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
 							}
 						}else{
 							console.log('no marks');
@@ -918,8 +918,7 @@
 								// Work out the values to include in the min/max calculation
 								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
 								else v = d[axes[axis]];
-								if(v) vs = [v];
-								this[axes[axis]] = calc(this[axes[axis]],vs);
+								this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
 							}
 						}else{
 							console.log('no marks');
