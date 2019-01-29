@@ -433,7 +433,7 @@
 		this.version = "0.2.6";
 		this.start = new Date();
 		if(typeof element!="object") return;
-		this.data = {};
+		this.marks = {};
 		this.chart = {};
 		this.options = {};
 		this.selecting = false;
@@ -447,6 +447,7 @@
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
 
+		this.logTime("Graph");
 		this.log('init',element,typeof element,data,options);
 
 		if(this.logging) var d = new Date();
@@ -515,7 +516,7 @@
 					// This is a data point so we'll trigger the clickpoint event
 					t = parseInt(d[0]);
 					i = parseInt(d[1]);
-					d = g.data[t];
+					d = g.marks[t];
 					ii = g.getPixPos(x,y);
 					a = g.trigger("clickpoint",{event:event,series:t,n:i,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
 				}
@@ -538,7 +539,7 @@
 					if(d && d.length == 3){
 						t = d[0];
 						i = d[1];
-						d = g.data[t];
+						d = g.marks[t];
 						ii = g.getPixPos(x,y);
 						g.trigger("hoverpoint",{event:event,point:d.data[i],xpix:x,ypix:ii[1],title:d.title,color:d.color});
 					}
@@ -655,11 +656,11 @@
 
 		// Extend the options with those provided by the user
 		this.setOptions(options);
-
+		
 		// Finally, set the data and update the display
-		this.updateData(data);
+		this.updateData();
 
-		//this.log("Total:" + (new Date() - d) + "ms");
+		this.logTime("Graph");
 		return this;
 	}
 
@@ -669,9 +670,13 @@
 	};
 
 	Graph.prototype.log = function(){
-		if(this.logging){
+		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && is(console.log,"function")) console.log('%cGraph%c ','font-weight:bold;','',args);
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.log('%cERROR%c %cGraph%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cGraph%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else console.log('%cGraph%c','font-weight:bold;','',args);
+			}
 		}
 		return this;
 	};
@@ -786,7 +791,7 @@
 			if(typeof idx==="undefined"){
 				// Create an idx
 				for(i = 0; i < 200; i++){
-					if(typeof this.data[i]==="undefined"){
+					if(typeof this.marks[i]==="undefined"){
 						idx = i;
 						i = 100;
 					}
@@ -795,38 +800,38 @@
 		}
 		this.originaldata = original;
 
-		if(this.data[idx]) this.log('addMarks error','refusing to overwrite existing dataset at '+idx,this.data[idx],data);
+		if(this.marks[idx]) this.log('WARNING','addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);
 		else {
-			this.data[idx] = parseData(data);
+			this.marks[idx] = parseData(data);
 
 			// Set the default to show the dataset
-			if(typeof this.data[idx].show!=="boolean") this.data[idx].show = true;
+			if(typeof this.marks[idx].show!=="boolean") this.marks[idx].show = true;
 
-			l = this.data[idx].data.length;
-			this.data[idx].marks = new Array(l);
+			l = this.marks[idx].data.length;
+			this.marks[idx].mark = new Array(l);
 
-			if(!this.data[idx].type) this.data[idx].type = "symbol";
-			if(!this.data[idx].format) this.data[idx].format = { };
+			if(!this.marks[idx].type) this.marks[idx].type = "symbol";
+			if(!this.marks[idx].format) this.marks[idx].format = { };
 
-			if(this.data[idx].symbol && !this.data[idx].symbol.shape) this.data[idx].symbol.shape = "circle";
-			if(typeof this.data[idx].format.size!=="number") this.data[idx].format.size = 4;
-			if(!this.data[idx].format.stroke) this.data[idx].format.stroke = this.colours[0];
-			if(!this.data[idx].format.strokeDash) this.data[idx].format.strokeDash = [1,0];
-			if(typeof this.data[idx].format.strokeWidth!=="number") this.data[idx].format.strokeWidth = 1;
-			if(!this.data[idx].format.fill) this.data[idx].format.fill = this.colours[0];
+			if(this.marks[idx].symbol && !this.marks[idx].symbol.shape) this.marks[idx].symbol.shape = "circle";
+			if(typeof this.marks[idx].format.size!=="number") this.marks[idx].format.size = 4;
+			if(!this.marks[idx].format.stroke) this.marks[idx].format.stroke = this.colours[0];
+			if(!this.marks[idx].format.strokeDash) this.marks[idx].format.strokeDash = [1,0];
+			if(typeof this.marks[idx].format.strokeWidth!=="number") this.marks[idx].format.strokeWidth = 1;
+			if(!this.marks[idx].format.fill) this.marks[idx].format.fill = this.colours[0];
 
 			types = ['symbol','rect','lines','area','rule','text','format'];
 
 			for(i = 0; i < l ; i++){
 
-				if(!this.data[idx].marks[i]) this.data[idx].marks[i] = {'props':{},'data':this.data[idx].data[i]};
+				if(!this.marks[idx].mark[i]) this.marks[idx].mark[i] = {'props':{},'data':this.marks[idx].data[i]};
 
 				for(j = 0; j < types.length; j++){
 					t = types[j];
-					if(!this.data[idx].marks[i].props[t] && this.data[idx][t]) this.data[idx].marks[i].props[t] = clone(this.data[idx][t]);
+					if(!this.marks[idx].mark[i].props[t] && this.marks[idx][t]) this.marks[idx].mark[i].props[t] = clone(this.marks[idx][t]);
 				}
 				// Should process all the "enter" options here
-				if(this.data[idx].enter) this.data[idx].marks[i] = this.data[idx].enter.call(this,this.data[idx].marks[i],this.data[idx].encode.enter);
+				if(this.marks[idx].enter) this.marks[idx].mark[i] = this.marks[idx].enter.call(this,this.marks[idx].mark[i],this.marks[idx].encode.enter);
 			}
 		}
 
@@ -835,7 +840,7 @@
 
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
-		this.log('updateData',this.data);
+		this.log('updateData',this.marks);
 		this.getGraphRange().getChartOffset().resetDataStyles().calculateData().draw(true);
 	};
 
@@ -846,7 +851,7 @@
 		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
 		this.y = G.extend(this.y,{ min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
-		if(this.data.length <= 0) return this;
+		if(this.marks.length <= 0) return this;
 
 		function calc(out,vs){
 			out.min = Math.min(out.min);
@@ -896,13 +901,13 @@
 					}
 				}
 				// Loop over the data
-				for(i in this.data){
+				for(i in this.marks){
 					// If no domain is provided or one is and this is the correct dataset
-					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==this.data[i].id)){
-						if(this.data[i].marks){
-							max = this.data[i].marks.length;
+					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==this.marks[i].id)){
+						if(this.marks[i].mark){
+							max = this.marks[i].mark.length;
 							for(j = 0; j < max ; j++){
-								d = this.data[i].marks[j].data;
+								d = this.marks[i].mark[j].data;
 								// Work out the values to include in the min/max calculation
 								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
 								else v = d[axes[axis]];
@@ -1171,10 +1176,10 @@
 				i = d[1];
 				w = d[2];
 				clipping = false;
-				typ = this.data[t].type;
+				typ = this.marks[t].type;
 
 				if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
-					if(this.data[t].clip){
+					if(this.marks[t].clip){
 						clipping = true;
 						// Build the clip path
 						ctx.save();
@@ -1185,7 +1190,7 @@
 				}
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 					// Update the mark if necessary
-					mark = (typeof this.data[t].hover==="function" ? this.data[t].hover.call(this,clone(this.data[t].marks[i]),this.data[t].encode.hover) : this.data[t].marks[i]);
+					mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : this.marks[t].mark[i]);
 					// Set the canvas colours
 					this.setCanvasStyles(ctx,mark);
 					this.setCanvasStyles(this.paper.temp.ctx,mark);
@@ -1201,8 +1206,8 @@
 
 				// Put the styles back to what they were
 				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
-					this.setCanvasStyles(ctx,this.data[t].marks[i]);
-					this.setCanvasStyles(this.paper.temp.ctx,this.data[t].marks[i]);
+					this.setCanvasStyles(ctx,this.marks[t].mark[i]);
+					this.setCanvasStyles(this.paper.temp.ctx,this.marks[t].mark[i]);
 				}
 
 				// Set the clipping
@@ -1216,7 +1221,7 @@
 				t = d[0];
 				i = d[1];
 				w = d[2];
-				var data = this.data[t];
+				var data = this.marks[t];
 
 				if(!this.coordinates){
 					this.canvas.canvasholder.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
@@ -1234,9 +1239,9 @@
 				var html = removeRoundingErrors(mark.props.tooltip) || "";
 				if(html){
 					this.coordinates.html(html);
-					var x = this.data[t].marks[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
-					if(x < this.chart.padding) x = this.data[t].marks[i].props.x+1;
-					var y = Math.max(0,Math.min(this.data[t].marks[i].props.y,this.canvas.tall-this.coordinates.outerHeight())); 
+					var x = this.marks[t].mark[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
+					if(x < this.chart.padding) x = this.marks[t].mark[i].props.x+1;
+					var y = Math.max(0,Math.min(this.marks[t].mark[i].props.y,this.canvas.tall-this.coordinates.outerHeight())); 
 					this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
 				}else{
 					this.coordinates.css({'display':'none'});
@@ -1935,11 +1940,11 @@
 	// Reset all the styles for the datasets
 	Graph.prototype.resetDataStyles = function(){
 		var sh,i;
-		for(sh in this.data){
-			if(this.data[sh].update && this.data[sh].show){
-				for(i = 0; i < this.data[sh].marks.length ; i++){
+		for(sh in this.marks){
+			if(this.marks[sh].update && this.marks[sh].show){
+				for(i = 0; i < this.marks[sh].mark.length ; i++){
 					// Process all the series updates here
-					this.data[sh].marks[i] = this.data[sh].update.call(this,this.data[sh].marks[i],this.data[sh].encode.update);
+					this.marks[sh].mark[i] = this.marks[sh].update.call(this,this.marks[sh].mark[i],this.marks[sh].encode.update);
 				}
 			}
 		}
@@ -1957,10 +1962,10 @@
 		if(!update) return this;
 		
 		// Process all the series updates here
-		for(sh in this.data){
-			if(this.data[sh].show){
-				for(i = 0; i < this.data[sh].marks.length ; i++){
-					d = this.data[sh].marks[i];
+		for(sh in this.marks){
+			if(this.marks[sh].show){
+				for(i = 0; i < this.marks[sh].mark.length ; i++){
+					d = this.marks[sh].mark[i];
 
 					// Store IDs for the layer and the item
 					if(!d.id) d.id = parseInt(sh)+':'+i;
@@ -1972,7 +1977,7 @@
 					d.props.y = parseFloat(y.toFixed(1));
 
 					// Add properties for rule lines
-					if(this.data[sh].type=="rule"){
+					if(this.marks[sh].type=="rule"){
 						if(!d.data.x2 && d.data.x) d.data.x2 = clone(d.data.x);
 						if(!d.data.y2 && d.data.y) d.data.y2 = clone(d.data.y);
 					}
@@ -2025,14 +2030,14 @@
 		this.paper.data.scale = {'x':1,'y':1};
 		ctx = this.canvas.ctx;
 
-		for(sh in this.data){
-			if(this.data[sh].show){
+		for(sh in this.marks){
+			if(this.marks[sh].show){
 
-				this.setCanvasStyles(this.paper.data.ctx,this.data[sh].marks[0]);
-				this.setCanvasStyles(this.paper.temp.ctx,this.data[sh].marks[0]);
+				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
+				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);
 
 				// Build the clip path for this marker layer
-				if(this.data[sh].clip){
+				if(this.marks[sh].clip){
 					this.paper.data.ctx.save();
 					this.paper.data.ctx.beginPath();
 					this.paper.data.ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
@@ -2040,22 +2045,22 @@
 				}
 
 				// Draw lines
-				if(this.data[sh].type=="line") this.drawLine(sh,{'update':true});
-				if(this.data[sh].type=="rule") this.drawRule(sh,{'update':true});
-				if(this.data[sh].type=="area") this.drawArea(sh,{'update':true});
-				if(this.data[sh].type=="symbol" || this.data[sh].type=="rect" || this.data[sh].type=="text"){
-					for(i = 0; i < this.data[sh].marks.length ; i++){
-						m = this.data[sh].marks[i];
+				if(this.marks[sh].type=="line") this.drawLine(sh,{'update':true});
+				if(this.marks[sh].type=="rule") this.drawRule(sh,{'update':true});
+				if(this.marks[sh].type=="area") this.drawArea(sh,{'update':true});
+				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
+					for(i = 0; i < this.marks[sh].mark.length ; i++){
+						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
-							if(this.data[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
-							if(this.data[sh].type=="rect") this.drawRect(m,{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
-							if(this.data[sh].type=="text") this.drawText(m,{'update':(updateLookup && typeof this.data[sh].hover==="function" ? true : false)});
+							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
+							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
+							if(this.marks[sh].type=="text") this.drawText(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
 						}
 					}
 				}
 				// Apply the clipping if set
-				if(this.data[sh].clip) this.paper.data.ctx.restore();
+				if(this.marks[sh].clip) this.paper.data.ctx.restore();
 			}
 		}
 		// Draw the data canvas to the main canvas
@@ -2114,8 +2119,8 @@
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		for(i = 0; i < this.data[sh].marks.length ; i++){
-			p = this.data[sh].marks[i].props;
+		for(i = 0; i < this.marks[sh].mark.length ; i++){
+			p = this.marks[sh].mark[i].props;
 			if(isNaN(p.x)){
 				p.x1 = this.chart.left;
 				p.x2 = this.chart.width+this.chart.left;
@@ -2134,7 +2139,7 @@
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.6});
 		return this;
 	};
 
@@ -2171,7 +2176,7 @@
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		ps = this.data[sh].marks;
+		ps = this.marks[sh].mark;
 		oldp = ps[0].props;
 		for(i = 1; i < ps.length ; i++){
 			p = ps[i].props;
@@ -2181,7 +2186,7 @@
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.6});
+		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.6});
 
 		return this;
 	};
@@ -2194,8 +2199,8 @@
 		oldp = {};
 		areas = [];
 		// We need to loop across the data first splitting into segments
-		for(i = 0, a = 0; i < this.data[sh].marks.length ; i++){
-			p = this.data[sh].marks[i].props;
+		for(i = 0, a = 0; i < this.marks[sh].mark.length ; i++){
+			p = this.marks[sh].mark[i].props;
 			y1 = (p.y1 || p.y);
 			y2 = p.y2;
 			if(p.x && y1 && y2){
@@ -2212,12 +2217,12 @@
 				// Move along top of area (y2 coordinates)
 				k = 0;
 				for(j = 0; j < areas[a].length; j++,k++){
-					p = this.data[sh].marks[areas[a][j]].props;
+					p = this.marks[sh].mark[areas[a][j]].props;
 					poly[a][k] = [p.x,p.y2];
 				}
 				// Move along bottom of area backwards
 				for(j = areas[a].length-1; j >= 0; j--,k++){
-					p = this.data[sh].marks[areas[a][j]].props;
+					p = this.marks[sh].mark[areas[a][j]].props;
 					p.y1 = (p.y1 || p.y);
 					poly[a][k] = [p.x,p.y1];
 				}
@@ -2234,11 +2239,11 @@
 		}
 
 		this.paper.temp.ctx.fill();
-		if(this.data[sh].marks[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
+		if(this.marks[sh].mark[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 		
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.data[sh].marks[0].id, 'weight':0.4});
+		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.4});
 
 		return this;
 	};

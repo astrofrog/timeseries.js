@@ -81,10 +81,10 @@
 .timeseries menu button.icon svg { width: 1em; height: auto; }
 .timeseries menu label { color: white; }
 .timeseries menu ol.layers { padding-left: 0px; margin: 0px; background-color: white; color: black; }
-.timeseries menu ol.layers li { list-style: none; padding: 0.5em; margin: 0px; }
+.timeseries menu ol.layers li { list-style: none; margin: 0px; }
 .timeseries menu ol.layers li.on, .timeseries menu ol.layers li:hover { background-color: #efefef; }
-.timeseries menu ol.layers li input[type=checkbox] { opacity: 0.01; float:left; position: absolute; }
-.timeseries menu ol.layers li label { width: 100%; display: block; cursor: pointer; margin: 0px; color: black;
+.timeseries menu ol.layers li input[type=checkbox] { opacity: 0.01; float:left; position: absolute; padding: 0.5em; }
+.timeseries menu ol.layers li label { width: 100%; display: block; padding: 0.5em; cursor: pointer; margin: 0px; color: black;
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
      -khtml-user-select: none; /* Konqueror HTML */

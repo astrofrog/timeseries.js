@@ -420,7 +420,7 @@
 		// Store the callback function
 		if(typeof callback==="function") this.callback = callback;
 
-		if(!e) console.log('ERROR',e,callback);
+		if(!e) this.log('ERROR',e,callback);
 
 		var el = S(e);
 		if(el.length == 0) return this;
@@ -579,16 +579,17 @@
 		var _obj = this;
 
 		for(var m = 0; m < this.json.marks.length; m++){
-			id = "";
 			mark = this.json.marks[m];
+			id = (mark.name||"");
 			if(mark.from && mark.from.data){
 				id = mark.from.data;
 				if(this.datasets[id]) this.datasetsused += id;
 			}
 
-			if(!id || this.datasets[id]){
+			// Only bother building this dataset if it hasn't already been added
+			if((!id || this.datasets[id]) && !this.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { title: id, id: id, desc: desc, type: mark.type, clickable: true, css:{'background-color':'#000000'} };
+				var dataset = { 'title': id, 'id': id, 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'} };
 
 				if(mark.type == "symbol") dataset.symbol = {show:true};
 				else if(mark.type == "rect") dataset.rect = {show:true};
@@ -641,7 +642,7 @@
 	};
 
 	TS.prototype.loaded = function(){
-		this.log('loaded',this.attr.showaswego,this.graph.data);
+		this.log('loaded',this.attr.showaswego,this.graph.marks);
 		var i,id,layers,l,p,k,w,h,draw,d,key;
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
@@ -653,10 +654,10 @@
 		layers.find('li').remove();
 		keyitems = {};
 		j = 1;
-		for(i in this.graph.data){
-		if(this.graph.data[i]){
+		for(i in this.graph.marks){
+		if(this.graph.marks[i]){
 			id = S(this.el).attr('id')+'_'+i;
-			key = this.graph.data[i].desc;
+			key = this.graph.marks[i].desc;
 			if(!keyitems[key]) keyitems[key] = [];
 				keyitems[key].push(i);
 				j++;
@@ -666,7 +667,7 @@
 		for(key in keyitems){
 			if(keyitems[key]){
 				id = S(this.el).attr('id')+'_'+j;
-				d = this.graph.data[keyitems[key][0]];
+				d = this.graph.marks[keyitems[key][0]];
 				// Check if we've already added this
 				if(layers.find('#'+id).length == 0){
 					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
@@ -677,7 +678,7 @@
 						g = e.data.me.graph;
 						for(i = 0; i < e.data.k.length; i++){
 							j = e.data.k[i];
-							g.data[j].show = !g.data[j].show;
+							g.marks[j].show = !g.marks[j].show;
 						}
 						g.calculateData().draw(true);
 						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
@@ -707,15 +708,15 @@
 				ctx.rect(0,0,w,h);
 				ctx.fill();
 				for(i = 0; i < keyitems[key].length; i++){
-					d = this.graph.data[keyitems[key][i]];
+					d = this.graph.marks[keyitems[key][i]];
 					k.css({'background-color':'none'});
 					// Set the canvas style
-					this.graph.setCanvasStyles(ctx,d.marks[0]);
+					this.graph.setCanvasStyles(ctx,d.mark[0]);
 					// Draw the different types
 					if(d.type=="symbol"){
-						this.graph.drawShape(d.marks[0],{'ctx':ctx,'x':w/2,'y':h/2});
+						this.graph.drawShape(d.mark[0],{'ctx':ctx,'x':w/2,'y':h/2});
 					}else if(d.type=="rect"){
-						this.graph.drawRect(d.marks[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+						this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
 					}else if(d.type=="line"){
 						ctx.beginPath();
 						ctx.moveTo(0,h/2);
