@@ -356,16 +356,41 @@
 	};
 	
 	TS.prototype.makeMenu = function(){
-		var el,id,k,i,tab,html,a;
+		var el,id,k,i,tab,str,html,a,menu;
 		el = S(this.el);
 		id = el.attr('id');
 
 		if(el.find('.menuholder').length == 0){
-			layers = [{'key':'layers'},{'key':'config'},{'key':'save'}];
-			var str = '';
-			for(i = 0; i < layers.length; i++) str += '<li><button '+(i==0 ? 'class="on" ':'')+'data="submenu-'+layers[i].key+'">'+getIcon(layers[i].key,'white')+'</button></li>';
+			menu = [{
+				'key': 'views',
+				'title': 'Views',
+				'html': '<ol class="views"></ol>'
+			},{
+				'key': 'layers',
+				'title': 'Marker layers',
+				'html': '<ol class="layers"></ol>',
+				'on': true
+			},{
+				'key': 'config',
+				'title': 'Options',
+				'html': '<div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div>'
+			},{
+				'key': 'save',
+				'title': 'Save',
+				'html': '<button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;">'
+			}];
+			str = '';
+			html = '';
+			for(i = 0; i < menu.length; i++){
+				str += '<li class="submenu-'+menu[i].key+'"><button '+(menu[i].on ? 'class="on" ':'')+'data="submenu-'+menu[i].key+'" title="'+menu[i].title+'">'+getIcon(menu[i].key,'white')+'</button></li>';
+				html += (menu[i].html ? '<div class="menu-panel submenu-'+menu[i].key+(menu[i].on ? ' on':'')+'">'+menu[i].html+'</div>' : '');
+			}
 			str += '<li></li>';
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul><div class="menu-panel submenu-config"><div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div></div><div class="menu-panel submenu-layers on"><ol class="layers"></ol></div><div class="menu-panel submenu-save"><button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;"></div></menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul>'+html+'</menu></div>');
+			// Turn this menu on
+			for(i = 0; i < menu.length; i++){
+				if(menu[i].on) el.find('submenu-'+menu[i].key).addClass('on');
+			}
 
 			// Add button events
 			el.find('.menuholder').on('mouseover',function(){ S('.graph-tooltip').css({'display':'none'}); });
@@ -639,13 +664,9 @@
 		return this;
 	};
 
-	TS.prototype.loaded = function(){
-		this.log('loaded',this.attr.showaswego,this.graph.marks);
+	// Build the menu for selecting layers
+	TS.prototype.updateLayerMenu = function(){
 		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup;
-		// If we haven't been updating the data for the graph we need to do that now
-		if(this.attr.showaswego==false) this.graph.updateData();
-		this.graph.canvas.container.find('.loader').remove();
-		
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
 		// Remove any buttons we've already added
@@ -700,7 +721,7 @@
 				if(["symbol","rect","line","rule","text"].indexOf(d.type) >= 0) draw = true;
 			}
 				
-			// Draw all the pieces that we need to
+			// Draw all the key images that we need to
 			if(draw && k && k[0]){
 				w = k[0].offsetWidth;
 				h = k[0].offsetHeight;
@@ -740,7 +761,7 @@
 			j++;
 		}
 
-		// Add hover event to marks
+		// Add hover event to marks to highlight layers in selector
 		this.graph.on('hoverpoint',{lookup:lookup,layers:layers},function(e){
 			// Remove selected class from all li elements
 			e.data.layers.find('li').removeClass('selected');
@@ -749,7 +770,86 @@
 				if(e.data.lookup[e.matches[m].series]) e.data.lookup[e.matches[m].series].addClass('selected');
 			}
 		});
+		return this;
+	};
+
+	TS.prototype.updateViewMenu = function(){
+		var i,a,s,d,el,id,li,active,alpha;
+		alpha = 'abcdefghijklmnopqrstuvwxyz';
+
+		el = this.graph.canvas.container.find('.views');
+		li = this.graph.canvas.container.find('.submenu-views');
+		// We need more than one view to exist to justify the view menu
+		if(!this.json._views || (this.json._views && this.json._views.length < 2)){
+			el.css({'display':'none'});
+			li.css({'display':'none'});
+			return this;
+		}else{
+			el.css({'display':''});
+			li.css({'display':''});
+		}
+
+		active = 0;
+		for(i = 0; i < this.json._views.length; i++){
+			if(this.json._views[i].active) active = this.json._views[i].active;
+		}
+		this.json._views[active].active = true;
+		for(i = 0; i < this.json._views.length; i++){
+	
+			// Build the ID for this view
+			id = S(this.el).attr('id')+'-view-'+i;
+			// Check if we've already added it
+			if(el.find('#'+id).length == 0){
+				el.append('<li '+(this.json._views[i].active ? ' class="selected"':'')+'><input type="radio"'+(this.json._views[i].active ? ' checked="checked"':'')+' id="'+id+'" name="'+S(this.el).attr('id')+'-view" data="'+i+'" /><label for="'+id+'" title="'+this.json._views[i].description+'"><span style="font-family:monospace;">'+alpha.substr(i,1).toUpperCase()+'.</span> '+this.json._views[i].title+'</label></li>');
+				l = el.find('#'+id);
+				l.on('change',{me:this,id:id,i:i,el:el},function(e){
+					var json,view,g;
+					g = e.data.me.graph;
+					json = e.data.me.json;
+					view = e.data.me.json._views[e.data.i];
+					
+					for(a = 0; a < json.axes.length; a++){
+						for(s = 0; s < view.scales.length; s++){
+							if(json.axes[a].scale == view.scales[s].name){
+								axis = (json.axes[a].orient=="left" ? "yaxis":"xaxis");
+								g.options[axis].log = (view.scales[s].type=="log");
+								g.options[axis].range = clone((view.scales[s].range) ? view.scales[s].range : json._views[0].scales[s].range);
+								g.options[axis].domain = clone((view.scales[s].domain) ? view.scales[s].domain : json._views[0].scales[s].domain);
+								for(d = 0; d < g.options[axis].domain.length; d++){
+									if(g.options[axis].domain[d].signal) g.options[axis].domain[d] = looseJsonParse(g.options[axis].domain[d].signal);
+								}
+							}
+						}
+					}
+					g.updateData();
+					e.data.el.find('.selected').removeClass('selected');
+					if(this.parent().find('input')[0].checked) this.parent().addClass('selected');
+				}).on('focus',{el:el},function(e){
+					e.data.el.find('li').removeClass('on');
+					this.parent().addClass('on');
+				});
+			}
+		}
+		return this;
+	};
+
+	TS.prototype.loaded = function(){
+		this.log('loaded',this.attr.showaswego,this.graph.marks);
+		var view,i;
+		// If we haven't been updating the data for the graph we need to do that now
+		if(this.attr.showaswego==false) this.graph.updateData();
+		this.graph.canvas.container.find('.loader').remove();
 		
+		// Create default view
+		if(!this.json._views) this.json._views = [];
+		view = {'name':'default','title':'Default','description':'The initial view','marks':[],'scales':clone(this.json.scales)};
+		for(i = 0; i < this.json.marks.length ; i++) view.marks.push({ "mark": this.json.marks[i].name, "visible": true });
+		this.json._views.unshift(view);
+
+		// Build the menus
+		this.updateLayerMenu();
+		this.updateViewMenu();
+
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
@@ -859,6 +959,7 @@
 		var icons = {
 			'fit':'<path style="fill:%COLOUR%" d="M 0,12 L0,0 12,0 12,4 6,4 12,10 10,12 4,6 4,12 M20,0 L 32,0 32,12 28,12 28,6 22,12 20,10 26,4 20,4 20,0 M 20,32 L20,28 26,28 20,22 22,20 28,26 28,20 32,20, 32,32 20,32 M 12,32 L 0,32 0,20 4,20 4,26 10,20 12,22 6,28 12,28 12,32" />',
 			'layers': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,6 l 12,6.5 -12,6.5 -12,-6.5Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,10.5 l 12,6.5 -12,6.5 -12,-6.5 Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,15 l 12,6.5 -12,6.5 -12,-6.5 Z" />',
+			'views': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 5,5 l 10,0 0,10 -10,0 0,-2 4,0 0,-2.5 2,0 0,2.5 1,0 0,-5 -1,-1 -2,0 -1,1 3,0 0,1.5 -2,0 0,-1.5 -1,0 0,5 -3,0Z M 17,5 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-1 -1,-1 1,-1 0,-1 -1,-1 -2,0 0,1 2,0 0,1 -0.5,0.5 -1.5,0 0,1 1.5,0 0.5,0.5 0,1 -2,0 0,-5 -1,0 0,6 -3,0Z M 5,17 l 10,0 0,10 -10,0 0,-2 4,0 3,0 0,-1 -3,0 0,-4 3,0 0,-1 -3,0 -1,1 0,4 1,1 -4,0Z M 17,17 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-4 -1,-1 -3,0 0,1 3,0 0,4 -2,0 0,-4 -1,0 0,5 -3,0Z" />',
 			'config': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 13.971 4.5996 L 13.377 7.6992 L 13.453 7.6992 A 8.661 8.661 0 0 0 12.008 8.291 L 9.4785 6.5 L 6.5781 9.4004 L 8.3926 11.865 A 8.661 8.661 0 0 0 7.707 13.551 L 7.707 13.4 L 4.6074 13.9 L 4.6074 18 L 7.707 18.5 L 7.707 18.361 A 8.661 8.661 0 0 0 8.3945 20.033 L 6.5781 22.5 L 9.4785 25.4 L 12.01 23.609 A 8.661 8.661 0 0 0 13.395 24.189 L 13.971 27.199 L 18.033 27.199 L 18.547 24.215 A 8.661 8.661 0 0 0 20.014 23.621 L 22.529 25.4 L 25.43 22.5 L 23.635 20.059 A 8.661 8.661 0 0 0 24.289 18.496 L 27.369 18 L 27.369 13.9 L 24.283 13.402 A 8.661 8.661 0 0 0 23.631 11.848 L 25.43 9.4004 L 22.529 6.5 L 20.01 8.2832 A 8.661 8.661 0 0 0 18.564 7.6836 L 18.033 4.5996 L 13.971 4.5996 z M 15.988 10.828 A 5.0719 5.0719 0 0 1 21.061 15.9 A 5.0719 5.0719 0 0 1 15.988 20.973 A 5.0719 5.0719 0 0 1 10.916 15.9 A 5.0719 5.0719 0 0 1 15.988 10.828 z" />',
 			'save': '<path style="fill:%COLOUR%;fill-opacity: 0.8;" d="M 6,26 l 20,0 0,-6 -6,0 -4,3 -4,-3 -6,0 Z M 16,20 l 8,-8 -5,0 0,-6 -6,0 0,6 -5,0" />'
 		};

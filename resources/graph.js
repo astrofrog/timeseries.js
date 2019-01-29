@@ -852,7 +852,7 @@
 	};
 
 	Graph.prototype.getGraphRange = function(){
-		var d,i,j,k,f,max,axes,axis,v;
+		var d,i,j,k,f,max,axes,axis,v,domain;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
@@ -881,29 +881,35 @@
 		};
 		for(axis in axes){
 			if(this.options[axis].range == "width" || this.options[axis].range == "height"){
+				domain = this.options[axis].domain;
 				// Loop over the datasets
 				for(i in this.datasets){
 					// If no domain is provided or one is and this is the correct dataset
-					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==i)){
-						if(this.datasets[i].data){
-							max = this.datasets[i].data.length;
-							for(j = 0; j < max ; j++){
-								d = this.datasets[i].data[j];
-								// Work out the values to include in the min/max calculation
-								if(this.options[axis].domain){
-									f = (this.options[axis].domain.field||"");
-									if(!f && this.options[axis].domain.fields){
-										for(k = 0; k < this.options[axis].domain.fields.length; k++){
-											f = this.options[axis].domain.fields[k];
-											if(d[f]) continue;
-										}
-									}
-									if(d[f]) v = d[f];
-								}else v = d[axes[axis]];
-								this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
-							}
+					if(!domain || (domain && domain.data==i) || (domain.length && domain.length==2)){
+						if(domain.length==2){
+							this[axes[axis]].min = domain[0];
+							this[axes[axis]].max = domain[1];
 						}else{
-							console.log('no marks');
+							if(this.datasets[i].data){
+								max = this.datasets[i].data.length;
+								for(j = 0; j < max ; j++){
+									d = this.datasets[i].data[j];
+									// Work out the values to include in the min/max calculation
+									if(this.options[axis].domain){
+										f = (domain.field||"");
+										if(!f && domain.fields){
+											for(k = 0; k < domain.fields.length; k++){
+												f = domain.fields[k];
+												if(d[f]) continue;
+											}
+										}
+										if(d[f]) v = d[f];
+									}else v = d[axes[axis]];
+									this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
+								}
+							}else{
+								console.log('no marks');
+							}
 						}
 					}
 				}

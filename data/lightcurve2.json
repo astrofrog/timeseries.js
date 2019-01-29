@@ -5,6 +5,41 @@
 	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
 	"_date": "relative",
+	"_views": [{
+		"name": "zoom",
+		"title": "Zoomed view",
+		"description": "A zoom in around the event",
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"domain": [{"signal":"datetime(2018,9,29,13,53,20)"},{"signal":"datetime(2018,9,29,13,53,24)"}]
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"domain": [0.97,1.01]
+		}]
+	},{
+		"name": "zoomout",
+		"title": "From a distance",
+		"description": "A zoom out around the event",
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"domain": [{"signal":"datetime(2018,9,29,13,53,0)"},{"signal":"datetime(2018,9,29,13,54,0)"}]
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"domain": [0.90,1.1]
+		}]
+	}],
 	"data": [{
 		"name": "lightcurve",
 		"url": "lightcurve2.csv",
@@ -45,6 +80,7 @@
 	],
 	"marks":[{
 		"type": "rule",
+		"name": "Event",
 		"description": "Event happened here",
 		"clip": true,
 		"encode": {
@@ -58,6 +94,7 @@
 		}
 	},{
 		"type": "rule",
+		"name": "Nominal",
 		"description": "Nominal",
 		"clip": true,
 		"encode": {
@@ -71,6 +108,7 @@
 		}
 	},{
 		"type": "area",
+		"name": "Shadow",
 		"description": "Shadow",
 		"from": {"data": "shadow"},
 		"clip": true,
@@ -94,6 +132,7 @@
 		}
 	},{
 		"type": "line",
+		"name": "Baseline",
 		"description": "Baseline",
 		"clip": true,
 		"from": {"data": "threshold"},
@@ -115,6 +154,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "Data-errorbars",
 		"description": "Data",
 		"clip": true,
 		"from": {"data": "lightcurve"},
@@ -141,6 +181,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Data",
 		"description": "Data",
 		"clip": true,
 		"from": {"data": "lightcurve"},
@@ -168,6 +209,7 @@
 		}
 	},{
 		"type": "text",
+		"name": "Labels",
 		"description": "Labels",
 		"encode": {
 			"enter": {
