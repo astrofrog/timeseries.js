@@ -7,21 +7,34 @@ html, body {
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
+@font-face {
+  font-family: franklin-gothic-urw;
+  src: url("https://use.typekit.net/af/9cb78a/0000000000000000000118ad/27/l?subset_id=2&fvd=n4&v=3") format("woff2"), url("https://use.typekit.net/af/9cb78a/0000000000000000000118ad/27/d?subset_id=2&fvd=n4&v=3") format("woff"), url("https://use.typekit.net/af/9cb78a/0000000000000000000118ad/27/a?subset_id=2&fvd=n4&v=3") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+}
+@font-face {
+  font-family: franklin-gothic-urw-cond;
+  src: url("https://use.typekit.net/af/e984ad/0000000000000000000118b5/27/l?subset_id=2&fvd=n4&v=3") format("woff2"), url("https://use.typekit.net/af/e984ad/0000000000000000000118b5/27/d?subset_id=2&fvd=n4&v=3") format("woff"), url("https://use.typekit.net/af/e984ad/0000000000000000000118b5/27/a?subset_id=2&fvd=n4&v=3") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+}
 body {
-	font-family: "PT Sans", helvetica, arial, sans-serif;
-	font-size: 18px;
+	font-family: "franklin-gothic-urw",sans-serif;
+	font-size: 16px;
 	margin: 0px;
 	padding: 0px;
-	color: #222;
+	color: #333;
 	font-weight: normal;
 	font-style: normal;
 	line-height: 1.5;
 	cursor: auto;
 }
-h1, h2, h3, h4 { color: #007aa0; }
+h1, h2, h3, h4 { color: #007aa0; font-family: "franklin-gothic-urw-cond", sans-serif; }
+h1 { font-size: 32px; line-height: 1.25; }
 header {
-	background-color: #007aa0;
-	color: #FFF;
+	background-color: rgb(204, 221, 246);
+	color: rgb(51, 51, 51);
 	margin-bottom: 2em;
 }
 header h1, header h2 { color: inherit; }
@@ -66,8 +79,6 @@ header h1, header h2 { color: inherit; }
 	border: 0;
 }
 p, ul, ol {
-	font-size: 1.125rem;
-	font-size: 18px;
 	line-height: 1.5;
 }
 .panel.callout > ul {
