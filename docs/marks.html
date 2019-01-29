@@ -42,7 +42,7 @@
 		<h2>Marks</h2>
 		<p><strong><a href="https://vega.github.io/vega/docs/marks/">Marks</a></strong> visually encode data using geographic primitives. We currently support VEGA's <code><a href="#area">area</a></code>, <code><a href="#line">line</a></code>, <code><a href="#rect">rect</a></code>, <code><a href="#rule">rule</a></code>, <code><a href="#symbol">symbol</a></code>, and <code><a href="#text">text</a></code> marks.</p>
 		<h3>Changing styles</h3>
-		<p>The marks are styled using three <code>encode</code> options. The initial style is set with <code>enter</code>. The markers are updated with the <code>update</code> option. A hover event triggers a <code>hover</code> and a mouseout then styles the point again using <code>update</code>. It should be noted that to save processing, the <code>hover</code> event actually just draws the styled version of the marker on a separate canvas and draws that <strong>on top</strong> of the existing canvas. This means we can keep a copy of the existing canvas and not have to re-draw everything. The result is that you may be able to see parts of the non-hovered version of the marker depending on how you style the hovered version. This will be more noticeable for <code>text</code> markers.</p> 
+		<p>The marks are styled using three <code>encode</code> options. The initial style is set with <code>enter</code>. The markers are updated with the <code>update</code> option. A hover event triggers a <code>hover</code> and a mouseout then styles the point again using <code>update</code>. It should be noted that to save processing, the <code>hover</code> event actually just draws the styled version of the marker on a separate canvas and draws that <strong>on top</strong> of the existing canvas. This means we can keep a copy of the existing canvas and not have to re-draw everything. The result is that you may be able to see parts of the non-hovered version of the marker depending on how you style the hovered version. This will be more noticeable for <code>text</code> markers.</p>
 	</div>
 	<div class="bkg-tint">
 		<div class="row">
@@ -130,7 +130,7 @@
 						});
 						</script>
 					</div>
-					<h2 id="line-mark-properties">Supported <code>line</code> mark properties</h2>
+					<h2 id="area-mark-properties">Supported <code>area</code> mark properties</h2>
 
 					<table class="properties">
 						<thead>
@@ -768,7 +768,7 @@
 						});
 						</script>
 					</div>
-					
+
 					<h2 id="text-mark-properties">Supported <code>text</code> mark properties</h2>
 					<table class="properties">
 					<thead>
@@ -825,7 +825,7 @@
 			</section>
 		</div>
 	</div>
-	
+
 	<!-- FOOTER	-->
 	<div class="row">
 		<footer>
