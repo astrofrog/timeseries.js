@@ -90,7 +90,7 @@ table.properties th, table.properties td { border: 1px solid #cccccc; padding: 6
 table.properties tbody tr:nth-child(2n+1) { background-color: #f8f8f8; }
 .notsupported { opacity: 0.1; text-decoration: line-through; }
 
-.seasonal { background-color: #396bad; }
+.seasonal { background-color: rgba(0, 110, 178, 1); }
 .loader {
 	content: "";
 	position: absolute;
