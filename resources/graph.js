@@ -857,7 +857,7 @@
 		if(this.marks.length <= 0) return this;
 
 		function calc(out,vs){
-			if(typeof vs==="undefined") out;
+			if(typeof vs==="undefined") return out;
 			out.min = Math.min(out.min);
 			out.max = Math.max(out.max);
 			for(var i = 0; i < vs.length; i++){
