@@ -747,11 +747,13 @@
 						ctx.beginPath();
 						ctx.moveTo(0,h/2);
 						ctx.lineTo(w,h/2);
+						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8)*1.2;
 						ctx.stroke();
 					}else if(d.type=="rule"){
 						ctx.beginPath();
 						ctx.moveTo(w/2,0);
 						ctx.lineTo(w/2,h);
+						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8)*1.2;
 						ctx.stroke();
 					}else if(d.type=="text"){
 						this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
