@@ -141,8 +141,6 @@
 		var n = "number";
 		var t = "string";
 		var b = "boolean";
-		var o = "object";
-		var f = "function";
 		if(is(i.logging,b)) this.logging = i.logging;
 		if(is(i.background,t)) this.background = i.background;
 		if(is(i.color,t)) this.color = i.color;
@@ -450,8 +448,6 @@
 		this.logTime("Graph");
 		this.log('init',element,typeof element,data,options);
 
-		if(this.logging) var d = new Date();
-
 		// Define the drawing canvas
 		var opt = {};
 		if(options.width) opt.width = options.width;
@@ -495,7 +491,7 @@
 			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
 			this.log("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
-			var event,g,x,y,s,d,t,i,ii,a,m;
+			var event,g,x,y,s,d,t,i,ii,a,m,ds;
 			event = ev.event.originalEvent;
 			g = ev.data.me;	// The graph object
 			if(event.which!=1) return;	// Only zoom on left click
@@ -528,7 +524,7 @@
 			a = g.trigger("clickpoint",{event:event,matches:m});
 			return true;
 		}).on("mousemove",{me:this},function(ev){
-			var event,g,x,y,d,t,i,ii,a,m;
+			var event,g,x,y,d,t,i,ii,a,m,ds;
 			event = ev.event.originalEvent;
 			if(!event) return;
 			g = ev.data.me;	// The graph object
@@ -791,7 +787,7 @@
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
 	Graph.prototype.addMarks = function(data,idx,original){
-		var i,j,t;
+		var i,j,t,l,types;
 
 		this.log('addMarks',idx);
 		if(typeof idx!=="number"){
@@ -988,7 +984,7 @@
 		if(!pos) pos = [];
 		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
-		var s,c,sx,sy,x,y;
+		var c,sx,sy,x,y;
 		if(pos.length == 2){
 			sx = sy = 0.8;
 			if(attr.scale) sx = sy = attr.scale;
@@ -1109,10 +1105,6 @@
 	};
 	
 	Graph.prototype.dataAtMousePosition = function(x,y){
-		var t = "string";
-		var idx = 0;
-		var max = 0;
-		var l,i,s;
 		x = Math.round(x*this.canvas.scale);
 		y = Math.round(y*this.canvas.scale);
 		if(x >= 0 && y >= 0 && x < this.canvas.c.width && y < this.canvas.c.height && this.lookup[x] && this.lookup[x][y]) return this.lookup[x][y];
@@ -1122,10 +1114,11 @@
 
 	// Find the highest layer in the stack
 	function getTopLayer(l){
-		var max = 0;
-		var idx = 0;
+		var max,idx,d,s,w;
+		max = 0;
+		idx = 0;
 		if(l && l.length > 0){
-			for(var s = 0; s < l.length; s++){
+			for(s = 0; s < l.length; s++){
 				d = l[s].split(':');
 				w = parseFloat(d[2]);
 				if(w > max){
@@ -1177,7 +1170,7 @@
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
 			this.drawOverlay();
-			var d,t,i,w,clipping,typ,mark,ctx,n,s;
+			var d,t,i,w,clipping,typ,mark,ctx,n,s,val;
 			ctx = this.canvas.ctx;
 
 			// Only highlight the first 10 matches
@@ -1315,8 +1308,7 @@
 			return this;
 		}
 
-		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn;
-		var param = {'name': 'seconds', 'div': 1, 'base': 10};
+		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn,dv,log10_dv,base,frac;
 		rg = this[axis].range;
 		mx = this[axis].max;
 		mn = this[axis].min;
@@ -1384,10 +1376,10 @@
 
 			// We now want to check whether frac falls closest to 1, 2, 5, or 10 (in log
 			// space). There are more efficient ways of doing this but this is just for clarity.
-			options = [1,2,5,10];
-			distance = new Array(options.length);
-			imin = -1;
-			tmin = 1e100;
+			var options = [1,2,5,10];
+			var distance = new Array(options.length);
+			var imin = -1;
+			var tmin = 1e100;
 			for(i = 0; i < options.length; i++){
 				distance[i] = Math.abs(frac - Math.log10(options[i]));
 				if(distance[i] < tmin){
@@ -1397,7 +1389,7 @@
 			}
 
 			// Now determine the actual spacing
-			spacing = Math.pow(10,(base))*options[imin];
+			var spacing = Math.pow(10,(base))*options[imin];
 			t_inc = spacing;
 
 			// Normalise the tick mark min/max
@@ -1413,7 +1405,7 @@
 
 			// If we are dealing with dates we set the precision that way
 			if(this[axis].isDate){
-				p = Math.log10(t_inc);
+				var p = Math.log10(t_inc);
 				this[axis].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
 				this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
 			}
@@ -1445,7 +1437,7 @@
 	};
 
 	Graph.prototype.makeTicks = function(a){
-		var v,mn,mx,l,sci,base,main,precision,fmt,ts;
+		var v,mn,mx,l,sci,precision,fmt,i,d;
 		// Get the min/max tick marks
 		mn = this[a].gridmin;
 		mx = this[a].gridmax;
@@ -1580,7 +1572,7 @@
 				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
 				if(o){
 					str = tidy(o.truncated || o.str);
-					prev = o;
+					//prev = o;
 				}
 				this[a].ticks[i].label = str;
 			}
@@ -1617,13 +1609,12 @@
 
 	Graph.prototype.getChartOffset = function(){
 		if(typeof this.chart!="object") this.chart = {};
-		var fs,ff,o,c,cc,ts,t,a,ax,offx,dp;
+		var fs,ff,o,c,a,ax,offx,dp,b;
 		fs = getStyle(this.canvas.container[0], 'font-size');
 		ff = getStyle(this.canvas.container[0], 'font-family');
 		o = this.options;
 		c = this.chart;
 		if(!c.left) c.left = 0;
-		var current = clone(c.left);
 		// Set the target
 		
 		c.padding = (this.canvas.fullscreen) ? 36 : 0;
@@ -1671,7 +1662,7 @@
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
 		if(!ok) return 0;
 
-		var fs,mn,mx,ctx,i,maxw,maxdp,maxi,maxe;
+		var fs,mn,mx,ctx,i,maxw,maxdp,maxi,maxe,s;
 
 		// Set font for labels
 		fs = this.getFontHeight('y','label');
@@ -1714,7 +1705,7 @@
 
 	// Draw the axes and grid lines for the graph
 	Graph.prototype.drawAxes = function(){
-		var grid,tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx;
+		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,fshalf,di;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -1845,7 +1836,6 @@
 			}
 			fshalf = Math.ceil(fs/2);
 			var oldx = 0;
-			var prev = {};
 			var str;
 			
 			mn = axis.gridmin;
@@ -1972,7 +1962,7 @@
 		this.log('calculateData');
 		if(typeof update!=="boolean") update = true;
 		
-		var d,n,xpx,ypx,x,y,x2,y2,sh,i;
+		var d,x,y,sh,i;
 
 		if(!update) return this;
 		
@@ -2027,8 +2017,7 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var lo,hi,x,y,ii,l,p,s,sh,o,ctx,i,j;
-		var twopi = Math.PI*2;
+		var m,p,sh,ctx,i,j;
 
 		// Define an empty pixel-based lookup table
 		if(updateLookup){
@@ -2130,7 +2119,7 @@
 
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
-		var ctx,i;
+		var ctx,i,p;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
@@ -2187,7 +2176,7 @@
 	};
 
 	Graph.prototype.drawLine = function(sh,attr){
-		var ctx,ps,oldp,i;
+		var ctx,ps,oldp,i,p;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
@@ -2207,7 +2196,7 @@
 	};
 	
 	Graph.prototype.drawArea = function(sh,attr){
-		var ctx,oldp,areas,a,i,j,k;
+		var ctx,oldp,areas,a,i,j,k,p,y1,y2;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
@@ -2281,7 +2270,7 @@
 
 	Graph.prototype.drawTextLabel = function(txt,x,y,attr){
 		if(!attr) attr = {};
-		var str,w,b,l,bits,f,fs,s,ctx;
+		var str,w,b,l,bits,f,fs,s,ctx,dy;
 
 		ctx = (attr.ctx||this.canvas.ctx);
 		f = (attr.format || {});
@@ -2332,7 +2321,7 @@
 	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
-		var ctx,p,x1,y1,s,w,h,o;
+		var ctx,p,x1,y1,s,w,h,o,dw;
 		ctx = attr.ctx;
 		p = datum.props;
 		
@@ -2440,7 +2429,7 @@
 	// We'll use a bounding box to define the lookup area
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.id) return;
-		var x,y,value,p,a,t,dir,bit;
+		var x,y,p,a,t,dir,bit;
 		p = 1;
 		a = i.id+':'+(i.weight||1);
 		if(i.xb < i.xa){ t = i.xa; i.xa = i.xb; i.xb = t; }
@@ -2473,7 +2462,7 @@
 
 	// Clear the canvas
 	Graph.prototype.clear = function(ctx){
-		var w,h,b;
+		var w,h;
 		w = ctx ? ctx.canvas.width : this.canvas.wide;
 		h = ctx ? ctx.canvas.height : this.canvas.tall;
 		ctx = (ctx || this.canvas.ctx);
@@ -2504,7 +2493,7 @@
 		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
 		if(!this.metrics[key].start) this.metrics[key].start = new Date();
 		else{
-			var t,w,v,tot,l,i;
+			var t,w,v,tot,l,i,ts;
 			t = ((new Date())-this.metrics[key].start);
 			ts = this.metrics[key].times;
 			// Define the weights for each time in the array
@@ -2533,7 +2522,7 @@
 	function tidy(v){
 		if(typeof v!=="string") return "";
 		if(v=="0") return v;
-		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+?)0+$/g,function(m,p1){ return "."+p1; });
+		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ var val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+?)0+$/g,function(m,p1){ return "."+p1; });
 	}
 
 	function removeRoundingErrors(e){
@@ -2543,7 +2532,7 @@
 	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
 	
 	function roundDate(ms,t,n,attr){
-		var d,df,l,a,a2,time,f,months;
+		var d,d2,df,a,a2,time,f,months,ly;
 		if(!attr) attr = {};
 		if(!attr.method) attr.method = "round";
 		time = new Date(ms);
