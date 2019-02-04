@@ -387,7 +387,7 @@
 				html += (menu[i].html ? '<div class="menu-panel submenu-'+menu[i].key+(menu[i].on ? ' on':'')+'">'+menu[i].html+'</div>' : '');
 			}
 			str += '<li></li>';
-			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul>'+html+'</menu></div>');
+			el.prepend('<div class="menuholder"><input type="checkbox" id="'+id+'_hamburger" class="hamburger"><label for="'+id+'_hamburger" class="hamburger">'+getIcon('menu','white')+'<span class="nv">Toggle menu (if not visible)</span></label><menu class="timeseries-actions-wrapper"><ul class="submenu">'+str+'</ul>'+html+'</menu></div>');
 			// Turn this menu on
 			for(i = 0; i < menu.length; i++){
 				if(menu[i].on) el.find('submenu-'+menu[i].key).addClass('on');
@@ -1020,6 +1020,7 @@
 
 	function getIcon(icon,colour){
 		var icons = {
+			'menu': '<path style="fill:%COLOUR%;fill-opacity: 0.8;" d="M 5,6 l 22,0 0,4 -22,0 0,-4 M 5,14 l 22,0 0,4 -22,0 0,-4 M 5,22 l 22,0 0,4 -22,0 0,-4 " />',
 			'fit':'<path style="fill:%COLOUR%" d="M 0,12 L0,0 12,0 12,4 6,4 12,10 10,12 4,6 4,12 M20,0 L 32,0 32,12 28,12 28,6 22,12 20,10 26,4 20,4 20,0 M 20,32 L20,28 26,28 20,22 22,20 28,26 28,20 32,20, 32,32 20,32 M 12,32 L 0,32 0,20 4,20 4,26 10,20 12,22 6,28 12,28 12,32" />',
 			'layers': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,6 l 12,6.5 -12,6.5 -12,-6.5Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,10.5 l 12,6.5 -12,6.5 -12,-6.5 Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,15 l 12,6.5 -12,6.5 -12,-6.5 Z" />',
 			'views': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 5,5 l 10,0 0,10 -10,0 0,-2 4,0 0,-2.5 2,0 0,2.5 1,0 0,-5 -1,-1 -2,0 -1,1 3,0 0,1.5 -2,0 0,-1.5 -1,0 0,5 -3,0Z M 17,5 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-1 -1,-1 1,-1 0,-1 -1,-1 -2,0 0,1 2,0 0,1 -0.5,0.5 -1.5,0 0,1 1.5,0 0.5,0.5 0,1 -2,0 0,-5 -1,0 0,6 -3,0Z M 5,17 l 10,0 0,10 -10,0 0,-2 4,0 3,0 0,-1 -3,0 0,-4 3,0 0,-1 -3,0 -1,1 0,4 1,1 -4,0Z M 17,17 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-4 -1,-1 -3,0 0,1 3,0 0,4 -2,0 0,-4 -1,0 0,5 -3,0Z" />',
