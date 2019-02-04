@@ -200,7 +200,7 @@
 			'relative': {
 				'title': 'Relative date',
 				'formatLabel': function(val,attr){
-					var sign,s,sec,str,inc,i,ds,b,k;
+					var sign,s,v,sec,str,inc,i,ds,b,k;
 					sign = (val < 0) ? -1 : 1;
 					val = Math.abs(val);
 					s = val*1;
@@ -357,7 +357,7 @@
 	};
 	
 	TS.prototype.makeMenu = function(){
-		var el,id,k,i,f,str,html,menu;
+		var el,id,k,i,tab,str,html,a,menu;
 		el = S(this.el);
 		id = el.attr('id');
 
@@ -502,7 +502,7 @@
 		f = "";
 		files = [];
 		fn = function(data,attr){
-			var json,typ;
+			var json;
 			typ = "json";
 			if(attr && attr.dataset && attr.dataset.format && attr.dataset.format.type=="csv") typ = "csv";
 			if(typ == "csv") json = CSV2JSON(data,attr.dataset.format.parse);
@@ -549,13 +549,12 @@
 
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
-			var datum,p,to,str;
 			if(!d){
 				console.log('updateProps fail',d,event);
 				return;
 			}
 			datum = d.data;
-			for(p in event){
+			for(var p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
 						if(typeof event[p].value !== "undefined"){
@@ -677,7 +676,7 @@
 
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
-		var i,j,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
+		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
 		keyitems = {};
@@ -825,7 +824,7 @@
 	};
 
 	TS.prototype.updateViewMenu = function(){
-		var i,l,el,id,li,active,alpha,axis,found;
+		var i,a,s,d,el,id,li,active,alpha;
 		alpha = 'abcdefghijklmnopqrstuvwxyz';
 
 		el = this.graph.canvas.container.find('.views');
@@ -948,7 +947,7 @@
 			dl.click();
 		
 		}
-		var txt,output,typ;
+		var txt;
 
 		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.vega);
@@ -967,7 +966,7 @@
 		}
 		if(type == "vegaeditor"){
 			// Open in VEGA editor
-			var vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
+			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
 			setTimeout(function(){
 				vegaeditor.postMessage({
 					"mode": "vega",
@@ -1186,7 +1185,7 @@
 	//	 4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
 	//	 5) <undefined> - uses the current time
 	function JD(jd,t,offs){
-		var epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
+		epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
 		var secs = 86400;
 		var scale = secs*1e6;
 		if(typeof jd==="number"){

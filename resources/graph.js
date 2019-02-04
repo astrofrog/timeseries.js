@@ -2127,7 +2127,7 @@
 			if(this.marks[sh].mark[i].data.x){
 				if(!this.marks[sh].mark[i].data.x.scale){
 					if(this.marks[sh].mark[i].data.x.value == 0) p.x1 = this.chart.left;
-					if(this.marks[sh].mark[i].data.x2.field && this.marks[sh].mark[i].data.x2.field.group=="width") p.x2 = this.chart.width+this.chart.left
+					if(this.marks[sh].mark[i].data.x2.field && this.marks[sh].mark[i].data.x2.field.group=="width") p.x2 = this.chart.width+this.chart.left;
 				}
 			}
 			if(this.marks[sh].mark[i].data.y){
