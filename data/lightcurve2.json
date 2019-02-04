@@ -51,7 +51,7 @@
 			"enter": {
 				"x": { "value": 0},
 				"x2": { "field": { "group": "width" }},
-				"y": {"scale":"yscale", "value": 0.97 },
+				"y": {"scale":"yscale", "value": 0.977 },
 				"stroke": {"value": "#f9b800"},
 				"strokeWidth": {"value": 2}
 			}
