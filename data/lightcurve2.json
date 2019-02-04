@@ -40,7 +40,7 @@
 			"zero": false,
 			"domain": [0.90,1.1]
 		}],
-		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Data-errorbars","visible":false},{"name":"Data","visible":false}]
+		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-errorbars","visible":false},{"name":"Data","visible":true}]
 	}],
 	"_extramarks": [{
 		"type": "rule",
