@@ -809,7 +809,7 @@
 
 			// Set the default to show the dataset
 			if(typeof this.marks[idx].show!=="boolean") this.marks[idx].show = true;
-
+			if(typeof this.marks[idx].include!=="boolean") this.marks[idx].include = true;
 			l = this.marks[idx].data.length;
 			this.marks[idx].mark = new Array(l);
 
@@ -912,7 +912,7 @@
 				for(i in this.marks){
 					// If no domain is provided or one is and this is the correct dataset
 					if(!this.options[axis].domain || (this.options[axis].domain && this.options[axis].domain.data==this.marks[i].id)){
-						if(this.marks[i].mark){
+						if(this.marks[i].mark && this.marks[i].include){
 							max = this.marks[i].mark.length;
 							for(j = 0; j < max ; j++){
 								d = this.marks[i].mark[j].data;
@@ -2034,7 +2034,7 @@
 		ctx = this.canvas.ctx;
 
 		for(sh in this.marks){
-			if(this.marks[sh].show){
+			if(this.marks[sh].show && this.marks[sh].include){
 
 				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
 				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);

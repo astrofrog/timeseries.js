@@ -200,12 +200,13 @@
 			'relative': {
 				'title': 'Relative date',
 				'formatLabel': function(val,attr){
-					var sign = (val < 0) ? -1 : 1;
+					var sign,s,sec,str,inc,i,ds,b,k;
+					sign = (val < 0) ? -1 : 1;
 					val = Math.abs(val);
-					var s = val*1;
+					s = val*1;
 					if(val == 0) return {'str':'0'};
-					var b = ['y','d','h','m','s','ms'];
-					var sec = {
+					b = ['y','d','h','m','s','ms'];
+					sec = {
 						'y':86400*365.25*1000,
 						'd':86400*1000,
 						'h':3600*1000,
@@ -214,9 +215,9 @@
 						'ms':1
 					};
 					if(val < sec.ms) return {'str':(sign < 0 ? '-':'')+(val/1000)};
-					var str = '';
-					var inc = {};
-					for(var i = 0,k=0; i < b.length; i++){
+					str = '';
+					inc = {};
+					for(i = 0,k=0; i < b.length; i++){
 						k = 0;
 						ds = sec[b[i]];
 						if(s >= ds && s > 0) k = Math.floor(s/ds);
@@ -314,7 +315,7 @@
 	TS.prototype.postProcess = function(){
 
 		this.log('postProcess',this);
-		var i,a;
+		var i,a,axis;
 
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
@@ -356,7 +357,7 @@
 	};
 	
 	TS.prototype.makeMenu = function(){
-		var el,id,k,i,tab,str,html,a,menu;
+		var el,id,k,i,f,str,html,menu;
 		el = S(this.el);
 		id = el.attr('id');
 
@@ -409,8 +410,8 @@
 
 			el.find('.submenu button').on('click',{el:el},function(e){
 				e.data.el.find('.on').removeClass('on');
-				me = S(e.currentTarget);
-				cls = me.attr('data');
+				var me = S(e.currentTarget);
+				var cls = me.attr('data');
 				me.addClass('on');
 				e.data.el.find('.menu-panel.'+cls).addClass('on');
 			});
@@ -501,7 +502,7 @@
 		f = "";
 		files = [];
 		fn = function(data,attr){
-			var json;
+			var json,typ;
 			typ = "json";
 			if(attr && attr.dataset && attr.dataset.format && attr.dataset.format.type=="csv") typ = "csv";
 			if(typ == "csv") json = CSV2JSON(data,attr.dataset.format.parse);
@@ -548,12 +549,13 @@
 
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
+			var datum,p,to,str;
 			if(!d){
 				console.log('updateProps fail',d,event);
 				return;
 			}
 			datum = d.data;
-			for(var p in event){
+			for(p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
 						if(typeof event[p].value !== "undefined"){
@@ -595,23 +597,17 @@
 			}
 			return d;
 		}
-
-		for(id in this.datasets){
-			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
-		}
-		this.graph.addDatasets(this.datasets);
-
-		for(m = 0; m < this.json.marks.length; m++){
-			mark = this.json.marks[m];
-			id = "";
+		
+		function addMarks(me,m,mark){
+			var id = "";
 			if(mark.from && mark.from.data){
 				id = mark.from.data;
-				if(this.datasets[id]) this.datasetsused += id;
+				if(me.datasets[id]) me.datasetsused += id;
 			}
 			// Only bother building this dataset if it hasn't already been added
-			if((!id || this.datasets[id]) && !this.graph.marks[m]){
+			if((!id || me.datasets[id]) && !me.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'} };
+				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
 
 				if(mark.type == "symbol") dataset.symbol = {show:true};
 				else if(mark.type == "rect") dataset.rect = {show:true};
@@ -620,9 +616,9 @@
 				else if(mark.type == "area") dataset.area = {show:true};
 				else if(mark.type == "text") dataset.text = {show:true};
 
-				if(this.datasets[id]){
-					dataset.data = clone(this.datasets[id].json);
-					dataset.parse = this.datasets[id].parse;
+				if(me.datasets[id]){
+					dataset.data = clone(me.datasets[id].json);
+					dataset.parse = me.datasets[id].parse;
 				}else{
 					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
 					dataset.parse = {};
@@ -647,13 +643,29 @@
 					dataset.clip = (mark.clip || false);
 
 					// Now we add this mark-based dataset
-					this.graph.addMarks(dataset,m);
-					if(this.datasets[id]) this.datasets[id].added = true;
+					me.graph.addMarks(dataset,m);
+					if(me.datasets[id]) me.datasets[id].added = true;
 					
 				}else{
-					this.log('No dataset built for '+id,mark);
+					me.log('No dataset built for '+id,mark);
 				}
 			}
+			return me;
+		}
+
+		for(id in this.datasets){
+			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
+		}
+		this.graph.addDatasets(this.datasets);
+
+		for(m = 0; m < this.json.marks.length; m++){
+			mark = this.json.marks[m];
+			addMarks(this,m,mark);
+		}
+		for(m = 0; m < this.json._extramarks.length; m++){
+			mark = clone(this.json._extramarks[m]);
+			mark.include = false;
+			addMarks(this,m+this.json.marks.length+m,mark);
 		}
 
 		// If the current list of datasets used is different
@@ -665,19 +677,17 @@
 
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
-		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c;
+		var i,j,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
-		// Remove any buttons we've already added
-		layers.find('li').remove();
 		keyitems = {};
 		lookup = {};
 		j = 1;
 		for(i in this.graph.marks){
-		if(this.graph.marks[i]){
-			id = S(this.el).attr('id')+'_'+i;
-			key = this.graph.marks[i].desc;
-			if(!keyitems[key]) keyitems[key] = [];
+			if(this.graph.marks[i]){
+				id = S(this.el).attr('id')+'_'+i;
+				key = this.graph.marks[i].desc;
+				if(typeof keyitems[key]==="undefined") keyitems[key] = [];
 				keyitems[key].push(i);
 				j++;
 			}
@@ -685,15 +695,21 @@
 
 		j = 0;
 		for(key in keyitems){
-			if(keyitems[key]){
+			if(typeof keyitems[key]!=="undefined"){
 				id = S(this.el).attr('id')+'_'+j;
 				d = this.graph.marks[keyitems[key][0]];
-				// Check if we've already added this
+				added = false;
+
+				// Check if we've already added this key item to the DOM
 				if(layers.find('#'+id).length == 0){
 					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
-					l = layers.find('#'+id);
-					p = l.parent();
-					k = p.find('.key');
+					added = true;
+				}
+				l = layers.find('#'+id);
+				p = l.parent();
+				k = p.find('.key');
+				// If we've just added it we need to add events
+				if(added){
 					l.on('change',{me:this,k:keyitems[key]},function(e){
 						var g,i,j;
 						g = e.data.me.graph;
@@ -712,64 +728,86 @@
 						e.data.layers.find('.selected').removeClass('selected');
 					});
 					lookup[keyitems[key][0]] = l.parent();
-				}
-			}
-			// Do we need to draw key items?
-			draw = false;
-			for(i = 0; i < keyitems[key].length; i++){
-				if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
-			}
+
+					// Do we need to draw key items?
+					draw = false;
+					for(i = 0; i < keyitems[key].length; i++){
+						if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
+					}
 				
-			// Draw all the key images that we need to
-			if(draw && k && k[0]){
-				w = k[0].offsetWidth;
-				h = k[0].offsetHeight;
-				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
-				c = k.find('canvas')[0];
-				ctx = c.getContext('2d');
-				scale = window.devicePixelRatio;
-				c.width = w*scale;
-				c.height = h*scale;
-				ctx.scale(scale,scale);
-				ctx.fillStyle = "#ffffff";
-				ctx.rect(0,0,w,h);
-				ctx.fill();
-				for(i = 0; i < keyitems[key].length; i++){
-					d = this.graph.marks[keyitems[key][i]];
-					k.css({'background-color':'none'});
-					// Set the canvas style
-					this.graph.setCanvasStyles(ctx,d.mark[0]);
-					// Draw the different types
-					if(d.type=="symbol"){
-						this.graph.drawShape(d.mark[0],{'ctx':ctx,'x':w/2,'y':h/2});
-					}else if(d.type=="rect"){
-						this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
-					}else if(d.type=="area"){
-						this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
-					}else if(d.type=="line"){
-						ctx.beginPath();
-						ctx.moveTo(0,h/2);
-						ctx.lineTo(w,h/2);
-						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8);
-						ctx.stroke();
-					}else if(d.type=="rule"){
-						ctx.beginPath();
-						ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
-						if(d.data[0].y.value == d.data[0].y2.value){
-							ctx.moveTo(0,h/2 + 0.5);
-							ctx.lineTo(w,h/2 + 0.5);
-						}else if(d.data[0].x.value == d.data[0].x2.value){
-							ctx.moveTo(w/2 + 0.5,0);
-							ctx.lineTo(w/2 + 0.5,h);
-						}else{
-							ctx.moveTo(0,0);
-							ctx.lineTo(w,h);
-						}
-						ctx.stroke();
-					}else if(d.type=="text"){
-						this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
+					// Create a canvas for each key item if we need to
+					if(draw && k && k[0]){
+						w = k[0].offsetWidth;
+						h = k[0].offsetHeight;
+						k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
 					}
 				}
+
+				// Update all the key images
+				if(p.find('canvas').length == 1){
+					c = p.find('canvas')[0];
+					w = parseInt(p.find('canvas').css('width'));
+					h = parseInt(p.find('canvas').css('height'));
+					ctx = c.getContext('2d');
+					scale = window.devicePixelRatio;
+					c.width = w*scale;
+					c.height = h*scale;
+					ctx.scale(scale,scale);
+					ctx.clearRect(0,0,w,h);
+					ctx.fillStyle = "#ffffff";
+					ctx.rect(0,0,w,h);
+					ctx.fill();
+					for(i = 0; i < keyitems[key].length; i++){
+						d = this.graph.marks[keyitems[key][i]];
+						if(d.include){
+							k.css({'background-color':'none'});
+							// Set the canvas style
+							this.graph.setCanvasStyles(ctx,d.mark[0]);
+							// Draw the different types
+							if(d.type=="symbol"){
+								this.graph.drawShape(d.mark[0],{'ctx':ctx,'x':w/2,'y':h/2});
+							}else if(d.type=="rect"){
+								this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+							}else if(d.type=="area"){
+								this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
+							}else if(d.type=="line"){
+								ctx.beginPath();
+								ctx.moveTo(0,h/2);
+								ctx.lineTo(w,h/2);
+								ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8);
+								ctx.stroke();
+							}else if(d.type=="rule"){
+								ctx.beginPath();
+								ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
+								if(d.data[0].y.value == d.data[0].y2.value){
+									ctx.moveTo(0,h/2 + 0.5);
+									ctx.lineTo(w,h/2 + 0.5);
+								}else if(d.data[0].x.value == d.data[0].x2.value){
+									ctx.moveTo(w/2 + 0.5,0);
+									ctx.lineTo(w/2 + 0.5,h);
+								}else{
+									ctx.moveTo(0,0);
+									ctx.lineTo(w,h);
+								}
+								ctx.stroke();
+							}else if(d.type=="text"){
+								this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
+							}
+						}
+					}
+				}
+
+				// Work out if the key item should be included and if it is visible
+				include = false;
+				show = false;
+				for(i = 0; i < keyitems[key].length; i++){
+					if(this.graph.marks[keyitems[key][i]].include) include = true;
+					if(this.graph.marks[keyitems[key][i]].show) show = true;
+				}
+				parent = layers.find('#'+id).parent();
+				parent.css({'display':(include ? 'block':'none')});
+				if(show) parent.removeClass('inactive');
+				else parent.addClass('inactive');
 			}
 			j++;
 		}
@@ -787,7 +825,7 @@
 	};
 
 	TS.prototype.updateViewMenu = function(){
-		var i,a,s,d,el,id,li,active,alpha;
+		var i,l,el,id,li,active,alpha,axis,found;
 		alpha = 'abcdefghijklmnopqrstuvwxyz';
 
 		el = this.graph.canvas.container.find('.views');
@@ -816,11 +854,10 @@
 				el.append('<li '+(this.json._views[i].active ? ' class="selected"':'')+'><input type="radio"'+(this.json._views[i].active ? ' checked="checked"':'')+' id="'+id+'" name="'+S(this.el).attr('id')+'-view" data="'+i+'" /><label for="'+id+'" title="'+this.json._views[i].description+'"><span style="font-family:monospace;">'+alpha.substr(i,1).toUpperCase()+'.</span> '+this.json._views[i].title+'</label></li>');
 				l = el.find('#'+id);
 				l.on('change',{me:this,id:id,i:i,el:el},function(e){
-					var json,view,g;
+					var json,view,g,a,i,s,d;
 					g = e.data.me.graph;
 					json = e.data.me.json;
-					view = e.data.me.json._views[e.data.i];
-					
+					view = e.data.me.json._views[e.data.i];					
 					for(a = 0; a < json.axes.length; a++){
 						for(s = 0; s < view.scales.length; s++){
 							if(json.axes[a].scale == view.scales[s].name){
@@ -834,6 +871,20 @@
 							}
 						}
 					}
+					for(i in g.marks){
+						if(g.marks[i]){
+							found = -1;
+							g.marks[i].include = false;
+							for(s = 0; s < view.markers.length; s++){
+								if(g.marks[i].name == view.markers[s].name){
+									found = s;
+									g.marks[i].include = true;
+									g.marks[i].show = view.markers[s].visible;
+								}
+							}
+						}
+					}
+					e.data.me.updateLayerMenu();
 					g.updateData();
 					e.data.el.find('.selected').removeClass('selected');
 					if(this.parent().find('input')[0].checked) this.parent().addClass('selected');
@@ -855,8 +906,8 @@
 		
 		// Create default view
 		if(!this.json._views) this.json._views = [];
-		view = {'name':'default','title':'Default','description':'The initial view','marks':[],'scales':clone(this.json.scales)};
-		for(i = 0; i < this.json.marks.length ; i++) view.marks.push({ "mark": this.json.marks[i].name, "visible": true });
+		view = {'name':'default','title':'Default','description':'The initial view','markers':[],'scales':clone(this.json.scales)};
+		for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
 		this.json._views.unshift(view);
 
 		// Build the menus
@@ -897,7 +948,7 @@
 			dl.click();
 		
 		}
-		var txt;
+		var txt,output,typ;
 
 		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.vega);
@@ -916,7 +967,7 @@
 		}
 		if(type == "vegaeditor"){
 			// Open in VEGA editor
-			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
+			var vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
 			setTimeout(function(){
 				vegaeditor.postMessage({
 					"mode": "vega",
@@ -1135,7 +1186,7 @@
 	//	 4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
 	//	 5) <undefined> - uses the current time
 	function JD(jd,t,offs){
-		epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
+		var epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
 		var secs = 86400;
 		var scale = secs*1e6;
 		if(typeof jd==="number"){

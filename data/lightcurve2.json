@@ -20,8 +20,9 @@
 			"type": "linear",
 			"range": "height",
 			"zero": false,
-			"domain": [0.97,1.01]
-		}]
+			"domain": [0.965,1.01]
+		}],
+		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Nominal2","visible":true},{"name":"Data","visible":true}]
 	},{
 		"name": "zoomout",
 		"title": "From a distance",
@@ -38,7 +39,23 @@
 			"range": "height",
 			"zero": false,
 			"domain": [0.90,1.1]
-		}]
+		}],
+		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Data-errorbars","visible":false},{"name":"Data","visible":false}]
+	}],
+	"_extramarks": [{
+		"type": "rule",
+		"name": "Nominal2",
+		"description": "Nominal2",
+		"clip": true,
+		"encode": {
+			"enter": {
+				"x": { "value": 0},
+				"x2": { "field": { "group": "width" }},
+				"y": {"scale":"yscale", "value": 0.97 },
+				"stroke": {"value": "#f9b800"},
+				"strokeWidth": {"value": 2}
+			}
+		}
 	}],
 	"data": [{
 		"name": "lightcurve",
