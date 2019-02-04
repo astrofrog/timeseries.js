@@ -2124,6 +2124,18 @@
 		this.paper.temp.ctx.beginPath();
 		for(i = 0; i < this.marks[sh].mark.length ; i++){
 			p = this.marks[sh].mark[i].props;
+			if(this.marks[sh].mark[i].data.x){
+				if(!this.marks[sh].mark[i].data.x.scale){
+					if(this.marks[sh].mark[i].data.x.value == 0) p.x1 = this.chart.left;
+					if(this.marks[sh].mark[i].data.x2.field && this.marks[sh].mark[i].data.x2.field.group=="width") p.x2 = this.chart.width+this.chart.left
+				}
+			}
+			if(this.marks[sh].mark[i].data.y){
+				if(!this.marks[sh].mark[i].data.y.scale){
+					if(this.marks[sh].mark[i].data.y.value == 0) p.y1 = this.chart.top;
+					if(this.marks[sh].mark[i].data.y2.field && this.marks[sh].mark[i].data.y2.field.group=="height") p.y2 = this.chart.height+this.chart.top;
+				}
+			}
 			if(isNaN(p.x)){
 				p.x1 = this.chart.left;
 				p.x2 = this.chart.width+this.chart.left;
@@ -2205,7 +2217,6 @@
 		for(i = 0, a = 0; i < this.marks[sh].mark.length ; i++){
 			p = this.marks[sh].mark[i].props;
 			y1 = (p.y1 || p.y);
-			if(typeof p.y2==="undefined") p.y2 = y1;
 			y2 = p.y2;
 			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
 				if(!areas[a]) areas[a] = [];
