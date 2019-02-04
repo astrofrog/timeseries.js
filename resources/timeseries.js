@@ -575,7 +575,6 @@
 							else datum[p].value = event[p].value;
 						}
 					}
-					//if(p=="tooltip") console.log(p,event[p])
 					if(event[p].signal){
 						to = dest[p] || "data";
 						if(typeof d[to][p]==="undefined") d[to][p] = {};
@@ -661,10 +660,12 @@
 			mark = this.json.marks[m];
 			addMarks(this,m,mark);
 		}
-		for(m = 0; m < this.json._extramarks.length; m++){
-			mark = clone(this.json._extramarks[m]);
-			mark.include = false;
-			addMarks(this,m+this.json.marks.length+m,mark);
+		if(this.json._extramarks){
+			for(m = 0; m < this.json._extramarks.length; m++){
+				mark = clone(this.json._extramarks[m]);
+				mark.include = false;
+				addMarks(this,m+this.json.marks.length+m,mark);
+			}
 		}
 
 		// If the current list of datasets used is different
@@ -898,16 +899,22 @@
 
 	TS.prototype.loaded = function(){
 		this.log('loaded',this.attr.showaswego,this.graph.marks);
-		var view,i;
+		var view,i,addeddefault;
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
 		
 		// Create default view
 		if(!this.json._views) this.json._views = [];
-		view = {'name':'default','title':'Default','description':'The initial view','markers':[],'scales':clone(this.json.scales)};
-		for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
-		this.json._views.unshift(view);
+		addeddefault = false;
+		for(i = 0; i < this.json._views.length; i++){
+			if(this.json._views[i].name=="default") addeddefault = true;
+		}
+		if(!addeddefault){
+			view = {'name':'default','title':'Default','description':'The initial view','markers':[],'scales':clone(this.json.scales)};
+			for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
+			this.json._views.unshift(view);
+		}
 
 		// Build the menus
 		this.updateLayerMenu();

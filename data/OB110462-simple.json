@@ -39,6 +39,7 @@
 	],
 	"marks":[{
 		"type": "line",
+		"name": "model",
 		"description": "Model fit",
 		"from": {"data": "Model"},
 		"clip": true,
@@ -58,6 +59,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "Data-errorbars",
 		"description": "Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
 		"clip": true,
@@ -78,6 +80,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Data",
 		"description": "Danish 1.54m",
 		"from": {"data": "Danish 1.54m"},
 		"clip": true,
