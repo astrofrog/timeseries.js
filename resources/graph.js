@@ -824,7 +824,6 @@
 			if(!this.marks[idx].format.fill) this.marks[idx].format.fill = this.colours[0];
 
 			types = ['symbol','rect','lines','area','rule','text','format'];
-
 			for(i = 0; i < l ; i++){
 
 				if(!this.marks[idx].mark[i]) this.marks[idx].mark[i] = {'props':{},'data':this.marks[idx].data[i]};
@@ -1987,7 +1986,7 @@
 						if(!d.data.y2 && d.data.y) d.data.y2 = clone(d.data.y);
 					}
 
-					if(d.data.x2){
+					if(typeof d.data.x2==="number"){
 						d.props.x2 = this.getPos("x",d.data.x2);
 						d.props.x1 = x;
 						d.props.x = x + (d.props.x2-x)/2;
@@ -2206,8 +2205,9 @@
 		for(i = 0, a = 0; i < this.marks[sh].mark.length ; i++){
 			p = this.marks[sh].mark[i].props;
 			y1 = (p.y1 || p.y);
+			if(typeof p.y2==="undefined") p.y2 = y1;
 			y2 = p.y2;
-			if(p.x && y1 && y2){
+			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
 				if(!areas[a]) areas[a] = [];
 				areas[a].push(i);
 			}else a++;

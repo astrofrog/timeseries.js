@@ -553,7 +553,6 @@
 				return;
 			}
 			datum = d.data;
-
 			for(var p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
@@ -562,7 +561,7 @@
 							if(d.props.format) d.props.format[p] = event[p].value;
 						}
 					}else{
-						if(!datum[p]) datum[p] = clone(event[p]);
+						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
 						if(event[p].field){
 							if(typeof event[p].field==="string"){
 								if(datum[event[p].field]) d.data[p] = datum[event[p].field];
@@ -578,7 +577,7 @@
 					//if(p=="tooltip") console.log(p,event[p])
 					if(event[p].signal){
 						to = dest[p] || "data";
-						if(!d[to][p]) d[to][p] = {};
+						if(typeof d[to][p]==="undefined") d[to][p] = {};
 						try { d[to][p].value = looseJsonParse(event[p].signal); }
 						catch(e) { _obj.log('Error',d.data,event[p]); }
 						// If we now have an object we build a string
@@ -594,6 +593,7 @@
 					}
 				}
 			}
+
 			return d;
 		}
 
