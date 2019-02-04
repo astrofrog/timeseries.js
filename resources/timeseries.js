@@ -564,7 +564,7 @@
 						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
 						if(event[p].field){
 							if(typeof event[p].field==="string"){
-								if(datum[event[p].field]) d.data[p] = datum[event[p].field];
+								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
 							}else if(typeof event[p].field==="object"){
 								d.data[p] = clone(event[p]);
 							}
@@ -593,7 +593,6 @@
 					}
 				}
 			}
-
 			return d;
 		}
 
@@ -666,7 +665,7 @@
 
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
-		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup;
+		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c;
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
 		// Remove any buttons we've already added
@@ -718,7 +717,7 @@
 			// Do we need to draw key items?
 			draw = false;
 			for(i = 0; i < keyitems[key].length; i++){
-				if(["symbol","rect","line","rule","text"].indexOf(d.type) >= 0) draw = true;
+				if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
 			}
 				
 			// Draw all the key images that we need to
@@ -726,10 +725,12 @@
 				w = k[0].offsetWidth;
 				h = k[0].offsetHeight;
 				k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
-				var c = k.find('canvas')[0];
-				var ctx = c.getContext('2d');
-				c.width = w;
-				c.height = h;
+				c = k.find('canvas')[0];
+				ctx = c.getContext('2d');
+				scale = window.devicePixelRatio;
+				c.width = w*scale;
+				c.height = h*scale;
+				ctx.scale(scale,scale);
 				ctx.fillStyle = "#ffffff";
 				ctx.rect(0,0,w,h);
 				ctx.fill();
@@ -743,17 +744,27 @@
 						this.graph.drawShape(d.mark[0],{'ctx':ctx,'x':w/2,'y':h/2});
 					}else if(d.type=="rect"){
 						this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+					}else if(d.type=="area"){
+						this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
 					}else if(d.type=="line"){
 						ctx.beginPath();
 						ctx.moveTo(0,h/2);
 						ctx.lineTo(w,h/2);
-						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8)*1.2;
+						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8);
 						ctx.stroke();
 					}else if(d.type=="rule"){
 						ctx.beginPath();
-						ctx.moveTo(w/2,0);
-						ctx.lineTo(w/2,h);
-						ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8)*1.2;
+						ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
+						if(d.data[0].y.value == d.data[0].y2.value){
+							ctx.moveTo(0,h/2 + 0.5);
+							ctx.lineTo(w,h/2 + 0.5);
+						}else if(d.data[0].x.value == d.data[0].x2.value){
+							ctx.moveTo(w/2 + 0.5,0);
+							ctx.lineTo(w/2 + 0.5,h);
+						}else{
+							ctx.moveTo(0,0);
+							ctx.lineTo(w,h);
+						}
 						ctx.stroke();
 					}else if(d.type=="text"){
 						this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
