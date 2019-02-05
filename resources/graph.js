@@ -2316,9 +2316,10 @@
 		var xo = x + (f.dx||0);
 		if(f.align == "center") xo -= w/2;
 		if(f.align == "right") xo -= w;
-		if(f.baseline == "top") ;
+		//if(f.baseline == "top") ;
 		// We've taken control of the positioning
 		ctx.textAlign = "left";
+		ctx.textBaseline = f.baseline;
 
 		for(b=0,l=xo; b < bits.length; b++){
 			s = (bits[b][0]=="NORMAL" ? 1 : 0.6);

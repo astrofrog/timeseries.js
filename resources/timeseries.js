@@ -772,7 +772,13 @@
 							if(d.type=="symbol"){
 								this.graph.drawShape(clone(d.mark[0]),{'ctx':ctx,'x':w/2,'y':h/2});
 							}else if(d.type=="rect"){
-								this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+								if(d.mark[0].props.x1 && d.mark[0].props.x2 && d.mark[0].props.y1 && d.mark[0].props.y2){
+									// If this has x1,x2,y1,y2 it is more like an area
+									this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
+								}else{
+									// We probably just have x1,x2,y or x,y1,y2 so this is more like a line
+									this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+								}
 							}else if(d.type=="area"){
 								this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
 							}else if(d.type=="line"){
