@@ -864,14 +864,20 @@
 					json = e.data.me.json;
 					view = e.data.me.json._views[e.data.i];					
 					for(a = 0; a < json.axes.length; a++){
-						for(s = 0; s < view.scales.length; s++){
-							if(json.axes[a].scale == view.scales[s].name){
-								axis = (json.axes[a].orient=="left" ? "yaxis":"xaxis");
-								g.options[axis].log = (view.scales[s].type=="log");
-								g.options[axis].range = clone((view.scales[s].range) ? view.scales[s].range : json._views[0].scales[s].range);
-								g.options[axis].domain = clone((view.scales[s].domain) ? view.scales[s].domain : json._views[0].scales[s].domain);
-								for(d = 0; d < g.options[axis].domain.length; d++){
-									if(g.options[axis].domain[d].signal) g.options[axis].domain[d] = looseJsonParse(g.options[axis].domain[d].signal);
+						if(view.scales){
+							for(s = 0; s < view.scales.length; s++){
+								if(json.axes[a].scale == view.scales[s].name){
+									axis = (json.axes[a].orient=="left" ? "yaxis":"xaxis");
+									g.options[axis].log = (view.scales[s].type=="log");
+									if(view.scales[s].range || json._views[0].scales[s].range){
+										g.options[axis].range = clone((view.scales[s].range) ? view.scales[s].range : json._views[0].scales[s].range);
+									}
+									if(json._views[0].scales[s].domain || view.scales[s].domain){
+										g.options[axis].domain = clone(view.scales[s].domain ? view.scales[s].domain : json._views[0].scales[s].domain);
+										for(d = 0; d < g.options[axis].domain.length; d++){
+											if(g.options[axis].domain[d].signal) g.options[axis].domain[d] = looseJsonParse(g.options[axis].domain[d].signal);
+										}
+									}
 								}
 							}
 						}
