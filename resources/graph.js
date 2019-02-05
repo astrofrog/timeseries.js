@@ -830,7 +830,7 @@
 
 				for(j = 0; j < types.length; j++){
 					t = types[j];
-					if(!this.marks[idx].mark[i].props[t] && this.marks[idx][t]) this.marks[idx].mark[i].props[t] = clone(this.marks[idx][t]);
+					if(typeof this.marks[idx].mark[i].props[t]!=="object" && this.marks[idx][t]) this.marks[idx].mark[i].props[t] = clone(this.marks[idx][t]);
 				}
 				// Should process all the "enter" options here
 				if(this.marks[idx].enter) this.marks[idx].mark[i] = this.marks[idx].enter.call(this,this.marks[idx].mark[i],this.marks[idx].encode.enter);
@@ -1181,7 +1181,6 @@
 				w = d[2];
 				clipping = false;
 				typ = this.marks[t].type;
-
 				if(this.marks[t].encode.hover){
 					if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
 						if(this.marks[t].clip){
@@ -1195,7 +1194,7 @@
 					}
 					if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 						// Update the mark if necessary
-						mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : this.marks[t].mark[i]);
+						mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : clone(this.marks[t].mark[i]));
 						// Set the canvas colours
 						this.setCanvasStyles(ctx,mark);
 						this.setCanvasStyles(this.paper.temp.ctx,mark);
@@ -1223,7 +1222,7 @@
 
 			d = getTopLayer(ds);
 
-			if(d && d.length == 3){
+			if(d && d.length == 3 && mark){
 				t = d[0];
 				i = d[1];
 				w = d[2];
@@ -1245,9 +1244,9 @@
 				var html = removeRoundingErrors(mark.props.tooltip) || "";
 				if(html){
 					this.coordinates.html(html);
-					var x = this.marks[t].mark[i].props.x-this.coordinates.outerWidth()-1+this.canvas.c.offsetLeft;
+					var x = this.marks[t].mark[i].props.x - this.coordinates.outerWidth() - 1 + this.canvas.c.offsetLeft;
 					if(x < this.chart.padding) x = this.marks[t].mark[i].props.x+1;
-					var y = Math.max(0,Math.min(this.marks[t].mark[i].props.y,this.canvas.tall-this.coordinates.outerHeight())); 
+					var y = Math.max(0,Math.min(this.marks[t].mark[i].props.y,this.canvas.tall - this.coordinates.outerHeight())); 
 					this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
 				}else{
 					this.coordinates.css({'display':'none'});
@@ -1851,8 +1850,13 @@
 				if(!p || !isFinite(p)) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
 				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-				if(d=="y") y1 = y2 = p;
-				else if(d=="x") x1 = x2 = p;
+				if(d=="y"){
+					y1 = p;
+					y2 = p;
+				}else if(d=="x"){
+					x1 = p;
+					x2 = p;
+				}
 
 				j = (axis.log) ? G.log10(i) : i.toFixed(prec);
 
@@ -1988,24 +1992,24 @@
 						if(!d.data.y2 && d.data.y) d.data.y2 = clone(d.data.y);
 					}
 
-					if(typeof d.data.x2==="number"){
+					if(typeof d.data.x2!=="undefined"){
 						d.props.x2 = this.getPos("x",d.data.x2);
 						d.props.x1 = x;
 						d.props.x = x + (d.props.x2-x)/2;
 					}else{
 						// Clear x1/x2 values in props if they aren't in data
-						if(d.props.x2){
+						if(typeof d.props.x2!=="undefined"){
 							d.props.x1 = null;
 							d.props.x2 = null;
 						}
 					}
-					if(d.data.y2){
+					if(typeof d.data.y2!=="undefined"){
 						d.props.y2 = this.getPos("y",d.data.y2);
 						d.props.y1 = y;
 						d.props.y = y + (d.props.y2-y)/2;
 					}else{
 						// Clear y1/y2 values in props if they aren't in data
-						if(d.props.y2){
+						if(typeof d.props.y2!=="undefined"){
 							d.props.y1 = null;
 							d.props.y2 = null;
 						}
@@ -2055,7 +2059,7 @@
 				if(this.marks[sh].type=="area") this.drawArea(sh,{'update':true});
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
-						m = this.marks[sh].mark[i];
+						m = clone(this.marks[sh].mark[i]);
 						p = m.props;
 						if(p.x && p.y){
 							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});

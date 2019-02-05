@@ -770,11 +770,11 @@
 							this.graph.setCanvasStyles(ctx,d.mark[0]);
 							// Draw the different types
 							if(d.type=="symbol"){
-								this.graph.drawShape(d.mark[0],{'ctx':ctx,'x':w/2,'y':h/2});
+								this.graph.drawShape(clone(d.mark[0]),{'ctx':ctx,'x':w/2,'y':h/2});
 							}else if(d.type=="rect"){
-								this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+								this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
 							}else if(d.type=="area"){
-								this.graph.drawRect(d.mark[0],{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
+								this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
 							}else if(d.type=="line"){
 								ctx.beginPath();
 								ctx.moveTo(0,h/2);
