@@ -86,7 +86,7 @@
 					"error": function(err,attr){
 						var cb = this.load.data.files[attr.file].callbacks;
 						// Throw an error for each callback
-						for(var i = 0; i < cb.length; i++) cb[i].attr.this.error('Failed to load',attr.file,err);
+						for(var i = 0; i < cb.length; i++) cb[i].attr['this'].error('Failed to load',attr.file,err);
 					}
 				});
 			}else{
