@@ -1227,9 +1227,10 @@
 				i = d[1];
 				w = d[2];
 				var data = this.marks[t];
+				var cls = 'graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "");
 
 				if(!this.coordinates){
-					this.canvas.canvasholder.append('<div class="graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "")+'" style="position:absolute;display:none;"></div>');
+					this.canvas.canvasholder.append('<div class="'+cls+'" style="position:absolute;display:none;"></div>');
 					this.coordinates = this.canvas.container.find('.graph-tooltip');
 				}
 				if(typeof data.css=="object") this.coordinates.css(data.css);
@@ -1243,11 +1244,15 @@
 				};
 				var html = removeRoundingErrors(mark.props.tooltip) || "";
 				if(html){
+					var x,y,c;
 					this.coordinates.html(html);
-					var x = this.marks[t].mark[i].props.x - this.coordinates.outerWidth() - 1 + this.canvas.c.offsetLeft;
-					if(x < this.chart.padding) x = this.marks[t].mark[i].props.x+1;
-					var y = Math.max(0,Math.min(this.marks[t].mark[i].props.y,this.canvas.tall - this.coordinates.outerHeight())); 
+					x = this.marks[t].mark[i].props.x + this.canvas.c.offsetLeft;
+					y = this.marks[t].mark[i].props.y;
 					this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
+					c = (y < this.chart.height/3 ? 'n' : (y > this.chart.height*2/3 ? 's':''));
+					c += (x < this.chart.width/3 ? 'w' : (x > this.chart.width*2/3 ? 'e' : ''));
+					if(!c) c = 'w';
+					this.coordinates.attr('class',cls+' graph-tooltip-'+c);
 				}else{
 					this.coordinates.css({'display':'none'});
 				}

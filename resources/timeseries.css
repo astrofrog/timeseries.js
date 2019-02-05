@@ -7,6 +7,79 @@
 	text-align: left;
 	z-index: 1000;
 }
+.graph-tooltip:after {
+	position: absolute;
+	content: "";
+	border: 10px solid black;
+	top: 50%;
+}
+.graph-tooltip.graph-tooltip-nw:after, .graph-tooltip.graph-tooltip-ne:after, .graph-tooltip.graph-tooltip-s:after {
+	border-right-color: transparent;
+	border-left-color: transparent;
+	border-bottom-color: transparent;
+}
+.graph-tooltip.graph-tooltip-n:after, .graph-tooltip.graph-tooltip-sw:after, .graph-tooltip.graph-tooltip-se:after {
+	border-right-color: transparent;
+	border-left-color: transparent;
+	border-top-color: transparent;
+}
+.graph-tooltip.graph-tooltip-w:after {
+	border-top-color: transparent;
+	border-left-color: transparent;
+	border-bottom-color: transparent;
+}
+.graph-tooltip.graph-tooltip-e:after {
+	border-top-color: transparent;
+	border-right-color: transparent;
+	border-bottom-color: transparent;
+}
+
+.graph-tooltip.graph-tooltip-n:after {
+	transform: translate3d(-50%,-100%,0);
+	left: 50%;
+	top: 0px;
+}
+.graph-tooltip.graph-tooltip-ne:after {
+	transform: translate3d(50%,0,0);
+	right: 0px;
+	top: 0px;
+}
+.graph-tooltip.graph-tooltip-e:after {
+	transform: translate3d(100%,-50%,0);
+	right: 0px;
+}
+.graph-tooltip.graph-tooltip-se:after {
+	transform: translate3d(50%,0,0);
+	right: 0px;
+	bottom: 0px;
+}
+.graph-tooltip.graph-tooltip-s:after {
+	transform: translate3d(-50%,100%,0);
+	left: 50%;
+	bottom: 0px;
+}
+.graph-tooltip.graph-tooltip-sw:after {
+	transform: translate3d(-50%,0,0);
+	left: 0px;
+	bottom: 0px;
+}
+.graph-tooltip.graph-tooltip-w:after {
+	transform: translate3d(-100%,-50%,0);
+	left: 0px;
+}
+.graph-tooltip.graph-tooltip-nw:after {
+	transform: translate3d(-50%,0,0);
+	left: 0px;
+	top: 0px;
+}
+.graph-tooltip.graph-tooltip-n { transform: translate3d(-50%, 10px, 0); }
+.graph-tooltip.graph-tooltip-ne { transform: translate3d(calc(-100% - 10px), 0, 0); }
+.graph-tooltip.graph-tooltip-e { transform: translate3d(calc(-100% - 10px), -50%, 0); }
+.graph-tooltip.graph-tooltip-se { transform: translate3d(calc(-100% - 10px), -100%, 0); }
+.graph-tooltip.graph-tooltip-s { transform: translate3d(-50%, calc(-100% - 10px), 0); }
+.graph-tooltip.graph-tooltip-sw { transform: translate3d(10px, -100%, 0); }
+.graph-tooltip.graph-tooltip-w { transform: translate3d(10px, -50%, 0); }
+.graph-tooltip.graph-tooltip-nw { transform: translate3d(10px, 0, 0); }
 .aas-theme { font-size: 1em; }
 .aas-theme td:first-child{
 	text-align: right;
