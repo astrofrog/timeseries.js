@@ -1182,40 +1182,42 @@
 				clipping = false;
 				typ = this.marks[t].type;
 
-				if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
-					if(this.marks[t].clip){
-						clipping = true;
-						// Build the clip path
-						ctx.save();
-						ctx.beginPath();
-						ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
-						ctx.clip();
+				if(this.marks[t].encode.hover){
+					if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
+						if(this.marks[t].clip){
+							clipping = true;
+							// Build the clip path
+							ctx.save();
+							ctx.beginPath();
+							ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
+							ctx.clip();
+						}
 					}
-				}
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
-					// Update the mark if necessary
-					mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : this.marks[t].mark[i]);
-					// Set the canvas colours
-					this.setCanvasStyles(ctx,mark);
-					this.setCanvasStyles(this.paper.temp.ctx,mark);
-				}
+					if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
+						// Update the mark if necessary
+						mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : this.marks[t].mark[i]);
+						// Set the canvas colours
+						this.setCanvasStyles(ctx,mark);
+						this.setCanvasStyles(this.paper.temp.ctx,mark);
+					}
 
-				// Draw the marks
-				if(typ=="line") this.drawLine(t,{'ctx':ctx});
-				if(typ=="symbol") this.drawShape(mark,{'ctx':ctx});
-				if(typ=="rect") this.drawRect(mark,{'ctx':ctx});
-				if(typ=="area") this.drawArea(t,{'ctx':ctx});
-				if(typ=="rule") this.drawRule(t,{'ctx':ctx});
-				if(typ=="text") this.drawText(mark,{'ctx':ctx});
+					// Draw the marks
+					if(typ=="line") this.drawLine(t,{'ctx':ctx});
+					if(typ=="symbol") this.drawShape(mark,{'ctx':ctx});
+					if(typ=="rect") this.drawRect(mark,{'ctx':ctx});
+					if(typ=="area") this.drawArea(t,{'ctx':ctx});
+					if(typ=="rule") this.drawRule(t,{'ctx':ctx});
+					if(typ=="text") this.drawText(mark,{'ctx':ctx});
 
-				// Put the styles back to what they were
-				if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
-					this.setCanvasStyles(ctx,this.marks[t].mark[i]);
-					this.setCanvasStyles(this.paper.temp.ctx,this.marks[t].mark[i]);
+					// Put the styles back to what they were
+					if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
+						this.setCanvasStyles(ctx,this.marks[t].mark[i]);
+						this.setCanvasStyles(this.paper.temp.ctx,this.marks[t].mark[i]);
+					}
+
+					// Set the clipping
+					if(clipping) ctx.restore();
 				}
-
-				// Set the clipping
-				if(clipping) ctx.restore();
 			}
 			
 

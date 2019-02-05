@@ -333,7 +333,12 @@
 						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
 						if(this.json.scales[i].type=="log") this.options[axis].log = true;
 						if(this.json.scales[i].range) this.options[axis].range = this.json.scales[i].range;
-						if(this.json.scales[i].domain) this.options[axis].domain = this.json.scales[i].domain;
+						if(this.json.scales[i].domain){
+							this.options[axis].domain = clone(this.json.scales[i].domain);
+							for(d = 0; d < this.options[axis].domain.length; d++){
+								if(this.options[axis].domain[d].signal) this.options[axis].domain[d] = looseJsonParse(this.options[axis].domain[d].signal);
+							}
+						}
 					}
 				}
 			}
