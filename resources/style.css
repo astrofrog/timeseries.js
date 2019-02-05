@@ -32,17 +32,16 @@ figure > div {
 	line-height: 1em;
 }
 
-#examples > ol {
+ol {
 	margin: 0px;
 	padding: 0px;
 }
-#examples > ol > li {
+ol > li {
 	list-style: none;
-	padding: 2em;
 	background-color: white;
 	margin-bottom: 2em;
 }
-#examples > ol > li h3 {
+ol > li h3 {
 	margin-top: 0px;
 }
 .vega-embed {

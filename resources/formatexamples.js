@@ -1,5 +1,14 @@
 S(document).ready(function(){
 
+	// Update anchor now that we've updated the page		
+	if(location.hash) document.location = location.hash;
+	
+	var d = new Date(document.lastModified);
+	str = d.toUTCString().replace(/[^\,]+\, /,"").replace(/ [0-9]{2}\:[0-9]{2}\:[0-9]{2} [^\s]+/,"").replace(/^0/,"");
+	S('.lastupdated').html(str);
+	S('.lastupdatedyear').html(d.getUTCFullYear());
+
+
 	// Format examples nicely to show how they were done
 	var examples = S('.example');
 	function tidy(t){ return t.replace(/===NEWLINE===/g,"\n").replace(/\n*$/,"").replace(/^\n*/,""); }
@@ -53,8 +62,5 @@ S(document).ready(function(){
 
 		highlight(i);
 	}
-
-	// Update anchor now that we've updated the page		
-	if(location.hash) document.location = location.hash;
 
 });
