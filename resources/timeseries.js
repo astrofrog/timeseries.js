@@ -530,7 +530,7 @@
 			if(data[i].values) fn.call(this,data[i].values,{'dataset':data[i],'files':files});
 		}
 
-		for(j = 0; j < n; j++){
+		for(j = 0; j < files.length; j++){
 			// Load data and store it in datasets.
 			// Update the graph if necessary
 			// If we've loaded all data we then call loaded()
