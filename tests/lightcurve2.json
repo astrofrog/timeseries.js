@@ -4,14 +4,75 @@
 	"height": 350,
 	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
+	"_date": "relative",
+	"_views": [{
+		"name": "zoom",
+		"title": "Zoomed view",
+		"description": "A zoom in around the event",
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"domain": [{"signal":"datetime(2018,9,29,13,53,20)"},{"signal":"datetime(2018,9,29,13,53,24)"}]
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"domain": [0.965,1.01]
+		}],
+		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Nominal2","visible":true},{"name":"Data","visible":true}]
+	},{
+		"name": "zoomout",
+		"title": "From a distance",
+		"description": "A zoom out around the event",
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"domain": [{"signal":"datetime(2018,9,29,13,53,0)"},{"signal":"datetime(2018,9,29,13,54,0)"}]
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"domain": [0.90,1.1]
+		}],
+		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-errorbars","visible":false},{"name":"Data","visible":true}]
+	}],
+	"_extramarks": [{
+		"type": "rule",
+		"name": "Nominal2",
+		"description": "Nominal2",
+		"clip": true,
+		"encode": {
+			"enter": {
+				"x": { "value": 0},
+				"x2": { "field": { "group": "width" }},
+				"y": {"scale":"yscale", "value": 0.977 },
+				"stroke": {"value": "#f9b800"},
+				"strokeWidth": {"value": 2}
+			}
+		}
+	}],
 	"data": [{
 		"name": "lightcurve",
 		"url": "lightcurve2.csv",
 		"format": {"type": "csv", "parse": {"x":"date", "value":"number", "error":"number", "note":"string"}}
+	},{
+		"name": "threshold",
+		"values": "x,value\n2018-10-29T13:53:18.0Z,0.99740\n2018-10-29T13:53:18.1Z,0.99731\n2018-10-29T13:53:18.2Z,0.99725\n2018-10-29T13:53:18.3Z,0.99721\n2018-10-29T13:53:18.4Z,0.99716\n2018-10-29T13:53:18.5Z,0.99712\n2018-10-29T13:53:18.6Z,0.99710\n2018-10-29T13:53:18.7Z,0.99710\n2018-10-29T13:53:18.8Z,0.99710\n2018-10-29T13:53:18.9Z,0.99706\n2018-10-29T13:53:19.0Z,0.99693\n2018-10-29T13:53:19.1Z,0.99680\n2018-10-29T13:53:19.2Z,0.99665\n2018-10-29T13:53:19.3Z,0.99651\n2018-10-29T13:53:19.4Z,0.99638\n2018-10-29T13:53:19.5Z,0.99621\n2018-10-29T13:53:19.6Z,0.99602\n2018-10-29T13:53:19.7Z,0.99579\n2018-10-29T13:53:19.8Z,0.99549\n2018-10-29T13:53:19.9Z,0.99506\n2018-10-29T13:53:20.0Z,0.99453\n2018-10-29T13:53:20.1Z,0.99394\n2018-10-29T13:53:20.2Z,0.99333\n2018-10-29T13:53:20.3Z,0.99264\n2018-10-29T13:53:20.4Z,0.99189\n2018-10-29T13:53:20.5Z,0.99106\n2018-10-29T13:53:20.6Z,0.99017\n2018-10-29T13:53:20.7Z,0.98931\n2018-10-29T13:53:20.8Z,0.98845\n2018-10-29T13:53:20.9Z,0.98759\n2018-10-29T13:53:21.0Z,0.98666\n2018-10-29T13:53:21.1Z,0.98569\n2018-10-29T13:53:21.2Z,0.98474\n2018-10-29T13:53:21.3Z,0.98379\n2018-10-29T13:53:21.4Z,0.98286\n2018-10-29T13:53:21.5Z,0.98208\n2018-10-29T13:53:21.6Z,0.98143\n2018-10-29T13:53:21.7Z,0.98088\n2018-10-29T13:53:21.8Z,0.98040\n2018-10-29T13:53:21.9Z,0.97989\n2018-10-29T13:53:22.0Z,0.97947\n2018-10-29T13:53:22.1Z,0.97905\n2018-10-29T13:53:22.2Z,0.97872\n2018-10-29T13:53:22.3Z,0.97850\n2018-10-29T13:53:22.4Z,0.97828\n2018-10-29T13:53:22.5Z,0.97802\n2018-10-29T13:53:22.6Z,0.97781\n2018-10-29T13:53:22.7Z,0.97767\n2018-10-29T13:53:22.8Z,0.97759\n2018-10-29T13:53:22.9Z,0.97752\n2018-10-29T13:53:23.0Z,0.97749\n2018-10-29T13:53:23.1Z,0.97749\n2018-10-29T13:53:23.2Z,0.97746\n2018-10-29T13:53:23.3Z,0.97742\n2018-10-29T13:53:23.4Z,0.97741\n2018-10-29T13:53:23.5Z,0.97741\n2018-10-29T13:53:23.6Z,0.97746\n2018-10-29T13:53:23.7Z,0.97751\n2018-10-29T13:53:23.8Z,0.97761\n2018-10-29T13:53:23.9Z,0.97773\n2018-10-29T13:53:24.0Z,0.97783\n2018-10-29T13:53:24.1Z,0.97800\n2018-10-29T13:53:24.2Z,0.97829\n2018-10-29T13:53:24.3Z,0.97862\n2018-10-29T13:53:24.4Z,0.97898\n2018-10-29T13:53:24.5Z,0.97941\n2018-10-29T13:53:24.6Z,0.97993\n2018-10-29T13:53:24.7Z,0.98046\n2018-10-29T13:53:24.8Z,0.98107\n2018-10-29T13:53:24.9Z,0.98171\n2018-10-29T13:53:25.0Z,0.98240\n2018-10-29T13:53:25.1Z,0.98314\n2018-10-29T13:53:25.2Z,0.98392\n2018-10-29T13:53:25.3Z,0.98479\n2018-10-29T13:53:25.4Z,0.98567\n2018-10-29T13:53:25.5Z,0.98657\n2018-10-29T13:53:25.6Z,0.98748\n2018-10-29T13:53:25.7Z,0.98832\n2018-10-29T13:53:25.8Z,0.98916\n2018-10-29T13:53:25.9Z,0.98992\n2018-10-29T13:53:26.0Z,0.99066\n2018-10-29T13:53:26.1Z,0.99139\n2018-10-29T13:53:26.2Z,0.99202\n2018-10-29T13:53:26.3Z,0.99258\n2018-10-29T13:53:26.4Z,0.99315\n2018-10-29T13:53:26.5Z,0.99367\n2018-10-29T13:53:26.6Z,0.99419\n2018-10-29T13:53:26.7Z,0.99460\n2018-10-29T13:53:26.8Z,0.99494\n2018-10-29T13:53:26.9Z,0.99520\n2018-10-29T13:53:27.0Z,0.99537\n2018-10-29T13:53:27.1Z,0.99557\n2018-10-29T13:53:27.2Z,0.99577\n2018-10-29T13:53:27.3Z,0.99595\n2018-10-29T13:53:27.4Z,0.99627\n2018-10-29T13:53:27.5Z,0.99652\n2018-10-29T13:53:27.6Z,0.99684\n2018-10-29T13:53:27.7Z,0.99711\n2018-10-29T13:53:27.8Z,0.99736\n2018-10-29T13:53:27.9Z,0.99767\n2018-10-29T13:53:28.0Z,0.99843\n2018-10-29T13:53:28.1Z,0.99857\n2018-10-29T13:53:28.2Z,0.99872\n2018-10-29T13:53:28.3Z,0.99885\n2018-10-29T13:53:28.4Z,0.99903\n2018-10-29T13:53:28.5Z,0.99924\n2018-10-29T13:53:28.6Z,0.99953\n2018-10-29T13:53:28.7Z,0.99987\n2018-10-29T13:53:28.8Z,1.00019",
+		"format": {"type": "csv", "parse": {"x":"date", "value":"number"}}
+	},{
+		"name": "shadow",
+		"values": "x,y,y2\n2018-10-29T13:53:18.0Z,0.997,1.005\n2018-10-29T13:53:19.0Z,0.995,1.002\n2018-10-29T13:53:20.0Z,0.994,1.001\n2018-10-29T13:53:21.0Z,0.988,0.999\n,,\n2018-10-29T13:53:26.0Z,0.990,0.998\n2018-10-29T13:53:27Z,0.998,1.001\n2018-10-29T13:53:28Z,0.992,1.003\n",
+		"format": {"type": "csv", "parse": {"x":"date", "y":"number", "y2":"number"}}
 	}],
 	"scales": [{
 		"name": "xscale",
-		"type": "time",
+		"type": "linear",
 		"range": "width",
 		"zero": false,
 		"domain": {"data": "lightcurve", "field": "x"}
@@ -30,18 +91,95 @@
 		},{
 			"orient": "left",
 			"scale": "yscale",
-			"title": "Intensity"
+			"title": "Intensity",
+			"grid": true
 		}
 	],
 	"marks":[{
+		"type": "rule",
+		"name": "Event",
+		"description": "Event happened here",
+		"clip": true,
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,22)"},
+				"y": { "value": 0},
+				"y2": { "field": { "group": "height" }},
+				"stroke": {"value": "#000"},
+				"strokeWidth": {"value": 2}
+			}
+		}
+	},{
+		"type": "rule",
+		"name": "Nominal",
+		"description": "Nominal",
+		"clip": true,
+		"encode": {
+			"enter": {
+				"x": { "value": 0},
+				"x2": { "field": { "group": "width" }},
+				"y": {"scale":"yscale", "value": 1 },
+				"stroke": {"value": "#000"},
+				"strokeWidth": {"value": 1}
+			}
+		}
+	},{
+		"type": "area",
+		"name": "Shadow",
+		"description": "Shadow",
+		"from": {"data": "shadow"},
+		"clip": true,
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "x"},
+				"y": {"scale": "yscale", "field": "y"},
+				"y2": {"scale": "yscale", "field": "y2"},
+				"strokeWidth": {"value": 0}
+			},
+			"update": {
+				"stroke": {"value": "#999999"},
+				"fill": {"value": "#000000"},
+				"fillOpacity": {"value": 0.1},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"fill": {"value": "#0DBC37"},
+				"fillOpacity": {"value": 0.2}
+			}
+		}
+	},{
+		"type": "line",
+		"name": "Baseline",
+		"description": "Baseline",
+		"clip": true,
+		"from": {"data": "threshold"},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "x"},
+				"y": {"scale": "yscale", "field": "value"},
+				"strokeWidth": {"value": 2},
+				"tooltip": {"field": "tooltip"}
+			},
+			"update": {
+				"stroke": {"value": "#396bad"},
+				"zindex": {"value": 0}
+			},
+			"hover": {
+				"stroke": {"value": "#0DBC37"},
+				"strokeWidth": {"value": 5}
+			}
+		}
+	},{
 		"type": "rect",
-		"description": "Error bars",
+		"name": "Data-errorbars",
+		"description": "Data",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
-				"y": {"scale": "yscale", "signal": "datum['value'] - datum['error']"},
-				"y2": {"scale": "yscale", "signal": "datum['value'] + datum['error']"},
+				"y": {"scale": "yscale", "signal": "datum['value'] - datum['error']/2"},
+				"y2": {"scale": "yscale", "signal": "datum['value'] + datum['error']/2"},
 				"width": {"value": 1},
 				"fill": {"value": "#000000"}
 			},
@@ -55,13 +193,14 @@
 				"fill": {"value": "#0DBC37"},
 				"fillOpacity": {"value": 1},
 				"width": {"value":5},
-				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+				"zindex": {"value": 1}
 			}
 		}
 	},{
 		"type": "symbol",
-		"description": "Data points",
+		"name": "Data",
+		"description": "Data",
+		"clip": true,
 		"from": {"data": "lightcurve"},
 		"encode": {
 			"enter": {
@@ -70,10 +209,9 @@
 				"shape": {"value": "circle"}
 			},
 			"update": {
-				"shape": "cross",
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
-				"shape": {"value": "circle"},
+				"shape": {"value": "cross"},
 				"size": {"value": 36},
 				"zindex": {"value": 0}
 			},
@@ -83,7 +221,28 @@
 				"shape": {"value": "diamond"},
 				"size": {"value": 400},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+				"tooltip": {"signal":"{'Title': 'Lightcurve', 'Date': timeFormat(datum.x,'%B %d, %Y'),'Time': timeFormat(datum.x,'%H:%M:%S.%L'), 'Unix': datum.x, 'Y': datum.value, 'Note': datum.note}"}
+			}
+		}
+	},{
+		"type": "text",
+		"name": "Labels",
+		"description": "Labels",
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "signal": "datetime(2018,9,29,13,53,24)"},
+				"y": {"scale": "yscale", "value": 0.986},
+				"text": { "value": "A_{5}"},
+				"fill": { "value": "#000000"},
+				"fontWeight": { "value": "normal" },
+				"baseline": { "value": "middle" },
+				"align": { "value": "left" },
+				"angle": { "value": 0 },
+				"dx": { "value": 6 }
+			},
+			"hover": {
+				"fill": { "value": "#0DBC37" },
+				"fontWeight": { "value": "bold" }
 			}
 		}
 	}]
