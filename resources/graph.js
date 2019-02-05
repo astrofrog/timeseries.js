@@ -2199,9 +2199,11 @@
 		this.paper.temp.ctx.beginPath();
 		ps = this.marks[sh].mark;
 		oldp = ps[0].props;
+		this.paper.temp.ctx.moveTo(oldp.x,oldp.y);
 		for(i = 1; i < ps.length ; i++){
 			p = ps[i].props;
-			if(!isNaN(oldp.x) && !isNaN(p.x)) this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
+			//if(!isNaN(oldp.x) && !isNaN(p.x)) this.drawVisibleLineSegment(oldp.x,oldp.y,p.x,p.y);
+			if(!isNaN(oldp.x) && !isNaN(p.x)) this.paper.temp.ctx.lineTo(p.x,p.y);
 			oldp = p;
 		}
 		this.paper.temp.ctx.stroke();
