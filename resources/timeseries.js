@@ -324,14 +324,14 @@
 		}
 		this.options.logging = this.logging;
 		this.options.logtime = (location.search.indexOf('logtime=true')>0);
-		this.options.xaxis.mode = 'time';
 		this.options.scrollWheelZoom = true;
 		if(this.json.scales){
 			for(a = 0; a < this.json.axes.length; a++){
 				for(i = 0; i < this.json.scales.length; i++){
 					if(this.json.axes[a].scale == this.json.scales[i].name){
 						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
-						if(this.json.scales[i].type=="log") this.options[axis].log = true;
+						this.options[axis].type = (this.json.scales[i].type || (axis=="xaxis" ? "utc" : "linear"));
+						this.options[axis].padding = (this.json.scales[i].padding || 0);
 						if(this.json.scales[i].range) this.options[axis].range = this.json.scales[i].range;
 						if(this.json.scales[i].domain){
 							this.options[axis].domain = clone(this.json.scales[i].domain);
@@ -865,29 +865,40 @@
 				el.append('<li '+(this.json._views[i].active ? ' class="selected"':'')+'><input type="radio"'+(this.json._views[i].active ? ' checked="checked"':'')+' id="'+id+'" name="'+S(this.el).attr('id')+'-view" data="'+i+'" /><label for="'+id+'" title="'+this.json._views[i].description+'"><span style="font-family:monospace;">'+alpha.substr(i,1).toUpperCase()+'.</span> '+this.json._views[i].title+'</label></li>');
 				l = el.find('#'+id);
 				l.on('change',{me:this,id:id,i:i,el:el},function(e){
-					var json,view,g,a,i,s,d;
+					var json,view,g,a,d,k,i,o,s;
 					g = e.data.me.graph;
 					json = e.data.me.json;
-					view = e.data.me.json._views[e.data.i];					
+					view = e.data.me.json._views[e.data.i];
+					o = {};
 					for(a = 0; a < json.axes.length; a++){
 						if(view.scales){
 							for(s = 0; s < view.scales.length; s++){
 								if(json.axes[a].scale == view.scales[s].name){
 									axis = (json.axes[a].orient=="left" ? "yaxis":"xaxis");
-									g.options[axis].log = (view.scales[s].type=="log");
+									if(typeof o[axis]!=="object") o[axis] = {};
+									// Set defaults
+									o[axis].type = (axis=="xaxis" ? "utc" : "linear");
+									o[axis].padding = 0;
+									// If we've defined the scale we over-write the defaults
+									if(view.scales[s]){
+										if(typeof view.scales[s].type!=="undefined") o[axis].type = view.scales[s].type;
+										if(typeof view.scales[s].padding!=="undefined") o[axis].padding = view.scales[s].padding;
+									}
 									if(view.scales[s].range || json._views[0].scales[s].range){
-										g.options[axis].range = clone((view.scales[s].range) ? view.scales[s].range : json._views[0].scales[s].range);
+										o[axis].range = clone(view.scales[s].range || json._views[0].scales[s].range);
 									}
 									if(json._views[0].scales[s].domain || view.scales[s].domain){
-										g.options[axis].domain = clone(view.scales[s].domain ? view.scales[s].domain : json._views[0].scales[s].domain);
-										for(d = 0; d < g.options[axis].domain.length; d++){
-											if(g.options[axis].domain[d].signal) g.options[axis].domain[d] = looseJsonParse(g.options[axis].domain[d].signal);
+										o[axis].domain = clone(view.scales[s].domain || json._views[0].scales[s].domain);
+										for(d = 0; d < o[axis].domain.length; d++){
+											if(o[axis].domain[d].signal) o[axis].domain[d] = looseJsonParse(o[axis].domain[d].signal);
 										}
 									}
 								}
 							}
 						}
 					}
+					// Set the options
+					g.setOptions(o);
 					for(i in g.marks){
 						if(g.marks[i]){
 							found = -1;

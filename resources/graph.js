@@ -66,6 +66,24 @@
 	G.stddev = function(a) { return Math.sqrt(G.variance(a)); };
 	G.log10 = function(v) { return Math.log(v)/2.302585092994046; };
 	G.variance = function(a) { var mean = G.mean(a), variance = 0; for (var i = 0; i < a.length; i++) variance += Math.pow(a[i] - mean, 2); return variance / (a.length - 1); };
+	G.deepExtend = function(destination, source) {
+		for(var property in source){
+			if(typeof source[property] === "object"){
+				// If the object type has changed, we'll over-write the object entirely
+				if(Array.isArray(source[property]) != Array.isArray(destination[property])){
+					destination[property] = clone(source[property]);
+				}else{
+					destination[property] = destination[property] || {};
+					arguments.callee(destination[property], source[property]);
+				}
+			}else{
+				destination[property] = source[property];
+			}
+		}
+		return destination;
+	};
+	// Polyfill for isArray()
+	if(!Array.isArray) Array.isArray = function(arg){ return Object.prototype.toString.call(arg) === '[object Array]'; };
 	if(typeof Object.extend === 'undefined') {
 		G.extend = function(destination, source) {
 			for (var property in source) {
@@ -719,8 +737,8 @@
 		this.options.height = parseInt(getStyle(this.canvas.container[0], 'height'), 10);
 
 		// Add user-defined options
-		this.options = G.extend(this.options, options);
-
+		//this.options = Object.assign(this.options, options);
+		this.options = G.deepExtend(this.options, options);
 		// Set defaults for options that haven't already been set
 		if(typeof this.options.grid!=="object") this.options.grid = {};
 		if(typeof this.options.grid.show!=="boolean") this.options.grid.show = false;
@@ -729,17 +747,25 @@
 		if(typeof this.options.labels!=="object") this.options.labels = {};
 		if(typeof this.options.labels.color!=="string") this.options.labels.color = "black";
 		if(typeof this.options.padding!=="number") this.options.padding = 0;
-		if(typeof this.options.xaxis!=="object") this.options.xaxis = {};
-		if(typeof this.options.yaxis!=="object") this.options.yaxis = {};
-		if(typeof this.options.xaxis.label!=="string") this.options.xaxis.label = "";
-		if(typeof this.options.yaxis.label!=="string") this.options.yaxis.label = "";
-		if(typeof this.options.xaxis.fit!=="boolean") this.options.xaxis.fit = false;
-		if(typeof this.options.yaxis.fit!=="boolean") this.options.yaxis.fit = false;
-		if(typeof this.options.xaxis.log!=="boolean") this.options.xaxis.log = false;
-		if(typeof this.options.yaxis.log!=="boolean") this.options.yaxis.log = false;
+		var k,a,axes;
+		// Default axis types see https://vega.github.io/vega/docs/scales/#types
+		var axisdefaults = {
+			'type': { 'type': 'string', 'value': ['utc','linear']},
+			'label': { 'type':'string', 'value':[''] },
+			'fit': { 'type': 'boolean', 'value': [false] },
+			'padding': { 'type': 'number', 'value': [0] }
+		};
+		axes = ['xaxis','yaxis'];
+		for(k in axisdefaults){
+			//if(typeof this.options[axes[a]]!=="object") this.options[axes[a]] = {};
+			if(axisdefaults[k]){
+				for(a = 0; a < axes.length; a++){
+					if(typeof this.options[axes[a]][k]!==axisdefaults[k].type) this.options[axes[a]][k] = axisdefaults[k].value[(axisdefaults[k].value.length==axes.length ? a : 0)];
+				}
+			}
+		}
 		if(typeof this.options.zoommode!=="string") this.options.zoommode = "both";
 		if(typeof this.options.zoomable!=="boolean") this.options.zoomable = true;
-		if(typeof this.options.xaxis.mode==="string" && this.options.xaxis.mode==="time") this.options.xaxis.isDate = true;
 		return this;
 	};
 
@@ -850,8 +876,8 @@
 		var d,i,j,k,f,max,axes,axis,v,domain;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
-		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: this.options.xaxis.isDate, log: this.options.xaxis.log, label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
-		this.y = G.extend(this.y,{ min: 1e32, max: -1e32, log: this.options.yaxis.log, label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
+		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: (this.options.xaxis.type=="time" || this.options.xaxis.type=="utc"), log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		this.y = G.extend(this.y,{ min: 1e32, max: -1e32, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
 		if(this.marks.length <= 0) return this;
 
@@ -1066,7 +1092,7 @@
 	};
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
-		var k,mn,mx,rn,v;
+		var k,mn,mx,rn,v,p,off,dim;
 		if(typeof c==="object"){
 			if(!c.scale){
 				v = 0;
@@ -1079,9 +1105,11 @@
 		mn = this[t][k+'min'];
 		mx = this[t][k+'max'];
 		rn = this[t][k+'range'];
-		
-		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + this.chart.height*((v-mn)/rn));
-		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? this.chart.left + this.chart.width*((mx-v)/(rn)) : this.chart.left + this.chart.width*((v-mn)/rn));
+		p = (this.options[t+'axis'].padding||0)+0;
+		off = (t=="x" ? this.chart.left + p : this.chart.bottom + p);
+		dim = (t=="x" ? this.chart.width : this.chart.height) - p*2;
+		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + p + dim*((v-mn)/rn));
+		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? off + dim*((mx-v)/(rn)) : off + dim*((v-mn)/rn));
 	};
 
 	// For an input data value find the pixel locations
@@ -1270,61 +1298,61 @@
 	};
 
 	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
-	Graph.prototype.defineAxis = function(axis,min,max){
+	Graph.prototype.defineAxis = function(a,min,max){
 
 		// Immediately return if the input seems wrong
-		if(typeof axis != "string" || (axis != "x" && axis != "y")) return this;
+		if(typeof a != "string" || (a != "x" && a != "y")) return this;
 
 		// Set the min/max if provided
-		if(typeof max=="number") this[axis].max = max;
-		if(typeof min=="number") this[axis].min = min;
+		if(typeof max=="number") this[a].max = max;
+		if(typeof min=="number") this[a].min = min;
 		// Set the range of the data
-		this[axis].range = this[axis].max - this[axis].min;
-		this[axis].ticks = [];
+		this[a].range = this[a].max - this[a].min;
+		this[a].ticks = [];
 
 		// Sort out what to do for log scales
-		if(this[axis].log){
+		if(this[a].log){
 			// Adjust the low and high values for log scale
-			this[axis].logmax = G.log10(this[axis].max);
-			this[axis].logmin = (this[axis].min <= 0) ? this[axis].logmax-2 : G.log10(this[axis].min);
-			this[axis].logrange = this[axis].logmax-this[axis].logmin;
-			this[axis].gridmin = this[axis].logmin+0;
-			this[axis].gridmax = this[axis].logmax+0;
-			this[axis].inc = 1;
-			this[axis].range = this[axis].max-this[axis].min;
-			this[axis].gridrange = this[axis].logrange+0;
-			this.makeTicks(axis);
+			this[a].logmax = G.log10(this[a].max);
+			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : G.log10(this[a].min);
+			this[a].logrange = this[a].logmax-this[a].logmin;
+			this[a].gridmin = this[a].logmin+0;
+			this[a].gridmax = this[a].logmax+0;
+			this[a].inc = 1;
+			this[a].range = this[a].max-this[a].min;
+			this[a].gridrange = this[a].logrange+0;
+			this.makeTicks(a);
 			return this;
 		}
 		// If we have zero range we need to expand it
-		if(this[axis].range < 0){
-			this[axis].inc = 0.0;
-			this[axis].gridrange = 0.0;
+		if(this[a].range < 0){
+			this[a].inc = 0.0;
+			this[a].gridrange = 0.0;
 			return this;
-		}else if(this[axis].range == 0){
-			this[axis].gridmin = Math.ceil(this[axis].max)-1;
-			this[axis].gridmax = Math.ceil(this[axis].max);
-			this[axis].min = this[axis].gridmin;
-			this[axis].max = this[axis].gridmax;
-			this[axis].inc = 1.0;
-			this[axis].range = this[axis].max-this[axis].min;
-			this[axis].gridrange = this[axis].gridmax-this[axis].gridmin;
-			this.makeTicks(axis);
+		}else if(this[a].range == 0){
+			this[a].gridmin = Math.ceil(this[a].max)-1;
+			this[a].gridmax = Math.ceil(this[a].max);
+			this[a].min = this[a].gridmin;
+			this[a].max = this[a].gridmax;
+			this[a].inc = 1.0;
+			this[a].range = this[a].max-this[a].min;
+			this[a].gridrange = this[a].gridmax-this[a].gridmin;
+			this.makeTicks(a);
 			return this;
 		}
 
 		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn,dv,log10_dv,base,frac;
-		rg = this[axis].range;
-		mx = this[axis].max;
-		mn = this[axis].min;
-		if(!this[axis].labelopts) this[axis].labelopts = {};
+		rg = this[a].range;
+		mx = this[a].max;
+		mn = this[a].min;
+		if(!this[a].labelopts) this[a].labelopts = {};
 		// Set the label scaling
-		var scale = (axis=="x" && this[axis].labelopts.scale) ? this[axis].labelopts.scale : 1;
+		var scale = (a=="x" && this[a].labelopts.scale) ? this[a].labelopts.scale : 1;
 
 		// Calculate reasonable grid line spacings
-		if(this[axis].isDate && scale==1){
+		if(this[a].isDate && scale==1){
 
-			this[axis].showAsDate = true;
+			this[a].showAsDate = true;
 
 			// Dates are in milliseconds
 			// Grid line spacings can range from 1 ms to 10000 years
@@ -1338,27 +1366,27 @@
 					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
 					{'name': 'months', 'div': 30*86400000, 'spacings':[1,3,6]},
 					{'name': 'years', 'div':365.2425*86400000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
-			steps = (this[axis].labelopts.steps || steps);
+			steps = (this[a].labelopts.steps || steps);
 			for(st = 0; st < steps.length ; st++){
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
-					n = Math.ceil(this[axis].range/(steps[st].div*steps[st].spacings[sp]));
+					n = Math.ceil(this[a].range/(steps[st].div*steps[st].spacings[sp]));
 					if(n < 1) continue;
 					if(!t_div || (n > 3 && n < t_div)){
 						t_div = n;
-						this[axis].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
+						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
 						t_inc = (steps[st].div*steps[st].spacings[sp]);
-						this[axis].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp]};
+						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp]};
 					}
 				}
 			}
 
 			// Set the min and max values by rounding the dates
-			t_min = (new Date(roundDate(mn,this[axis].datestep.name,this[axis].datestep.spacing,{'method':'floor'}))).valueOf();
-			t_max = (new Date(roundDate(mx,this[axis].datestep.name,this[axis].datestep.spacing,{'method':'ceil'}))).valueOf();
+			t_min = (new Date(roundDate(mn,this[a].datestep.name,this[a].datestep.spacing,{'method':'floor'}))).valueOf();
+			t_max = (new Date(roundDate(mx,this[a].datestep.name,this[a].datestep.spacing,{'method':'ceil'}))).valueOf();
 
 		}else{
-			this[axis].showAsDate = false;
-			this[axis].spacing = null;
+			this[a].showAsDate = false;
+			this[a].spacing = null;
 
 			// Scale the range before we work out the spacings
 			if(scale!=1){
@@ -1367,7 +1395,7 @@
 			}
 
 			// Start off by finding the exact spacing
-			dv = Math.abs(mx - mn) / (this[axis].isDate ? 3 : 5);
+			dv = Math.abs(mx - mn) / (this[a].isDate ? 3 : 5);
 		
 			// In any given order of magnitude interval, we allow the spacing to be
 			// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
@@ -1405,14 +1433,14 @@
 			
 			// Determine the number of decimal places to show
 			// Quicker to do it here than in makeTicks.
-			this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc)));
-			if(this[axis].precisionlabel==0 && Math.abs(t_min) > 10) this[axis].precisionlabel = Math.floor(Math.log10(Math.abs(t_min)));
+			this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc)));
+			if(this[a].precisionlabel==0 && Math.abs(t_min) > 10) this[a].precisionlabel = Math.floor(Math.log10(Math.abs(t_min)));
 
 			// If we are dealing with dates we set the precision that way
-			if(this[axis].isDate){
+			if(this[a].isDate){
 				var p = Math.log10(t_inc);
-				this[axis].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
-				this[axis].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
+				this[a].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
+				this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
 			}
 
 			// Now scale the range back
@@ -1421,7 +1449,7 @@
 				t_max = t_max*scale;
 				t_inc = t_inc*scale;
 				// Fix precision errors introduced by the multiplication
-				t_inc = parseFloat(t_inc.toPrecision(this[axis].precisionlabel));
+				t_inc = parseFloat(t_inc.toPrecision(this[a].precisionlabel));
 			}
 
 			// Round to nearest t_inc (because of precision issues)
@@ -1430,13 +1458,13 @@
 		}
 
 		// Set the first/last gridline values as well as the spacing
-		this[axis].gridmin = t_min;
-		this[axis].gridmax = t_max;
-		this[axis].inc = t_inc;
-		this[axis].gridrange = this[axis].gridmax-this[axis].gridmin;
-		this[axis].precision = this[axis].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
+		this[a].gridmin = t_min;
+		this[a].gridmax = t_max;
+		this[a].inc = t_inc;
+		this[a].gridrange = this[a].gridmax-this[a].gridmin;
+		this[a].precision = this[a].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
 
-		this.makeTicks(axis);
+		this.makeTicks(a);
 
 		return this;
 	};
