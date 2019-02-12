@@ -11,9 +11,10 @@
 		"description": "A zoom in around the event",
 		"scales": [{
 			"name": "xscale",
-			"type": "linear",
+			"type": "utc",
 			"range": "width",
 			"zero": false,
+			"padding": 0,
 			"domain": [{"signal":"datetime(2018,9,29,13,53,20)"},{"signal":"datetime(2018,9,29,13,53,24)"}]
 		},{
 			"name": "yscale",
@@ -29,7 +30,7 @@
 		"description": "A zoom out around the event",
 		"scales": [{
 			"name": "xscale",
-			"type": "linear",
+			"type": "utc",
 			"range": "width",
 			"zero": false,
 			"domain": [{"signal":"datetime(2018,9,29,13,53,0)"},{"signal":"datetime(2018,9,29,13,54,0)"}]
@@ -72,15 +73,17 @@
 	}],
 	"scales": [{
 		"name": "xscale",
-		"type": "linear",
+		"type": "utc",
 		"range": "width",
 		"zero": false,
+		"padding": 18,
 		"domain": {"data": "lightcurve", "field": "x"}
 	},{
 		"name": "yscale",
 		"type": "linear",
 		"range": "height",
 		"zero": false,
+		"padding": 18,
 		"domain": {"data": "lightcurve", "field": "value"}
 	}],
 	"axes": [
