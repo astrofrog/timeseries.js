@@ -49,15 +49,15 @@
 			S(document).ready(function(){
 
 				// Create a TimeSeries object using an external, Vega-compatible, JSON file
-				var ex1 = TimeSeries.create("examples/data/lightcurve2.json");
+				var figure = TimeSeries.create("examples/data/lightcurve2.json");
 				
 				// Attach the TimeSeries to a DOM element
-				ex1.initialize(document.getElementById('example1'));
+				figure.initialize(document.getElementById('figure1'));
 
 			});
 			</script>
 			<figure>
-				<div id="example1">
+				<div id="figure1">
 					<img src="examples/data/lightcurve.png" />
 				</div>
 				<figcaption>This plot represents a simulated lightcurve.</figcaption>
