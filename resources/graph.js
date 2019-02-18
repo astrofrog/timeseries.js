@@ -2378,8 +2378,8 @@
 		ctx = attr.ctx;
 		p = datum.props;
 		
-		x1 = attr.x || p.x;
-		y1 = attr.y || p.y;
+		x1 = (typeof attr.x==="number") ? attr.x : p.x;
+		y1 = (typeof attr.y==="number") ? attr.y : p.y;
 		
 		ctx.moveTo(x1,y1);
 		ctx.beginPath();
@@ -2399,12 +2399,12 @@
 			if(p.x2) w = p.x2-p.x1;
 			else if(p.width && p.x){ w = p.width; x1 = p.x - p.width/2; }
 			else if(p.width && p.xc){ w = p.width; x1 = p.xc - p.width/2; }
-			else{ x1 = p.x - w/2; }
+			else{ x1 = x1 - w/2; }
 
 			if(p.y2) h = p.y2-p.y1;
 			else if(p.height && p.y){ h = p.height; y1 = p.y - p.height/2; }
 			else if(p.height && p.yc){ h = p.height; y1 = p.yc - p.height/2; }
-			else{ y1 = p.y - h/2; }
+			else{ y1 = y1 - h/2; }
 
 			ctx.rect(x1,y1,w,h);
 		}else if(shape=="cross"){

@@ -682,7 +682,7 @@
 
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
-		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
+		var i,id,styles,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
 
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
@@ -691,65 +691,58 @@
 
 		keyitems = {};
 		lookup = {};
-		j = 1;
 		for(i in this.graph.marks){
 			if(this.graph.marks[i]){
 				id = S(this.el).attr('id')+'_'+i;
 				key = this.graph.marks[i].desc;
-				if(typeof keyitems[key]==="undefined") keyitems[key] = [];
-				keyitems[key].push(i);
-				j++;
+				if(this.graph.marks[i].include){
+					if(typeof keyitems[key]==="undefined") keyitems[key] = [];
+					keyitems[key].push(i);
+				}
 			}
 		}
-
 		j = 0;
 		for(key in keyitems){
 			if(typeof keyitems[key]!=="undefined"){
 				id = S(this.el).attr('id')+'_'+j;
 				d = this.graph.marks[keyitems[key][0]];
-				added = false;
 
-				// Check if we've already added this key item to the DOM
-				if(layers.find('#'+id).length == 0){
-					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'"></span>'+key+'</label></li>');
-					added = true;
-				}
+				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'">?</span>'+key+'</label></li>');
 				l = layers.find('#'+id);
 				p = l.parent();
 				k = p.find('.key');
-				// If we've just added it we need to add events
-				if(added){
-					l.on('change',{me:this,k:keyitems[key]},function(e){
-						var g,i,j;
-						g = e.data.me.graph;
-						for(i = 0; i < e.data.k.length; i++){
-							j = e.data.k[i];
-							g.marks[j].show = !g.marks[j].show;
-						}
-						g.calculateData().draw(true);
-						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
-						else this.parent().addClass('inactive');
-					}).on('focus',{layers:layers},function(e){
-						e.data.layers.find('li').removeClass('on').removeClass('selected');
-						this.parent().addClass('on');
-					});
-					layers.on('mouseover',{layers:layers},function(e){
-						e.data.layers.find('.selected').removeClass('selected');
-					});
-					lookup[keyitems[key][0]] = l.parent();
+				// We need to add events
+				l.on('change',{me:this,k:keyitems[key]},function(e){
+					var g,i,j;
+					g = e.data.me.graph;
+					for(i = 0; i < e.data.k.length; i++){
+						j = e.data.k[i];
+						g.marks[j].show = !g.marks[j].show;
+					}
+					g.calculateData().draw(true);
+					if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+					else this.parent().addClass('inactive');
+				}).on('focus',{layers:layers},function(e){
+					e.data.layers.find('li').removeClass('on').removeClass('selected');
+					this.parent().addClass('on');
+				});
+				layers.on('mouseover',{layers:layers},function(e){
+					e.data.layers.find('.selected').removeClass('selected');
+				});
+				lookup[keyitems[key][0]] = l.parent();
 
-					// Do we need to draw key items?
-					draw = false;
-					for(i = 0; i < keyitems[key].length; i++){
-						if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
-					}
-				
-					// Create a canvas for each key item if we need to
-					if(draw && k && k[0]){
-						w = k[0].offsetWidth;
-						h = k[0].offsetHeight;
-						k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
-					}
+				// Do we need to draw key items?
+				draw = false;
+				for(i = 0; i < keyitems[key].length; i++){
+					if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
+				}
+			
+				// Create a canvas for each key item if we need to
+				if(draw && k.length==1){
+					styles = window.getComputedStyle(k[0]);
+					w = parseInt(styles.width);
+					h = parseInt(styles.height);
+					k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
 				}
 
 				// Update all the key images
@@ -768,6 +761,7 @@
 					ctx.fill();
 					for(i = 0; i < keyitems[key].length; i++){
 						d = this.graph.marks[keyitems[key][i]];
+						// Only add them if they are included in this view
 						if(d.include){
 							k.css({'background-color':'none'});
 							// Set the canvas style

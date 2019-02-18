@@ -23,7 +23,7 @@
 			"zero": false,
 			"domain": [0.965,1.01]
 		}],
-		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Nominal2","visible":true},{"name":"Data","visible":true}]
+		"markers": [{"name":"Event","visible":true},{"name":"Baseline","visible":true},{"name":"Nominal2","visible":true},{"name":"Data-values","visible":true}]
 	},{
 		"name": "zoomout",
 		"title": "From a distance",
@@ -41,7 +41,7 @@
 			"zero": false,
 			"domain": [0.90,1.1]
 		}],
-		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-errorbars","visible":false},{"name":"Data","visible":true}]
+		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-values","visible":true}]
 	}],
 	"_extramarks": [{
 		"type": "rule",
@@ -153,7 +153,7 @@
 	},{
 		"type": "line",
 		"name": "Baseline",
-		"description": "Baseline",
+		"description": "Running average",
 		"clip": true,
 		"from": {"data": "threshold"},
 		"encode": {
@@ -201,7 +201,7 @@
 		}
 	},{
 		"type": "symbol",
-		"name": "Data",
+		"name": "Data-values",
 		"description": "Data",
 		"clip": true,
 		"from": {"data": "lightcurve"},
