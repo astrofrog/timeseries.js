@@ -14,24 +14,24 @@
 	top: 50%;
 }
 .graph-tooltip.graph-tooltip-nw:after, .graph-tooltip.graph-tooltip-ne:after, .graph-tooltip.graph-tooltip-s:after {
-	border-right-color: transparent;
-	border-left-color: transparent;
-	border-bottom-color: transparent;
+	border-right-color: transparent!important;
+	border-left-color: transparent!important;
+	border-bottom-color: transparent!important;
 }
 .graph-tooltip.graph-tooltip-n:after, .graph-tooltip.graph-tooltip-sw:after, .graph-tooltip.graph-tooltip-se:after {
-	border-right-color: transparent;
-	border-left-color: transparent;
-	border-top-color: transparent;
+	border-right-color: transparent!important;
+	border-left-color: transparent!important;
+	border-top-color: transparent!important;
 }
 .graph-tooltip.graph-tooltip-w:after {
-	border-top-color: transparent;
-	border-left-color: transparent;
-	border-bottom-color: transparent;
+	border-top-color: transparent!important;
+	border-left-color: transparent!important;
+	border-bottom-color: transparent!important;
 }
 .graph-tooltip.graph-tooltip-e:after {
-	border-top-color: transparent;
-	border-right-color: transparent;
-	border-bottom-color: transparent;
+	border-top-color: transparent!important;
+	border-right-color: transparent!important;
+	border-bottom-color: transparent!important;
 }
 
 .graph-tooltip.graph-tooltip-n:after {
