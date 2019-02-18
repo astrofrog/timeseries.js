@@ -18,12 +18,14 @@
 		"type": "time",
 		"range": "width",
 		"zero": false,
+		"padding": 18,
 		"domain": {"data": "Danish 1.54m", "field": "HJD"}
 	},{
 		"name": "yscale",
 		"type": "linear",
 		"range": "height",
 		"zero": false,
+		"padding": 18,
 		"domain": {"data": "Danish 1.54m", "field": "dmag"}
 	}],
 	"axes": [
