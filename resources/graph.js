@@ -1209,7 +1209,7 @@
 				w = d[2];
 				clipping = false;
 				typ = this.marks[t].type;
-				if(this.marks[t].encode.hover){
+				if(this.marks[t].encode.hover && this.marks[t].interactive){
 					if(typ=="line" || typ=="rect" || typ=="area" || typ=="rule"){
 						if(this.marks[t].clip){
 							clipping = true;
@@ -2095,9 +2095,9 @@
 						m = clone(this.marks[sh].mark[i]);
 						p = m.props;
 						if(p.x && p.y){
-							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
-							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
-							if(this.marks[sh].type=="text") this.drawText(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" ? true : false)});
+							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
+							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
+							if(this.marks[sh].type=="text") this.drawText(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
 						}
 					}
 				}

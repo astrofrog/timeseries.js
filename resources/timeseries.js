@@ -379,7 +379,7 @@
 			},{
 				'key': 'config',
 				'title': 'Options',
-				'html': '<div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Zoom to data</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div>'
+				'html': '<div class="row"><button class="fullscreen icon" title="Toggle fullscreen">'+getIcon('fit')+'</button><button class="autozoom">Reset view</button></div><div class="row"><button class="fontup">A&plus;</button><button class="fontreset">A</button><button class="fontdn">A&minus;</button></div>'
 			},{
 				'key': 'save',
 				'title': 'Save',
@@ -610,7 +610,7 @@
 			// Only bother building this dataset if it hasn't already been added
 			if((!id || me.datasets[id]) && !me.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'clickable': true, 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
+				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
 
 				if(mark.type == "symbol") dataset.symbol = {show:true};
 				else if(mark.type == "rect") dataset.rect = {show:true};
