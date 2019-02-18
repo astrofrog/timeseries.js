@@ -46,10 +46,11 @@
 			<script language="javascript" type="text/javascript" src="resources/timeseries.js"></script>
 			<!-- Javascript -->
 			<script>
+			var figure;
 			S(document).ready(function(){
 
 				// Create a TimeSeries object using an external, Vega-compatible, JSON file
-				var figure = TimeSeries.create("examples/data/lightcurve2.json");
+				figure = TimeSeries.create("examples/data/lightcurve2.json");
 				
 				// Attach the TimeSeries to a DOM element
 				figure.initialize(document.getElementById('figure1'));

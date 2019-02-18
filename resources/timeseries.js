@@ -833,6 +833,92 @@
 		return this;
 	};
 
+	TS.prototype.getViews = function(){
+		return clone(this.json._views)
+	};
+	
+	TS.prototype.setView = function(i){
+		var g,j,view,a,m,o,s,lis,li,axis,found,el,str;
+		j = this.json;
+		if(typeof i!=="number"){
+			str = JSON.stringify(i)
+			for(m = 0; m < j._views.length; m++){
+				if(JSON.stringify(j._views[m]) == str){
+					i = m;
+					continue;
+				}
+			}
+			if(typeof i!=="number"){
+				this.log('ERROR','Invalid view number provided: '+i);
+				return this;
+			}
+		}
+		if(typeof i!=="number"){
+			this.log('ERROR','Invalid view index provided: '+i);
+			return this;
+		}
+		if(i >= j._views.length){
+			this.log('ERROR','The maximum index is '+(j._views.length-1)+'');
+			return this;
+		}
+		view = clone(j._views[i]);
+		o = {};
+		for(a = 0; a < j.axes.length; a++){
+			if(view.scales){
+				for(s = 0; s < view.scales.length; s++){
+					if(j.axes[a].scale == view.scales[s].name){
+						axis = (j.axes[a].orient=="left" ? "yaxis":"xaxis");
+						if(typeof o[axis]!=="object") o[axis] = {};
+						// Set defaults
+						o[axis].type = (axis=="xaxis" ? "utc" : "linear");
+						o[axis].padding = 0;
+						// If we've defined the scale we over-write the defaults
+						if(view.scales[s]){
+							if(typeof view.scales[s].type!=="undefined") o[axis].type = view.scales[s].type;
+							if(typeof view.scales[s].padding!=="undefined") o[axis].padding = view.scales[s].padding;
+						}
+						if(view.scales[s].range || j._views[0].scales[s].range){
+							o[axis].range = clone(view.scales[s].range || j._views[0].scales[s].range);
+						}
+						if(j._views[0].scales[s].domain || view.scales[s].domain){
+							o[axis].domain = clone(view.scales[s].domain || j._views[0].scales[s].domain);
+							for(d = 0; d < o[axis].domain.length; d++){
+								if(o[axis].domain[d].signal) o[axis].domain[d] = looseJsonParse(o[axis].domain[d].signal);
+							}
+						}
+					}
+				}
+			}
+		}
+		// Set the options
+		g = this.graph;
+		g.setOptions(o);
+		for(m in g.marks){
+			if(g.marks[m]){
+				found = -1;
+				g.marks[m].include = false;
+				for(s = 0; s < view.markers.length; s++){
+					if(g.marks[m].name == view.markers[s].name){
+						found = s;
+						g.marks[m].include = true;
+						g.marks[m].show = view.markers[s].visible;
+					}
+				}
+			}
+		}
+		this.updateLayerMenu();
+		g.updateData();
+		el = g.canvas.container.find('.views');
+		lis = el.find('li');
+		for(m = 0; m < lis.length; m++){
+			li = S(lis[m]);
+			// If the list item is checked we add the selected class
+			if(i==m) li.addClass('selected').find('input').attr('checked','checked');
+			else li.removeClass('selected').find('input').attr('checked','');
+		}
+		return this;
+	};
+
 	TS.prototype.updateViewMenu = function(){
 		var i,a,s,d,el,id,li,active,alpha;
 		alpha = 'abcdefghijklmnopqrstuvwxyz';
@@ -863,57 +949,7 @@
 				el.append('<li '+(this.json._views[i].active ? ' class="selected"':'')+'><input type="radio"'+(this.json._views[i].active ? ' checked="checked"':'')+' id="'+id+'" name="'+S(this.el).attr('id')+'-view" data="'+i+'" /><label for="'+id+'" title="'+this.json._views[i].description+'"><span style="font-family:monospace;">'+alpha.substr(i,1).toUpperCase()+'.</span> '+this.json._views[i].title+'</label></li>');
 				l = el.find('#'+id);
 				l.on('change',{me:this,id:id,i:i,el:el},function(e){
-					var json,view,g,a,d,k,i,o,s;
-					g = e.data.me.graph;
-					json = e.data.me.json;
-					view = e.data.me.json._views[e.data.i];
-					o = {};
-					for(a = 0; a < json.axes.length; a++){
-						if(view.scales){
-							for(s = 0; s < view.scales.length; s++){
-								if(json.axes[a].scale == view.scales[s].name){
-									axis = (json.axes[a].orient=="left" ? "yaxis":"xaxis");
-									if(typeof o[axis]!=="object") o[axis] = {};
-									// Set defaults
-									o[axis].type = (axis=="xaxis" ? "utc" : "linear");
-									o[axis].padding = 0;
-									// If we've defined the scale we over-write the defaults
-									if(view.scales[s]){
-										if(typeof view.scales[s].type!=="undefined") o[axis].type = view.scales[s].type;
-										if(typeof view.scales[s].padding!=="undefined") o[axis].padding = view.scales[s].padding;
-									}
-									if(view.scales[s].range || json._views[0].scales[s].range){
-										o[axis].range = clone(view.scales[s].range || json._views[0].scales[s].range);
-									}
-									if(json._views[0].scales[s].domain || view.scales[s].domain){
-										o[axis].domain = clone(view.scales[s].domain || json._views[0].scales[s].domain);
-										for(d = 0; d < o[axis].domain.length; d++){
-											if(o[axis].domain[d].signal) o[axis].domain[d] = looseJsonParse(o[axis].domain[d].signal);
-										}
-									}
-								}
-							}
-						}
-					}
-					// Set the options
-					g.setOptions(o);
-					for(i in g.marks){
-						if(g.marks[i]){
-							found = -1;
-							g.marks[i].include = false;
-							for(s = 0; s < view.markers.length; s++){
-								if(g.marks[i].name == view.markers[s].name){
-									found = s;
-									g.marks[i].include = true;
-									g.marks[i].show = view.markers[s].visible;
-								}
-							}
-						}
-					}
-					e.data.me.updateLayerMenu();
-					g.updateData();
-					e.data.el.find('.selected').removeClass('selected');
-					if(this.parent().find('input')[0].checked) this.parent().addClass('selected');
+					e.data.me.setView(e.data.i);
 				}).on('focus',{el:el},function(e){
 					e.data.el.find('li').removeClass('on');
 					this.parent().addClass('on');
