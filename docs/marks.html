@@ -44,14 +44,35 @@
 		<p><strong><a href="https://vega.github.io/vega/docs/marks/">Marks</a></strong> visually encode data using geographic primitives. We currently support VEGA's <code><a href="#area">area</a></code>, <code><a href="#line">line</a></code>, <code><a href="#rect">rect</a></code>, <code><a href="#rule">rule</a></code>, <code><a href="#symbol">symbol</a></code>, and <code><a href="#text">text</a></code> marks.</p>
 		<h3>Changing styles</h3>
 		<p>The marks are styled using three <code>encode</code> options. The initial style is set with <code>enter</code>. The markers are updated with the <code>update</code> option. A hover event triggers a <code>hover</code> and a mouseout then styles the point again using <code>update</code>. It should be noted that to save processing, the <code>hover</code> event actually just draws the styled version of the marker on a separate canvas and draws that <strong>on top</strong> of the existing canvas. This means we can keep a copy of the existing canvas and not have to re-draw everything. The result is that you may be able to see parts of the non-hovered version of the marker depending on how you style the hovered version. This will be more noticeable for <code>text</code> markers.</p>
+
+		<h3 id="mark-properties">Supported generic mark properties</h3>
+		<table class="properties">
+			<thead>
+				<tr>
+					<th>Property</th>
+					<th>Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr><td>type</td><td>String</td><td>The type of mark:  <code><a href="#area">area</a></code>, <code><a href="#line">line</a></code>, <code><a href="#rect">rect</a></code>, <code><a href="#rule">rule</a></code>, <code><a href="#symbol">symbol</a></code>, and <code><a href="#text">text</a></code>.</td></tr>
+				<tr><td>clip</td><td>Boolean</td><td>This specifies if the marks should be clipped to the chart area. Note that this is more limited that allowed in VEGA</td></tr>
+				<tr><td>name</td><td>String</td><td>A unique name (without spaces) to reference this mark.</td></tr>
+				<tr><td>description</td><td>String</td><td>An optional description of this mark shown in the layer choosing menu. If it is the same as other marks, these will be grouped in the layer menu.</td></tr>
+				<tr><td>from</td><td>Object</td><td>An object describing the data this mark set should visualize. This will reference the data layer <code>name</code> to take the data from e.g. <code>{"data": "lightcurve"}</code>.</td></tr>
+				<tr><td>interactive</td><td>Boolean</td><td>A boolean flag (default true) indicating if the marks can serve as input event sources. If false, no mouse or touch events corresponding to the marks will be generated.</td></tr>
+				<tr><td>encode</td><td>Encode</td><td>An object containing a set of visual encoding rules for mark properties. This can contain properties and values that are set using the <code>enter</code>, <code>update</code>, and <code>hover</code> events.</td></tr>
+			</tbody>
+		</table>
+		
 	</div>
 	<div class="bkg-tint">
 		<div class="row">
 			<section id="examples">
 				<ol>
-				<li id="area">
+				<li id="area" class="padded">
 					<h2>Area</h2>
-					<p>Area marks are are filled areas. See <a href="#area-mark-properties">which VEGA properties are supported</a> below</p>
+					<p>Area marks are filled areas. See <a href="#area-mark-properties">which VEGA properties are supported</a> below</p>
 					<div class="example">
 						<figure>
 							<div id="example-area">
@@ -104,6 +125,7 @@
 									"type": "area",
 									"description": "Shadow",
 									"from": {"data": "shadow"},
+									"clip": true,
 									"encode": {
 										"enter": {
 											"x": {"scale": "xscale", "field": "x"},
@@ -168,10 +190,10 @@
 						</tbody>
 					</table>
 				</li>
-				<li id="line">
+				<li id="line" class="padded">
 					<h2>Line</h2>
 					<p>Line marks are stroked paths with constant width, defined by an ordered set of (x, y) coordinates. See <a href="#line-mark-properties">which VEGA properties are supported</a> below</p>
-					<p>The VEGA implementation allows a <code>defined</code> flag to say if a data point is defined. If <code>false</code>, the corresponding line segment will be omitted creating a "break". Our implementation allows breaks to be included my inserting undefined values in the data. The following example includes a line with a break and hover events.</p>
+					<p>The VEGA implementation allows a <code>defined</code> flag to say if a data point is defined. If <code>false</code>, the corresponding line segment will be omitted creating a "break". Our implementation allows breaks to be included by inserting undefined values in the data. The following example includes a line with a break and hover events.</p>
 					<div class="example">
 						<figure>
 							<div id="example-line">
@@ -218,7 +240,9 @@
 								}],
 								"marks":[{
 									"type": "line",
+									"name": "UniqueID",
 									"description": "Model",
+									"clip": true,
 									"from": {"data": "model"},
 									"encode": {
 										"enter": {
@@ -282,10 +306,9 @@
 						</tbody>
 					</table>
 				</li>
-				<li id="rect">
+				<li id="rect" class="padded">
 					<h2>Rect</h2>
 					<p>Rect marks are rectangles with a given position, width and height. They are useful for drawing error bars behind data points. See <a href="#rect-mark-properties">which VEGA properties are supported</a> below.</p>
-					<p>The VEGA implementation allows a <code>defined</code> flag to say if a data point is defined. If <code>false</code>, the corresponding line segment will be omitted creating a "break". Our implementation allows breaks to be included my inserting undefined values in the data. The following example includes a line with a break and hover events.</p>
 					<div class="example">
 						<figure>
 							<div id="example-rect">
@@ -332,7 +355,9 @@
 								}],
 								"marks":[{
 									"type": "rect",
+									"name": "UniqueID",
 									"description": "Data",
+									"clip": true,
 									"from": {"data": "lightcurve"},
 									"encode": {
 										"enter": {
@@ -401,7 +426,7 @@
 						</tbody>
 					</table>
 				</li>
-				<li id="rule">
+				<li id="rule" class="padded">
 					<h2>Rule</h2>
 					<p>Rule marks are simply a line from (x, y) to (x2, y2). These are useful for adding horizontal or vertical lines. See <a href="#rule-mark-properties">which VEGA properties are supported</a> below.</p>
 					<div class="example">
@@ -518,7 +543,7 @@
 						</tbody>
 					</table>
 				</li>
-				<li id="symbol">
+				<li id="symbol" class="padded">
 					<h2>Symbol</h2>
 					<p>Symbol marks are useful for plotting data, and include circles, squares and oriented triangles. See <a href="#symbol-mark-properties">which VEGA properties are supported</a> below.</p>
 					<div class="example">
@@ -693,7 +718,7 @@
 						</tbody>
 					</table>
 				</li>
-				<li id="text">
+				<li id="text" class="padded">
 					<h2>Text</h2>
 					<p>Text marks are useful for adding labels to a plot. See <a href="#text-mark-properties">which VEGA properties are supported</a> below.</p>
 					<div class="example">
@@ -742,6 +767,7 @@
 								}],
 								"marks":[{
 									"type": "text",
+									"clip": true,
 									"description": "Labels",
 									"encode": {
 										"enter": {
