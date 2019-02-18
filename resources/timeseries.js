@@ -683,8 +683,12 @@
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
 		var i,id,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
+
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
+		// Remove any existing list items as we may have started from an incomplete list
+		layers.find('li').remove();
+
 		keyitems = {};
 		lookup = {};
 		j = 1;
