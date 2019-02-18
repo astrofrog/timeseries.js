@@ -834,7 +834,11 @@
 	};
 
 	TS.prototype.getViews = function(){
-		return clone(this.json._views)
+		var views,i,j,v;
+		views = [];
+		v = this.json._views;
+		for(i = 0; i < v.length; i++) views.push({'title':(v[i].title||""),'name':(v[i].name||""),'description':(v[i].description||"")});
+		return views;
 	};
 	
 	TS.prototype.setView = function(i){
