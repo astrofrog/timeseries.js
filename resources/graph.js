@@ -446,7 +446,7 @@
 		if(typeof options.logtime==="boolean") this.logtime = options.logtime;
 
 		// Define some variables
-		this.version = "0.2.6";
+		this.version = "0.2.7";
 		this.start = new Date();
 		if(typeof element!="object") return;
 		this.marks = {};
