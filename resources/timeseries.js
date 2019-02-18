@@ -383,7 +383,7 @@
 			},{
 				'key': 'save',
 				'title': 'Save',
-				'html': '<button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open in VEGA Editor</button><br style="clear:both;">'
+				'html': '<button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open selected view in VEGA</button><br style="clear:both;">'
 			}];
 			str = '';
 			html = '';
@@ -865,6 +865,9 @@
 			this.log('ERROR','The maximum index is '+(j._views.length-1)+'');
 			return this;
 		}
+		for(m = 0; m < j._views.length; m++){
+			j._views[m].active = (i==m);
+		}
 		view = clone(j._views[i]);
 		o = {};
 		for(a = 0; a < j.axes.length; a++){
@@ -995,7 +998,8 @@
 
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
-		var opts = { 'type': 'text/text', 'file': (this.file ?	this.file.replace(/.*\//g,"") : "timeseries.json") };
+		var i,txt,v,s,view,opts;
+		opts = { 'type': 'text/text', 'file': (this.file ? this.file.replace(/.*\//g,"") : "timeseries.json") };
 		if(!attr) attr = {};
 
 		function save(content){
@@ -1020,16 +1024,54 @@
 			dl.click();
 		
 		}
-		var txt;
 
 		if(type == "vega" || type == "vegaeditor"){
 			output = clone(this.vega);
-			for(var i = 0; i < output.data.length; i++){
+			for(i = 0; i < output.data.length; i++){
 				delete output.data[i].url;
 				typ = "json";
 				if(this.datasets[output.data[i].name].csv) typ = "csv";
 				output.data[i].values = this.datasets[output.data[i].name][typ];
 			}
+
+			if(type == "vegaeditor"){
+				// Find which view is selected
+				v = 0;
+				for(i = 0; i < this.json._views.length; i++){
+					if(this.json._views[i].active) v = i;
+				}
+				view = this.json._views[v];
+
+				// Update markers section
+				var marks = [];
+				var done = {};
+				for(m = 0; m < view.markers.length; m++){
+					found = false;
+					for(s = 0; s < this.json.marks.length; s++){
+						if(!done[view.markers[m].name] && this.json.marks[s].name == view.markers[m].name){
+							marks.push(clone(this.json.marks[s]));
+							done[view.markers[m].name] = true;
+						}
+					}
+					if(!done[view.markers[m].name]){
+						for(s = 0; s < this.json._extramarks.length; s++){
+							if(!done[view.markers[m].name] && this.json._extramarks[s].name == view.markers[m].name){
+								marks.push(clone(this.json._extramarks[s]));
+								done[view.markers[m].name] = true;
+							}
+						}
+					}
+				}
+				output.marks = marks;
+				if(view.scales) output.scales = view.scales;
+
+				// Remove our custom views and marks section
+				delete output._views;
+				delete output._extramarks;
+				delete output._date;
+			}
+
+			// Convert to text for sending
 			txt = JSON.stringify(output);
 		}
 		if(type == "vega"){
