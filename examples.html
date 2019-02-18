@@ -97,6 +97,8 @@
 								],
 								"marks":[{
 									"type": "line",
+									"name": "modelfit",
+									"description": "Model fit",
 									"from": {"data": "Model"},
 									"clip": true,
 									"encode": {
@@ -115,20 +117,19 @@
 									}
 								},{
 									"type": "rect",
+									"name": "Data-errorbars",
+									"description": "Danish 1.54m",
 									"from": {"data": "Danish 1.54m"},
 									"clip": true,
 									"encode": {
 										"enter": {
-										"x": {"scale": "xscale", "field": "x"},
 											"x": {"scale": "xscale", "field": "HJD"},
 											"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
 											"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 											"width": {"value": 1},
-											"fill": {"value": "#FF7F00"},
-											"fillOpacity": {"value": 0.5}
+											"fill": {"value": "#FF7F00"}
 										},
 										"update": {
-											"fillOpacity": {"value": 1},
 											"fill": {"value": "#FF7F00"}
 										},
 										"hover": {
@@ -137,6 +138,8 @@
 									}
 								},{
 									"type": "symbol",
+									"name": "Data-points",
+									"description": "Danish 1.54m",
 									"from": {"data": "Danish 1.54m"},
 									"clip": true,
 									"encode": {
@@ -144,7 +147,7 @@
 											"x": {"scale": "xscale", "field": "HJD"},
 											"y": {"scale": "yscale", "field": "dmag"},
 											"shape": {"value": "circle"},
-											"tooltip": {"signal": "'Time: ' + datum.x + '<br />Dmag: ' + datum.dmag + '<br />Error: ' + datum.err"}
+											"tooltip": {"field": "tooltip"}
 										},
 										"update": {
 											"shape": "cross",
@@ -159,7 +162,8 @@
 											"fillOpacity": {"value": 1},
 											"shape": {"value": "cross"},
 											"size": {"value": 100},
-											"zindex": {"value": 1}
+											"zindex": {"value": 1},
+											"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y"}
 										}
 									}
 								}]
@@ -187,7 +191,7 @@
 						<script>
 						S(document).ready(function(){
 
-							var json = {
+							var json2 = {
 								"$schema": "https://vega.github.io/schema/vega/v4.json",
 								"width": 800,
 								"height": 450,
@@ -228,7 +232,8 @@
 								],
 								"marks":[{
 									"type": "line",
-									"description": "Model",
+									"name": "modelfit",
+									"description": "Model fit",
 									"from": {"data": "Model"},
 									"clip": true,
 									"encode": {
@@ -247,21 +252,19 @@
 									}
 								},{
 									"type": "rect",
-									"description": "Data",
+									"name": "Data-errorbars",
+									"description": "Danish 1.54m",
 									"from": {"data": "Danish 1.54m"},
 									"clip": true,
 									"encode": {
 										"enter": {
-										"x": {"scale": "xscale", "field": "x"},
 											"x": {"scale": "xscale", "field": "HJD"},
 											"y": {"scale": "yscale", "signal": "datum.dmag - datum.err"},
 											"y2": {"scale": "yscale", "signal": "datum.dmag + datum.err"},
 											"width": {"value": 1},
-											"fill": {"value": "#FF7F00"},
-											"fillOpacity": {"value": 0.5}
+											"fill": {"value": "#FF7F00"}
 										},
 										"update": {
-											"fillOpacity": {"value": 1},
 											"fill": {"value": "#FF7F00"}
 										},
 										"hover": {
@@ -270,7 +273,8 @@
 									}
 								},{
 									"type": "symbol",
-									"description": "Data",
+									"name": "Data-points",
+									"description": "Danish 1.54m",
 									"from": {"data": "Danish 1.54m"},
 									"clip": true,
 									"encode": {
@@ -278,7 +282,7 @@
 											"x": {"scale": "xscale", "field": "HJD"},
 											"y": {"scale": "yscale", "field": "dmag"},
 											"shape": {"value": "circle"},
-											"tooltip": {"signal": "'Time: ' + datum.x + '<br />Dmag: ' + datum.dmag + '<br />Error: ' + datum.err"}
+											"tooltip": {"field": "tooltip"}
 										},
 										"update": {
 											"shape": "cross",
@@ -293,13 +297,14 @@
 											"fillOpacity": {"value": 1},
 											"shape": {"value": "cross"},
 											"size": {"value": 100},
-											"zindex": {"value": 1}
+											"zindex": {"value": 1},
+											"tooltip": {"signal":"'Time: ' + datum.x + '<br />Dmag: ' + datum.y"}
 										}
 									}
 								}]
 							};
 
-							ex2 = TimeSeries.create(json);
+							ex2 = TimeSeries.create(json2);
 							ex2.initialize(document.getElementById('example2'));
 
 						});
