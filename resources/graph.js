@@ -2074,16 +2074,21 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var m,p,sh,ctx,i,j;
-
+		var p,sh,ctx,i,j,m,update;
+		this.logTime('drawData');
 		// Define an empty pixel-based lookup table
 		if(updateLookup){
-			//EMCA6
-			//this.lookup = Array(this.canvas.c.width).fill().map(x => Array(this.canvas.c.height));
-			this.lookup = [];
-			for(i = 0; i < this.canvas.c.width; i++) {
-				this.lookup[i] = [];
-				for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
+			// If the size of the lookup hasn't changed, we can just set everything to null
+			if(this.lookup && this.lookup.length==this.canvas.c.width && this.lookup[0].length==this.canvas.c.height){
+				for(i = 0; i < this.canvas.c.width; i++) {
+					for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
+				}
+			}else{
+				this.lookup = [];
+				for(i = 0; i < this.canvas.c.width; i++) {
+					this.lookup[i] = [];
+					for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
+				}
 			}
 		}
 		// Clear the data canvas
@@ -2093,7 +2098,6 @@
 
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
-
 				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
 				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);
 
@@ -2110,13 +2114,15 @@
 				if(this.marks[sh].type=="rule") this.drawRule(sh,{'update':true});
 				if(this.marks[sh].type=="area") this.drawArea(sh,{'update':true});
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
+					// Work out if we need to update this lookup for these marks
+					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
-						m = clone(this.marks[sh].mark[i]);
+						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
-							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
-							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
-							if(this.marks[sh].type=="text") this.drawText(m,{'update':(updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive ? true : false)});
+							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':update});
+							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
+							if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
 						}
 					}
 				}
@@ -2126,6 +2132,7 @@
 		}
 		// Draw the data canvas to the main canvas
 		try { this.canvas.ctx.drawImage(this.paper.data.c,0,0,this.paper.data.width,this.paper.data.height); }catch(e){ }
+		this.logTime('drawData');
 
 		return this;
 	};
@@ -2525,7 +2532,7 @@
 		// Use bounding box to define the lookup area
 		for(x = i.xa; x < i.xb; x++){
 			for(y = i.ya; y < i.yb; y++){
-				if(!this.lookup[x][y]) this.lookup[x][y] = [a];
+				if(this.lookup[x][y] == null) this.lookup[x][y] = [a];
 				else this.lookup[x][y].push(a);
 			}
 		}
@@ -2561,7 +2568,6 @@
 	};
 
 	Graph.prototype.logTime = function(key){
-
 		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
 		if(!this.metrics[key].start) this.metrics[key].start = new Date();
 		else{
