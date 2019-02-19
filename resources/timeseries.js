@@ -437,6 +437,8 @@
 	TS.prototype.loadDatasets = function(data){
 		this.log('loadDatasets',data);
 		if(!data) return this;
+		this.updateMessage('Loading data...');
+
 		this.datasets = {};
 		var n,f,files,fn,i,j;
 		n = data.length;
