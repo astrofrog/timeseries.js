@@ -446,7 +446,7 @@
 		if(typeof options.logtime==="boolean") this.logtime = options.logtime;
 
 		// Define some variables
-		this.version = "0.2.7";
+		this.version = "0.2.8";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -2074,7 +2074,8 @@
 
 	// Draw the data onto the graph
 	Graph.prototype.drawData = function(updateLookup){
-		var p,sh,ctx,i,j,m,update;
+
+		var p,sh,ctx,i,j,m,update,px,quickdraw,colour;
 		this.logTime('drawData');
 		// Define an empty pixel-based lookup table
 		if(updateLookup){
@@ -2095,6 +2096,22 @@
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
 		ctx = this.canvas.ctx;
+
+		// Define a function to extract the RGB values
+		function getRGB(c){
+			var r,g,b,a;
+			a = 1;
+			if(c.indexOf('#')==0){
+				r = parseInt(c.substr(1,2),16);
+				g = parseInt(c.substr(3,2),16);
+				b = parseInt(c.substr(5,2),16);
+			}else if(c.indexOf("rgba")==0){
+				c.replace(/rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9\.]+)\)/,function(m,p1,p2,p3,p4){ r = parseInt(p1); g = parseInt(p2); b = parseInt(p3); a = parseFloat(p4); return m; });
+			}else if(c.indexOf("rgb(")==0){
+				c.replace(/rgb\(([0-9]+),([0-9]+),([0-9]+)\)/,function(m,p1,p2,p3){ r = p1; g = p2; b = p3; return m; });
+			}
+			return {'r':r,'g':g,'b':b,'a':a};
+		}
 
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
@@ -2117,19 +2134,28 @@
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
+					
+					quickdraw = (this.metrics['drawData '+sh].av > 70);
+					if(quickdraw){
+						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
+						colour = getRGB(this.marks[sh].mark[0].props.format.fill);
+						for(i = 0; i < 4; i+=4){
+							px.data[i + 0] = colour.r;
+							px.data[i + 1] = colour.g;
+							px.data[i + 2] = colour.b;
+							px.data[i + 3] = colour.a*255;
+						}
+					}
 					// Loop over points drawing them
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
 						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
 							if(this.marks[sh].type=="symbol"){
-								// If this layer is taking too long to update 
-								// we'll make the symbol simpler
-								if(this.metrics['drawData '+sh].av > 75){
-									m.props.symbol.shape = "rect";
-									m.props.format.size = 4;
-								}
-								this.drawShape(m,{'update':update});
+								// If this layer is taking too long to update we'll make the symbol simpler
+								if(quickdraw){
+									if(p.x >= this.chart.left && p.x <= this.chart.left+this.chart.width && p.y >= this.chart.top && p.y <= this.chart.top+this.chart.height) this.paper.data.ctx.putImageData(px, p.x*this.canvas.scale, p.y*this.canvas.scale);
+								}else this.drawShape(m,{'update':update});
 							}
 							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
 							if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
