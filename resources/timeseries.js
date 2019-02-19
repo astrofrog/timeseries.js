@@ -132,12 +132,12 @@
 					if(val == 0) return {'str':'0'};
 					b = ['y','d','h','m','s','ms'];
 					sec = {
-						'y':86400*365.25*1000,
-						'd':86400*1000,
-						'h':3600*1000,
-						'm':60*1000,
-						's':1000,
-						'ms':1
+						'y':86400*365.25,
+						'd':86400,
+						'h':3600,
+						'm':60,
+						's':1,
+						'ms':1/1000
 					};
 					if(val < sec.ms) return {'str':(sign < 0 ? '-':'')+(val/1000)};
 					str = '';
@@ -160,20 +160,20 @@
 			'locale': {
 				'title': 'Locale',
 				'formatLabel': function(j){
-					var d = new Date(parseInt(j));
+					var d = new Date(Math.floor(parseFloat(j)*1000));
 					return {'str':d.toLocaleString()};
 				}
 			},
 			'jd': {
 				'title': 'Julian date',
-				'scale': 86400000,
+				'scale': 86400,
 				'formatLabel': function(j){
 					return {'str':formatDate(parseFloat(j),"jd")+''};
 				}
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
-				'scale': 86400000,
+				'scale': 86400,
 				'formatLabel': function(j){
 					var mjd = formatDate(parseInt(j),"mjd");
 					var o = {'str':mjd+''};
@@ -183,7 +183,7 @@
 			},
 			'tjd': {
 				'title': 'Truncated Julian date',
-				'scale': 86400000,
+				'scale': 86400,
 				'formatLabel': function(j,attr){
 					var tjd = formatDate(parseInt(j),"tjd");
 					if(attr.dp > 0) tjd = tjd.toFixed(attr.dp);
@@ -805,13 +805,15 @@
 						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
 						if(event[p].field){
 							if(typeof event[p].field==="string"){
-								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
+								if(typeof datum[event[p].field]!=="undefined"){
+									d.data[p] = datum[event[p].field];
+								}
 							}else if(typeof event[p].field==="object"){
 								d.data[p] = clone(event[p]);
 							}
 						}
 						if(typeof event[p].value!=="undefined"){
-							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime();
+							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime()/1000;
 							else datum[p].value = event[p].value;
 						}
 					}
@@ -1211,7 +1213,7 @@
 	
 	function looseJsonParse(obj){
 		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
-		fns += "function timeFormat(t,f){ var d = new Date(t); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);};";
+		fns += "function timeFormat(t,f){ var d = new Date(t*1000); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);};";
 		//YES %a - abbreviated weekday name.*
 		//YES %A - full weekday name.*
 		//YES %b - abbreviated month name.*
@@ -1244,8 +1246,8 @@
 
 		// The month is zero-based for compatibility with VEGA
 		// https://vega.github.io/vega/docs/expressions/#datetime
-		fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf(); }";
-		fns += "function date(d){ return (new Date(d)).getTime(); }";
+		fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; }";
+		fns += "function date(d){ return (new Date(d)).getTime()/1000; }";
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
 
@@ -1265,7 +1267,7 @@
 	// Convert dates
 	function formatDate(dt,t){
 		if(!t) t = "jd";
-		var d = new JD(dt,"unix");
+		var d = new JD(dt*1000,"unix");
 		if(t=="jd") return d.valueOf();
 		else if(t=="mjd") return d.toMJD();
 		else if(t=="tjd") return d.toTJD();

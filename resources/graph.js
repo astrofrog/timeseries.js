@@ -447,7 +447,6 @@
 
 		// Define some variables
 		this.version = "0.2.7";
-		this.start = new Date();
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -770,7 +769,7 @@
 	};
 
 	function parseData(data){
-		var i,key,v,format,s;
+		var i,key,v,format,s,temporal;
 		// Parse the data
 		for(key in data.parse){
 			format = data.parse[key];
@@ -781,14 +780,14 @@
 					// "number", "boolean" or "date"
 					if(format=="number"){
 						v = parseFloat(v);
-					}else if(format=="date"){
+					}else if(format=="date" || format=="utc"){
 						// Convert to milliseconds since the epoch
 						s = new Date(v.replace(/^"/,"").replace(/"$/,"")).getTime();
 						// Extract anything less than milliseconds
 						var m = v.match(/\.[0-9]{3}([0-9]+)/);
 						// Add it back
 						if(m && m.length == 2) s += parseFloat('0.'+m[1]);
-						v = s;
+						v = s/1000;	// Convert to seconds
 					}else if(format=="boolean"){
 						if(v=="1" || v=="true" || v=="Y") v = true;
 						else if(v=="0" || v=="false" || v=="N") v = false;
@@ -1379,14 +1378,14 @@
 			// Grid line spacings can range from 1 ms to 10000 years
 			// Use Gregorian year length for calendar display
 			// 31557600000
-			steps = [{'name': 'milliseconds', 'div': 1, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'seconds','div':1000,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'minutes', 'div':60000,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600000,'spacings':[1,2,4,6,12]},
-					{'name': 'days', 'div':86400000,'spacings':[1,2]},
-					{'name': 'weeks', 'div':7*86400000,'spacings':[1,2]},
-					{'name': 'months', 'div': 30*86400000, 'spacings':[1,3,6]},
-					{'name': 'years', 'div':365.2425*86400000,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
+			steps = [{'name': 'milliseconds', 'div': 1/1000, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'seconds','div':1,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'minutes', 'div':60,'spacings':[1,2,5,10,15,20,30]},
+					{'name': 'hours', 'div':3600,'spacings':[1,2,4,6,12]},
+					{'name': 'days', 'div':86400,'spacings':[1,2]},
+					{'name': 'weeks', 'div':7*86400,'spacings':[1,2]},
+					{'name': 'months', 'div': 30*86400, 'spacings':[1,3,6]},
+					{'name': 'years', 'div':365.2425*86400,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
 			steps = (this[a].labelopts.steps || steps);
 			for(st = 0; st < steps.length ; st++){
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
@@ -1400,10 +1399,9 @@
 					}
 				}
 			}
-
 			// Set the min and max values by rounding the dates
-			t_min = (new Date(roundDate(mn,this[a].datestep.name,this[a].datestep.spacing,{'method':'floor'}))).valueOf();
-			t_max = (new Date(roundDate(mx,this[a].datestep.name,this[a].datestep.spacing,{'method':'ceil'}))).valueOf();
+			t_min = (new Date(roundDate(mn,this[a].datestep.name,this[a].datestep.spacing,{'method':'floor'}))).valueOf()/1000;
+			t_max = (new Date(roundDate(mx,this[a].datestep.name,this[a].datestep.spacing,{'method':'ceil'}))).valueOf()/1000;
 
 		}else{
 			this[a].showAsDate = false;
@@ -1503,7 +1501,7 @@
 		this[a].ticks = [];
 		// Because of precision issues we can't rely on exact equality.
 		for(v = mn; v < mx+this[a].inc*0.2; v += this[a].inc){
-			if(this[a].showAsDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf(),'label':''});
+			if(this[a].showAsDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf()/1000,'label':''});
 			else this[a].ticks.push({'value':v,'label':''});
 		}
 
@@ -1516,9 +1514,9 @@
 		
 		// A function to format the date nicely
 		function niceDate(d,sp){
-		
 			var hr,mn,sc,dy,mo,yr,n,f,fs;
 			fs = "";
+			if(typeof d==="number") d *= 1000;
 			(removeRoundingErrors(d)+"").replace(/\.([0-9]+)/,function(m,p1){ fs = p1; });
 			d = new Date((typeof d==="string" ? parseInt(d):d));
 			f = sp.fract;
@@ -1588,7 +1586,7 @@
 			for(i = 0; i < this[a].ticks.length; i++){
 				v = this[a].ticks[i].value;
 				if(this[a].showAsDate){
-					d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v/1000).toFixed(precision+3) : niceDate(v,this[a].spacing);
+					d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v).toFixed(precision+3) : niceDate(v,this[a].spacing);
 					this[a].ticks[i].label = d;
 				}else{
 					fmt = {};
@@ -2605,8 +2603,9 @@
 	
 	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
 	
-	function roundDate(ms,t,n,attr){
-		var d,d2,df,a,a2,time,f,months,ly;
+	function roundDate(s,t,n,attr){
+		var d,d2,df,a,a2,time,f,months,ly,ms;
+		ms = s*1000;
 		if(!attr) attr = {};
 		if(!attr.method) attr.method = "round";
 		time = new Date(ms);
