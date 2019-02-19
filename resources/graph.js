@@ -812,9 +812,8 @@
 	// Only send one dataset at a time with this function
 	// If an index is provided use it otherwise add sequentially
 	// If a dataset already exists we don't over-write
-	Graph.prototype.addMarks = function(data,idx,original){
-		var i,j,t,l,types;
-
+	Graph.prototype.addMarks = function(data,idx,original,attr){
+		var i,j,t,l,types,pc,update;
 		this.log('addMarks',idx);
 		if(typeof idx!=="number"){
 			if(typeof idx==="undefined"){
@@ -828,6 +827,7 @@
 			}
 		}
 		this.originaldata = original;
+		attr.name = original.name;
 
 		if(this.marks[idx]) this.log('WARNING','addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);
 		else {
@@ -849,18 +849,39 @@
 			if(typeof this.marks[idx].format.strokeWidth!=="number") this.marks[idx].format.strokeWidth = 1;
 			if(!this.marks[idx].format.fill) this.marks[idx].format.fill = this.colours[0];
 
+			update = (typeof attr.progress==="function");
 			types = ['symbol','rect','lines','area','rule','text','format'];
-			for(i = 0; i < l ; i++){
+			// So that we can present a progress bar for big datasets,
+			// we'll chunk up the processing into blocks of 5000
+			function processChunk(attr){
+				var t,max,pc,chk;
+				chk = 10000;
+				max = Math.min(attr.marks.data.length,i+chk);
+				for(i = attr.i; i < max; i++){
+					// If we have sent an update function we'll process it as we go
+					if(update && i > chk && i % Math.round(l/100) == 0) attr.attr.progress.call((attr.attr.this||this),{'mark':original,'i':i,'total':attr.total});
 
-				if(!this.marks[idx].mark[i]) this.marks[idx].mark[i] = {'props':{},'data':this.marks[idx].data[i]};
+					if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i]};
 
-				for(j = 0; j < types.length; j++){
-					t = types[j];
-					if(typeof this.marks[idx].mark[i].props[t]!=="object" && this.marks[idx][t]) this.marks[idx].mark[i].props[t] = clone(this.marks[idx][t]);
+					for(j = 0; j < types.length; j++){
+						t = types[j];
+						if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
+					}
+					// Should process all the "enter" options here
+					if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr.this,attr.marks.mark[i],attr.marks.encode.enter);
 				}
-				// Should process all the "enter" options here
-				if(this.marks[idx].enter) this.marks[idx].mark[i] = this.marks[idx].enter.call(this,this.marks[idx].mark[i],this.marks[idx].encode.enter);
+				attr.i = i;
+				if(i < attr.marks.data.length){
+					setTimeout(processChunk,100,attr);
+				}else{
+					if(typeof attr.attr.success==="function"){
+						attr.attr.i = i;
+						attr.attr.total = attr.total;
+						attr.attr.success.call((attr.attr.this||this),attr.attr);
+					}
+				}
 			}
+			processChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':l});
 		}
 
 		return this;

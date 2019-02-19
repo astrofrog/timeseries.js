@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.11";
+		this.version = "0.0.12";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
@@ -42,16 +42,6 @@
 			return this;
 		};
 		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
-		
-		/* Have we loaded all the data files necessary? */
-		this.filesLoaded = function(fs){
-			this.log('filesLoaded',fs,this.load.data);
-			var n = 0;
-			for(var d = 0; d < fs.length; d++){
-				if(this.load.data.files[fs[d]] && this.load.data.files[fs[d]].loaded) n++;
-			}
-			return (n==fs.length);
-		};
 
 		this.loadFromDataFile = function(f,attr,fn){
 		
@@ -100,72 +90,6 @@
 			}
 		};
 
-		this.loadResources = function(files,attr,callback){
-
-			this.log('loadResources',files);
-
-			// Load any necessary extra js/css for clustering
-			if(typeof files==="string") files = [files];
-			
-			// Store the callback for when we've loaded everything
-			this.load.resources.callbacks.push({'callback':callback,'attr':attr});
-
-			function checkAndGo(fs,t){
-				var got = 0;
-				for(var f = 0; f < fs.length; f++){
-					if(TimeSeries.load[t].files[fs[f]].loaded) got++;
-				}
-				_obj.log('checkAndGo',got,fs.length,TimeSeries.load[t].callbacks);
-				if(got==fs.length){
-					for(var c = TimeSeries.load[t].callbacks.length-1; c >= 0; c--){
-						_obj.log('Processing callback '+c+' for '+t,TimeSeries.load[t].callbacks);
-						TimeSeries.load[t].callbacks[c].callback.call((TimeSeries.load[t].callbacks[c].attr['this'] || TimeSeries),{'data':TimeSeries.load[t].callbacks[c].attr});
-						// Remove the callback
-						TimeSeries.load[t].callbacks.pop();
-					}
-				}
-			}
-
-			for(var i = 0; i < files.length; i++){
-				if(!this.load.resources.files[files[i]]){
-					this.log('loading resource',files[i]);
-
-					this.log('start loading '+files[i]+' is ',this.load.resources.files[files[i]]);
-					this.load.resources.files[files[i]] = {'loaded':false};
-
-					this.loadCode(files[i],{me:this,files:files,callback:checkAndGo},function(e){
-						e.data.me.load.resources.files[e.url].loaded = true;
-						e.data.me.log('loaded resource '+e.url);
-						e.data.callback.call(this,e.data.files,"resources");
-					});
-				}else{
-					this.log('current state of '+files[i]+' is ',this.load.resources.files[files[i]]);
-				}
-			}
-
-			return this;
-		};
-
-		this.loadCode = function(url,attr,callback){
-			var el;
-			if(typeof attr==="function" && !callback) callback = attr;
-			this.log('loadCode',url,callback);
-			if(url.indexOf(".js")>= 0){
-				el = document.createElement("script");
-				el.setAttribute('type',"text/javascript");
-				el.src = url;
-			}else if(url.indexOf(".css")>= 0){
-				el = document.createElement("style");
-				el.setAttribute('rel','stylesheet');
-				el.setAttribute('type','text/css');
-				el.setAttribute('href',url);
-			}
-			if(el){
-				el.onload = function(){ callback.call(_obj,{'url':url,'data':(attr||{})}); };
-				document.getElementsByTagName('head')[0].appendChild(el);
-			}
-			return _obj;
-		};
 		return this;
 	}
 
@@ -182,6 +106,7 @@
 		this.logging = opt.logging || false;
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 		this.log('TS',json);
+		this.progress = {'datasets':{'old':'','used':''},'update':{'todo':0,'done':0}};
 
 		// Set some defaults
 		this.options = {
@@ -275,11 +200,14 @@
 				if(o=="fit" || o=="tooltip") this.options[o] = opt[o];	// https://github.com/vega/vega-tooltip/blob/master/docs/customizing_your_tooltip.md
 			}
 		}
+
+		// If we have JSON we process it now
 		if(this.json) this.processJSON(json);
 
 		return this;
 	}
 
+	// Log messages to the console
 	TS.prototype.log = function(){
 		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
@@ -290,7 +218,7 @@
 		}
 		return this;
 	};
-
+	
 	TS.prototype.processJSON = function(d){
 		this.json = d;
 		this.vega = JSON.parse(JSON.stringify(d));
@@ -309,6 +237,60 @@
 			}
 		}
 		this.options.logging = true;
+		return this;
+	};
+
+	/*
+		Render a TimeSeries from an HTML element 
+		We look for attributes vega-src and vega-scale
+		Arguments:
+		e - the DOM element to attach the time series to
+		callback - a function to call once finished
+	*/
+	TS.prototype.initialize = function(e,callback){
+
+		this.log('initialize',e);
+
+		// Store the callback function
+		if(typeof callback==="function") this.callback = callback;
+
+		if(!e) this.log('ERROR',e,callback);
+
+		var el = S(e);
+		if(el.length == 0){
+			this.log('ERROR','No DOM element to attach to',e);
+			return this;
+		}
+		this.el = e;
+
+		var f = el.attr('vega-src');
+		if(f) this.file = f;
+		if(!this.file) this.file = "";
+		if(typeof this.file!=="string") return this;
+		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
+
+		if(this.file){
+			// Load the Vega-JSON file
+			var idx = this.file.lastIndexOf("/");
+			this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
+			S().ajax(this.file,{
+				"dataType": "json",
+				"this": this,
+				"cache": true,
+				"success": function(d,attr){
+					this.processJSON(d);
+					this.postProcess();
+					return this;
+				},
+				"error": function(err){
+					this.error("Unable to load configuration",this.file,err);
+				}
+			});
+		}else{
+			this.postProcess();
+			return this;
+		}
+
 		return this;
 	};
 
@@ -350,8 +332,11 @@
 		var el = S(this.el);
 		var str = '<div class="loader"><div class="spinner">';
 		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
-		str += '</div></div>';
+		str += '</div><div class="loader-message"></div><div class="progressbar" style="display:none;"><div class="progress-inner"></div></div></div>';
 		el.addClass('timeseries').append(str);
+		this.message = {'el':el.find('.loader-message'),'progress':el.find('.progress-inner')};
+		
+		var _obj = this;
 
 		// Build the menu
 		this.makeMenu();
@@ -360,6 +345,13 @@
 
 		return this;
 	};
+
+	TS.prototype.updateMessage = function(msg,pc){
+		if(this.message && this.message.el.length > 0) this.message.el[0].innerHTML = msg;
+		if(typeof pc==="number" && pc <= 100) this.message.progress.css({'width':pc+'%'}).parent().css({'display':'block'});
+		else this.message.progress.parent().css({'display':'none'})
+		return this;
+	}
 	
 	TS.prototype.makeMenu = function(){
 		var el,id,k,i,tab,str,html,a,menu;
@@ -439,65 +431,9 @@
 				}
 			});
 		}
-	};
-
-	/*
-		Render a TimeSeries from an HTML element 
-		We look for attributes vega-src and vega-scale
-	*/
-	TS.prototype.initialize = function(e,callback){
-
-		this.log('initialize',e);
-
-		// Store the callback function
-		if(typeof callback==="function") this.callback = callback;
-
-		if(!e) this.log('ERROR',e,callback);
-
-		var el = S(e);
-		if(el.length == 0) return this;
-		this.el = e;
-
-		this.log('load',e,el,this.options.fit);
-
-		var f = el.attr('vega-src');
-		if(f) this.file = f;
-		if(!this.file) this.file = "";
-		if(typeof this.file!=="string") return this;
-		if(typeof this.initializedValues==="undefined") this.initializedValues = {'w':e.clientWidth,'h':e.clientHeight};
-
-		// Load any necessary extra js/css
-		// Do we need to load some extra Javascript?
-		if(typeof Graph==="undefined" && typeof Graph!=="function"){
-			// Load the Javascript and, once done, call this function again
-			TimeSeries.loadResources(basedir+"graph.js", {"this":this, "el":e}, function(ev){ this.log('loadedResources',ev,this); this.initialize(ev.data.el); });
-		}else{
-			if(this.file){
-				// Load the Vega-JSON file
-				var idx = this.file.lastIndexOf("/");
-				this.directory = (idx >= 0) ? this.file.substr(0,idx+1) : "";
-				S().ajax(this.file,{
-					"dataType": "json",
-					"this": this,
-					"cache": true,
-					"success": function(d,attr){
-						this.processJSON(d);
-						this.postProcess();
-						return this;
-					},
-					"error": function(err){
-						this.error("Unable to load configuration",this.file,err);
-					}
-				});
-			}else{
-				this.postProcess();
-				return this;
-			}
-		}
-
 		return this;
 	};
-	
+
 	TS.prototype.loadDatasets = function(data){
 		this.log('loadDatasets',data);
 		if(!data) return this;
@@ -506,6 +442,7 @@
 		n = data.length;
 		f = "";
 		files = [];
+		this.progress.datasets = {'todo':n,'done':0};
 		fn = function(data,attr){
 			var json;
 			typ = "json";
@@ -514,8 +451,9 @@
 			else if(typ == "json") json = data[0];
 			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
 			this.datasets[attr.dataset.name][typ] = data;
-			this.update(attr.dataset.name);
-			if(TimeSeries.filesLoaded(attr.files)) this.loaded();
+			this.progress.datasets.done++;
+			this.log('loaded dataset',attr.dataset.name)
+			if(this.progress.datasets.done==this.progress.datasets.todo) this.processDatasets();
 		};
 
 		// Build an array of files to load
@@ -523,7 +461,7 @@
 			if(data[i].url) files.push(this.directory + data[i].url);
 		}
 
-		this.log('files',files,TimeSeries.filesLoaded(files));
+		this.log('files',files);
 
 		// Process any inline values
 		for(i = 0; i < n; i++){
@@ -533,149 +471,9 @@
 		for(j = 0; j < files.length; j++){
 			// Load data and store it in datasets.
 			// Update the graph if necessary
-			// If we've loaded all data we then call loaded()
+			// If we've loaded all data we then use the callback we defined above
 			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},fn);
 		}
-
-		return this;
-	};
-
-	TS.prototype.update = function(datasetID){
-
-		var id,mark,m,_obj;
-		this.olddatasetsused = this.datasetsused;
-		this.datasetsused = "";
-
-		this.log('update',datasetID);
-		
-		// This is much quicker than looseJsonParse
-		// We'll use it for coordinates despite the eval()
-		//var ev = function(str,datum){ return eval(str); };
-
-		function updateProperties(d,event){
-			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
-			if(!d){
-				console.log('updateProps fail',d,event);
-				return;
-			}
-			datum = d.data;
-			for(var p in event){
-				if(event[p]){
-					if(dest[p] && dest[p]=="props"){
-						if(typeof event[p].value !== "undefined"){
-							if(d.props.symbol) d.props.symbol[p] = event[p].value;
-							if(d.props.format) d.props.format[p] = event[p].value;
-						}
-					}else{
-						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
-						if(event[p].field){
-							if(typeof event[p].field==="string"){
-								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
-							}else if(typeof event[p].field==="object"){
-								d.data[p] = clone(event[p]);
-							}
-						}
-						if(typeof event[p].value!=="undefined"){
-							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime();
-							else datum[p].value = event[p].value;
-						}
-					}
-					if(event[p].signal){
-						to = dest[p] || "data";
-						if(typeof d[to][p]==="undefined") d[to][p] = {};
-						try { d[to][p].value = looseJsonParse(event[p].signal); }
-						catch(e) { _obj.log('Error',d.data,event[p]); }
-						// If we now have an object we build a string
-						if(p=="tooltip"){
-							if(typeof d.props[p].value==="object"){
-								str = "<table>";
-								for(var i in d.props[p].value){
-									if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
-								}
-								d.props[p] = str+"</table>";
-							}else d.props[p] = d.props[p].value;
-						}
-					}
-				}
-			}
-			return d;
-		}
-		
-		function addMarks(me,m,mark){
-			var id = "";
-			if(mark.from && mark.from.data){
-				id = mark.from.data;
-				if(me.datasets[id]) me.datasetsused += id;
-			}
-			// Only bother building this dataset if it hasn't already been added
-			if((!id || me.datasets[id]) && !me.graph.marks[m]){
-				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
-
-				if(mark.type == "symbol") dataset.symbol = {show:true};
-				else if(mark.type == "rect") dataset.rect = {show:true};
-				else if(mark.type == "line") dataset.lines = {show:true};
-				else if(mark.type == "rule") dataset.rule = {show:true};
-				else if(mark.type == "area") dataset.area = {show:true};
-				else if(mark.type == "text") dataset.text = {show:true};
-
-				if(me.datasets[id]){
-					dataset.data = clone(me.datasets[id].json);
-					dataset.parse = me.datasets[id].parse;
-				}else{
-					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
-					dataset.parse = {};
-				}
-
-				// Add the dataset
-				if(dataset){
-
-					if(mark.encode && mark.encode.hover){
-						dataset.hoverable = true;
-						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
-					}
-
-					dataset.encode = mark.encode;
-
-					// Add callbacks
-					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); };
-					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); };
-					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
-
-					// Is this marker layer clipped?
-					dataset.clip = (mark.clip || false);
-
-					// Now we add this mark-based dataset
-					me.graph.addMarks(dataset,m);
-					if(me.datasets[id]) me.datasets[id].added = true;
-					
-				}else{
-					me.log('No dataset built for '+id,mark);
-				}
-			}
-			return me;
-		}
-
-		for(id in this.datasets){
-			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
-		}
-		this.graph.addDatasets(this.datasets);
-
-		for(m = 0; m < this.json.marks.length; m++){
-			mark = this.json.marks[m];
-			addMarks(this,m,mark);
-		}
-		if(this.json._extramarks){
-			for(m = 0; m < this.json._extramarks.length; m++){
-				mark = clone(this.json._extramarks[m]);
-				mark.include = false;
-				addMarks(this,m+this.json.marks.length+m,mark);
-			}
-		}
-
-		// If the current list of datasets used is different
-		// to what we've already processed, we will update the graph
-		if(this.datasetsused != this.olddatasetsused && this.attr.showaswego) this.graph.updateData();
 
 		return this;
 	};
@@ -966,9 +764,186 @@
 		return this;
 	};
 
-	TS.prototype.loaded = function(){
-		this.log('loaded',this.attr.showaswego,this.graph.marks);
+	TS.prototype.processDatasets = function(){
+		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
+
+		var id,mark,m,fn,up,ms,n;
+
+		// Set up the progress object to monitor what we've done for each mark
+		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
+		ms = ['marks','_extramarks'];
+		for(m = 0,n = 0; m < ms.length; m++){
+			if(this.json[ms[m]]){
+				for(i = 0; i < this.json[ms[m]].length ; i++){
+					// Create a name for this mark if one hasn't been given
+					if(!this.json[ms[m]][i].name) this.json[ms[m]][i].name = "fake-id-"+n;
+					this.progress.marks.mark[this.json[ms[m]][i].name] = {'done':-1,'todo':0};
+					n++;
+				}
+			}
+		}
+
+		this.progress.datasets.old = this.progress.datasets.used;
+		
+		function updateProperties(d,event){
+			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
+			if(!d){
+				console.log('updateProps fail',d,event);
+				return;
+			}
+			datum = d.data;
+			for(var p in event){
+				if(event[p]){
+					if(dest[p] && dest[p]=="props"){
+						if(typeof event[p].value !== "undefined"){
+							if(d.props.symbol) d.props.symbol[p] = event[p].value;
+							if(d.props.format) d.props.format[p] = event[p].value;
+						}
+					}else{
+						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
+						if(event[p].field){
+							if(typeof event[p].field==="string"){
+								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
+							}else if(typeof event[p].field==="object"){
+								d.data[p] = clone(event[p]);
+							}
+						}
+						if(typeof event[p].value!=="undefined"){
+							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime();
+							else datum[p].value = event[p].value;
+						}
+					}
+					if(event[p].signal){
+						to = dest[p] || "data";
+						if(typeof d[to][p]==="undefined") d[to][p] = {};
+						try { d[to][p].value = looseJsonParse(event[p].signal); }
+						catch(e) { _obj.log('Error',d.data,event[p]); }
+						// If we now have an object we build a string
+						if(p=="tooltip"){
+							if(typeof d.props[p].value==="object"){
+								str = "<table>";
+								for(var i in d.props[p].value){
+									if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
+								}
+								d.props[p] = str+"</table>";
+							}else d.props[p] = d.props[p].value;
+						}
+					}
+				}
+			}
+			return d;
+		}
+		
+		function addMarks(me,m,mark,attr){
+			var id = "";
+			if(mark.from && mark.from.data){
+				id = mark.from.data;
+				if(me.datasets[id]) me.progress.datasets.used += id;
+			}
+			// Only bother building this dataset if it hasn't already been added
+			if((!id || me.datasets[id]) && !me.graph.marks[m]){
+				var desc = mark.description || "Markers "+(m+1);
+				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
+
+				if(mark.type == "symbol") dataset.symbol = {show:true};
+				else if(mark.type == "rect") dataset.rect = {show:true};
+				else if(mark.type == "line") dataset.lines = {show:true};
+				else if(mark.type == "rule") dataset.rule = {show:true};
+				else if(mark.type == "area") dataset.area = {show:true};
+				else if(mark.type == "text") dataset.text = {show:true};
+
+				if(me.datasets[id]){
+					dataset.data = clone(me.datasets[id].json);
+					dataset.parse = me.datasets[id].parse;
+				}else{
+					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
+					dataset.parse = {};
+				}
+
+				// Add the dataset
+				if(dataset){
+
+					if(mark.encode && mark.encode.hover){
+						dataset.hoverable = true;
+						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
+					}
+
+					dataset.encode = mark.encode;
+
+					// Add callbacks
+					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); };
+					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); };
+					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
+
+					// Is this marker layer clipped?
+					dataset.clip = (mark.clip || false);
+
+					// Now we add this mark-based dataset
+					me.graph.addMarks(dataset,m,mark,attr);
+					if(me.datasets[id]) me.datasets[id].added = true;
+					
+				}else{
+					me.log('No dataset built for '+id,mark);
+				}
+			}
+			return me;
+		}
+
+		for(id in this.datasets){
+			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
+		}
+		this.graph.addDatasets(this.datasets);
+
+		// Store the number of marks we are going to process
+		this.progress.marks.todo = this.json.marks.length + (this.json._extramarks ? this.json._extramarks.length : 0);
+
+		// Define the callback function
+		fn = function(e){
+			// Function called once addMarks has finally finished
+			this.progress.marks.done++;
+			this.progress.marks.mark[e.name].done = e.i;
+			this.progress.marks.mark[e.name].todo = e.total;
+			
+			// Update the total for this mark
+			this.log('Processed '+e.name,this.progress.marks.mark[e.name]);
+
+			if(this.attr.showaswego) this.graph.updateData();
+			if(this.progress.marks.done == this.progress.marks.todo) this.finalize();
+		};
+		up = function(e){
+			this.progress.marks.mark[e.mark.name].done = e.i;
+			this.progress.marks.mark[e.mark.name].todo = e.total;
+			this.updateMessage('Processing '+(e.mark.description||e.mark.name),100*e.i/e.total);
+			return this;
+		};
+		for(m = 0; m < this.json.marks.length; m++){
+			mark = this.json.marks[m];
+			if(this.progress.marks.mark[mark.name].done < 0){
+				this.progress.marks.mark[mark.name].done = 0;
+				addMarks(this,m,clone(mark),{'this':this,'success':fn,'progress':up});
+			}
+		}
+		if(this.json._extramarks){
+			for(m = 0; m < this.json._extramarks.length; m++){
+				mark = this.json._extramarks[m];
+				mark.include = false;
+				addMarks(this,m+this.json.marks.length+m,clone(mark),{'this':this,'success':fn,'progress':up});
+			}
+		}
+
+		// If the current list of datasets used is different
+		// to what we've already processed, we will update the graph
+		if(this.progress.datasets.used != this.progress.datasets.old && this.attr.showaswego) this.graph.updateData();
+
+		return this;
+	};
+
+	TS.prototype.finalize = function(){
 		var view,i,addeddefault;
+
+		this.log('finalize',this.attr.showaswego,this.graph.marks);
+		this.updateMessage('');
+
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
@@ -992,8 +967,10 @@
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
-	};
-	
+	}
+
+	// Function to save the output as either an image or JSON
+	// (and optionally send to the online VEGA editor)
 	TS.prototype.save = function(type,attr){
 
 		// Bail out if there is no Blob function to save with
