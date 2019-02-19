@@ -15,6 +15,9 @@
 	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
 	<!-- TimeSeries library -->
 	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+	<!-- Syntax highlighting -->
+	<link rel="stylesheet" href="../resources/highlight/highlight.css">
+	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
 </head>
 <body>
 
@@ -37,12 +40,11 @@
 				<div id="example1">
 					<img src="data/lightcurve.png" />
 				</div>
-				<figcaption>This plot represents a simulated lightcurve.</figcaption>
+				<figcaption>This plot represents a simulated lightcurve. Inspired by the <a href="http://docs.sunpy.org/en/stable/generated/gallery/time_series/goes_hek_m25.html#sphx-glr-generated-gallery-time-series-goes-hek-m25-py">SunPy GOES example</a>.</figcaption>
 			</figure>
 			<!-- Javascript -->
 			<script>
 			var goes;
-			window.devicePixelRatio = 1.6;
 			S(document).ready(function(){
 
 				goes = TimeSeries.create("data/goes.json",{});
@@ -60,6 +62,7 @@
 		</footer>
 	</div>
 
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
 
 </body>
 </html>
