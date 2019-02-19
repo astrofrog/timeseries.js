@@ -2098,6 +2098,7 @@
 
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
+				this.logTime('drawData '+sh);
 				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
 				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);
 
@@ -2116,16 +2117,26 @@
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
+					// Loop over points drawing them
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
 						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
-							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':update});
+							if(this.marks[sh].type=="symbol"){
+								// If this layer is taking too long to update 
+								// we'll make the symbol simpler
+								if(this.metrics['drawData '+sh].av > 75){
+									m.props.symbol.shape = "rect";
+									m.props.format.size = 4;
+								}
+								this.drawShape(m,{'update':update});
+							}
 							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
 							if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
 						}
 					}
 				}
+				this.logTime('drawData '+sh);
 				// Apply the clipping if set
 				if(this.marks[sh].clip) this.paper.data.ctx.restore();
 			}
@@ -2143,7 +2154,7 @@
 	};
 
 	Graph.prototype.drawRect = function(datum,attr){
-		var x1,y1,x2,y2,dx,dy,o,ctx,n;
+		var x1,y1,x2,y2,dx,dy,o,ctx,n,l,r,t,b,ok;
 		n = "number";
 		ctx = (attr.ctx || this.paper.data.ctx);
 		if(is(attr.x,n)) datum.props.x = attr.x;
@@ -2169,6 +2180,15 @@
 				y1 = y1+(dy-datum.props.format.height)/2;
 				dy = datum.props.format.height;
 			}
+
+			// Bail out if it is outside the chart area
+			l = 0;
+			r = this.canvas.wide;
+			t = 0;
+			b = this.canvas.tall;
+			ok = false;
+			if((x2 >= l && x1 <= r) || (y1 >= b && y2 <= t) || (datum.props.x+dx > l && datum.props.x-dx < r) || (datum.props.y+dy > t && datum.props.y-dy < b)) ok = true;
+			if(!ok) return {};
 
 			ctx.beginPath();
 			ctx.rect(x1,y1,dx,dy);
@@ -2400,7 +2420,7 @@
 	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
-		var ctx,p,x1,y1,s,w,h,o,dw;
+		var ctx,p,x1,y1,s,w,h,o,dw,s2;
 		ctx = attr.ctx;
 		p = datum.props;
 		
@@ -2413,10 +2433,14 @@
 		var shape = p.symbol.shape;
 
 		w = s = h = (Math.sqrt(p.format.size) || 4);
+		s2 = s*2;
+
+		// Bail out if the symbol is off the chart
+		if(x1+s2 < 0 || x1-s2 > this.chart.left+this.chart.width || y1+s2 < 0 || y1-s2 > this.chart.top+this.chart.height) return {};
 
 		function m(a,b){ ctx.moveTo(x1+a,y1+b); }
 		function l(a,b){ ctx.lineTo(x1+a,y1+b); }
-				
+
 		if(shape=="circle"){
 			ctx.arc(x1,y1,(s/2 || 4),0,Math.PI*2,false);
 		}else if(shape=="rect"){
