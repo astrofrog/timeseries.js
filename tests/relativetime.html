@@ -28,7 +28,8 @@
 			<div class="padded">
 				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
 				<h1 id="project_title">timeseries.js library</h1>
-				<p>Last updated: 18 December 2018</p>
+				<h2>Test of relative times</h2>
+				<p>Last updated: <span class="lastupdated">2019</span></p>
 			</div>
 		</div>
 	</header>
@@ -38,34 +39,34 @@
 		<p>Test the relative time string formatter</p>
 		<div id="output"></div>
 		<script>
-		
+
 		ts = TimeSeries.create({});
 				console.log(ts,ts.dateformats)
-				
 		relativeTime = ts.dateformats.relative.formatLabel;
 		
 		tests = [{'s':0.0001,'expect':'0.0001'},{'s':0.001,'expect':'0.001'},{'s':0.5,'expect':'0.5'},{'s':1,'expect':'1'},{'s':10,'expect':'10'},{'s':59.9,'expect':'59.9'},{'s':60,'expect':'00:01'},{'s':62.5,'expect':'00:01:02.5'},{'s':90,'expect':'00:01:30'},{'s':200,'expect':'00:03:20'},{'s':600,'expect':'00:10'},{'s':1000,'expect':'00:16:40'},{'s':1800,'expect':'00:30'},{'s':3599.9,'expect':'00:59:59.9'},{'s':3600,'expect':'01:00'},{'s':3600.1,'expect':'01:00:00.1'},{'s':86399,'expect':'23:59:59'},{'s':86400,'expect':'1d'},{'s':86401,'expect':'1d 00:00:01'},{'s':86400*366,'expect':'1y 18:00'},{'s':86400*10.1*365.25,'expect':'10y 36d 12:36'}];
 
-		html = '<table style="width:100%;"><tr><th>Seconds</th><th>&times;1000</th><th>Expected string</th><th>Return string</th></tr>';
+		html = '<table style="width:100%;"><tr><th>Seconds</th><th>Expected string</th><th>Return string</th></tr>';
 		for(var i = 0; i < tests.length; i++){
-			r = relativeTime(tests[i].s*1000);
-			html += '<tr class="'+(r.str == tests[i].expect ? 'success':'fail')+'"><td>'+tests[i].s+'</td><td>'+(tests[i].s*1000)+'</td><td>'+tests[i].expect+'</td><td>'+r.str+'</td></tr>';
-			r = relativeTime(-tests[i].s*1000);
-			html += '<tr class="'+(r.str == '-'+tests[i].expect ? 'success':'fail')+'"><td>'+-tests[i].s+'</td><td>'+(-tests[i].s*1000)+'</td><td>-'+tests[i].expect+'</td><td>'+r.str+'</td></tr>';
+			r = relativeTime(tests[i].s);
+			html += '<tr class="'+(r.str == tests[i].expect ? 'success':'fail')+'"><td>'+tests[i].s+'</td><td>'+tests[i].expect+'</td><td>'+r.str+'</td></tr>';
+			r = relativeTime(-tests[i].s);
+			html += '<tr class="'+(r.str == '-'+tests[i].expect ? 'success':'fail')+'"><td>'+-tests[i].s+'</td><td>-'+tests[i].expect+'</td><td>'+r.str+'</td></tr>';
 		}
 		html += '</table>';
 		S('#output').html(html);
-		console.log(relativeTime(60000));
 		</script>
 	</div>
 
 	<!-- FOOTER	-->
 	<div class="row">
 		<footer>
-		&copy; 2018 Aperio Software / AAS
+		&copy; <span class="lastupdatedyear">2019</span> Aperio Software / AAS
 		</footer>
 	</div>
 
+
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
 
 </body>
 </html>
