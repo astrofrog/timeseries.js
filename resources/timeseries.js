@@ -125,35 +125,38 @@
 			'relative': {
 				'title': 'Relative date',
 				'formatLabel': function(val,attr){
-					var sign,s,v,sec,str,inc,i,ds,b,k;
-					sign = (val < 0) ? -1 : 1;
-					val = Math.abs(val);
-					s = val*1;
-					if(val == 0) return {'str':'0'};
-					b = ['y','d','h','m','s','ms'];
-					sec = {
-						'y':86400*365.25,
-						'd':86400,
-						'h':3600,
-						'm':60,
-						's':1,
-						'ms':1/1000
-					};
-					if(val < sec.ms) return {'str':(sign < 0 ? '-':'')+(val/1000)};
+					var typ,sign,v,s,sec,str,i,k,ds,b,bit;
+					typ = typeof val;
+					if(typ=="string" || typ=="number") val = new Big(val);
+					if(val==null) return {'str':''};
+					sign = (val.gte(0)) ? 1 : -1;
+
+					// Keep the absolute value
+					v = val.abs();
+					// A working version of the absolute value
+					s = val.abs();
+
+					b = ['y','d','h','m','s'];
+					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
 					str = '';
-					inc = {};
-					for(i = 0,k=0; i < b.length; i++){
-						k = 0;
-						ds = sec[b[i]];
-						if(s >= ds && s > 0) k = Math.floor(s/ds);
-						if(b[i]=="y" && val >= ds) str += k+'y';
-						if(b[i]=="d" && val >= ds && k > 0) str += (str ? ' ':'')+k+'d';
-						if(b[i]=="h" && val >= sec.m && s > 0){ str += (str ? ' ':'')+zeroPad(k,2)+':'; inc.m = true; }
-						if(b[i]=="m" && inc.m) str += zeroPad(k,2);
-						if(b[i]=="s" && s > 0) str += (val < sec.m ? k : ':'+zeroPad(k,2));
-						if(b[i]=="ms" && s > 0 && k > 0) str += '.'+zeroPad(k,3).replace(/0+$/,"");
-						s -= k*ds;
+					bit = {};
+					for(i = 0; i < b.length; i++){
+						k = b[i];
+						ds = sec[k];
+						bit[k] = Number(s.div(ds).round(0,0));
+						s = s.minus(bit[k]*ds);
 					}
+					if(s.gt(0)){
+						bit.f = s.toString();
+						bit.f = bit.f.substr(bit.f.indexOf("."));
+					}
+					str = '';
+					if(bit.y > 0) str = bit.y+'y';
+					if(bit.d > 0) str += (str ? ' ':'')+bit.d+'d';
+					if(bit.h > 0 || bit.m > 0 || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
+					if(bit.m > 0 || bit.h > 0 || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
+					if(bit.s > 0 || bit.f) str += (bit.m||bit.h||v.gt(sec.d) ? ':':'')+(v.gt(sec.s) ? zeroPad(bit.s,2):bit.s);
+					if(bit.f) str += bit.f;
 					return {'str':(sign < 0 ? '-':'')+str};
 				}
 			},
@@ -1210,44 +1213,50 @@
 	}
 
 	function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; }
-	
-	function looseJsonParse(obj){
-		var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
-		fns += "function timeFormat(t,f){ var d = new Date(t*1000); var micros = ''; var m = (t+'').match(/\\.([0-9]+)/);if(m && m.length==2){ micros = m[1]; } var ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/,zeroPad(d.getUTCMilliseconds(),3)+micros);};";
-		//YES %a - abbreviated weekday name.*
-		//YES %A - full weekday name.*
-		//YES %b - abbreviated month name.*
-		//YES %B - full month name.*
-		// %c - the locale’s date and time, such as %x, %X.*
-		//YES %d - zero-padded day of the month as a decimal number [01,31].
-		// %e - space-padded day of the month as a decimal number [ 1,31]; equivalent to %_d.
-		// %f - microseconds as a decimal number [000000, 999999].
-		// %H - hour (24-hour clock) as a decimal number [00,23].
-		// %I - hour (12-hour clock) as a decimal number [01,12].
-		// %j - day of the year as a decimal number [001,366].
-		// %m - month as a decimal number [01,12].
-		// %M - minute as a decimal number [00,59].
-		//YES %L - milliseconds as a decimal number [000, 999].
-		// %p - either AM or PM.*
-		// %Q - milliseconds since UNIX epoch.
-		// %s - seconds since UNIX epoch.
-		// %S - second as a decimal number [00,61].
-		// %u - Monday-based (ISO 8601) weekday as a decimal number [1,7].
-		// %U - Sunday-based week of the year as a decimal number [00,53].
-		// %V - ISO 8601 week of the year as a decimal number [01, 53].
-		// %w - Sunday-based weekday as a decimal number [0,6].
-		// %W - Monday-based week of the year as a decimal number [00,53].
-		// %x - the locale’s date, such as %-m/%-d/%Y.*
-		// %X - the locale’s time, such as %-I:%M:%S %p.*
-		//YES %y - year without century as a decimal number [00,99].
-		//YES %Y - year with century as a decimal number.
-		// %Z - time zone offset, such as -0700, -07:00, -07, or Z.
-		// %% - a literal percent sign (%).
 
-		// The month is zero-based for compatibility with VEGA
-		// https://vega.github.io/vega/docs/expressions/#datetime
-		fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; }";
-		fns += "function date(d){ return (new Date(d)).getTime()/1000; }";
+	// Build the functions that we are making available to looseJsonParse
+	var fns = "function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; };";
+	fns += "function timeFormat(t,f){ var d,micros,ds,dl,m,ms,ml; d = new Date(t*1000); micros = ''; m = (t+'').match(/\\.[0-9]{3}([0-9]+)/);if(m && m.length==2){ micros = m[1]; }; ds = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; dl = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; ml = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return f.replace(/\%a/g,ds[d.getDay()]).replace(/\%Y/g,d.getFullYear()).replace(/\%a/g,dl[d.getDay()]).replace(/\%b/g,ms[d.getMonth()]).replace(/\%B/g,ml[d.getMonth()]).replace(/\%d/g,(d.getDate().length==1 ? '0':'')+d.getDate()).replace(/\%m/,(d.getMonth()+1)).replace(/\%H/,zeroPad(d.getUTCHours())).replace(/\%M/,zeroPad(d.getUTCMinutes())).replace(/\%S/,zeroPad(d.getUTCSeconds())).replace(/\%L/, (zeroPad(d.getUTCMilliseconds(),3)+micros).replace(/([0-9])0+$/,function(m,p1){ return p1; }));};";
+	//YES %a - abbreviated weekday name.*
+	//YES %A - full weekday name.*
+	//YES %b - abbreviated month name.*
+	//YES %B - full month name.*
+	// %c - the locale’s date and time, such as %x, %X.*
+	//YES %d - zero-padded day of the month as a decimal number [01,31].
+	// %e - space-padded day of the month as a decimal number [ 1,31]; equivalent to %_d.
+	// %f - microseconds as a decimal number [000000, 999999].
+	// %H - hour (24-hour clock) as a decimal number [00,23].
+	// %I - hour (12-hour clock) as a decimal number [01,12].
+	// %j - day of the year as a decimal number [001,366].
+	// %m - month as a decimal number [01,12].
+	// %M - minute as a decimal number [00,59].
+	//YES %L - milliseconds as a decimal number [000, 999].
+	// %p - either AM or PM.*
+	// %Q - milliseconds since UNIX epoch.
+	// %s - seconds since UNIX epoch.
+	// %S - second as a decimal number [00,61].
+	// %u - Monday-based (ISO 8601) weekday as a decimal number [1,7].
+	// %U - Sunday-based week of the year as a decimal number [00,53].
+	// %V - ISO 8601 week of the year as a decimal number [01, 53].
+	// %w - Sunday-based weekday as a decimal number [0,6].
+	// %W - Monday-based week of the year as a decimal number [00,53].
+	// %x - the locale’s date, such as %-m/%-d/%Y.*
+	// %X - the locale’s time, such as %-I:%M:%S %p.*
+	//YES %y - year without century as a decimal number [00,99].
+	//YES %Y - year with century as a decimal number.
+	// %Z - time zone offset, such as -0700, -07:00, -07, or Z.
+	// %% - a literal percent sign (%).
+
+	// The month is zero-based for compatibility with VEGA
+	// https://vega.github.io/vega/docs/expressions/#datetime
+	fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; }";
+	fns += "function date(d){ return (new Date(d)).getTime()/1000; }";
+
+	function looseJsonParse(obj){
+		// If we are using big.js for the value we need to convert any values to a plain-old number here
+		for(var m in datum){
+			if(typeof datum[m]=="object" && datum[m].c && datum[m].c.length > 0) datum[m] = Number(datum[m].valueOf());
+		}
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
 
