@@ -1254,8 +1254,10 @@
 
 	function looseJsonParse(obj){
 		// If we are using big.js for the value we need to convert any values to a plain-old number here
-		for(var m in datum){
-			if(typeof datum[m]=="object" && datum[m].c && datum[m].c.length > 0) datum[m] = Number(datum[m].valueOf());
+		if(typeof datum==="object"){
+			for(var m in datum){
+				if(typeof datum[m]=="object" && datum[m].c && datum[m].c.length > 0) datum[m] = Number(datum[m].valueOf());
+			}
 		}
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
