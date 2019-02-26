@@ -9,6 +9,8 @@
 	<link rel="stylesheet" href="../resources/aas.css">
 	<link rel="stylesheet" href="../resources/style.css">
 	<link rel="stylesheet" href="../resources/timeseries.css">
+	<!-- Big.js -->
+	<script language="javascript" type="text/javascript" src="../resources/big.min.js"></script>
 	<!-- StuQuery for DOM manipulation -->
 	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
 	<!-- Graphing library -->
@@ -46,6 +48,7 @@
 			<!-- Javascript -->
 			<script>
 			var goes;
+			//window.devicePixelRatio = 1.6;
 			S(document).ready(function(){
 
 				goes = TimeSeries.create("data/goes.json",{});
