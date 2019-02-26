@@ -163,7 +163,7 @@
 			'locale': {
 				'title': 'Locale',
 				'formatLabel': function(j){
-					var d = new Date(Math.floor(parseFloat(j)*1000));
+					var d = new Date(Math.floor(Number(j.valueOf())*1000));
 					return {'str':d.toLocaleString()};
 				}
 			},
@@ -171,14 +171,14 @@
 				'title': 'Julian date',
 				'scale': 86400,
 				'formatLabel': function(j){
-					return {'str':formatDate(parseFloat(j),"jd")+''};
+					return {'str':formatDate(Number(j.valueOf()),"jd")+''};
 				}
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
 				'scale': 86400,
 				'formatLabel': function(j){
-					var mjd = formatDate(parseInt(j),"mjd");
+					var mjd = formatDate(Number(j.valueOf()),"mjd");
 					var o = {'str':mjd+''};
 					o.truncated = mjd.toPrecision(this.x.precisionlabel+1);
 					return o;
@@ -188,7 +188,7 @@
 				'title': 'Truncated Julian date',
 				'scale': 86400,
 				'formatLabel': function(j,attr){
-					var tjd = formatDate(parseInt(j),"tjd");
+					var tjd = formatDate(Number(j.valueOf()),"tjd");
 					if(attr.dp > 0) tjd = tjd.toFixed(attr.dp);
 					var o = {'str':tjd+''};
 					return o;

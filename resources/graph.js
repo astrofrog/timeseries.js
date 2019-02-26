@@ -67,7 +67,7 @@
 	else G.min = function(a) { return a.min(); };
 	G.mean = function(a) { return G.sum(a) / a.length; };
 	G.stddev = function(a) { return Math.sqrt(G.variance(a)); };
-	G.log10 = function(v) { return Math.log(v)/2.302585092994046; };
+	G.log10 = function(v) { return (Math.log10 ? Math.log10(v) : Math.log(v)/2.302585092994046); };
 	G.variance = function(a) { var mean = G.mean(a), variance = 0; for (var i = 0; i < a.length; i++) variance += Math.pow(a[i] - mean, 2); return variance / (a.length - 1); };
 	G.deepExtend = function(destination, source) {
 		for(var property in source){
@@ -764,6 +764,7 @@
 			//if(typeof this.options[axes[a]]!=="object") this.options[axes[a]] = {};
 			if(axisdefaults[k]){
 				for(a = 0; a < axes.length; a++){
+					if(!this.options[axes[a]]) this.options[axes[a]] = {};
 					if(typeof this.options[axes[a]][k]!==axisdefaults[k].type) this.options[axes[a]][k] = axisdefaults[k].value[(axisdefaults[k].value.length==axes.length ? a : 0)];
 				}
 			}
@@ -1329,6 +1330,17 @@
 		return this;
 	};
 
+	Graph.prototype.setInc = function(a,inc){
+		if(typeof inc=="number"){
+			this[a].inc = inc;
+			this[a].tinc = new Big(inc);
+		}else{
+			this[a].tinc = inc;
+			this[a].inc = Number(inc.toString());
+		}
+		return this;
+	};
+
 	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
 	Graph.prototype.defineAxis = function(a,min,max){
 
@@ -1350,7 +1362,7 @@
 			this[a].logrange = this[a].logmax-this[a].logmin;
 			this[a].gridmin = this[a].logmin+0;
 			this[a].gridmax = this[a].logmax+0;
-			this[a].inc = 1;
+			this.setInc(a,1);
 			this[a].range = this[a].max-this[a].min;
 			this[a].gridrange = this[a].logrange+0;
 			this.makeTicks(a);
@@ -1358,7 +1370,7 @@
 		}
 		// If we have zero range we need to expand it
 		if(this[a].range < 0){
-			this[a].inc = 0.0;
+			this.setInc(a,0.0);
 			this[a].gridrange = 0.0;
 			return this;
 		}else if(this[a].range == 0){
@@ -1366,7 +1378,7 @@
 			this[a].gridmax = Math.ceil(this[a].max);
 			this[a].min = this[a].gridmin;
 			this[a].max = this[a].gridmax;
-			this[a].inc = 1.0;
+			this.setInc(a,1.0);
 			this[a].range = this[a].max-this[a].min;
 			this[a].gridrange = this[a].gridmax-this[a].gridmin;
 			this.makeTicks(a);
@@ -1390,7 +1402,9 @@
 			// Grid line spacings can range from 1 ms to 10000 years
 			// Use Gregorian year length for calendar display
 			// 31557600000
-			steps = [{'name': 'milliseconds', 'div': 1/1000, 'spacings':[1,2,5,10,20,50,100,200,500]},
+			steps = [{'name': 'nanoseconds', 'div': 1e-9, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'microseconds', 'div': 1e-6, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'milliseconds', 'div': 1e-3, 'spacings':[1,2,5,10,20,50,100,200,500]},
 					{'name': 'seconds','div':1,'spacings':[1,2,5,10,15,20,30]},
 					{'name': 'minutes', 'div':60,'spacings':[1,2,5,10,15,20,30]},
 					{'name': 'hours', 'div':3600,'spacings':[1,2,4,6,12]},
@@ -1402,18 +1416,18 @@
 			for(st = 0; st < steps.length ; st++){
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
 					n = Math.ceil(this[a].range/(steps[st].div*steps[st].spacings[sp]));
-					if(n < 1) continue;
+					if(n < 1 || n > 20) continue;
 					if(!t_div || (n > 3 && n < t_div)){
 						t_div = n;
+						t_inc = (new Big(steps[st].div)).times(steps[st].spacings[sp]);
 						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
-						t_inc = (steps[st].div*steps[st].spacings[sp]);
-						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp]};
+						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'inc':t_inc};
 					}
 				}
 			}
 			// Set the min and max values by rounding the dates
-			t_min = (new Date(roundDate(mn,this[a].datestep.name,this[a].datestep.spacing,{'method':'floor'}))).valueOf()/1000;
-			t_max = (new Date(roundDate(mx,this[a].datestep.name,this[a].datestep.spacing,{'method':'ceil'}))).valueOf()/1000;
+			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'})).valueOf();
+			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'})).valueOf();
 
 		}else{
 			this[a].showAsDate = false;
@@ -1427,7 +1441,7 @@
 
 			// Start off by finding the exact spacing
 			dv = Math.abs(mx - mn) / (this[a].isDate ? 3 : 5);
-		
+
 			// In any given order of magnitude interval, we allow the spacing to be
 			// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
 			// log of the spacing value, then splitting this into the integer and
@@ -1486,12 +1500,13 @@
 			// Round to nearest t_inc (because of precision issues)
 			t_min = Math.round(t_min/t_inc)*t_inc;
 			t_max = Math.round(t_max/t_inc)*t_inc;
+			t_inc = new Big(t_inc);
 		}
 
 		// Set the first/last gridline values as well as the spacing
 		this[a].gridmin = t_min;
 		this[a].gridmax = t_max;
-		this[a].inc = t_inc;
+		this.setInc(a,t_inc);
 		this[a].gridrange = this[a].gridmax-this[a].gridmin;
 		this[a].precision = this[a].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
 
@@ -1501,19 +1516,27 @@
 	};
 
 	Graph.prototype.makeTicks = function(a){
-		var v,mn,mx,l,sci,precision,fmt,i,d;
+		var v,mn,mx,l,sci,precision,fmt,i,d,vmx;
+
 		// Get the min/max tick marks
 		mn = this[a].gridmin;
 		mx = this[a].gridmax;
+		
 		if(this[a].log){
 			mn = Math.floor(mn);
 			mx = Math.ceil(mx);
 		}
+
 		if(isNaN(mn) || isNaN(mx)) return this;
+
+		mn = new Big(mn);
+		mx = new Big(mx);
+
 		this[a].ticks = [];
-		// Because of precision issues we can't rely on exact equality.
-		for(v = mn; v < mx+this[a].inc*0.2; v += this[a].inc){
-			if(this[a].showAsDate) this[a].ticks.push({'value':(roundDate(v,this[a].datestep.name,this[a].datestep.spacing)).valueOf()/1000,'label':''});
+
+		vmx = mx.plus(this[a].tinc.times(0.2));
+		for(v = mn; v.lt(vmx); v = v.plus(this[a].tinc)){
+			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].datestep.inc}),'label':''});
 			else this[a].ticks.push({'value':v,'label':''});
 		}
 
@@ -1528,6 +1551,7 @@
 		function niceDate(d,sp){
 			var hr,mn,sc,dy,mo,yr,n,f,fs;
 			fs = "";
+			if(typeof d==="object") d = Number(d.valueOf());
 			if(typeof d==="number") d *= 1000;
 			(removeRoundingErrors(d)+"").replace(/\.([0-9]+)/,function(m,p1){ fs = p1; });
 			d = new Date((typeof d==="string" ? parseInt(d):d));
@@ -1539,7 +1563,8 @@
 			mo = zeroFill(d.getUTCMonth()+1,2);
 			yr = d.getUTCFullYear();
 			n = sp.name;
-			if(n=="milliseconds") return sc+""+fs;
+			if(n=="microseconds") return sc+""+fs;
+			else if(n=="milliseconds") return sc+""+fs;
 			else if(n=="seconds") return (f >= 1 ? hr+":"+mn+":"+sc : ""+sc+""+fs);
 			else if(n=="minutes") return hr+":"+mn+(d.getUTCSeconds()==0 ? "" : ":"+sc);
 			else if(n=="hours") return hr+":"+mn;
@@ -1553,6 +1578,7 @@
 		// Calculate the number of decimal places for the increment
 		this.sci_hi = 10000;
 		this.sci_lo = 1e-4;
+
 		l = Math.max(Math.abs(mx),Math.abs(mn));
 		sci = (l > this.sci_hi || l < this.sci_lo);
 		// Check if the data range is within our scientific bounds
@@ -1577,7 +1603,9 @@
 		if(this[a].log){
 			// Format labels for log scale
 			for(i = 0; i < this[a].ticks.length; i++){
-				v = Math.pow(10,this[a].ticks[i].value);
+				console.log(this[a].ticks[i].value.valueOf())
+				v = Math.pow(10,Number(this[a].ticks[i].value.valueOf()));
+				console.log(v)
 				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo);
 				fmt = {};
 				if(sci){
@@ -1594,25 +1622,27 @@
 				this[a].ticks[i].label = shortestFormat(fmt);
 			}
 		}else{
+
 			// Format labels for linear scale
 			for(i = 0; i < this[a].ticks.length; i++){
 				v = this[a].ticks[i].value;
 				if(this[a].showAsDate){
-					d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (v).toFixed(precision+3) : niceDate(v,this[a].spacing);
+					// Default date formatting
+					d = (this[a].spacing && this[a].spacing.name=="seconds" && this[a].spacing.fract < 1e-3) ? (Number(v.toString())).toFixed(precision+3) : niceDate(v,this[a].spacing);
 					this[a].ticks[i].label = d;
 				}else{
 					fmt = {};
 					precision = this[a].precision;
 					// Find the differential precision
-					if(v > this.sci_hi || v < this.sci_lo) precision = Math.floor(Math.log10(Math.abs(v))) - Math.floor(Math.log10(Math.abs(this[a].inc)));
+					if(v.gt(this.sci_hi) || v.lt(this.sci_lo)) precision = Math.floor(Math.log10(Number(v.abs().valueOf()))) - Math.floor(Math.log10(Math.abs(this[a].inc)));
 					if(this[a].isDate) precision = 1;
 					if(precision < 1) precision = this[a].precisionlabel;
 					if(sci){
 						if(this[a].isDate) fmt.date = ""+v;
-						else fmt.exp = v.toExponential(precision);
+						else fmt.exp = (Number(v.valueOf())).toExponential();
 					}else{
-						if(this[a].inc > 1) fmt.round = ""+Math.round(v);
-						else fmt.fixed = v.toFixed(precision);
+						if(this[a].inc > 1) fmt.round = ""+v.round(0,1).toString();
+						else fmt.fixed = v.toString();
 					}
 
 					// Bug fix for Javascript rounding issues when the range is big
@@ -1626,24 +1656,24 @@
 		if(!this[a].showAsDate){
 			for(i = 0; i < this[a].ticks.length; i++){
 				// Because of precision issues, use the label to rebuild the value
-				this[a].ticks[i].calcval = this[a].ticks[i].value+0;
+				this[a].ticks[i].calcval = Number(this[a].ticks[i].value.valueOf());
 				this[a].ticks[i].value = parseFloat(this[a].ticks[i].label);
 			}
 		}
+		// If formatLabel is set we use that to format the label
 		for(i = 0; i < this[a].ticks.length; i++){
 			if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
 				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
 				if(o){
 					str = tidy(o.truncated || o.str);
-					//prev = o;
 				}
 				this[a].ticks[i].label = str;
 			}
 		}
+
 		// Final tidy
 		for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].label = tidy(this[a].ticks[i].label);
-
 		// Fix precision issues
 		if(this[a].log){
 			this[a].gridmin = G.log10(this[a].ticks[0].value);
@@ -1652,6 +1682,7 @@
 			this[a].gridmin = this[a].ticks[0].value;
 			this[a].gridmax = this[a].ticks[this[a].ticks.length-1].value;
 		}
+
 		this[a].gridrange = this[a].gridmax - this[a].gridmin;
 
 		return this;
@@ -1739,10 +1770,12 @@
 
 		mn = this.y.gridmin;
 		mx = this.y.gridmax;
+
 		if(this.y.log){
 			mn = Math.ceil(this.y.gridmin);
 			mx = Math.floor(this.y.gridmax);
 		}
+
 		if(this.y.ticks){
 			// Chop down the labels so that the length doesn't oscillate when we're adding decimal places
 			// Loop over and find the length of the decimal portion and length of the integer portion 
@@ -2660,56 +2693,7 @@
 	
 	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
 	
-	function roundDate(s,t,n,attr){
-		var d,d2,df,a,a2,time,f,months,ly,ms;
-		ms = s*1000;
-		if(!attr) attr = {};
-		if(!attr.method) attr.method = "round";
-		time = new Date(ms);
-		d = { 'dow': time.getUTCDay(), 'h': time.getUTCHours(), 'm': time.getUTCMinutes(), 's': (time.getUTCSeconds()+time.getUTCMilliseconds()/1000), 'ms': time.getUTCMilliseconds(), 'dd': time.getUTCDate(), 'mm': time.getUTCMonth(), 'yy': time.getUTCFullYear() };
-		if(!n || n < 1) n = 1;
-		df = 0;
-		ly = false;
-		if(d.yy%4==0) ly = true;
-		if(d.yy%100==0) ly = false;
-		if(d.yy%400==0) ly = true;
-		months = [31,(ly ? 29 : 28),31,30,31,30,31,31,30,31,30,31];
-		// Round to nearest block
-		if(t == "years"){
-			a = d.yy + (d.mm + (d.dd + (d.h+((d.m+(d.s/60))/60))/24)/months[d.mm])/12;
-			a2 = Math[attr.method].call([],a/n)*n;
-			// There is no year zero
-			if(a2 == 0) a2 = 1;
-			d2 = new Date(zeroFill(a2,4)+'-01-01');
-			df = d2-time;
-		}else if(t == "months"){
-			a = d.mm + d.dd/months[d.mm];
-			a2 = (Math[attr.method].call([],a/n)*n + 1);
-			if(a2 > 12){
-				d.yy += Math.floor(a2/12);
-				a2 = a2%12;
-			}
-			d2 = new Date(d.yy+'-'+zeroFill(a2,2)+'-01');
-			df = d2-time;
-		}else if(t == "weeks"){
-			a = (d.dow + (d.h+((d.m+(d.s/60))/60))/24);
-			a2 = Math[attr.method].call([],a/(n*7))*(n*7);
-			f = 86400000;
-			df = Math.round((a2-a)*f);
-		}else{
-			f = 1;
-			if(t == "milliseconds"){ a = d.s*1000; f = 1; }
-			else if(t == "seconds"){ a = d.s; f = 1000; }
-			else if(t == "minutes"){ a = d.m + d.s/60; f = 60000; }
-			else if(t == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600000; }
-			else if(t == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400000; }
-			else{ a = d.s*1000; f = 1; }
-			a2 = Math[attr.method].call([],a/n)*n;
-			df = Math.round((a2-a)*f);
-		}
-		if(df != 0) time = new Date(time.valueOf() + df);
-		return time;
-	}
+
 
 	// Functions to prevent scrolling on mouse wheel events
 	function preventDefault(e) {
@@ -2733,3 +2717,89 @@
 	root.Graph = Graph;
 
 })(window || this);
+
+
+	// Round the date to a suitable place
+	// Inputs:
+	//   s = (big.js number) The date
+	//   attr = {
+	//             'range': 0.5      // time range in seconds
+	//             'inc': 0.2        // the increment size
+	//             'n': 1,           // spacing between ticks in multiples of 'unit'
+	//             'unit': 'years',  // The unit of rounding e.g. "years", "months", "seconds", "decimal"
+	//             'method': 'floor' // the rounding method
+	//          }
+	function roundDate(s,attr){
+		var d,d2,df,a,a2,time,f,months,ly,ms,bits,idx,str,norder;
+		str = s.toString();
+		idx = str.indexOf(".");
+		bits = [str,new Big(0)];
+		if(idx >= 0) bits = [str.substr(0,idx),new Big("0."+str.substr(idx+1,str.length-1))];
+		if(!attr) attr = {};
+		if(!attr.method) attr.method = "round";
+		if(!attr.n || attr.n < 1) attr.n = 1;
+		if(!attr.range) attr.range = 1;
+
+		// If we are in the sub-second range we'll 
+		// just do some simple number-based rounding
+		if(attr.range < 1){
+			a = bits[1].div(attr.inc).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.inc);
+			return (new Big(bits[0])).add(a);
+		}
+
+		// If the range is larger than a second we
+		// want to process this as a date properly
+		ms = Number(bits[0])*1000;
+
+		time = new Date(ms);
+		d = { 'dow': time.getUTCDay(), 'h': time.getUTCHours(), 'm': time.getUTCMinutes(), 's': (time.getUTCSeconds()+time.getUTCMilliseconds()/1000), 'ms': time.getUTCMilliseconds(), 'dd': time.getUTCDate(), 'mm': time.getUTCMonth(), 'yy': time.getUTCFullYear() };
+		df = new Big(0);
+		ly = false;
+		if(d.yy%4==0) ly = true;
+		if(d.yy%100==0) ly = false;
+		if(d.yy%400==0) ly = true;
+		months = [31,(ly ? 29 : 28),31,30,31,30,31,31,30,31,30,31];
+		// Round to nearest block
+		if(attr.unit == "years"){
+			a = d.yy + (d.mm + (d.dd + (d.h+((d.m+(d.s/60))/60))/24)/months[d.mm])/12;
+			a2 = Math[attr.method].call([],a/attr.n)*attr.n;
+			// There is no year zero
+			if(a2 == 0) a2 = 1;
+			d2 = new Date(zeroFill(a2,4)+'-01-01');
+			df = new Big(d2-time);
+		}else if(attr.unit == "months"){
+			a = d.mm + d.dd/months[d.mm];
+			a2 = (Math[attr.method].call([],a/attr.n)*attr.n + 1);
+			if(a2 > 12){
+				d.yy += Math.floor(a2/12);
+				a2 = a2%12;
+			}
+			d2 = new Date(d.yy+'-'+zeroFill(a2,2)+'-01');
+			df = new Big(d2-time);
+		}else if(attr.unit == "weeks"){
+			a = (d.dow + (d.h+((d.m+(d.s/60))/60))/24);
+			a2 = Math[attr.method].call([],a/(attr.n*7))*(attr.n*7);
+			f = 86400000;
+			df = new Big(Math.round((a2-a)*f));
+		}else{
+			f = 1;
+			if(attr.unit == "milliseconds"){ a = d.s*1000; f = 1; }
+			else if(attr.unit == "seconds"){ a = d.s; f = 1000; }
+			else if(attr.unit == "minutes"){ a = d.m + d.s/60; f = 60000; }
+			else if(attr.unit == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600000; }
+			else if(attr.unit == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400000; }
+			else{ a = d.s*1000; f = 1; }
+			
+			a = new Big(a);
+			a2 = a.div(attr.n).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.n);
+			//a2 = Math[attr.method].call([],a/attr.n)*attr.n;
+			df = a.minus(a2).times(f).round(0,1);
+		}
+		// Change the offset into seconds
+		df.e -= 3;
+		// Get the time in integer seconds
+		time = (new Big(bits[0])).minus(df);
+		
+		return time;
+	}
+	
