@@ -3,12 +3,21 @@
 	
 	// First we will include all the useful helper functions
 
+	// Make a copy of the object (to avoid over-writing it)
+	function clone(a){ return JSON.parse(JSON.stringify(a)); }
+	// Remove trailing zeroes after decimal point
+	function clip(a){ return a.replace(/(\.[0-9]+?)0+$/,function(m,p1){return p1;}); }
+
+	// Convert a "#xxxxxx" colour into an "rgb(x,x,x)" or "rgba(x,x,x,x)" colour
+	function hex2rgba(hex,a){
+		var r = parseInt(hex.substr(1,2),16);
+		var g = parseInt(hex.substr(3,2),16);
+		var b = parseInt(hex.substr(5,2),16);
+		return 'rgba('+r+','+g+','+b+(a ? ','+a:'')+')';
+	}
+
 	// Basic wrapper around big.js to avoid problems and add features
 	function Num(v){
-		// Make a copy of the object (to avoid over-writing it)
-		function clone(a){ return JSON.parse(JSON.stringify(a)); }
-		// Remove trailing zeroes after decimal point
-		function clip(a){ return a.replace(/(\.[0-9]+?)0+$/,function(m,p1){return p1;}); }
 		// Create a BigNumber object
 		function N(v){
 			this.type = "Num";
@@ -823,7 +832,7 @@
 				if(format!="string"){
 					// "number", "boolean" or "date"
 					if(format=="number"){
-						v = Num(v);
+						v = parseFloat(v);
 					}else if(format=="date" || format=="utc"){
 						if(v==null || v=="") v = parseFloat(v);
 						else{
@@ -847,10 +856,12 @@
 	}
 
 	Graph.prototype.addDatasets = function(datasets){
+		this.logTime('addDatasets');
 		if(!this.datasets) this.datasets = {};
 		for(var id in datasets){
 			if(!this.datasets[id]) this.datasets[id] = parseData(clone(datasets[id]));
 		}
+		this.logTime('addDatasets');
 		return this;
 	};
 
@@ -1226,21 +1237,6 @@
 			if(is(l[idx],"string")) return l[idx].split(':');
 		}
 		return;
-	}
-
-	// Function to clone a hash otherwise we end up using the same one
-	function clone(hash) {
-		var json = JSON.stringify(hash);
-		var object = JSON.parse(json);
-		return object;
-	}
-
-	// Convert a "#xxxxxx" colour into an "rgb(x,x,x)" or "rgba(x,x,x,x)" colour
-	function hex2rgba(hex,a){
-		var r = parseInt(hex.substr(1,2),16);
-		var g = parseInt(hex.substr(3,2),16);
-		var b = parseInt(hex.substr(5,2),16);
-		return 'rgba('+r+','+g+','+b+(a ? ','+a:'')+')';
 	}
 
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
