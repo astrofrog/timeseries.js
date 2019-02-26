@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.12";
+		this.version = "0.0.13";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
@@ -127,7 +127,7 @@
 				'formatLabel': function(val,attr){
 					var typ,sign,v,s,sec,str,i,k,ds,b,bit;
 					typ = typeof val;
-					if(typ=="string" || typ=="number") val = new Big(val);
+					if(typ=="string" || typ=="number") val = Num(val);
 					if(val==null) return {'str':''};
 					sign = (val.gte(0)) ? 1 : -1;
 
@@ -772,7 +772,7 @@
 	TS.prototype.processDatasets = function(){
 		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
 
-		var id,mark,m,fn,up,ms,n;
+		var id,mark,m,fn,up,ms,n,_obj;
 
 		// Set up the progress object to monitor what we've done for each mark
 		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
@@ -789,7 +789,8 @@
 		}
 
 		this.progress.datasets.old = this.progress.datasets.used;
-		
+
+		_obj = this;		
 		function updateProperties(d,event){
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
@@ -1256,7 +1257,7 @@
 		// If we are using big.js for the value we need to convert any values to a plain-old number here
 		if(typeof datum==="object"){
 			for(var m in datum){
-				if(typeof datum[m]=="object" && datum[m].c && datum[m].c.length > 0) datum[m] = Number(datum[m].valueOf());
+				if(typeof datum[m]=="object" && datum[m].type=="Num") datum[m] = datum[m].toValue();
 			}
 		}
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
