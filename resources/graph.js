@@ -1116,6 +1116,7 @@
 				pos[3] = c.y + sy*(this.y.max-c.y);
 			}
 		}
+
 		// Zoom into a defined region [x1,x2,y1,y2]
 		if(pos.length == 4){
 			if(typeof pos[0]!="number" || typeof pos[1]!="number" || typeof pos[2]!="number" || typeof pos[3]!="number") pos = [];
@@ -1452,14 +1453,16 @@
 				for(sp = 0; sp < steps[st].spacings.length; sp++){
 					n = Math.ceil(this[a].range/(steps[st].div*steps[st].spacings[sp]));
 					if(n < 1 || n > 20) continue;
-					if(!t_div || (n > 3 && n < t_div)){
-						t_div = n;
-						t_inc = Num(steps[st].div).times(steps[st].spacings[sp]);
-						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
-						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'inc':t_inc};
+					else{
+						if(!t_div || (n > 3 && n < t_div)){
+							t_div = n;
+							this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
+							this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'div':steps[st].div};
+						}
 					}
 				}
 			}
+			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
 			// Set the min and max values by rounding the dates
 			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'})).toValue();
 			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'})).toValue();
@@ -1553,7 +1556,7 @@
 
 	Graph.prototype.makeTicks = function(a){
 		var v,mn,mx,l,sci,precision,fmt,i,d,vmx;
-
+		this.logTime('makeTicks');
 		// Get the min/max tick marks
 		mn = this[a].gridmin;
 		mx = this[a].gridmax;
@@ -1570,9 +1573,9 @@
 
 		this[a].ticks = [];
 
-		vmx = mx.plus(this[a].tinc.times(0.2));
-		for(v = mn; v.lt(vmx); v = v.plus(this[a].tinc)){
-			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].datestep.inc}),'label':''});
+		vmx = mx.plus(this[a].tinc.times(0.2)).toValue();
+		for(v = mn; v.toValue() < vmx; v = v.plus(this[a].tinc)){
+			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].tinc}).toValue(),'label':''});
 			else this[a].ticks.push({'value':v,'label':''});
 		}
 
@@ -1721,6 +1724,7 @@
 		}
 
 		this[a].gridrange = this[a].gridmax - this[a].gridmin;
+		this.logTime('makeTicks');
 
 		return this;
 	};
@@ -2754,6 +2758,10 @@
 		// If we are in the sub-second range we'll 
 		// just do some simple number-based rounding
 		if(attr.range < 1){
+			if(!attr.inc){
+				console.log('ERROR','No increment provided');
+				return "";
+			}
 			a = bits[1].div(attr.inc).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.inc);
 			return bits[0].plus(a);
 		}
@@ -2794,7 +2802,10 @@
 			df = Num(Math.round((a-a2)*f)).div(1000);
 		}else{
 			f = 1;
-			if(attr.unit == "seconds"){ a = d.s; f = 1; }
+			if(attr.unit == "nanoseconds"){ a = d.s; f = 1e-9; }
+			else if(attr.unit == "microseconds"){ a = d.s; f = 1e-6; }
+			else if(attr.unit == "milliseconds"){ a = d.s; f = 1e-3; }
+			else if(attr.unit == "seconds"){ a = d.s; f = 1; }
 			else if(attr.unit == "minutes"){ a = d.m + d.s/60; f = 60; }
 			else if(attr.unit == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600; }
 			else if(attr.unit == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400; }
