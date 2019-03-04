@@ -441,6 +441,11 @@
 		this.log('loadDatasets',data);
 		if(!data) return this;
 		this.updateMessage('Loading data...');
+		
+		if(data.length==0){
+			S(this.el).find('.loader').html('&#9888; No data defined');
+			return this;
+		}
 
 		this.datasets = {};
 		var n,f,files,fn,i,j;

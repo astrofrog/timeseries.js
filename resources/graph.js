@@ -2757,7 +2757,7 @@
 
 		// If we are in the sub-second range we'll 
 		// just do some simple number-based rounding
-		if(attr.range < 1){
+		if(attr.range < 2){
 			if(!attr.inc){
 				console.log('ERROR','No increment provided');
 				return "";
