@@ -277,7 +277,7 @@
 		this.canvas.on("mouseup",{me:this}, function(e){ e.data.me.trigger("mouseup",{event:e}); });
 		this.canvas.on("mouseover",{me:this}, function(e){ e.data.me.trigger("mouseover",{event:e}); });
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
-		this.canvasholder.on("wheel",{me:this}, function(e){ e.preventDefault(); e.stopPropagation(); e.data.me.trigger("wheel",{event:e}); });
+		this.canvasholder.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
 			var ongoingTouches = [];
 			function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
@@ -570,7 +570,7 @@
 			// No data (but the alt key is pressed) so we'll start the zoom selection
 			if(g.within(x,y) && g.options.zoomable){
 				g.selectfrom = [x,y];
-				g.selectto = g.selectfrom;
+				g.selectto = clone(g.selectfrom);
 				if(event.altKey) g.selecting = true;
 				else g.panning = true;
 				if(g.coordinates) g.coordinates.css({'display':'none'});
@@ -623,13 +623,16 @@
 			if(g.selecting || g.panning){
 				if(g.within(x,y)){
 					g.selectto = [x,y];
+					var to = clone(g.selectto);
+					var from = clone(g.selectfrom);
+					
 					if(g.options.zoommode == "x"){
-						g.selectfrom[1] = g.getPos("y",g.y.min);
-						g.selectto[1] = g.getPos("y",g.y.max);
+						from[1] = g.getPos("y",g.y.min);
+						to[1] = g.getPos("y",g.y.max);
 					}
 					if(g.options.zoommode == "y"){
-						g.selectfrom[0] = g.getPos("x",g.x.min);
-						g.selectto[0] = g.getPos("x",g.x.max);
+						from[0] = g.getPos("x",g.x.min);
+						to[0] = g.getPos("x",g.x.max);
 					}
 					if(g.selecting){
 						g.canvas.pasteFromClipboard();
@@ -637,11 +640,11 @@
 						// Draw selection rectangle
 						g.canvas.ctx.fillStyle = g.options.grid.colorZoom || 'rgba(0,0,0,0.1)';
 						g.canvas.ctx.lineWidth = g.options.grid.border;
-						g.canvas.ctx.fillRect(g.selectfrom[0]-0.5,g.selectfrom[1]-0.5,g.selectto[0]-g.selectfrom[0],g.selectto[1]-g.selectfrom[1]);
+						g.canvas.ctx.fillRect(from[0]-0.5,from[1]-0.5,to[0]-from[0],to[1]-from[1]);
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(g.selectto[0]-g.selectfrom[0], g.selectto[1]-g.selectfrom[1],{'quick':(g.metrics.draw.av >= g.quicktime)});
+					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],{'quick':(g.metrics.draw.av >= g.quicktime)});
 				}
 			}
 			g.updating = false;
@@ -681,8 +684,10 @@
 				g.selecting = false;
 			}
 			if(g.panning){
+				var dx = event.layerX-g.selectfrom[0];
+				var dy = event.layerY-g.selectfrom[1];
 				// Work out the new range
-				r = g.getDataRange(g.chart.left-g.offset.x, g.chart.left+g.chart.width-g.offset.x, g.chart.top-g.offset.y, g.chart.top+g.chart.height-g.offset.y);
+				r = g.getDataRange(g.chart.left-dx, g.chart.left+g.chart.width-dx, g.chart.top-dy, g.chart.top+g.chart.height-dy);
 				// Reset the offsets
 				g.offset.x = 0;
 				g.offset.y = 0;
@@ -697,10 +702,6 @@
 		}).on("wheel",{me:this,options:options},function(ev){
 			var oe,g,c,co,f,s;
 			oe = ev.event.originalEvent;
-			if(ev.data.options.scrollWheelZoom){
-				oe.preventDefault();
-				oe.stopPropagation();
-			}
 			g = ev.data.me;
 			if(g.wheelid) clearTimeout(g.wheelid);
 			if(!g.updating){
@@ -953,8 +954,8 @@
 		var d,i,j,k,f,max,axes,axis,v,domain;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
-		this.x = G.extend(this.x,{ min: 1e32, max: -1e32, isDate: (this.options.xaxis.type=="time" || this.options.xaxis.type=="utc"), log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
-		this.y = G.extend(this.y,{ min: 1e32, max: -1e32, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
+		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, isDate: (this.options.xaxis.type=="time" || this.options.xaxis.type=="utc"), log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
 		if(this.marks.length <= 0) return this;
 
@@ -1032,6 +1033,16 @@
 			}
 		}
 
+		// Add any initial padding
+		if(this.x.min < 1e100){
+			this.x.min -= this.dataPadding('x',this.x.min);
+			this.x.max += this.dataPadding('x',this.x.min);
+		}
+		if(this.y.min < 1e100){
+			this.y.min -= this.dataPadding('y',this.y.min);
+			this.y.max += this.dataPadding('y',this.y.min);
+		}
+
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;
@@ -1039,6 +1050,7 @@
 		this.y.datamin = this.y.min;
 		this.y.datamax = this.y.max;
 		this.y.datarange = this.y.max-this.y.min;
+
 		this.defineAxis("x");
 		this.defineAxis("y");
 		return this;
@@ -1159,18 +1171,32 @@
 
 		return this;
 	};
+	
+	
+	Graph.prototype.dataPadding = function(t,v){
+		var k = (this[t].log) ? 'log':'';
+		var mn = this[t][k+'min'];
+		var mx = this[t][k+'max'];
+		if(this[t].log){
+			console.log(v,G.log10(v))
+			return 0;
+		}else{
+			var p = (this.options[t+'axis'].padding||0);
+			var dim = (t=="x" ? this.chart.width : this.chart.height);
+			return p*(mx-mn)/(dim-p*2);
+		}
+	};
+		
 	Graph.prototype.getDataRange = function(x1,x2,y1,y2){
 		var c1 = this.pixel2data(x1,y1);
 		var c2 = this.pixel2data(x2,y2);
-		var xlo = (c1.x < c2.x) ? c1.x : c2.x;
-		var xhi = (c1.x < c2.x) ? c2.x : c1.x;
-		var ylo = (c1.y < c2.y) ? c1.y : c2.y;
-		var yhi = (c1.y < c2.y) ? c2.y : c1.y;
-		return [xlo,xhi,ylo,yhi];
+		return [Math.min(c1.x,c2.x),Math.max(c1.x,c2.x),Math.min(c1.y,c2.y),Math.max(c1.y,c2.y)];
 	};
+	
+	// Given an axis (t) and value (c) return the pixel position
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
-		var k,mn,mx,rn,v,p,off,dim;
+		var k,mn,mx,rn,v,off,dim;
 		if(typeof c==="object"){
 			if(!c.scale){
 				if(typeof c==="object" && c.type=="Num"){
@@ -1187,10 +1213,9 @@
 		mn = this[t][k+'min'];
 		mx = this[t][k+'max'];
 		rn = this[t][k+'range'];
-		p = (this.options[t+'axis'].padding||0)+0;
-		off = (t=="x" ? this.chart.left + p : this.chart.bottom + p);
-		dim = (t=="x" ? this.chart.width : this.chart.height) - p*2;
-		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + p + dim*((v-mn)/rn));
+		off = (t=="x" ? this.chart.left : this.chart.bottom);
+		dim = (t=="x" ? this.chart.width : this.chart.height);
+		if(t=="y") return (this.offset[t]||0)+this.options.height-(this.chart.bottom + dim*((v-mn)/rn));
 		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? off + dim*((mx-v)/(rn)) : off + dim*((v-mn)/rn));
 	};
 
@@ -1980,8 +2005,10 @@
 				mn = Math.floor(axis.gridmin);
 				mx = Math.ceil(axis.gridmax);
 			}
+
 			for(var ii = 0; ii < axis.ticks.length; ii++) {
 				i = axis.ticks[ii].value;
+				// Investigate here console.log(d,axis.ticks[ii],this.getPos(d,i))
 				p = this.getPos(d,i);
 				if(!p || !isFinite(p)) continue;
 				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
