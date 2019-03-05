@@ -9,7 +9,6 @@
 	<link rel="stylesheet" href="../resources/aas.css">
 	<link rel="stylesheet" href="../resources/style.css">
 	<link rel="stylesheet" href="../resources/timeseries.css">
-	<!-- StuQuery for DOM manipulation -->
 	<script language="javascript" type="text/javascript" src="../resources/big.min.js"></script>
 	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
 	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
@@ -84,138 +83,171 @@
 
 				var tests = [
 					{
-						'range':{'min':'1000000','max':'1004000'},
-						'output':{'min':1000000,'max':1004000,'inc':1000},
-						'labels':["1000000","1001000","1002000","1003000","1004000"]
+						'text': 'A small range.',
+						'range':{'min':3.1,'max':7.8},
+						'output':{'min':3,'max':8,'inc':1},
+						'labels':["3","4","5","6","7","8"]
 					},{
-						'range':{'min':'1000000','max':'1900000'},
-						'output':{'min':1000000,'max':2000000,'inc':200000},
-						'labels':["1e+6","1.2e+6","1.4e+6","1.6e+6","1.8e+6","2e+6"]
-					},{
+						'text': 'A small range.',
 						'range':{'min':0.91,'max':1.42},
 						'output':{'min':0.9,'max':1.5,'inc':0.1},
 						'labels':["0.9","1","1.1","1.2","1.3","1.4","1.5"]
 					},{
+						'text': 'A small range.',
 						'range':{'min':0.995,'max':1.035},
 						'output':{'min':0.99,'max':1.04,'inc':0.01},
 						'labels':["0.99","1","1.01","1.02","1.03","1.04"]
 					},{
+						'text': 'A range that shouldn\'t trigger scientific notation.',
+						'range':{'min':'1000000','max':'1004000'},
+						'output':{'min':1000000,'max':1004000,'inc':1000},
+						'labels':["1000000","1001000","1002000","1003000","1004000"]
+					},{
+						'text': 'A range that should trigger scientific notation.',
+						'range':{'min':'1000000','max':'1900000'},
+						'output':{'min':1000000,'max':2000000,'inc':200000},
+						'labels':["1e+6","1.2e+6","1.4e+6","1.6e+6","1.8e+6","2e+6"]
+					},{
+						'text': 'A small range.',
 						'range':{'min':5.6881e16,'max':5.701e16},
 						'output':{'min':5.688e+16,'max':5.702e+16,'inc':2e13},
 						'labels':["5.688e+16","5.69e+16","5.692e+16","5.694e+16","5.696e+16","5.698e+16","5.7e+16","5.702e+16"]
 					},{
+						'text': 'A negative range that triggers scientific notation.',
 						'range':{'min':-1071142847431880800,'max':-807611025643724300},
 						'output':{'min':-1.1e18,'max':-8e17,'inc':5e16},
 						'labels':["-1.1e+18","-1.05e+18","-1e+18","-9.5e+17","-9e+17","-8.5e+17","-8e+17"]
 					},{
+						'text': 'A range that triggers scientific notation.',
 						'range':{'min':0.0000001,'max':0.000000145},
 						'output':{'min':1e-7,'max':1.5e-7,'inc':1e-8},
 						'labels':["1e-7","1.1e-7","1.2e-7","1.3e-7","1.4e-7","1.5e-7"]
 					},{
+						'text': 'A range that is entirely negative and in scientific notation.',
 						'range':{'min':-0.000000145,'max':-0.0000001},
 						'output':{'min':-1.5e-7,'max':-1e-7,'inc':1e-8},
 						'labels':["-1.5e-7","-1.4e-7","-1.3e-7","-1.2e-7","-1.1e-7","-1e-7"]
 					},{
+						'text': 'A range that spans zero and should trigger scientific notation.',
 						'range':{'min':-0.000000145,'max':0.0000001},
 						'output':{'min':-1.5e-7,'max':1e-7,'inc':5e-8},
 						'labels':["-1.5e-7","-1e-7","-5e-8","0","5e-8","1e-7"]
 					},{
+						'text': 'Use UNIX seconds but treat them as numbers rather than date labels.',
 						'range':{'min':'1542651740.796','max':'1542651740.811'},
 						'output':{'min':1542651740.796,'max':1542651740.812,'inc':0.002},
 						'labels':["1542651740.796","1542651740.798","1542651740.8","1542651740.802","1542651740.804","1542651740.806","1542651740.808","1542651740.81","1542651740.812"]
 					},{
+						'text': 'Testing large numbers that go from negative to positive through zero.',
 						'range':{'min':-1.456789e15,'max':1.456789e15},
 						'output':{'min':-1.5e15,'max':1.5e15,'inc':5e14},
 						'labels':["-1.5e+15","-1e+15","-5e+14","0","5e+14","1e+15","1.5e+15"]
 					},{
+						'text': 'Less than a tenth of a second.',
 						'range':{'min':'1542651740.796','max':'1542651740.811'},
 						'date': true,
 						'output':{'min':1542651740.795,'max':1542651740.815,'inc':0.005},
 						'labels':["20.795","20.8","20.805","20.81","20.815"]
 					},{
+						'text': 'A few minutes.',
 						'range':{'min':'1542651740.796','max':'1542651940.811'},
 						'date': true,
 						'output':{'min':1542651720.000,'max':1542651960.000,'inc':60},
 						'labels':["18:22","18:23","18:24","18:25","18:26"]
 					},{
+						'text': 'Over 10 seconds.',
 						'range':{'min':'1540821198','max':'1540821208.7'},
 						'date': true,
 						'output':{'min':1540821198.000,'max':1540821210.000,'inc':2},
 						'labels':["13:53:18","13:53:20","13:53:22","13:53:24","13:53:26","13:53:28","13:53:30"]
 					},{
+						'text': 'A day and a quarter.',
 						'range':{'min':'1542651740.796','max':'1542751740.811'},
 						'date': true,
 						'output':{'min':1542650400.000,'max':1542758400.000,'inc':21600},
 						'labels':["18:00","00:00","06:00","12:00","18:00","00:00"]
 					},{
+						'text': 'A time range of two weeks.',
 						'range':{'min':'1542651740.796','max':'1543651740.811'},
 						'date': true,
 						'output':{'min':1542499200,'max':1543708800,'inc':172800},
 						'labels':["2018-11-18","2018-11-20","2018-11-22","2018-11-24","2018-11-26","2018-11-28","2018-11-30","2018-12-02"]
 					},{
+						'text': 'A time range of a few years.',
 						'range':{'min':'1542651740.796','max':'1642651740.811'},
 						'date': true,
 						'output':{'min':1514764800,'max':1672531200,'inc':31556952},
 						'labels':["2018","2019","2020","2021","2022","2023"]
 					},{
+						'text': 'A time range of a few decades',
 						'range':{'min':'1542651740.796','max':'2542651740.811'},
 						'date': true,
 						'output':{'min':1262304000,'max':2840140800,'inc':315569520},
 						'labels':["2010","2020","2030","2040","2050","2060"]
 					},{
+						'text': 'A time range of over 300 years.',
 						'range':{'min':'1542651740.796','max':'11542651740.811'},
 						'date': true,
 						'output':{'min':946684800,'max':13569465600,'inc':3155695200},
 						'labels':["2000","2100","2200","2300","2400"]
 					},{
+						'text': 'A time range of over 3000 years.',
+						'range':{'min':'1542651740.796','max':'96213464540.796'},
+						'date': true,
+						'output':{'min':946684800,'max':111396038400,'inc':15778476000},
+						'labels':["2000","2500","3000","3500","4000","4500","5000","5500"]
+					},{
+						'text': 'Testing Julian Date across nearly 11 seconds',
 						'range':{'min':'1540821198','max':'1540821208.8'},
 						'date': true,
 						'dateformat':'jd',
 						'output':{'min':1540821195.360,'max':1540821212.640,'inc':4.320},
 						'labels':["2458421.07865","2458421.0787","2458421.07875","2458421.0788","2458421.07885"]
 					},{
+						'text': 'Testing Modified Julian Date across two-thirds of a day.',
 						'range':{'min':'1540799726.830911','max':'1540855448.0109622'},
 						'date': true,
 						'dateformat':'mjd',
 						'output':{'min':1540788480,'max':1540857600,'inc':17280},
 						'labels':["58420.2","58420.4","58420.6","58420.8","58421"]
 					},{
+						'text': 'Testing Modified Julian Date across 30 seconds.',
 						'range':{'min':'1540821194.0755989','max':'1540821214.8048894'},
 						'date': true,
 						'dateformat':'mjd',
 						'output':{'min':1540821191.04,'max':1540821216.96 ,'inc':8.64},
 						'labels':["58420.5786","58420.5787","58420.5788","58420.5789"]
 					},{
+						'text': 'Testing Modified Julian Date across a couple of hours.',
 						'range':{'min':'1540818628.7870164','max':'1540825233.4494124'},
 						'date': true,
 						'dateformat':'mjd',
 						'output':{'min':1540817856,'max':1540826496,'inc':1728},
 						'labels':["58420.54","58420.56","58420.58","58420.6","58420.62","58420.64"]
 					},{
+						'text': 'Testing second-scale range when the format is Truncated Julian Date.',
 						'range':{'min':'1540821199.5099182','max':'1540821206.1184883'},
 						'date': true,
 						'dateformat':'tjd',
 						'output':{'min':1540821197.952,'max':1540821206.592,'inc':1.728},
 						'labels':["18420.57868","18420.5787","18420.57872","18420.57874","18420.57876","18420.57878"]
 					},{
+						'text': '',
 						'range':{'min':'1540821198.567','max':'1540821198.667'},
 						'date': true,
-						'output':{'min':1540821198.000,'max':1540821210.000,'inc':0.02},
+						'output':{'min':1540821198.56,'max':1540821198.68,'inc':0.02},
 						'labels':["18.56","18.58","18.6","18.62","18.64","18.66","18.68"]
 					},{
+						'text': 'Testing a millisecond-scale range. These would just be possible with the Javascript Date object.',
 						'range':{'min':'1540821198.501','max':'1540821198.508'},
 						'date': true,
 						'output':{'min':1540821198.500,'max':1540821198.508,'inc':0.002},
 						'labels':["18.5","18.502","18.504","18.506","18.508"]
 					},{
-						'range':{'min':'1540821198.50001','max':'1540821198.50008'},
-						'date': true,
-						'output':{'min':1540821198.5,'max':1540821198.50008,'inc':0.00002},
-						'labels':["18.5","18.50002","18.50004","18.50006","18.50008"]
-					},{
+						'text': 'Testing a micro-second-scale range. These are not possible with the Javascript Data object.',
 						'range':{'min':'1540821198.000001','max':'1540821198.000003'},
 						'date': true,
-						'output':{'min':1540821198.5,'max':1540821198.50008,'inc':0.0000005},
+						'output':{'min':1540821198.000001,'max':1540821198.000003,'inc':0.0000005},
 						'labels':["18.000001","18.0000015","18.000002","18.0000025","18.000003"]
 					}
 				];
@@ -301,7 +333,7 @@
 
 					good += score.ok;
 					ntest = score.ok + score.partial + score.bad;
-					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3><p>Data range is <dfn title="'+asDate(tests[t].range.min,output.isDate)+'">'+tests[t].range.min+'</dfn> &rarr; <dfn title="'+asDate(tests[t].range.max,output.isDate)+'">'+tests[t].range.max+'</dfn> which becomes <span class="'+getClass('min')+'" title="'+asDate(output.min,output.isDate)+'">'+output.min+'</span>'+(compare.min ? '' :' (expecting <dfn title="'+asDate(tests[t].output.min,output.isDate)+'">'+tests[t].output.min+'</span>)')+' &rarr; <span class="'+getClass('max')+'">'+output.max+'</span>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>'+(output.isDate ? ' and the date format is <code>'+fmt.title+'</code>':'')+'.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
+					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3>'+(tests[t].text ? '<p>'+tests[t].text+'</p>' : '')+'<p>Data range is <dfn title="'+asDate(tests[t].range.min,output.isDate)+'">'+tests[t].range.min+'</dfn> &rarr; <dfn title="'+asDate(tests[t].range.max,output.isDate)+'">'+tests[t].range.max+'</dfn> which becomes <dfn class="'+getClass('min')+'" title="'+asDate(output.min,output.isDate)+'">'+output.min+'</dfn>'+(compare.min ? '' :' (expecting <dfn title="'+asDate(tests[t].output.min,output.isDate)+'">'+tests[t].output.min+'</span>)')+' &rarr; <dfn class="'+getClass('max')+'" title="'+asDate(output.max,output.isDate)+'">'+output.max+'</dfn>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>'+(output.isDate ? ' and the date format is <code>'+fmt.title+'</code>':'')+'.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
 					if(errs.length > 0){
 						o += '<h4>Errors</h4><ul class="errors">';
 						for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
