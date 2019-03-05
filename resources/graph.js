@@ -1006,7 +1006,7 @@
 									this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
 								}
 							}else{
-								console.log('no marks');
+								this.log('no marks');
 							}
 						}
 					}
@@ -1025,7 +1025,7 @@
 								this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
 							}
 						}else{
-							console.log('no marks');
+							this.log('no marks');
 						}
 					}
 				}
@@ -1464,11 +1464,10 @@
 			}
 			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
 			// Set the min and max values by rounding the dates
-			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'})).toValue();
-			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'})).toValue();
+			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'}));
+			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'}));
 
 		}else{
-		
 			this[a].showAsDate = false;
 			this[a].spacing = null;
 
@@ -1540,6 +1539,7 @@
 			t_min = Num(t_min).div(t_inc).round(0,0).times(t_inc).toValue();
 			t_max = Num(t_max).div(t_inc).round(0,0).times(t_inc).toValue();
 			t_inc = Num(t_inc);
+
 		}
 
 		// Set the first/last gridline values as well as the spacing
@@ -1574,13 +1574,13 @@
 		this[a].ticks = [];
 
 		vmx = mx.plus(this[a].tinc.times(0.2)).toValue();
-		for(v = mn; v.toValue() < vmx; v = v.plus(this[a].tinc)){
-			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].tinc}).toValue(),'label':''});
+		for(v = mn; v.toValue() <= vmx; v = v.plus(this[a].tinc)){
+			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].tinc}),'label':''});
 			else this[a].ticks.push({'value':v,'label':''});
 		}
 
 		if(this[a].ticks.length == 0){
-			console.log('no ticks');
+			this.log('WARNING','No ticks');
 			return this;
 		}
 		mn = this[a].ticks[0].value;
@@ -1697,7 +1697,7 @@
 			for(i = 0; i < this[a].ticks.length; i++){
 				// Because of precision issues, use the label to rebuild the value
 				this[a].ticks[i].calcval = this[a].ticks[i].value.toValue();
-				this[a].ticks[i].value = parseFloat(this[a].ticks[i].label);
+				this[a].ticks[i].value = (typeof this[a].ticks[i].calcval==="number") ? this[a].ticks[i].calcval : parseFloat(this[a].ticks[i].label);
 			}
 		}
 		// If formatLabel is set we use that to format the label
@@ -1705,9 +1705,7 @@
 			if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
 				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
-				if(o){
-					str = tidy(o.truncated || o.str);
-				}
+				if(o) str = tidy(o.truncated || o.str);
 				this[a].ticks[i].label = str;
 			}
 		}
