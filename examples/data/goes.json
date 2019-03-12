@@ -28,7 +28,7 @@
 		"type": "log",
 		"range": "height",
 		"zero": false,
-		"domain": {"data": "lightcurve", "fields": ["xrsa","xrsb"]}
+		"domain": [1e-9,1e-2]
 	}],
 	"axes": [
 		{
