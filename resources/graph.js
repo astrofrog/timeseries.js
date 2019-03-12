@@ -1178,7 +1178,7 @@
 		var mn = this[t][k+'min'];
 		var mx = this[t][k+'max'];
 		if(this[t].log){
-			console.log(v,G.log10(v))
+			console.log(v,G.log10(v),'need to work out padding')
 			return 0;
 		}else{
 			var p = (this.options[t+'axis'].padding||0);
@@ -1580,7 +1580,7 @@
 	};
 
 	Graph.prototype.makeTicks = function(a){
-		var v,mn,mx,l,sci,precision,fmt,i,d,vmx;
+		var v,mn,mx,l,sci,precision,fmt,i,d,vmx,calcval;
 		this.logTime('makeTicks');
 		// Get the min/max tick marks
 		mn = this[a].gridmin;
@@ -1721,8 +1721,8 @@
 		if(!this[a].showAsDate){
 			for(i = 0; i < this[a].ticks.length; i++){
 				// Because of precision issues, use the label to rebuild the value
-				this[a].ticks[i].calcval = this[a].ticks[i].value.toValue();
-				this[a].ticks[i].value = (typeof this[a].ticks[i].calcval==="number") ? this[a].ticks[i].calcval : parseFloat(this[a].ticks[i].label);
+				calcval = this[a].ticks[i].value.toValue();
+				this[a].ticks[i].value = (typeof calcval==="number") ? calcval : parseFloat(this[a].ticks[i].label);
 			}
 		}
 		// If formatLabel is set we use that to format the label
@@ -1739,6 +1739,8 @@
 		for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].label = tidy(this[a].ticks[i].label);
 		// Fix precision issues
 		if(this[a].log){
+			// Update all the values for the log scale
+			for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].value = Math.pow(10,this[a].ticks[i].value);
 			this[a].gridmin = G.log10(this[a].ticks[0].value);
 			this[a].gridmax = G.log10(this[a].ticks[this[a].ticks.length-1].value);
 		}else{
