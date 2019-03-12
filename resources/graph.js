@@ -1033,16 +1033,6 @@
 			}
 		}
 
-		// Add any initial padding
-		if(this.x.min < 1e100){
-			this.x.min -= this.dataPadding('x',this.x.min);
-			this.x.max += this.dataPadding('x',this.x.min);
-		}
-		if(this.y.min < 1e100){
-			this.y.min -= this.dataPadding('y',this.y.min);
-			this.y.max += this.dataPadding('y',this.y.min);
-		}
-
 		// Keep a record of the data min/max
 		this.x.datamin = this.x.min;
 		this.x.datamax = this.x.max;
@@ -1172,19 +1162,36 @@
 		return this;
 	};
 	
-	
-	Graph.prototype.dataPadding = function(t,v){
-		var k = (this[t].log) ? 'log':'';
-		var mn = this[t][k+'min'];
-		var mx = this[t][k+'max'];
+	Graph.prototype.addAxisPadding = function(t){
+
+		this[t].range = this[t].max - this[t].min;
+
+		// First we need to calculate the log min/max/range
 		if(this[t].log){
-			console.log(v,G.log10(v),'need to work out padding')
-			return 0;
-		}else{
-			var p = (this.options[t+'axis'].padding||0);
-			var dim = (t=="x" ? this.chart.width : this.chart.height);
-			return p*(mx-mn)/(dim-p*2);
+			// Adjust the low and high values for log scale
+			this[t].logmax = G.log10(this[t].max);
+			this[t].logmin = (this[t].min <= 0) ? this[t].logmax-2 : G.log10(this[t].min);
+			this[t].logrange = this[t].logmax-this[t].logmin;
 		}
+
+		if(this[t].min < 1e100){
+			var p = (this.options[t+'axis'].padding||0);
+			// Work out the number of pixels for the chart dimension e.g. width - padding*2
+			var dim = (t=="x" ? this.chart.width : this.chart.height)-(p*2);
+			// Work out the data range to add/subtract
+			var d = p*this[t][(this[t].log ? 'log':'')+'range']/dim;
+			if(this[t].log){
+				this[t].logmin -= d;
+				this[t].logmax += d;
+				this[t].min = Math.pow(10,this[t].logmin);
+				this[t].max = Math.pow(10,this[t].logmax);
+			}else{
+				this[t].min -= d;
+				this[t].max += d;
+			}
+			this[t].range = this[t].max - this[t].min;
+		}
+		return this;
 	};
 		
 	Graph.prototype.getDataRange = function(x1,x2,y1,y2){
@@ -1409,11 +1416,10 @@
 		if(typeof a != "string" || (a != "x" && a != "y")) return this;
 
 		// Set the min/max if provided
-		if(typeof max=="number") this[a].max = max;
-		if(typeof min=="number") this[a].min = min;
-		// Set the range of the data
-		this[a].range = this[a].max - this[a].min;
-		this[a].ticks = [];
+		if(typeof max=="number" && typeof min=="number"){
+			this[a].max = max;
+			this[a].min = min;
+		}else this.addAxisPadding(a);
 
 		// Sort out what to do for log scales
 		if(this[a].log){
@@ -1421,6 +1427,14 @@
 			this[a].logmax = G.log10(this[a].max);
 			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : G.log10(this[a].min);
 			this[a].logrange = this[a].logmax-this[a].logmin;
+		}
+
+		// Set the range of the data
+		this[a].range = this[a].max - this[a].min;
+		this[a].ticks = [];
+
+		// Sort out what to do for log scales
+		if(this[a].log){
 			this[a].gridmin = this[a].logmin+0;
 			this[a].gridmax = this[a].logmax+0;
 			this.setInc(a,1);
