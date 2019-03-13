@@ -143,7 +143,6 @@
 						max = s;
 					}
 					if(typeof max.toValue==="function") max = max.toValue();
-					console.log('test',s,max)
 
 					b = ['y','d','h','m','s'];
 					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
