@@ -4,7 +4,8 @@
 	"height": 350,
 	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
-	"_date": "relative",
+	"_xtype": "date",
+	"_xformat": "default",
 	"_views": [{
 		"name": "zoom",
 		"title": "Zoomed view",
@@ -142,8 +143,7 @@
 			"update": {
 				"stroke": {"value": "#999999"},
 				"fill": {"value": "#000000"},
-				"fillOpacity": {"value": 0.1},
-				"zindex": {"value": 0}
+				"fillOpacity": {"value": 0.1}
 			},
 			"hover": {
 				"fill": {"value": "#0DBC37"},
@@ -164,8 +164,7 @@
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
-				"stroke": {"value": "#396bad"},
-				"zindex": {"value": 0}
+				"stroke": {"value": "#396bad"}
 			},
 			"hover": {
 				"stroke": {"value": "#0DBC37"},
