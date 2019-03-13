@@ -1,0 +1,217 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 600,
+	"height": 400,
+	"padding": 0,
+	"autosize": {
+		"type": "fit",
+		"resize": false
+	},
+	"description": "The default view of the data with points ordered by time",
+	"_views": [{
+		"name": "astime",
+		"title": "By phase",
+		"description": "The data shown by phase",
+		"axes": [{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "Phase"
+		}, {
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Intensity"
+		}],
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"padding": 0,
+			"domain": [0,1]
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"padding": 18
+		}],
+		"markers": [{"name":"thing","visible":true},{"name":"thingerror","visible":true}]
+	}],
+	"data": [{
+		"name": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e",
+		"format": {
+			"type": "csv",
+			"parse": {
+				"time": "date",
+				"phase": "number",
+				"flux": "number",
+				"error": "number",
+				"flux_lo": "number",
+				"flux_hi": "number"
+			}
+		},
+		"url": "phase.csv"
+	}],
+	"marks": [{
+		"type": "line",
+		"name": "ad1fbdac-adb4-4ff1-a551-73da61816f21",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": {
+					"scale": "xscale",
+					"field": "time"
+				},
+				"y": {
+					"scale": "yscale",
+					"field": "flux"
+				},
+				"stroke": {
+					"value": "#000000"
+				},
+				"strokeOpacity": {
+					"value": 1
+				},
+				"strokeWidth": {
+					"value": 1
+				}
+			}
+		}
+	},{
+		"type": "rect",
+		"name": "thingtimeerror",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "time"},
+				"y": {"scale": "yscale", "field": "flux_lo"},
+				"y2": {"scale": "yscale", "field": "flux_hi"},
+				"stroke": { "value": "#000000" },
+				"strokeOpacity": { "value": 1 },
+				"strokeWidth": { "value": 1 }
+			},
+			"update": {
+				"fillOpacity": {"value": 0.5},
+				"fill": {"value": "#FF7F00"},
+				"zindex": {"value": 0},
+				"width": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "thingtime",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "time" },
+				"y": { "scale": "yscale", "field": "flux" },
+				"stroke": { "value": "#000000" },
+				"strokeOpacity": { "value": 1 },
+				"strokeWidth": { "value": 1 }
+			},
+			"update": {
+				"shape": { "value": "circle" },
+				"size": { "value": 30 },
+				"fill": { "value": "#ff8200" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
+			}
+		}
+	}],
+	"_extramarks": [{
+		"type": "rect",
+		"name": "thingerror",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "phase"},
+				"y": {"scale": "yscale", "field": "flux_lo"},
+				"y2": {"scale": "yscale", "field": "flux_hi"},
+				"stroke": { "value": "#000000" },
+				"strokeOpacity": { "value": 1 },
+				"strokeWidth": { "value": 1 }
+			},
+			"update": {
+				"fillOpacity": {"value": 0.5},
+				"fill": { "value": "#ff8200" },
+				"zindex": {"value": 0},
+				"width": {"value": 1}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1},
+				"fill": { "value": "#ff8200" },
+				"width": {"value":2},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "thing",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "phase" },
+				"y": { "scale": "yscale", "field": "flux" },
+				"stroke": { "value": "#000000" },
+				"strokeOpacity": { "value": 1 },
+				"strokeWidth": { "value": 1 }
+			},
+			"update": {
+				"shape": { "value": "circle" },
+				"size": { "value": 30 },
+				"fill": { "value": "#ff8200" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 100 },
+				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
+			}
+		}
+	}],
+	"scales": [{
+		"name": "xscale",
+		"type": "utc",
+		"range": "width",
+		"padding": 36,
+		"zero": false,
+		"domain": {"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e", "field": "time"}
+	},{
+		"name": "yscale",
+		"type": "linear",
+		"range": "height",
+		"padding": 36,
+		"zero": false
+	}],
+	"axes": [{
+		"orient": "bottom",
+		"scale": "xscale",
+		"title": "Time"
+	}, {
+		"orient": "left",
+		"scale": "yscale",
+		"title": "Intensity"
+	}]
+}
