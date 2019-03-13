@@ -15,7 +15,7 @@
 		"name": "asphase",
 		"title": "By phase",
 		"description": "The data shown by phase",
-		"_xtype": "number",
+		"_xtype": "phase",
 		"axes": [{
 			"orient": "bottom",
 			"scale": "xscale",
