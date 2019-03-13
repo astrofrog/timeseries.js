@@ -692,6 +692,7 @@
 							if(typeof view.scales[s].type!=="undefined") o[axis].type = view.scales[s].type;
 							if(typeof view.scales[s].padding!=="undefined") o[axis].padding = view.scales[s].padding;
 						}
+						
 						if(view.scales[s].range || j._views[0].scales[s].range){
 							o[axis].range = clone(view.scales[s].range || j._views[0].scales[s].range);
 						}
@@ -703,6 +704,11 @@
 						}
 					}
 				}
+			}
+			if(view.axes){
+				axis = (j.axes[a].orient=="left" ? "yaxis":"xaxis");
+				// Set the title of the axis
+				o[axis].title = (typeof view.axes[a].title!=="undefined" ? view.axes[a].title:"");
 			}
 		}
 		// Set the options
@@ -721,7 +727,9 @@
 				}
 			}
 		}
+		
 		this.updateLayerMenu();
+		this.updateOptionMenu();
 		g.updateData();
 		el = g.canvas.container.find('.views');
 		lis = el.find('li');
@@ -771,6 +779,13 @@
 				});
 			}
 		}
+		return this;
+	};
+	
+	TS.prototype.updateOptionMenu = function(){
+		var el = S(this.el);
+		var id = el.attr('id');
+		el.find('#'+id+'_dateformat').parent().css({'display':(this.graph.x.isDate ? '' : 'none')});
 		return this;
 	};
 
@@ -829,7 +844,7 @@
 					if(event[p].signal){
 						to = dest[p] || "data";
 						if(typeof d[to][p]==="undefined") d[to][p] = {};
-						try { d[to][p].value = looseJsonParse(event[p].signal); }
+						try { d[to][p].value = looseJsonParse(event[p].signal,datum); }
 						catch(e) { _obj.log('Error',d.data,event[p]); }
 						// If we now have an object we build a string
 						if(p=="tooltip"){
@@ -968,7 +983,7 @@
 			if(this.json._views[i].name=="default") addeddefault = true;
 		}
 		if(!addeddefault){
-			view = {'name':'default','title':'Default','description':'The initial view','markers':[],'scales':clone(this.json.scales)};
+			view = {'name':'default','title':'Default','description':(this.json.description || 'The initial view'),'markers':[],'scales':clone(this.json.scales),'axes':clone(this.json.axes)};
 			for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
 			this.json._views.unshift(view);
 		}
@@ -976,6 +991,7 @@
 		// Build the menus
 		this.updateLayerMenu();
 		this.updateViewMenu();
+		this.updateOptionMenu();
 
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
@@ -1258,11 +1274,13 @@
 	fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; }";
 	fns += "function date(d){ return (new Date(d)).getTime()/1000; }";
 
-	function looseJsonParse(obj){
+	function looseJsonParse(obj,datum){
 		// If we are using big.js for the value we need to convert any values to a plain-old number here
 		if(typeof datum==="object"){
 			for(var m in datum){
-				if(typeof datum[m]=="object" && datum[m].type=="Num") datum[m] = datum[m].toValue();
+				if(typeof datum[m]=="object" && datum[m].type=="Num"){
+					datum[m] = (typeof datum[m].toValue==="function") ? datum[m].toValue() : datum[m].v;
+				}
 			}
 		}
 		return Function('"use strict";'+fns+' return (' + obj + ')')();

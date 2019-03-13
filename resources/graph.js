@@ -16,13 +16,16 @@
 		return 'rgba('+r+','+g+','+b+(a ? ','+a:'')+')';
 	}
 
+	var hasbig = false;
+	if(typeof Big==="function") hasbig = true;
+
 	// Basic wrapper around big.js to avoid problems and add features
 	function Num(v){
 		// Create a BigNumber object
 		function N(v){
 			this.type = "Num";
 			this.o = v;
-			this.v = new Big(v==null ? 0 : v);
+			this.v = (hasbig ? new Big(v==null ? 0 : v) : parseFloat(v));
 			this.toValue = function(){ return Number(this.v.toString()); }
 			this.toString = function(){ return clip(typeof this.o=="string" ? this.o : this.o.toString()); }
 			this.toExponential = function(dp){ return this.v.toExponential(dp); }
