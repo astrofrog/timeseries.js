@@ -136,8 +136,14 @@
 					v = val.abs();
 					// A working version of the absolute value
 					s = val.abs();
-					// Get the maximum tick value (to make formatting consistent)
-					max = Math.abs(attr.ticks[attr.ticks.length-1].value);
+					if(attr){
+						// Get the maximum tick value (to make formatting consistent)
+						max = Math.abs(attr.ticks[attr.ticks.length-1].value);
+					}else{
+						max = s;
+					}
+					if(typeof max.toValue==="function") max = max.toValue();
+					console.log('test',s,max)
 
 					b = ['y','d','h','m','s'];
 					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
@@ -154,11 +160,11 @@
 						bit.f = bit.f.substr(bit.f.indexOf("."));
 					}
 					str = '';
-					if(max > sec.y) str = bit.y+'y';
-					if(max > sec.d) str += (str ? ' ':'')+bit.d+'d';
-					if(max > sec.h || max > sec.m || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
-					if(max > sec.m || max > sec.h || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
-					if(max > sec.s || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
+					if(bit.y > 0) str = bit.y+'y';
+					if(bit.d > 0) str += (str ? ' ':'')+bit.d+'d';
+					if(bit.h > 0 || bit.m > 0 || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
+					if(bit.m > 0 || bit.h > 0 || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
+					if(bit.s > 0 || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
 					if(bit.f) str += bit.f;
 					return {'str':(sign < 0 ? '-':'')+str};
 				},
