@@ -54,21 +54,24 @@
 				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
 
 				this.log('loading data',f);
+				var _obj = attr['this'];
 				// Now grab the data
 				S().ajax(f,{
 					"dataType": "text",
 					"this": this,
 					"file": f,
 					"success": function(d,attr){
+						_obj.updateMessage('Loaded data...');
 						// Remove extra newlines at the end
 						d = d.replace(/[\n\r]$/,"");
-
 						var cb = this.load.data.files[attr.file].callbacks;
 						this.log('CALLBACKS',attr.file,cb);
+						_obj.updateMessage('Finished loading data');
 						for(var i = 0; i < cb.length; i++){
 							// Set original context dataset data
 							this.load.data.files[cb[i].attr.file].data = d;
 							this.load.data.files[cb[i].attr.file].loaded = true;
+							
 
 							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr['this'],this.load.data.files[cb[i].attr.file].data,cb[i].attr);
 						}
