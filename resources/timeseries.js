@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.13";
+		this.version = "0.0.14";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
