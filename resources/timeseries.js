@@ -120,12 +120,13 @@
 		};
 		this.dateformats = {
 			'default': {
-				'title': 'Default'
+				'title': 'Default',
+				'available': true
 			},
 			'relative': {
 				'title': 'Relative date',
 				'formatLabel': function(val,attr){
-					var typ,sign,v,s,sec,str,i,k,ds,b,bit;
+					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
 					typ = typeof val;
 					if(typ=="string" || typ=="number") val = Num(val);
 					if(val==null) return {'str':''};
@@ -135,6 +136,8 @@
 					v = val.abs();
 					// A working version of the absolute value
 					s = val.abs();
+					// Get the maximum tick value (to make formatting consistent)
+					max = Math.abs(attr.ticks[attr.ticks.length-1].value);
 
 					b = ['y','d','h','m','s'];
 					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
@@ -151,28 +154,31 @@
 						bit.f = bit.f.substr(bit.f.indexOf("."));
 					}
 					str = '';
-					if(bit.y > 0) str = bit.y+'y';
-					if(bit.d > 0) str += (str ? ' ':'')+bit.d+'d';
-					if(bit.h > 0 || bit.m > 0 || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
-					if(bit.m > 0 || bit.h > 0 || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
-					if(bit.s > 0 || bit.f) str += (bit.m||bit.h||v.gt(sec.d) ? ':':'')+(v.gt(sec.s) ? zeroPad(bit.s,2):bit.s);
+					if(max > sec.y) str = bit.y+'y';
+					if(max > sec.d) str += (str ? ' ':'')+bit.d+'d';
+					if(max > sec.h || max > sec.m || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
+					if(max > sec.m || max > sec.h || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
+					if(max > sec.s || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
 					if(bit.f) str += bit.f;
 					return {'str':(sign < 0 ? '-':'')+str};
-				}
+				},
+				'available': true
 			},
 			'locale': {
 				'title': 'Locale',
 				'formatLabel': function(j){
 					var d = new Date(Math.floor(Number(j.valueOf())*1000));
 					return {'str':d.toLocaleString()};
-				}
+				},
+				'available': true
 			},
 			'jd': {
 				'title': 'Julian date',
 				'scale': 86400,
 				'formatLabel': function(j){
 					return {'str':formatDate(Number(j.valueOf()),"jd")+''};
-				}
+				},
+				'available': true
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
@@ -182,7 +188,8 @@
 					var o = {'str':mjd+''};
 					o.truncated = mjd.toPrecision(this.x.precisionlabel+1);
 					return o;
-				}
+				},
+				'available': true
 			},
 			'tjd': {
 				'title': 'Truncated Julian date',
@@ -192,7 +199,8 @@
 					if(attr.dp > 0) tjd = tjd.toFixed(attr.dp);
 					var o = {'str':tjd+''};
 					return o;
-				}
+				},
+				'available': true
 			}
 		};
 		this.datasets = [];
@@ -414,24 +422,6 @@
 				var cls = me.attr('data');
 				me.addClass('on');
 				e.data.el.find('.menu-panel.'+cls).addClass('on');
-			});
-
-			// Build date selector
-			html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
-			for(k in this.dateformats){
-				if(this.dateformats[k]){
-					f = (this.json._date||this.json._dateformat||"default");
-					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
-					if(f && this.dateformats[f]) this.graph.x.labelopts = this.dateformats[f];
-				}
-			}
-			html += '</select></div>';
-			el.find('.menu-panel.submenu-config').append(html);
-			el.find('#'+id+'_dateformat').on('change',{graph:this.graph,formats:this.dateformats},function(e){
-				if(e.data.formats[this[0].value]){
-					e.data.graph.x.labelopts = e.data.formats[this[0].value];
-					e.data.graph.defineAxis("x").calculateData().draw(true);
-				}
 			});
 		}
 		return this;
@@ -711,6 +701,8 @@
 				o[axis].title = (typeof view.axes[a].title!=="undefined" ? view.axes[a].title:"");
 			}
 		}
+		this._view = view;
+		
 		// Set the options
 		g = this.graph;
 		g.setOptions(o);
@@ -729,7 +721,10 @@
 		}
 		
 		this.updateLayerMenu();
-		this.updateOptionMenu();
+		
+		if(this._view._xtype=="date") g.x.isDate = true;
+
+		// Update the graph data
 		g.updateData();
 		el = g.canvas.container.find('.views');
 		lis = el.find('li');
@@ -739,6 +734,10 @@
 			if(i==m) li.addClass('selected').find('input').attr('checked','checked');
 			else li.removeClass('selected').find('input').attr('checked','');
 		}
+		
+		// Update the Options menu
+		this.updateOptionsMenu();
+
 		return this;
 	};
 
@@ -782,12 +781,47 @@
 		return this;
 	};
 	
-	TS.prototype.updateOptionMenu = function(){
+	TS.prototype.updateOptionsMenu = function(){
 		var el = S(this.el);
 		var id = el.attr('id');
-		el.find('#'+id+'_dateformat').parent().css({'display':(this.graph.x.isDate ? '' : 'none')});
+
+		// Remove any existing date format drop down selector
+		if(el.find('#'+id+'_dateformat').length > 0) el.find('#'+id+'_dateformat').parent().remove();
+
+		// If the x-axis is a date then build a date selector
+		if(this.graph.x.isDate){
+
+			var f = (this._view._xformat||"default");
+			var t = this.graph.options.xaxis.type;
+			var absolute = (this._view._xtype=="date" && (t=="date" || t=="utc"));
+			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
+			
+			for(k in this.dateformats) {
+				this.dateformats[k].available = (absolute) ? (k!="relative") : (k=="relative" || k=="default");
+			}
+		
+			if(this.dateformats[f] && !this.dateformats[f].available) this.log("ERROR",f+" is not an available date format");
+			for(k in this.dateformats){
+				if(this.dateformats[k] && this.dateformats[k].available){
+					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
+					if(f && this.dateformats[f]) this.setDateFormat(f);
+				}
+			}
+			html += '</select></div>';
+			el.find('.menu-panel.submenu-config').append(html);
+			el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
+		}
+
 		return this;
 	};
+	
+	TS.prototype.setDateFormat = function(f,update){
+		if(this.dateformats[f]){
+			this.graph.x.labelopts = this.dateformats[f];
+			this.graph.defineAxis("x").calculateData().draw(update);
+		}
+		return this;
+	}
 
 	TS.prototype.processDatasets = function(){
 		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
@@ -983,15 +1017,25 @@
 			if(this.json._views[i].name=="default") addeddefault = true;
 		}
 		if(!addeddefault){
-			view = {'name':'default','title':'Default','description':(this.json.description || 'The initial view'),'markers':[],'scales':clone(this.json.scales),'axes':clone(this.json.axes)};
+			view = {
+				'name': 'default',
+				'title': (this.json.title || 'Default'),
+				'description': (this.json.description || 'The initial view'),
+				'markers': [],
+				'scales': clone(this.json.scales),
+				'axes': clone(this.json.axes),
+				'_xtype': this.json._xtype,		// TimeSeries addition to VEGA spec to say if this should be treated as a "number", "phase", "date"
+				'_xformat': this.json._xformat	// TimeSeries addition to VEGA spec to say the date format
+			};
 			for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
 			this.json._views.unshift(view);
+			this._view = view;
 		}
 
 		// Build the menus
 		this.updateLayerMenu();
 		this.updateViewMenu();
-		this.updateOptionMenu();
+		this.updateOptionsMenu();
 
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
@@ -1041,12 +1085,7 @@
 			}
 
 			if(type == "vegaeditor"){
-				// Find which view is selected
-				v = 0;
-				for(i = 0; i < this.json._views.length; i++){
-					if(this.json._views[i].active) v = i;
-				}
-				view = this.json._views[v];
+				view = this._view;
 
 				// Update markers section
 				var marks = [];
@@ -1070,11 +1109,14 @@
 				}
 				output.marks = marks;
 				if(view.scales) output.scales = view.scales;
+				if(view.axes) output.axes = view.axes;
+				if(view.title) output.title = view.title;
 
 				// Remove our custom views and marks section
 				delete output._views;
 				delete output._extramarks;
-				delete output._date;
+				delete output._xtype;
+				delete output._xformat;
 			}
 
 			// Convert to text for sending

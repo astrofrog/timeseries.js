@@ -7,11 +7,15 @@
 		"type": "fit",
 		"resize": false
 	},
+	"title": "By time of observation",
 	"description": "The default view of the data with points ordered by time",
+	"_xtype": "date",
+	"_xformat": "default",
 	"_views": [{
-		"name": "astime",
+		"name": "asphase",
 		"title": "By phase",
 		"description": "The data shown by phase",
+		"_xtype": "number",
 		"axes": [{
 			"orient": "bottom",
 			"scale": "xscale",
@@ -33,9 +37,41 @@
 			"type": "linear",
 			"range": "height",
 			"zero": false,
-			"padding": 18
+			"padding": 18,
+			"domain": {"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e", "fields": ["flux_lo","flux_hi"]}
 		}],
-		"markers": [{"name":"thing","visible":true},{"name":"thingerror","visible":true}]
+		"markers": [{"name":"pointphase","visible":true},{"name":"pointphaseerror","visible":true}]
+	},{
+		"name": "asrelative",
+		"title": "By relative time",
+		"description": "The data shown by relative time",
+		"_xtype": "date",
+		"_xformat": "relative",
+		"axes": [{
+			"orient": "bottom",
+			"scale": "xscale",
+			"title": "Relative time"
+		}, {
+			"orient": "left",
+			"scale": "yscale",
+			"title": "Intensity"
+		}],
+		"scales": [{
+			"name": "xscale",
+			"type": "linear",
+			"range": "width",
+			"zero": false,
+			"padding": 36,
+			"domain": {"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e", "field": "relative"}
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"zero": false,
+			"padding": 18,
+			"domain": {"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e", "fields": ["flux_lo","flux_hi"]}
+		}],
+		"markers": [{"name":"pointrelative","visible":true},{"name":"pointrelativeerror","visible":true}]
 	}],
 	"data": [{
 		"name": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e",
@@ -43,6 +79,7 @@
 			"type": "csv",
 			"parse": {
 				"time": "date",
+				"relative": "number",
 				"phase": "number",
 				"flux": "number",
 				"error": "number",
@@ -83,7 +120,7 @@
 		}
 	},{
 		"type": "rect",
-		"name": "thingtimeerror",
+		"name": "pointerror",
 		"description": "Data",
 		"clip": true,
 		"from": {
@@ -93,10 +130,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "time"},
 				"y": {"scale": "yscale", "field": "flux_lo"},
-				"y2": {"scale": "yscale", "field": "flux_hi"},
-				"stroke": { "value": "#000000" },
-				"strokeOpacity": { "value": 1 },
-				"strokeWidth": { "value": 1 }
+				"y2": {"scale": "yscale", "field": "flux_hi"}
 			},
 			"update": {
 				"fillOpacity": {"value": 0.5},
@@ -107,7 +141,7 @@
 		}
 	},{
 		"type": "symbol",
-		"name": "thingtime",
+		"name": "point",
 		"description": "Data",
 		"clip": true,
 		"from": {
@@ -116,10 +150,7 @@
 		"encode": {
 			"enter": {
 				"x": { "scale": "xscale", "field": "time" },
-				"y": { "scale": "yscale", "field": "flux" },
-				"stroke": { "value": "#000000" },
-				"strokeOpacity": { "value": 1 },
-				"strokeWidth": { "value": 1 }
+				"y": { "scale": "yscale", "field": "flux" }
 			},
 			"update": {
 				"shape": { "value": "circle" },
@@ -135,7 +166,7 @@
 	}],
 	"_extramarks": [{
 		"type": "rect",
-		"name": "thingerror",
+		"name": "pointphaseerror",
 		"description": "Data",
 		"clip": true,
 		"from": {
@@ -145,10 +176,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "phase"},
 				"y": {"scale": "yscale", "field": "flux_lo"},
-				"y2": {"scale": "yscale", "field": "flux_hi"},
-				"stroke": { "value": "#000000" },
-				"strokeOpacity": { "value": 1 },
-				"strokeWidth": { "value": 1 }
+				"y2": {"scale": "yscale", "field": "flux_hi"}
 			},
 			"update": {
 				"fillOpacity": {"value": 0.5},
@@ -165,7 +193,7 @@
 		}
 	},{
 		"type": "symbol",
-		"name": "thing",
+		"name": "pointphase",
 		"description": "Data",
 		"clip": true,
 		"from": {
@@ -174,10 +202,7 @@
 		"encode": {
 			"enter": {
 				"x": { "scale": "xscale", "field": "phase" },
-				"y": { "scale": "yscale", "field": "flux" },
-				"stroke": { "value": "#000000" },
-				"strokeOpacity": { "value": 1 },
-				"strokeWidth": { "value": 1 }
+				"y": { "scale": "yscale", "field": "flux" }
 			},
 			"update": {
 				"shape": { "value": "circle" },
@@ -188,6 +213,57 @@
 			"hover": {
 				"size": { "value": 100 },
 				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
+			}
+		}
+	},{
+		"type": "rect",
+		"name": "pointrelativeerror",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": {"scale": "xscale", "field": "relative"},
+				"y": {"scale": "yscale", "field": "flux_lo"},
+				"y2": {"scale": "yscale", "field": "flux_hi"}
+			},
+			"update": {
+				"fillOpacity": {"value": 0.5},
+				"fill": { "value": "#ff8200" },
+				"zindex": {"value": 0},
+				"width": {"value": 1}
+			},
+			"hover": {
+				"fillOpacity": {"value": 1},
+				"fill": { "value": "#ff8200" },
+				"width": {"value":2},
+				"zindex": {"value": 1}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "pointrelative",
+		"description": "Data",
+		"clip": true,
+		"from": {
+			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "relative" },
+				"y": { "scale": "yscale", "field": "flux" }
+			},
+			"update": {
+				"shape": { "value": "circle" },
+				"size": { "value": 30 },
+				"fill": { "value": "#ff8200" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 100 },
+				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.relative,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
 			}
 		}
 	}],
@@ -203,7 +279,8 @@
 		"type": "linear",
 		"range": "height",
 		"padding": 36,
-		"zero": false
+		"zero": false,
+		"domain": {"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e", "fields": ["flux_lo","flux_hi"]}
 	}],
 	"axes": [{
 		"orient": "bottom",

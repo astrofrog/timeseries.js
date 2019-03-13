@@ -957,8 +957,10 @@
 		var d,i,j,k,f,max,axes,axis,v,domain;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
-		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, isDate: (this.options.xaxis.type=="time" || this.options.xaxis.type=="utc"), log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
 		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
+		
+		if(this.options.xaxis.type=="time" || this.options.xaxis.type=="utc") this.x.isDate = true;
 
 		if(this.marks.length <= 0) return this;
 
@@ -1167,6 +1169,7 @@
 	
 	Graph.prototype.addAxisPadding = function(t){
 
+		// Update the range
 		this[t].range = this[t].max - this[t].min;
 
 		// First we need to calculate the log min/max/range
@@ -1192,6 +1195,7 @@
 				this[t].min -= d;
 				this[t].max += d;
 			}
+			// Update range
 			this[t].range = this[t].max - this[t].min;
 		}
 		return this;
@@ -1422,7 +1426,11 @@
 		if(typeof max=="number" && typeof min=="number"){
 			this[a].max = max;
 			this[a].min = min;
-		}else this.addAxisPadding(a);
+		}else{
+			this[a].max = this[a].datamax;
+			this[a].min = this[a].datamin;
+			this.addAxisPadding(a);
+		}
 
 		// Sort out what to do for log scales
 		if(this[a].log){
@@ -1746,7 +1754,7 @@
 		for(i = 0; i < this[a].ticks.length; i++){
 			if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
 				var str = '';
-				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp});
+				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp,'ticks':this[a].ticks});
 				if(o) str = tidy(o.truncated || o.str);
 				this[a].ticks[i].label = str;
 			}
