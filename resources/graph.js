@@ -841,7 +841,7 @@
 						if(v==null || v=="") v = parseFloat(v);
 						else{
 							// Convert to integer seconds since the epoch as a string
-							s = Math.floor(new Date(v.replace(/^"/,"").replace(/"$/,"")).getTime()/1000)+'';
+							s = Math.floor(new Date(v.replace(/(^"|"$)/,"")).getTime()/1000)+'';
 							// Extract anything less than seconds and add it back
 							var m = v.match(/\.([0-9]+)/);
 							if(m && m.length == 2) s += m[0];

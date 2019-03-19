@@ -61,12 +61,12 @@
 					"this": this,
 					"file": f,
 					"success": function(d,attr){
-						_obj.updateMessage('Loaded data...');
+						_obj.updateMessage('main','Loaded data...');
 						// Remove extra newlines at the end
 						d = d.replace(/[\n\r]$/,"");
 						var cb = this.load.data.files[attr.file].callbacks;
 						this.log('CALLBACKS',attr.file,cb);
-						_obj.updateMessage('Finished loading data');
+						_obj.updateMessage('main','Finished loading data');
 						for(var i = 0; i < cb.length; i++){
 							// Set original context dataset data
 							this.load.data.files[cb[i].attr.file].data = d;
@@ -351,9 +351,8 @@
 		var el = S(this.el);
 		var str = '<div class="loader"><div class="spinner">';
 		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
-		str += '</div><div class="loader-message"></div><div class="progressbar" style="display:none;"><div class="progress-inner"></div></div></div>';
+		str += '</div></div>';
 		el.addClass('timeseries').append(str);
-		this.message = {'el':el.find('.loader-message'),'progress':el.find('.progress-inner')};
 		
 		var _obj = this;
 
@@ -365,10 +364,30 @@
 		return this;
 	};
 
-	TS.prototype.updateMessage = function(msg,pc){
-		if(this.message && this.message.el.length > 0) this.message.el[0].innerHTML = msg;
-		if(typeof pc==="number" && pc <= 100) this.message.progress.css({'width':pc+'%'}).parent().css({'display':'block'});
-		else this.message.progress.parent().css({'display':'none'})
+	TS.prototype.updateMessage = function(id,msg,pc,c){
+		var el = S(this.el).find('.loader');
+		if(!id){
+			el.html('');
+			return this;
+		}
+		if(!this.message) this.message = {};
+		id = this.el.getAttribute('id')+'-'+id;
+		if(!this.message[id]){
+			el.append('<div id="'+id+'"><div class="loader-message"></div></div>');
+			el = el.find('#'+id);
+			this.message[id] = {'el':el,'message':el.find('.loader-message')};
+		}
+		if(msg || (typeof pc==="number" && pc <= 100)){
+			if(this.message[id].message.length > 0) this.message[id].message[0].innerHTML = msg;
+			if(typeof pc==="number" && pc <= 100){
+				if(!this.message[id].progress){
+					this.message[id].el.append('<div class="progressbar"><div class="progress-inner"></div></div>');
+					this.message[id].progress = this.message[id].el.find('.progress-inner');
+				}
+				this.message[id].progress.css({'width':pc+'%'});
+				if(c) this.message[id].progress.css({'background':c});
+			}
+		}else this.message[id].el.remove();
 		return this;
 	}
 	
@@ -438,7 +457,7 @@
 	TS.prototype.loadDatasets = function(data){
 		this.log('loadDatasets',data);
 		if(!data) return this;
-		this.updateMessage('Loading data...');
+		this.updateMessage('main','Loading data...');
 		
 		if(data.length==0){
 			S(this.el).find('.loader').html('&#9888; No data defined');
@@ -976,6 +995,7 @@
 			
 			// Update the total for this mark
 			this.log('Processed '+e.name,this.progress.marks.mark[e.name]);
+			this.updateMessage(e.name,'')
 
 			if(this.attr.showaswego) this.graph.updateData();
 			if(this.progress.marks.done == this.progress.marks.todo) this.finalize();
@@ -983,9 +1003,10 @@
 		up = function(e){
 			this.progress.marks.mark[e.mark.name].done = e.i;
 			this.progress.marks.mark[e.mark.name].todo = e.total;
-			this.updateMessage('Processing '+(e.mark.description||e.mark.name),100*e.i/e.total);
+			this.updateMessage(e.mark.name,'Processing '+(e.mark.description||e.mark.name),100*e.i/e.total,(e.mark.encode && e.mark.encode.update && e.mark.encode.update.fill ? e.mark.encode.update.fill.value : ''));
 			return this;
 		};
+		this.updateMessage('main','');
 		for(m = 0; m < this.json.marks.length; m++){
 			mark = this.json.marks[m];
 			if(this.progress.marks.mark[mark.name].done < 0){
@@ -1012,7 +1033,7 @@
 		var view,i,addeddefault;
 
 		this.log('finalize',this.attr.showaswego,this.graph.marks);
-		this.updateMessage('');
+		this.updateMessage('main','');
 
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
