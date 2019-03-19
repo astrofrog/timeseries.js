@@ -108,6 +108,7 @@ table.properties tbody tr:nth-child(2n+1) { background-color: #f8f8f8; }
 	justify-content: center;
 	flex-direction: column;
 }
+.loader-message { margin-top: 0.5em; }
 .spinner {
 	width: 50px;
 	height: 50px;
