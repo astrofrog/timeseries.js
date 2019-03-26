@@ -9,13 +9,125 @@
 	},
 	"title": "By time of observation",
 	"description": "The default view of the data with points ordered by time",
-	"_xtype": "date",
-	"_xformat": "default",
+	"_extend": {
+		"x": {
+			"input": "iso",
+			"output": "auto"
+		},
+		"marks": [{
+			"type": "rect",
+			"name": "pointphaseerror",
+			"description": "Data",
+			"clip": true,
+			"from": {
+				"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+			},
+			"encode": {
+				"enter": {
+					"x": {"scale": "xscale", "field": "phase"},
+					"y": {"scale": "yscale", "field": "flux_lo"},
+					"y2": {"scale": "yscale", "field": "flux_hi"}
+				},
+				"update": {
+					"fillOpacity": {"value": 0.5},
+					"fill": { "value": "#ff8200" },
+					"zindex": {"value": 0},
+					"width": {"value": 1}
+				},
+				"hover": {
+					"fillOpacity": {"value": 1},
+					"fill": { "value": "#ff8200" },
+					"width": {"value":2},
+					"zindex": {"value": 1}
+				}
+			}
+		},{
+			"type": "symbol",
+			"name": "pointphase",
+			"description": "Data",
+			"clip": true,
+			"from": {
+				"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+			},
+			"encode": {
+				"enter": {
+					"x": { "scale": "xscale", "field": "phase" },
+					"y": { "scale": "yscale", "field": "flux" }
+				},
+				"update": {
+					"shape": { "value": "circle" },
+					"size": { "value": 30 },
+					"fill": { "value": "#ff8200" },
+					"fillOpacity": { "value": 1 }
+				},
+				"hover": {
+					"size": { "value": 100 },
+					"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
+				}
+			}
+		},{
+			"type": "rect",
+			"name": "pointrelativeerror",
+			"description": "Data",
+			"clip": true,
+			"from": {
+				"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+			},
+			"encode": {
+				"enter": {
+					"x": {"scale": "xscale", "field": "relative"},
+					"y": {"scale": "yscale", "field": "flux_lo"},
+					"y2": {"scale": "yscale", "field": "flux_hi"}
+				},
+				"update": {
+					"fillOpacity": {"value": 0.5},
+					"fill": { "value": "#ff8200" },
+					"zindex": {"value": 0},
+					"width": {"value": 1}
+				},
+				"hover": {
+					"fillOpacity": {"value": 1},
+					"fill": { "value": "#ff8200" },
+					"width": {"value":2},
+					"zindex": {"value": 1}
+				}
+			}
+		},{
+			"type": "symbol",
+			"name": "pointrelative",
+			"description": "Data",
+			"clip": true,
+			"from": {
+				"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
+			},
+			"encode": {
+				"enter": {
+					"x": { "scale": "xscale", "field": "relative" },
+					"y": { "scale": "yscale", "field": "flux" }
+				},
+				"update": {
+					"shape": { "value": "circle" },
+					"size": { "value": 30 },
+					"fill": { "value": "#ff8200" },
+					"fillOpacity": { "value": 1 }
+				},
+				"hover": {
+					"size": { "value": 100 },
+					"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.relative,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
+				}
+			}
+		}]
+	},
 	"_views": [{
 		"name": "asphase",
 		"title": "By phase",
 		"description": "The data shown by phase",
-		"_xtype": "phase",
+		"_extend": {
+			"x": {
+				"input": "phase",
+				"output": "unity"
+			}
+		},
 		"axes": [{
 			"orient": "bottom",
 			"scale": "xscale",
@@ -45,8 +157,12 @@
 		"name": "asrelative",
 		"title": "By relative time",
 		"description": "The data shown by relative time",
-		"_xtype": "date",
-		"_xformat": "relative",
+		"_extend": {
+			"x": {
+				"input": "seconds",
+				"output": "relative"
+			}
+		},
 		"axes": [{
 			"orient": "bottom",
 			"scale": "xscale",
@@ -161,109 +277,6 @@
 			"hover": {
 				"size": { "value": 200 },
 				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
-			}
-		}
-	}],
-	"_extramarks": [{
-		"type": "rect",
-		"name": "pointphaseerror",
-		"description": "Data",
-		"clip": true,
-		"from": {
-			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
-		},
-		"encode": {
-			"enter": {
-				"x": {"scale": "xscale", "field": "phase"},
-				"y": {"scale": "yscale", "field": "flux_lo"},
-				"y2": {"scale": "yscale", "field": "flux_hi"}
-			},
-			"update": {
-				"fillOpacity": {"value": 0.5},
-				"fill": { "value": "#ff8200" },
-				"zindex": {"value": 0},
-				"width": {"value": 1}
-			},
-			"hover": {
-				"fillOpacity": {"value": 1},
-				"fill": { "value": "#ff8200" },
-				"width": {"value":2},
-				"zindex": {"value": 1}
-			}
-		}
-	},{
-		"type": "symbol",
-		"name": "pointphase",
-		"description": "Data",
-		"clip": true,
-		"from": {
-			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
-		},
-		"encode": {
-			"enter": {
-				"x": { "scale": "xscale", "field": "phase" },
-				"y": { "scale": "yscale", "field": "flux" }
-			},
-			"update": {
-				"shape": { "value": "circle" },
-				"size": { "value": 30 },
-				"fill": { "value": "#ff8200" },
-				"fillOpacity": { "value": 1 }
-			},
-			"hover": {
-				"size": { "value": 100 },
-				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.time,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
-			}
-		}
-	},{
-		"type": "rect",
-		"name": "pointrelativeerror",
-		"description": "Data",
-		"clip": true,
-		"from": {
-			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
-		},
-		"encode": {
-			"enter": {
-				"x": {"scale": "xscale", "field": "relative"},
-				"y": {"scale": "yscale", "field": "flux_lo"},
-				"y2": {"scale": "yscale", "field": "flux_hi"}
-			},
-			"update": {
-				"fillOpacity": {"value": 0.5},
-				"fill": { "value": "#ff8200" },
-				"zindex": {"value": 0},
-				"width": {"value": 1}
-			},
-			"hover": {
-				"fillOpacity": {"value": 1},
-				"fill": { "value": "#ff8200" },
-				"width": {"value":2},
-				"zindex": {"value": 1}
-			}
-		}
-	},{
-		"type": "symbol",
-		"name": "pointrelative",
-		"description": "Data",
-		"clip": true,
-		"from": {
-			"data": "a043630c-e49a-4af0-8d7b-4f8e4c315f7e"
-		},
-		"encode": {
-			"enter": {
-				"x": { "scale": "xscale", "field": "relative" },
-				"y": { "scale": "yscale", "field": "flux" }
-			},
-			"update": {
-				"shape": { "value": "circle" },
-				"size": { "value": 30 },
-				"fill": { "value": "#ff8200" },
-				"fillOpacity": { "value": 1 }
-			},
-			"hover": {
-				"size": { "value": 100 },
-				"tooltip": {"signal":"{'Title': 'Data', 'Time': timeFormat(datum.relative,'%H:%M:%S.%L'), 'Phase': datum.phase, 'Flux': datum.flux }"}
 			}
 		}
 	}],

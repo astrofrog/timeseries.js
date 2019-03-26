@@ -804,6 +804,7 @@
 		if(typeof this.options.padding!=="number") this.options.padding = 0;
 		var k,a,axes;
 		// Default axis types see https://vega.github.io/vega/docs/scales/#types
+		// We support linear/log/utc/time so far
 		var axisdefaults = {
 			'type': { 'type': 'string', 'value': ['utc','linear']},
 			'label': { 'type':'string', 'value':[''] },
@@ -827,17 +828,19 @@
 
 	function parseData(data){
 		var i,key,v,format,s,temporal;
+		var lookup = {};
 		// Parse the data
 		for(key in data.parse){
 			format = data.parse[key];
 			for(i = 0 ; i < data.data.length; i++){
 			// Loop over each column in the line
 				v = data.data[i][key];
+				
 				if(format!="string"){
-					// "number", "boolean" or "date"
+					// "number", "boolean" or "date" https://github.com/vega/vega/wiki/Data#-csv
 					if(format=="number"){
 						v = parseFloat(v);
-					}else if(format=="date" || format=="utc"){
+					}else if(format=="date"){
 						if(v==null || v=="") v = parseFloat(v);
 						else{
 							// Convert to integer seconds since the epoch as a string
@@ -853,6 +856,7 @@
 						else v = null;
 					}
 				}
+				lookup[data.data[i][key]] = v;
 				data.data[i][key] = v;
 			}
 		}
@@ -863,7 +867,9 @@
 		this.logTime('addDatasets');
 		if(!this.datasets) this.datasets = {};
 		for(var id in datasets){
-			if(!this.datasets[id]) this.datasets[id] = parseData(clone(datasets[id]));
+			if(!this.datasets[id]){
+				this.datasets[id] = parseData(clone(datasets[id]));
+			}
 		}
 		this.logTime('addDatasets');
 		return this;
@@ -1477,50 +1483,66 @@
 		mn = this[a].min;
 		if(!this[a].labelopts) this[a].labelopts = {};
 		// Set the label scaling
-		var scale = (a=="x" && this[a].labelopts.scale) ? this[a].labelopts.scale : 1;
+		var scale = (a=="x" && this[a].labelopts.inputscale) ? this[a].labelopts.inputscale : 1;
+
 
 		// Calculate reasonable grid line spacings
-		if(this[a].isDate && scale==1){
+		// Dates are in seconds
+		// Grid line spacings can range from 1 ms to 10000 years
+		// Use Gregorian year length for calendar display
+		// 31557600000
+		steps = [{'name': 'nanoseconds', 'div': 1e-9, 'spacings':[1,2,5,10,20,50,100,200,500]},
+				{'name': 'microseconds', 'div': 1e-6, 'spacings':[1,2,5,10,20,50,100,200,500]},
+				{'name': 'milliseconds', 'div': 1e-3, 'spacings':[1,2,5,10,20,50,100,200,500]},
+				{'name': 'seconds','div':1,'spacings':[1,2,5,10,15,20,30]},
+				{'name': 'minutes', 'div':60,'spacings':[1,2,5,10,15,20,30]},
+				{'name': 'hours', 'div':3600,'spacings':[1,2,4,6,12]},
+				{'name': 'days', 'div':86400,'spacings':[1,2]},
+				{'name': 'weeks', 'div':7*86400,'spacings':[1,2]},
+				{'name': 'months', 'div': 30*86400, 'spacings':[1,3,6]},
+				{'name': 'years', 'div':365.2425*86400,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
+		steps = (this[a].labelopts.steps || steps);
 
-			this[a].showAsDate = true;
-
-			// Dates are in milliseconds
-			// Grid line spacings can range from 1 ms to 10000 years
-			// Use Gregorian year length for calendar display
-			// 31557600000
-			steps = [{'name': 'nanoseconds', 'div': 1e-9, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'microseconds', 'div': 1e-6, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'milliseconds', 'div': 1e-3, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'seconds','div':1,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'minutes', 'div':60,'spacings':[1,2,5,10,15,20,30]},
-					{'name': 'hours', 'div':3600,'spacings':[1,2,4,6,12]},
-					{'name': 'days', 'div':86400,'spacings':[1,2]},
-					{'name': 'weeks', 'div':7*86400,'spacings':[1,2]},
-					{'name': 'months', 'div': 30*86400, 'spacings':[1,3,6]},
-					{'name': 'years', 'div':365.2425*86400,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
-			steps = (this[a].labelopts.steps || steps);
-			for(st = 0; st < steps.length ; st++){
-				for(sp = 0; sp < steps[st].spacings.length; sp++){
-					n = Math.ceil(this[a].range/(steps[st].div*steps[st].spacings[sp]));
-					if(n < 1 || n > 20) continue;
-					else{
-						if(!t_div || (n > 3 && n < t_div)){
-							t_div = n;
-							this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp]};
-							this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'div':steps[st].div};
-						}
+		for(st = 0; st < steps.length ; st++){
+			for(sp = 0; sp < steps[st].spacings.length; sp++){
+				n = Math.ceil(this[a].range*scale/(steps[st].div*steps[st].spacings[sp]));
+				if(n < 1 || n > 20) continue;
+				else{
+					if(!t_div || (n > 3 && n < t_div)){
+						t_div = n;
+						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp],'scale':scale};
+						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'div':steps[st].div,'scale':scale};
 					}
 				}
 			}
-			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
+		}
+
+		// If the output format is a "date" type and the input scale is set to 1 we use base 60/24 as appropriate
+		if(this[a].isDate && scale==1){
+		
+			// The displayed labels are shown as dates (this uses date rounding)
+			this[a].showAsDate = true;
+
 			// Set the min and max values by rounding the dates
+			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
 			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'}));
 			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'}));
 
-		}else{
-			this[a].showAsDate = false;
-			this[a].spacing = null;
+		}else if(this[a].isPhase){
 
+			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
+			t_min = Math.floor(mn/t_inc.toValue())*t_inc.toValue();
+			t_max = Math.ceil(mx/t_inc.toValue())*t_inc.toValue();
+
+		}else{
+
+			// Do we do date-based rounding
+			this[a].showAsDate = false;
+
+			// If the output type is a date but the scale is not in seconds, 
+			// we switch to using the native scale of the input
+			if(this[a].isDate) scale = 1;
+			
 			// Scale the range before we work out the spacings
 			if(scale!=1){
 				mn = mn/scale;
@@ -1622,7 +1644,6 @@
 		mx = Num(mx);
 
 		this[a].ticks = [];
-
 		vmx = mx.plus(this[a].tinc.times(0.2)).toValue();
 		for(v = mn; v.toValue() <= vmx; v = v.plus(this[a].tinc)){
 			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].tinc}),'label':''});
@@ -1648,6 +1669,7 @@
 				bits = [Num(str.substr(0,idx)),Num("0"+fs)];
 			}
 			d = new Date(bits[0].times(1000).toValue());
+			if(!sp) sp = {'fract':1,'name':'seconds'};
 			f = sp.fract;
 			hr = zeroFill(d.getUTCHours(),2);
 			mn = zeroFill(d.getUTCMinutes(),2);
@@ -1751,10 +1773,10 @@
 			}
 		}
 		// If formatLabel is set we use that to format the label
-		for(i = 0; i < this[a].ticks.length; i++){
-			if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
+		if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
+			for(i = 0; i < this[a].ticks.length; i++){
 				var str = '';
-				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp,'ticks':this[a].ticks});
+				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp,'ticks':this[a].ticks,'input':(this[a].labelopts.input||""),'output':(this[a].labelopts.output||""),'niceDate':niceDate,'spacing':this[a].spacing});
 				if(o) str = tidy(o.truncated || o.str);
 				this[a].ticks[i].label = str;
 			}
@@ -2066,7 +2088,9 @@
 							if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
 								ctx.textAlign = 'center';
 								ctx.fillStyle = this.options.labels.color;
-								for(k = 0; k < ds.length ; k++) ctx.fillText(removeRoundingErrors(ds[k]),x1.toFixed(1),(y1 + 3 + tw + k*fs).toFixed(1));
+								for(k = 0; k < ds.length ; k++){
+									this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
+								}
 								oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 							}
 						}else if(d=="y"){
@@ -2534,18 +2558,21 @@
 		// Deal with superscript
 		if(!txt) txt = "";
 		if(typeof txt==="object" && txt.value) txt = txt.value;
-		str = (typeof txt==="string" ? 'NORMAL:'+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+':'+p2+'%%NORMAL:'; }):'');
+		str = (typeof txt==="string" ? 'NORMAL==='+txt.replace(/([\^\_])\{([^\}]*)\}/g,function(m,p1,p2){ var t = (p1=="^" ? 'SUP':'SUB');return '%%'+t+'==='+p2+'%%NORMAL==='; }):'');
+		str = str.replace(/%%NORMAL===$/,"");
 		bits = str.split(/%%/);
+
 		w = 0;
 		// Calculate the width of the text
 		for(b = 0; b < bits.length; b++){
-			bits[b] = bits[b].split(":");
+			bits[b] = bits[b].split("===");
 			if(f.fontSize && f.font){
 				fs = (bits[b][0]=="NORMAL" ? 1 : 0.8)*f.fontSize;
 				ctx.font = buildFont(f);
 			}
 			w += ctx.measureText(bits[b][1]).width;
 		}
+
 		// Starting x-position
 		var xo = x + (f.dx||0);
 		if(f.align == "center") xo -= w/2;

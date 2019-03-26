@@ -4,8 +4,6 @@
 	"height": 350,
 	"padding": 0,
 	"autosize": {"type": "fit", "resize": true},
-	"_xtype": "date",
-	"_xformat": "default",
 	"_views": [{
 		"name": "zoom",
 		"title": "Zoomed view",
@@ -44,21 +42,27 @@
 		}],
 		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-values","visible":true}]
 	}],
-	"_extramarks": [{
-		"type": "rule",
-		"name": "Nominal2",
-		"description": "Nominal2",
-		"clip": true,
-		"encode": {
-			"enter": {
-				"x": { "value": 0},
-				"x2": { "field": { "group": "width" }},
-				"y": {"scale":"yscale", "value": 0.977 },
-				"stroke": {"value": "#f9b800"},
-				"strokeWidth": {"value": 2}
+	"_extend": {
+		"x": {
+			"input": "iso",
+			"output": "auto"
+		},
+		"marks": [{
+			"type": "rule",
+			"name": "Nominal2",
+			"description": "Nominal2",
+			"clip": true,
+			"encode": {
+				"enter": {
+					"x": { "value": 0},
+					"x2": { "field": { "group": "width" }},
+					"y": {"scale":"yscale", "value": 0.977 },
+					"stroke": {"value": "#f9b800"},
+					"strokeWidth": {"value": 2}
+				}
 			}
-		}
-	}],
+		}]
+	},
 	"data": [{
 		"name": "lightcurve",
 		"url": "lightcurve2.csv",

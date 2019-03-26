@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.14";
+		this.version = "0.0.15";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
@@ -121,14 +121,23 @@
 			tooltip: {'theme':'aas-theme'},
 			showaswego: opt.showaswego
 		};
-		this.dateformats = {
-			'default': {
-				'title': 'Default',
-				'available': true
+		this.xformats = {
+			'auto': {
+				'title': 'Auto',
+				'absolute': true,
+				'relative': true,
+				'scale': 1,
+				'formatLabel': function(j,attr){
+					var v = convertDate(j,attr.input,"seconds");
+					return {'str':attr.niceDate(v,attr.spacing)};
+				}
 			},
 			'relative': {
 				'title': 'Relative date',
+				'relative': true,
+				'scale': 1,
 				'formatLabel': function(val,attr){
+				console.log('format relative',val);
 					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
 					typ = typeof val;
 					if(typ=="string" || typ=="number") val = Num(val);
@@ -169,46 +178,86 @@
 					if(bit.s > 0 || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
 					if(bit.f) str += bit.f;
 					return {'str':(sign < 0 ? '-':'')+str};
-				},
-				'available': true
+				}
 			},
 			'locale': {
 				'title': 'Locale',
-				'formatLabel': function(j){
-					var d = new Date(Math.floor(Number(j.valueOf())*1000));
-					return {'str':d.toLocaleString()};
-				},
-				'available': true
+				'scale': 1,
+				'absolute': true,
+				'formatLabel': function(j,attr){
+					return {'str':(new Date(convertDate(j,attr.input,'unix'))).toLocaleString()};
+				}
+			},
+			'iso': {
+				'title': 'ISO8601',
+				'scale': 1,
+				'absolute': true,
+				'formatLabel': function(j,attr){
+					var o = {'str':'?'};
+					var v = convertDate(j,attr.input,attr.output);
+					if(attr.spacing.name=="days") v = v.replace(/^([0-9]{4}-[0-9]{2}-[0-9]{2}).*/,function(m,p1){ return p1+'T12:00Z'; });
+					o.str = v.replace(/\.0+Z/,"Z");
+					return o;
+				}
 			},
 			'jd': {
 				'title': 'Julian date',
 				'scale': 86400,
-				'formatLabel': function(j){
-					return {'str':formatDate(Number(j.valueOf()),"jd")+''};
-				},
-				'available': true
+				'absolute': true,
+				'formatLabel': function(j,attr){
+					return {'str':convertDate(j,attr.input,attr.output)+''};
+				}
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
 				'scale': 86400,
-				'formatLabel': function(j){
-					var mjd = formatDate(Number(j.valueOf()),"mjd");
-					var o = {'str':mjd+''};
-					o.truncated = mjd.toPrecision(this.x.precisionlabel+1);
-					return o;
-				},
-				'available': true
+				'absolute': true,
+				'formatLabel': function(j,attr){
+					return {'str':convertDate(j,attr.input,attr.output)+''};
+				}
 			},
 			'tjd': {
 				'title': 'Truncated Julian date',
 				'scale': 86400,
+				'absolute': true,
 				'formatLabel': function(j,attr){
-					var tjd = formatDate(Number(j.valueOf()),"tjd");
-					if(attr.dp > 0) tjd = tjd.toFixed(attr.dp);
-					var o = {'str':tjd+''};
-					return o;
-				},
-				'available': true
+					return {'str':convertDate(j,attr.input,attr.output)+''};
+				}
+			},
+			'unity': {
+				'title': 'Phase (unity)',
+				'phase': true,
+				'scale': 1,
+				'formatLabel': function(j,attr){
+					return {'str':j+''};
+				}
+			},
+			'degrees': {
+				'title': 'Phase (degrees)',
+				'phase': true,
+				'scale': 1,
+				'steps': [
+					{'name': 'millidegrees', 'div': 1e-3/360, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'degrees','div':1/360,'spacings':[1,2,5,10,15,20,30,60,90,120,180,360]},
+				],
+				'formatLabel': function(j,attr){
+					return {'str':Math.round(j*360)+'°'};
+				}
+			},
+			'radians': {
+				'title': 'Phase (radians)',
+				'phase': true,
+				'scale': 1,
+				'steps': [
+					{'name': 'millirad', 'div': 1e-3/Math.PI, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'radians','div':1/Math.PI,'spacings':[1,Math.PI/2,2,Math.PI]},
+				],
+				'formatLabel': function(j,attr){
+					var r = (j*2*Math.PI)+'';
+					console.log(attr)
+					r = r.replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
+					return {'str':r+'π'};
+				}
 			}
 		};
 		this.datasets = [];
@@ -359,7 +408,11 @@
 		// Build the menu
 		this.makeMenu();
 
-		if(this.json) this.loadDatasets(this.json.data);
+		if(this.json){
+			if(!this.json._extend) this.json._extend = {};
+			if(!this.json._views) this.json._views = [];
+			this.loadDatasets(this.json.data);
+		}
 
 		return this;
 	};
@@ -748,9 +801,7 @@
 		}
 		
 		this.updateLayerMenu();
-		
-		if(this._view._xtype=="date") g.x.isDate = true;
-
+	
 		// Update the graph data
 		g.updateData();
 		el = g.canvas.container.find('.views');
@@ -774,8 +825,9 @@
 
 		el = this.graph.canvas.container.find('.views');
 		li = this.graph.canvas.container.find('.submenu-views');
+
 		// We need more than one view to exist to justify the view menu
-		if(!this.json._views || (this.json._views && this.json._views.length < 2)){
+		if(this.json._views.length < 2){
 			el.css({'display':'none'});
 			li.css({'display':'none'});
 			return this;
@@ -807,7 +859,7 @@
 		}
 		return this;
 	};
-	
+
 	TS.prototype.updateOptionsMenu = function(){
 		var el = S(this.el);
 		var id = el.attr('id');
@@ -815,25 +867,35 @@
 		// Remove any existing date format drop down selector
 		if(el.find('#'+id+'_dateformat').length > 0) el.find('#'+id+'_dateformat').parent().remove();
 
-		// If the x-axis is a date then build a date selector
-		if(this.graph.x.isDate){
+		// If the x-axis has a defined input format we can build a format selector
+		if(this._view._extend.x){
+			var i,f,label,html,ok;
 
-			var f = (this._view._xformat||"default");
-			var t = this.graph.options.xaxis.type;
-			var absolute = (this._view._xtype=="date" && (t=="date" || t=="utc"));
-			var html = '<div class="row"><label for="'+id+'_dateformat">Date format: </label><select id="'+id+'_dateformat">';
-			
-			for(k in this.dateformats) {
-				this.dateformats[k].available = (absolute) ? (k!="relative") : (k=="relative" || k=="default");
+			// Define the general type for the input format: phase/relative/absolute
+			i = "absolute";
+			if(this._view._extend.x.input=="phase") i = "phase";
+			else if(this._view._extend.x.input=="seconds") i = "relative";
+
+			if(i=="phase"){
+				// We are showing phases
+				f = (this._view._extend.x.output || "unity");
+				label = "Phase format";
+			}else{
+				// We are showing dates
+				f = (this._view._extend.x.output || "auto");
+				label = "Date format";
 			}
-		
-			if(this.dateformats[f] && !this.dateformats[f].available) this.log("ERROR",f+" is not an available date format");
-			for(k in this.dateformats){
-				if(this.dateformats[k] && this.dateformats[k].available){
-					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.dateformats[k].title+'</option>';
-					if(f && this.dateformats[f]) this.setDateFormat(f);
+
+			html = '<div class="row"><label for="'+id+'_dateformat">'+label+': </label><select id="'+id+'_dateformat">';
+			ok = false;
+			for(k in this.xformats){
+				if(this.xformats[k] && this.xformats[k][i]){
+					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.xformats[k].title+'</option>';
+					if(f && this.xformats[f] && k==f) this.setDateFormat(f);
+					if(k==f) ok = true;
 				}
 			}
+			if(!ok) this.log("ERROR",f+" is not an available format");
 			html += '</select></div>';
 			el.find('.menu-panel.submenu-config').append(html);
 			el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
@@ -842,10 +904,20 @@
 		return this;
 	};
 	
-	TS.prototype.setDateFormat = function(f,update){
-		if(this.dateformats[f]){
-			this.graph.x.labelopts = this.dateformats[f];
-			this.graph.defineAxis("x").calculateData().draw(update);
+	TS.prototype.setDateFormat = function(o,update){
+		var i = this._view._extend.x.input;
+		if(this.xformats[o]){
+			this.graph.x.labelopts = this.xformats[o];
+			this.graph.x.isDate = (this.xformats[o].absolute ? true : false);
+			this.graph.x.isPhase = (this.xformats[o].phase ? true : false);
+			this.graph.x.labelopts.input = i;
+			this.graph.x.labelopts.output = o;
+			this.graph.x.labelopts.inputscale = (this.xformats[i] ? this.xformats[i].scale : 1);	// Scale the input number if necessary
+			// Define the axis set to the current range
+			this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).calculateData().draw(update);
+		}else{
+			if(!this.xformats[i]) this.log('ERROR','Input format '+i+' is not a known date format');
+			if(!this.xformats[o]) this.log('ERROR','Output format '+o+' is not a known date format');
 		}
 		return this;
 	}
@@ -857,15 +929,14 @@
 
 		// Set up the progress object to monitor what we've done for each mark
 		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
-		ms = ['marks','_extramarks'];
+		ms = [this.json.marks];
+		if(this.json._extend.marks) ms.push(this.json._extend.marks);
 		for(m = 0,n = 0; m < ms.length; m++){
-			if(this.json[ms[m]]){
-				for(i = 0; i < this.json[ms[m]].length ; i++){
-					// Create a name for this mark if one hasn't been given
-					if(!this.json[ms[m]][i].name) this.json[ms[m]][i].name = "fake-id-"+n;
-					this.progress.marks.mark[this.json[ms[m]][i].name] = {'done':-1,'todo':0};
-					n++;
-				}
+			for(i = 0; i < ms[m].length ; i++){
+				// Create a name for this mark if one hasn't been given
+				if(!ms[m][i].name) ms[m][i].name = "fake-id-"+n;
+				this.progress.marks.mark[ms[m][i].name] = {'done':-1,'todo':0};
+				n++;
 			}
 		}
 
@@ -984,7 +1055,7 @@
 		this.graph.addDatasets(this.datasets);
 
 		// Store the number of marks we are going to process
-		this.progress.marks.todo = this.json.marks.length + (this.json._extramarks ? this.json._extramarks.length : 0);
+		this.progress.marks.todo = this.json.marks.length + (this.json._extend.marks ? this.json._extend.marks.length : 0);
 
 		// Define the callback function
 		fn = function(e){
@@ -992,7 +1063,7 @@
 			this.progress.marks.done++;
 			this.progress.marks.mark[e.name].done = e.i;
 			this.progress.marks.mark[e.name].todo = e.total;
-			
+
 			// Update the total for this mark
 			this.log('Processed '+e.name,this.progress.marks.mark[e.name]);
 			this.updateMessage(e.name,'')
@@ -1014,9 +1085,9 @@
 				addMarks(this,m,clone(mark),{'this':this,'success':fn,'progress':up});
 			}
 		}
-		if(this.json._extramarks){
-			for(m = 0; m < this.json._extramarks.length; m++){
-				mark = this.json._extramarks[m];
+		if(this.json._extend.marks){
+			for(m = 0; m < this.json._extend.marks.length; m++){
+				mark = this.json._extend.marks[m];
 				mark.include = false;
 				addMarks(this,m+this.json.marks.length+m,clone(mark),{'this':this,'success':fn,'progress':up});
 			}
@@ -1039,6 +1110,9 @@
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
 		
+		// Create a default extension object
+		if(!this.json._extend) this.json._extend = {};
+		
 		// Create default view
 		if(!this.json._views) this.json._views = [];
 		addeddefault = false;
@@ -1053,8 +1127,7 @@
 				'markers': [],
 				'scales': clone(this.json.scales),
 				'axes': clone(this.json.axes),
-				'_xtype': this.json._xtype,		// TimeSeries addition to VEGA spec to say if this should be treated as a "number", "phase", "date"
-				'_xformat': this.json._xformat	// TimeSeries addition to VEGA spec to say the date format
+				'_extend': clone(this.json._extend)		// TimeSeries addition to VEGA spec
 			};
 			for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
 			this.json._views.unshift(view);
@@ -1128,9 +1201,9 @@
 						}
 					}
 					if(!done[view.markers[m].name]){
-						for(s = 0; s < this.json._extramarks.length; s++){
-							if(!done[view.markers[m].name] && this.json._extramarks[s].name == view.markers[m].name){
-								marks.push(clone(this.json._extramarks[s]));
+						for(s = 0; s < this.json._extend.marks.length; s++){
+							if(!done[view.markers[m].name] && this.json._extend.marks[s].name == view.markers[m].name){
+								marks.push(clone(this.json._extend.marks[s]));
 								done[view.markers[m].name] = true;
 							}
 						}
@@ -1141,11 +1214,9 @@
 				if(view.axes) output.axes = view.axes;
 				if(view.title) output.title = view.title;
 
-				// Remove our custom views and marks section
+				// Remove our custom views and extended properties
+				delete output._extend;
 				delete output._views;
-				delete output._extramarks;
-				delete output._xtype;
-				delete output._xformat;
 			}
 
 			// Convert to text for sending
@@ -1370,73 +1441,60 @@
 		return;
 	};
 
-	// Convert dates
-	function formatDate(dt,t){
-		if(!t) t = "jd";
-		var d = new JD(dt*1000,"unix");
-		if(t=="jd") return d.valueOf();
-		else if(t=="mjd") return d.toMJD();
-		else if(t=="tjd") return d.toTJD();
-		else if(t=="iso") return d.toISOString();
-		else return d;
+	// Convert a date from an input format to an output format
+	function convertDate(dt,i,o){
+		if(typeof dt==="number") dt = Num(dt);
+		dt2 = new Dates(dt,i);
+		if(o=="jd") return dt2.toJD();
+		else if(o=="mjd") return dt2.toMJD();
+		else if(o=="tjd") return dt2.toTJD();
+		else if(o=="unix") return dt2.toUNIX();
+		else if(o=="seconds") return dt2.toSeconds();
+		else if(o=="iso") return dt2.toDate().toISOString();
+		return 0;
 	}
 
-	// Can provide as:
-	//	 1) (ms,"unix") - milliseconds since the UNIX epoch
-	//	 2) (days,"mjd") - days since the MJD epoch
-	//	 3) (seconds,"epoch","2000-01-01T00:00Z") - number of seconds since a user-defined epoch
-	//	 4) ("1858-11-17T00:00:00.000001Z") - as an ISO8601 date string (can go to microseconds)
-	//	 5) <undefined> - uses the current time
-	function JD(jd,t,offs){
-		epoch = 2440587.5;	// The Julian Date of the Unix Time epoch is 2440587.5
-		var secs = 86400;
-		var scale = secs*1e6;
-		if(typeof jd==="number"){
-			if(typeof t!=="undefined"){
-				if(t=="unix") this.val = u2jd(jd);
-				else if(t=="epoch" && offs) this.val = u2jd((new Date(offs)).getTime() + jd*1000);
-				else if(t=="mjd") jd += 2400000.5;
-				else if(t=="tjd") jd += 2440000.5;
-			}
-			if(!this.val){
-				var days = Math.floor(jd);
-				this.val = [days,(jd - days)*scale];
-			}
-		}else this.val = u2jd(jd);
-		var _obj = this;
-
-		this.valueOf = function(){ return _obj.val[0] + _obj.val[1]/scale; };
-		this.toUNIX = function(){ return ((_obj.val[0]-epoch)*scale + _obj.val[1])/1e3; };	// Milliseconds
-		this.toMJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2400000.5); };
-		this.toTJD = function(){ return (_obj.val[0]+(_obj.val[1]/scale)-2440000.5); };
-		this.toISOString = function(){ return (new Date(_obj.toUNIX())).toISOString().replace(/\.0*([^0-9])/,function(m,p){ return p; }); };
-
-		// Deal with Julian Date in two parts to avoid rounding errors
-		// Input is either:
-		//		1) the number of milliseconds since 1970-01-01
-		//		2) the ISO8601 date string (can go to microseconds)
-		//		3) <undefined> - uses the current time
-		function u2jd(today) {
-			// The Julian Date of the Unix Time epoch is 2440587.5
-			var days = 0;
-			var rem = 0;
-			var ms = 0;
-			if(typeof today==="undefined"){
-				today = new Date();
-				ms = today.getTime();
-			}else if(typeof today==="string"){
-				// We'll take the decimal seconds and deal with
-				// them separately to avoid rounding errors.
-				var s = 0;
-				today = today.replace(/(\:[0-9]{2})\.([0-9]+)/,function(m,p1,p2){ s = parseFloat("0."+p2); return p1; });
-				ms = (new Date(today)).getTime();
-				ms += s*1000;
-			}else ms = today*1000;
-			days = Math.floor(ms/scale);
-			rem = (ms - days*scale) + scale/2;
-			return [days + epoch - 0.5,rem];
-		}
+	// Define a date convertor
+	function Dates(v,input){
+		this.epoch = {'jd':2440587.5,'mjd':2400000.5,'tjd':2440000.5};	// The epochs for Julian Date, MJD, and TJD
+		this.d2ms = 86400000;	// Days to milliseconds
+		if(typeof v==="number") v = Num(v);
+		if(input=="jd") this.jd = v;
+		if(input=="mjd") this.jd = v.plus(this.epoch.mjd);
+		if(input=="tjd") this.jd = v.plus(this.epoch.tjd);
+		if(input=="unix") this.unix = v;
+		if(input=="iso" || input=="locale") this.unix = v.times(1000);
 		return this;
+	}
+	Dates.prototype.toJD = function(){
+		if(this.jd) return this.jd.toValue();
+		if(this.unix) return this.unix.div(this.d2ms).plus(this.epoch.jd).toValue();
+		return 0;
+	}
+	Dates.prototype.toUNIX = function(){
+		if(this.unix) return this.unix.toValue();
+		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).toValue();
+		return 0;
+	}
+	Dates.prototype.toSeconds = function(){
+		if(this.unix) return this.unix.div(1000).toValue();
+		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).div(1000).toValue();
+		return 0;
+	}
+	Dates.prototype.toMJD = function(){
+		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
+		if(this.jd) return this.jd.minus(this.epoch.mjd).toValue();
+		else return 0;
+	}
+	Dates.prototype.toTJD = function(){
+		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
+		if(this.jd) return this.jd.minus(this.epoch.tjd).toValue();
+		else return 0;
+	}
+	Dates.prototype.toDate = function(){
+		if(this.jd) return new Date(this.toUNIX());
+		if(this.unix) return new Date(this.unix.toValue());
+		return new Date();
 	}
 
 	root.TimeSeries = TimeSeries;
