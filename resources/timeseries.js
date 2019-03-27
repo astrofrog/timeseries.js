@@ -288,8 +288,8 @@
 	};
 	
 	TS.prototype.processJSON = function(d){
-		this.json = d;
-		this.vega = JSON.parse(JSON.stringify(d));
+		this.json = clone(d);
+		this.vega = clone(d);
 		this.log('processJSON',d,this.json);
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
@@ -1227,6 +1227,9 @@
 							}
 						}
 					}
+				}
+				for(m = 0; m < marks.length; m++){
+					if(marks[m].encode && marks[m].encode.hover && marks[m].encode.hover.tooltip) delete marks[m].encode.hover.tooltip;
 				}
 				output.marks = marks;
 				if(view.scales) output.scales = view.scales;
