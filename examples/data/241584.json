@@ -76,6 +76,9 @@
 				"fill": { "value": "#F9BC26" },
 				"fillOpacity": { "value": 1 }
 			},
+			"update": {
+				"size": { "value": 4 }
+			},
 			"hover": {
 				"size": { "value": 200 },
 				"tooltip": {"signal":"{'Title': 'Australia', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
@@ -97,6 +100,9 @@
 				"size": { "value": 4 },
 				"fill": { "value": "#FF6700" },
 				"fillOpacity": { "value": 1 }
+			},
+			"update": {
+				"size": { "value": 4 }
 			},
 			"hover": {
 				"size": { "value": 200 },
@@ -120,6 +126,9 @@
 				"fill": { "value": "#2254F4" },
 				"fillOpacity": { "value": 1 }
 			},
+			"update": {
+				"size": { "value": 4 }
+			},
 			"hover": {
 				"size": { "value": 200 },
 				"tooltip": {"signal":"{'Title': 'France', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
@@ -142,6 +151,9 @@
 				"fill": { "value": "#178CFF" },
 				"fillOpacity": { "value": 1 }
 			},
+			"update": {
+				"size": { "value": 4 }
+			},
 			"hover": {
 				"size": { "value": 200 },
 				"tooltip": {"signal":"{'Title': 'Great Britain', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
@@ -163,6 +175,9 @@
 				"size": { "value": 4 },
 				"fill": { "value": "#D60303" },
 				"fillOpacity": { "value": 1 }
+			},
+			"update": {
+				"size": { "value": 4 }
 			},
 			"hover": {
 				"size": { "value": 200 },
