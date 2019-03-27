@@ -409,8 +409,43 @@
 		this.makeMenu();
 
 		if(this.json){
+
+			// Build default view/views
+
+			// Create a default extension object
 			if(!this.json._extend) this.json._extend = {};
+			// Create default views object
 			if(!this.json._views) this.json._views = [];
+
+			
+			// Create default view
+			addeddefault = false;
+			for(i = 0; i < this.json._views.length; i++){
+				if(this.json._views[i].name=="default"){
+					addeddefault = true;
+					view = clone(this.json._views[i]);
+				}
+			}
+			if(!addeddefault){
+				view = {
+					'name': 'default',
+					'title': (this.json.title || 'Default'),
+					'description': (this.json.description || 'The initial view'),
+					'markers': [],
+				};
+			}
+			// Add some defaults if not defined
+			if(!view.scales) view.scales = clone(this.json.scales);
+			if(!view.axes) view.axes = clone(this.json.axes);
+			if(!view._extend) view._extend = clone(this.json._extend);		// TimeSeries addition to VEGA spec
+			if(!addeddefault){
+				// Add marks
+				for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
+				this.json._views.unshift(view);
+			}
+			this._view = view;
+			// End building view
+			
 			this.loadDatasets(this.json.data);
 		}
 
@@ -925,7 +960,7 @@
 	TS.prototype.processDatasets = function(){
 		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
 
-		var id,mark,m,fn,up,ms,n,_obj;
+		var i,id,mark,m,fn,up,ms,n,_obj,show;
 
 		// Set up the progress object to monitor what we've done for each mark
 		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
@@ -1011,6 +1046,7 @@
 				else if(mark.type == "rule") dataset.rule = {show:true};
 				else if(mark.type == "area") dataset.area = {show:true};
 				else if(mark.type == "text") dataset.text = {show:true};
+				
 
 				if(me.datasets[id]){
 					dataset.data = clone(me.datasets[id].json);
@@ -1092,6 +1128,13 @@
 				addMarks(this,m+this.json.marks.length+m,clone(mark),{'this':this,'success':fn,'progress':up});
 			}
 		}
+		for(m in this.graph.marks){
+			for(i = 0; i < this._view.markers.length; i++){
+				if(this.graph.marks[m].name==this._view.markers[i].name){
+					if(!this._view.markers[i].visible) this.graph.marks[m].show = false;
+				}
+			}
+		}
 
 		// If the current list of datasets used is different
 		// to what we've already processed, we will update the graph
@@ -1109,30 +1152,6 @@
 		// If we haven't been updating the data for the graph we need to do that now
 		if(this.attr.showaswego==false) this.graph.updateData();
 		this.graph.canvas.container.find('.loader').remove();
-		
-		// Create a default extension object
-		if(!this.json._extend) this.json._extend = {};
-		
-		// Create default view
-		if(!this.json._views) this.json._views = [];
-		addeddefault = false;
-		for(i = 0; i < this.json._views.length; i++){
-			if(this.json._views[i].name=="default") addeddefault = true;
-		}
-		if(!addeddefault){
-			view = {
-				'name': 'default',
-				'title': (this.json.title || 'Default'),
-				'description': (this.json.description || 'The initial view'),
-				'markers': [],
-				'scales': clone(this.json.scales),
-				'axes': clone(this.json.axes),
-				'_extend': clone(this.json._extend)		// TimeSeries addition to VEGA spec
-			};
-			for(i = 0; i < this.json.marks.length ; i++) view.markers.push({ "name": this.json.marks[i].name, "include": true, "visible": true });
-			this.json._views.unshift(view);
-			this._view = view;
-		}
 
 		// Build the menus
 		this.updateLayerMenu();

@@ -960,7 +960,7 @@
 	};
 
 	Graph.prototype.getGraphRange = function(){
-		var d,i,j,k,f,max,axes,axis,v,domain;
+		var d,i,j,k,f,max,axes,axis,v,domain,keepers,keep;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
@@ -992,6 +992,13 @@
 		for(axis in axes){
 			if(this.options[axis].range == "width" || this.options[axis].range == "height"){
 				domain = this.options[axis].domain;
+				v = [];
+				// Build hash of which columns to keep
+				keepers = {};
+				if(domain.field) keepers[domain.field] = true;
+				if(domain.fields){
+					for(k = 0; k < domain.fields.length; k++) keepers[domain.fields[k]] = true;
+				}
 				// Loop over the datasets
 				for(i in this.datasets){
 					// If no domain is provided or one is and this is the correct dataset
@@ -1002,20 +1009,15 @@
 						}else{
 							if(this.datasets[i].data){
 								max = this.datasets[i].data.length;
+								// Loop over the columns in the dataset
 								for(j = 0; j < max ; j++){
 									d = this.datasets[i].data[j];
 									// Work out the values to include in the min/max calculation
 									if(this.options[axis].domain){
-										f = (domain.field||"");
-										if(!f && domain.fields){
-											for(k = 0; k < domain.fields.length; k++){
-												f = domain.fields[k];
-												if(d[f]) continue;
-											}
+										for(k in keepers){
+											if(d[k]) v.push(d[k]);
 										}
-										if(d[f]) v = d[f];
-									}else v = d[axes[axis]];
-									this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
+									}else v.push(d[axes[axis]]);
 								}
 							}else{
 								this.log('no marks');
@@ -1023,6 +1025,11 @@
 						}
 					}
 				}
+
+				// Calculate the range for this axis
+				this[axes[axis]] = calc(this[axes[axis]],v);
+
+				v = [];
 				// Loop over the data
 				for(i in this.marks){
 					// If no domain is provided or one is and this is the correct dataset
@@ -1032,15 +1039,20 @@
 							for(j = 0; j < max ; j++){
 								d = this.marks[i].mark[j].data;
 								// Work out the values to include in the min/max calculation
-								if(this.options[axis].domain && d[this.options[axis].domain.field]) v = d[this.options[axis].domain.field];
-								else v = d[axes[axis]];
-								this[axes[axis]] = calc(this[axes[axis]],(v ? [v] : []));
+								if(this.options[axis].domain){
+									for(k in keepers){
+										if(d[k]){
+											v.push(d[k]);
+										}
+									}
+								}else v.push(d[axes[axis]]);
 							}
 						}else{
 							this.log('no marks');
 						}
 					}
 				}
+				this[axes[axis]] = calc(this[axes[axis]],v);				
 			}
 		}
 
