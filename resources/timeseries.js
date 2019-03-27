@@ -195,7 +195,7 @@
 				'formatLabel': function(j,attr){
 					var o = {'str':'?'};
 					var v = convertDate(j,attr.input,attr.output);
-					if(attr.spacing.name=="days") v = v.replace(/^([0-9]{4}-[0-9]{2}-[0-9]{2}).*/,function(m,p1){ return p1+'T12:00Z'; });
+					if(attr.spacing.name=="days") v = v.replace(/^([0-9]{4}-[0-9]{2}-[0-9]{2}).*/,function(m,p1){ return p1; });
 					o.str = v.replace(/\.0+Z/,"Z");
 					return o;
 				}
