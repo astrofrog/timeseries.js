@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<title>Views with time or phase</title>
+	<link rel="stylesheet" href="../resources/aas.css">
+	<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<script language="javascript" type="text/javascript" src="../resources/big.min.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+	<!-- Syntax highlighting -->
+	<link rel="stylesheet" href="../resources/highlight/highlight.css">
+	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title"><a href="index.html">Interactive time series figures in AAS journals</a></h1>
+				<h2>Petition 241584</h2>
+				<p>Last updated: <span class="lastupdated">2019</span></p>
+			</div>
+		</div>
+	</header>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<div class="example">
+			<figure>
+				<div id="example1">
+				</div>
+				<figcaption>The number of signatures to the Revoke Article 50 petition for France (blue), Spain (orange), US (red), and Australia (yellow).</figcaption>
+			</figure>
+			<!-- Javascript -->
+			<script>
+			var ex1;
+			S(document).ready(function(){
+				ex1 = TimeSeries.create("data/241584.json");
+				ex1.initialize(document.getElementById('example1'));
+
+			});
+			</script>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; <span class="lastupdatedyear">2018</span> Aperio Software / AAS
+		</footer>
+	</div>
+
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
+
+</body>
+</html>

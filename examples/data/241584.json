@@ -1,0 +1,173 @@
+{
+	"$schema": "https://vega.github.io/schema/vega/v4.json",
+	"width": 900,
+	"height": 400,
+	"padding": 0,
+	"autosize": {
+		"type": "fit",
+		"resize": false
+	},
+	"title": "By time of observation",
+	"description": "The default view of the data with points ordered by time",
+	"_extend": {
+		"x": {
+			"input": "iso",
+			"output": "auto"
+		}
+	},
+	"_views": [{
+		"name": "default",
+		"title": "List of countries",
+		"description": "Signatures by country",
+		"markers": [{"name":"GB","visible":true},{"name":"AU","visible":true},{"name":"FR","visible":true},{"name":"US","visible":true},{"name":"ES","visible":true}]
+	}],
+	"data": [{
+		"name": "bycountry",
+		"format": {
+			"type": "csv",
+			"parse": {
+				"Date": "date",
+				"AU": "number",
+				"FR": "number",
+				"GB": "number",
+				"ES": "number"
+			}
+		},
+		"url": "241584-bycountry.csv"
+	}],
+	"scales": [{
+		"name": "xscale",
+		"type": "utc",
+		"range": "width",
+		"padding": 36,
+		"zero": false,
+		"domain": {"data": "bycountry", "field": "Date"}
+	},{
+		"name": "yscale",
+		"type": "linear",
+		"range": "height",
+		"padding": 36,
+		"zero": false,
+		"domain": {"data": "bycountry", "fields": ["FR","AU","US"]}
+	}],
+	"axes": [{
+		"orient": "bottom",
+		"scale": "xscale",
+		"title": "Time"
+	}, {
+		"orient": "left",
+		"scale": "yscale",
+		"title": "Signatures (reported by the petitions website)"
+	}],
+	"marks": [{
+		"type": "symbol",
+		"name": "AU",
+		"description": "Australia",
+		"clip": true,
+		"from": {
+			"data": "bycountry"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "Date" },
+				"y": { "scale": "yscale", "field": "AU" },
+				"shape": { "value": "circle" },
+				"size": { "value": 4 },
+				"fill": { "value": "#F9BC26" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'Australia', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "ES",
+		"description": "Spain",
+		"clip": true,
+		"from": {
+			"data": "bycountry"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "Date" },
+				"y": { "scale": "yscale", "field": "ES" },
+				"shape": { "value": "circle" },
+				"size": { "value": 4 },
+				"fill": { "value": "#FF6700" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'Spain', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "FR",
+		"description": "France",
+		"clip": true,
+		"from": {
+			"data": "bycountry"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "Date" },
+				"y": { "scale": "yscale", "field": "FR" },
+				"shape": { "value": "circle" },
+				"size": { "value": 4 },
+				"fill": { "value": "#2254F4" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'France', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "GB",
+		"description": "Great Britain",
+		"clip": true,
+		"from": {
+			"data": "bycountry"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "Date" },
+				"y": { "scale": "yscale", "field": "GB" },
+				"shape": { "value": "circle" },
+				"size": { "value": 4 },
+				"fill": { "value": "#178CFF" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'Great Britain', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+			}
+		}
+	},{
+		"type": "symbol",
+		"name": "US",
+		"description": "United States",
+		"clip": true,
+		"from": {
+			"data": "bycountry"
+		},
+		"encode": {
+			"enter": {
+				"x": { "scale": "xscale", "field": "Date" },
+				"y": { "scale": "yscale", "field": "US" },
+				"shape": { "value": "circle" },
+				"size": { "value": 4 },
+				"fill": { "value": "#D60303" },
+				"fillOpacity": { "value": 1 }
+			},
+			"hover": {
+				"size": { "value": 200 },
+				"tooltip": {"signal":"{'Title': 'United States', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+			}
+		}
+	}]
+}
