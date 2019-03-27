@@ -102,7 +102,7 @@
 	z-index: 2;
 }
 .timeseries label.hamburger .nv { display: none; }
-.timeseries input.hamburger { z-index: 1005; opacity: 0.01; box-sizing: border-box; }
+.timeseries input.hamburger { z-index: 1005; box-sizing: border-box; -moz-appearance: none; -webkit-appearance:none; -o-appearance:none; appearance: none; }
 .timeseries label.hamburger {
 	padding: 2px;
 }
