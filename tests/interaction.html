@@ -30,26 +30,82 @@
 		var scale = 1;
 		S('#msg').html('test')
 		
+		function getDist(e){
+			console.log('getDist')
+			if(e.touches) return Math.hypot(e.touches[0].pageX - e.touches[1].pageX,e.touches[0].pageY - e.touches[1].pageY);
+			else return 0;
+		}
+
+		function getScale(start, end) {
+			return getDistance(end[0], end[1], ['clientX', 'clientY']) / getDistance(start[0], start[1], ['clientX', 'clientY']);
+		}
+
+		/**
+		 * create a simple clone from the input used for storage of firstInput and firstMultiple
+		 * @param {Object} input
+		 * @returns {Object} clonedInputData
+		 */
+		function simpleCloneInputData(input) {
+			// make a simple copy of the pointers because we will get a reference if we don't
+			// we only need clientXY for the calculations
+			var pointers = [];
+			var i = 0;
+			while (i < input.pointers.length) {
+				pointers[i] = {
+					clientX: round(input.pointers[i].clientX),
+					clientY: round(input.pointers[i].clientY)
+				};
+				i++;
+			}
+
+			return {
+				timeStamp: now(),
+				pointers: pointers,
+				center: getCenter(pointers),
+				deltaX: input.deltaX,
+				deltaY: input.deltaY
+			};
+		}
+
+		/**
+		 * calculate the absolute distance between two points
+		 * @param {Object} p1 {x, y}
+		 * @param {Object} p2 {x, y}
+		 * @param {Array} [props] containing x and y keys
+		 * @return {Number} distance
+		 */
+		function getDistance(p1, p2, props) {
+			if(!props) props = ['x', 'y'];
+			var x = p2[props[0]] - p1[props[0]],
+				y = p2[props[1]] - p1[props[1]];
+			return Math.sqrt((x * x) + (y * y));
+		}
+		
 		el.on('touchstart',function(e){
+			e.preventDefault();
 			console.log('touchstart',e)
 			if(e.touches.length === 2){
 				scaling = true;
 				//pinchStart(e);
 			}
-			S('#msg').html('pinchStart '+scaling);
+			S('#msg').html('pinchStart '+scaling+' '+getDist(e));
 		}).on('touchmove',function(e){
+			e.preventDefault();
 			//if(scaling) pinchMove(e);
-			S('#msg').html('pinchMove '+scaling);
+			S('#msg').html('pinchMove '+scaling+' '+getDist(e));
 		}).on('touchend',function(e){
+			e.preventDefault();
 			scaling = false;
-			S('#msg').html('pinchEnd '+scaling);
+			S('#msg').html('pinchEnd '+scaling+' '+getDist(e));
 		}).on('click',function(e){
 			S('#msg').html('click')
 		}).on('dblclick',function(e){
 			e.stopPropagation()
 			S('#msg').html('dblclick')
 		}).on('wheel',function(e){
+console.log('whee;')
 			e.preventDefault();
+			getDist(e);
 			var o = e.originalEvent
 			var x = (o.clientX-o.originalTarget.offsetLeft);
 			var y = (o.clientY-o.originalTarget.offsetTop);
