@@ -17,7 +17,7 @@
 	},
 	"_views": [{
 		"name": "default",
-		"title": "List of countries",
+		"title": "Revoke Article 50 petition signatures",
 		"description": "Signatures by country",
 		"markers": [{"name":"GB","visible":true},{"name":"AU","visible":true},{"name":"FR","visible":true},{"name":"US","visible":true},{"name":"ES","visible":true}]
 	}],
@@ -40,7 +40,6 @@
 		"type": "utc",
 		"range": "width",
 		"padding": 36,
-		"zero": false,
 		"domain": {"data": "bycountry", "field": "Date"}
 	},{
 		"name": "yscale",
@@ -81,7 +80,7 @@
 			},
 			"hover": {
 				"size": { "value": 200 },
-				"tooltip": {"signal":"{'Title': 'Australia', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+				"tooltip": {"signal":"{'Title': 'Australia', 'Signatures': datum.AU, 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
 			}
 		}
 	},{
@@ -106,7 +105,7 @@
 			},
 			"hover": {
 				"size": { "value": 200 },
-				"tooltip": {"signal":"{'Title': 'Spain', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+				"tooltip": {"signal":"{'Title': 'Spain', 'Signatures': datum.ES, 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
 			}
 		}
 	},{
@@ -131,7 +130,7 @@
 			},
 			"hover": {
 				"size": { "value": 200 },
-				"tooltip": {"signal":"{'Title': 'France', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+				"tooltip": {"signal":"{'Title': 'France', 'Signatures': datum.FR, 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
 			}
 		}
 	},{
@@ -156,7 +155,7 @@
 			},
 			"hover": {
 				"size": { "value": 200 },
-				"tooltip": {"signal":"{'Title': 'Great Britain', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+				"tooltip": {"signal":"{'Title': 'Great Britain', 'Signatures': datum.GB, 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
 			}
 		}
 	},{
@@ -181,7 +180,7 @@
 			},
 			"hover": {
 				"size": { "value": 200 },
-				"tooltip": {"signal":"{'Title': 'United States', 'Signatures': datum.y.toLocaleString(), 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
+				"tooltip": {"signal":"{'Title': 'United States', 'Signatures': datum.US, 'Date': timeFormat(datum.Date,'%Y-%m-%d'), 'Time': timeFormat(datum.Date,'%H:%M:%S') }"}
 			}
 		}
 	}]
