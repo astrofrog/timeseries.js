@@ -254,7 +254,6 @@
 				],
 				'formatLabel': function(j,attr){
 					var r = (j*2*Math.PI)+'';
-					console.log(attr)
 					r = r.replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
 					return {'str':r+'π'};
 				}
@@ -1227,9 +1226,6 @@
 							}
 						}
 					}
-				}
-				for(m = 0; m < marks.length; m++){
-					if(marks[m].encode && marks[m].encode.hover && marks[m].encode.hover.tooltip) delete marks[m].encode.hover.tooltip;
 				}
 				output.marks = marks;
 				if(view.scales) output.scales = view.scales;
