@@ -69,7 +69,6 @@
 		"name": "xscale",
 		"type": "time",
 		"range": "width",
-		"zero": false,
 		"domain": {"data": "Model", "field": "HJD"}
 	},{
 		"name": "yscale",
@@ -129,7 +128,7 @@
 				"fill": {"value": "#000000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: OGLE<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'OGLE', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -172,11 +171,12 @@
 				"fill": {"value": "#7F0000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: MOA<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'MOA', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "Danish-error",
 		"description": "Danish 1.54m",
 		"clip": true,
 		"from": {"data": "Danish 1.54m"},
@@ -197,6 +197,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Danish",
 		"description": "Danish 1.54m",
 		"clip": true,
 		"from": {"data": "Danish 1.54m"},
@@ -215,11 +216,12 @@
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Danish 1.54m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Danish 1.54m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "FTN-error",
 		"description": "Faulkes North 2.0m",
 		"clip": true,
 		"from": {"data": "Faulkes North 2.0m"},
@@ -240,6 +242,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "FTN",
 		"description": "Faulkes North 2.0m",
 		"clip": true,
 		"from": {"data": "Faulkes North 2.0m"},
@@ -258,11 +261,12 @@
 				"fill": {"value": "#00FFFF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Faulkes North 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Faulkes North 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "FTS-error",
 		"description": "Faulkes South 2.0m",
 		"clip": true,
 		"from": {"data": "Faulkes South 2.0m"},
@@ -283,6 +287,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "FTS",
 		"description": "Faulkes South 2.0m",
 		"clip": true,
 		"from": {"data": "Faulkes South 2.0m"},
@@ -301,11 +306,12 @@
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Faulkes South 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Faulkes South 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "liverpool2-error",
 		"description": "Liverpool 2.0m",
 		"clip": true,
 		"from": {"data": "Liverpool 2.0m"},
@@ -326,6 +332,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "liverpool2",
 		"description": "Liverpool 2.0m",
 		"clip": true,
 		"from": {"data": "Liverpool 2.0m"},
@@ -344,7 +351,7 @@
 				"fill": {"value": "#00A0A0"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Liverpool 2.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Liverpool 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -387,7 +394,7 @@
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: MONET North 1.2m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'MONET North 1.2m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -430,7 +437,7 @@
 				"fill": {"value": "#FF00FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: UTas 1.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'UTas 1.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -473,7 +480,7 @@
 				"fill": {"value": "#00FF00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: SAAO 1.0m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'SAAO 1.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -516,11 +523,12 @@
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: CTIO 1.3m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'CTIO 1.3m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "Auckland-error",
 		"description": "Auckland 0.4m",
 		"clip": true,
 		"from": {"data": "Auckland 0.4m"},
@@ -541,6 +549,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Auckland",
 		"description": "Auckland 0.4m",
 		"clip": true,
 		"from": {"data": "Auckland 0.4m"},
@@ -559,11 +568,12 @@
 				"fill": {"value": "#007F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Auckland 0.4m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Auckland 0.4m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "FarmCove-error",
 		"description": "Farm Cove 0.35m",
 		"clip": true,
 		"from": {"data": "Farm Cove 0.35m"},
@@ -584,6 +594,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "FarmCove",
 		"description": "Farm Cove 0.35m",
 		"clip": true,
 		"from": {"data": "Farm Cove 0.35m"},
@@ -602,11 +613,12 @@
 				"fill": {"value": "#0000FF"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Farm Cove 0.35m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Farm Cove 0.35m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "Kumeu-error",
 		"description": "Kumeu Obs 0.35m",
 		"clip": true,
 		"from": {"data": "Kumeu Obs 0.35m"},
@@ -627,6 +639,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Kumeu",
 		"description": "Kumeu Obs 0.35m",
 		"clip": true,
 		"from": {"data": "Kumeu Obs 0.35m"},
@@ -645,11 +658,12 @@
 				"fill": {"value": "#00007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Kumeu Obs 0.35m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Kumeu Obs 0.35m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "rect",
+		"name": "Vintage-error",
 		"description": "Vintage Lane 0.4m",
 		"clip": true,
 		"from": {"data": "Vintage Lane 0.4m"},
@@ -670,6 +684,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "Vintage",
 		"description": "Vintage Lane 0.4m",
 		"clip": true,
 		"from": {"data": "Vintage Lane 0.4m"},
@@ -688,11 +703,12 @@
 				"fill": {"value": "#7F007F"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"'Title: Vintage Lane 0.4m<br />Time: ' + datum.x + '<br />Dmag: ' + datum.y + '<br />Error: ' + datum.err"}
+				"tooltip": {"signal":"{'Title': 'Vintage Lane 0.4m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
 		"type": "line",
+		"name": "modelfit",
 		"description": "Model fit",
 		"clip": true,
 		"from": {"data": "Model"},
@@ -704,12 +720,10 @@
 			},
 			"update": {
 				"stroke": {"value": "#999999"},
-				"fillOpacity": {"value": 1},
 				"zindex": {"value": 0}
 			},
 			"hover": {
-				"fill": {"value": "#999999"},
-				"fillOpacity": {"value": 1},
+				"stroke": {"value": "#999999"},
 				"zindex": {"value": 1}
 			}
 		}
