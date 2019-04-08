@@ -28,7 +28,7 @@
 		var path = scripts[scripts.length-1].src.split('?')[0];
 		var idx = path.lastIndexOf("/");
 		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
-		
+
 		this.log = function(){
 			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 				var args = Array.prototype.slice.call(arguments, 0);
@@ -1001,7 +1001,7 @@
 
 		this.progress.datasets.old = this.progress.datasets.used;
 
-		_obj = this;		
+		_obj = this;
 		function updateProperties(d,event){
 			var to,str;
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
@@ -1009,7 +1009,7 @@
 				console.log('updateProps fail',d,event);
 				return;
 			}
-			var datum = d.data;
+			datum = d.data;
 			for(var p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
@@ -1194,7 +1194,7 @@
 
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
-		var i,txt,m,s,view,opts,output,typ;
+		var i,txt,s,view,opts,typ,output;
 		opts = { 'type': 'text/text', 'file': (this.file ? this.file.replace(/.*\//g,"") : "timeseries.json") };
 		if(!attr) attr = {};
 
@@ -1236,7 +1236,7 @@
 				// Update markers section
 				var marks = [];
 				var done = {};
-				var found;
+				var found,m;
 
 				for(m = 0; m < view.markers.length; m++){
 					found = false;

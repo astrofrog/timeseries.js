@@ -26,30 +26,30 @@
 			this.type = "Num";
 			this.o = v;
 			this.v = (hasbig ? new Big(v==null ? 0 : v) : parseFloat(v));
-			this.toValue = function(){ return Number(this.v.toString()); }
-			this.toString = function(){ return clip(typeof this.o=="string" ? this.o : this.o.toString()); }
-			this.toExponential = function(dp){ return this.v.toExponential(dp); }
+			this.toValue = function(){ return Number(this.v.toString()); };
+			this.toString = function(){ return clip(typeof this.o=="string" ? this.o : this.o.toString()); };
+			this.toExponential = function(dp){ return this.v.toExponential(dp); };
 
 			return this;
 		}
 		// Boolean results
-		N.prototype.eq = function(b){ return this.v.eq(b); }
-		N.prototype.gt = function(b){ return this.v.gt(b); }
-		N.prototype.gte = function(b){ return this.v.gte(b); }
-		N.prototype.lt = function(b){ return this.v.lt(b); }
-		N.prototype.lte = function(b){ return this.v.lte(b); }
+		N.prototype.eq = function(b){ return this.v.eq(b); };
+		N.prototype.gt = function(b){ return this.v.gt(b); };
+		N.prototype.gte = function(b){ return this.v.gte(b); };
+		N.prototype.lt = function(b){ return this.v.lt(b); };
+		N.prototype.lte = function(b){ return this.v.lte(b); };
 
 		// Return a Num type
-		N.prototype.abs = function(){ return Num(this.v.abs()); }
-		N.prototype.plus = function(n){ return Num(this.v.plus(n)); }
-		N.prototype.minus = function(n){ return Num(this.v.minus(n)); }
-		N.prototype.div = function(n){ return Num(this.v.div(n)); }
-		N.prototype.times = function(n){ return Num(this.v.times(n)); }
-		N.prototype.pow = function(n){ return Num(this.v.pow(n)); }
-		N.prototype.pow10 = function(n){ var b = Num(this); b.v.e += n; return b; }
-		N.prototype.round = function(dp,t){ return Num(this.v.round(dp,(typeof t==="number" ? t:1))); }
-		N.prototype.floor = function(dp){ return Num(this.v.round(dp,0)); }
-		N.prototype.ceil = function(dp){ return Num(this.v.round(dp,3)); }
+		N.prototype.abs = function(){ return Num(this.v.abs()); };
+		N.prototype.plus = function(n){ return Num(this.v.plus(n)); };
+		N.prototype.minus = function(n){ return Num(this.v.minus(n)); };
+		N.prototype.div = function(n){ return Num(this.v.div(n)); };
+		N.prototype.times = function(n){ return Num(this.v.times(n)); };
+		N.prototype.pow = function(n){ return Num(this.v.pow(n)); };
+		N.prototype.pow10 = function(n){ var b = Num(this); b.v.e += n; return b; };
+		N.prototype.round = function(dp,t){ return Num(this.v.round(dp,(typeof t==="number" ? t:1))); };
+		N.prototype.floor = function(dp){ return Num(this.v.round(dp,0)); };
+		N.prototype.ceil = function(dp){ return Num(this.v.round(dp,3)); };
 
 		return new N(v);
 	}
@@ -831,33 +831,35 @@
 		var lookup = {};
 		// Parse the data
 		for(key in data.parse){
-			format = data.parse[key];
-			for(i = 0 ; i < data.data.length; i++){
-			// Loop over each column in the line
-				v = data.data[i][key];
+			if(data.parse[key]){
+				format = data.parse[key];
+				for(i = 0 ; i < data.data.length; i++){
+				// Loop over each column in the line
+					v = data.data[i][key];
 				
-				if(format!="string"){
-					// "number", "boolean" or "date" https://github.com/vega/vega/wiki/Data#-csv
-					if(format=="number"){
-						v = parseFloat(v);
-					}else if(format=="date"){
-						if(v==null || v=="") v = parseFloat(v);
-						else{
-							// Convert to integer seconds since the epoch as a string
-							s = Math.floor(new Date(v.replace(/(^"|"$)/,"")).getTime()/1000)+'';
-							// Extract anything less than seconds and add it back
-							var m = v.match(/\.([0-9]+)/);
-							if(m && m.length == 2) s += m[0];
-							v = Num(s);	// Convert to big number
+					if(format!="string"){
+						// "number", "boolean" or "date" https://github.com/vega/vega/wiki/Data#-csv
+						if(format=="number"){
+							v = parseFloat(v);
+						}else if(format=="date"){
+							if(v==null || v=="") v = parseFloat(v);
+							else{
+								// Convert to integer seconds since the epoch as a string
+								s = Math.floor(new Date(v.replace(/(^"|"$)/,"")).getTime()/1000)+'';
+								// Extract anything less than seconds and add it back
+								var m = v.match(/\.([0-9]+)/);
+								if(m && m.length == 2) s += m[0];
+								v = Num(s);	// Convert to big number
+							}
+						}else if(format=="boolean"){
+							if(v=="1" || v=="true" || v=="Y") v = true;
+							else if(v=="0" || v=="false" || v=="N") v = false;
+							else v = null;
 						}
-					}else if(format=="boolean"){
-						if(v=="1" || v=="true" || v=="Y") v = true;
-						else if(v=="0" || v=="false" || v=="N") v = false;
-						else v = null;
 					}
+					lookup[data.data[i][key]] = v;
+					data.data[i][key] = v;
 				}
-				lookup[data.data[i][key]] = v;
-				data.data[i][key] = v;
 			}
 		}
 		return data;
@@ -867,8 +869,10 @@
 		this.logTime('addDatasets');
 		if(!this.datasets) this.datasets = {};
 		for(var id in datasets){
-			if(!this.datasets[id]){
-				this.datasets[id] = parseData(clone(datasets[id]));
+			if(datasets[id]){
+				if(!this.datasets[id]){
+					this.datasets[id] = parseData(clone(datasets[id]));
+				}
 			}
 		}
 		this.logTime('addDatasets');
@@ -1697,12 +1701,14 @@
 			var l = 1e100;
 			var i = "";
 			for(var f in fmt){
-				try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
-				catch(err){ console.log('ERROR',fmt[f],err); }
-				if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
-				if(fmt[f].length < l){
-					l = fmt[f].length;
-					i = f;
+				if(fmt[f]){
+					try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
+					catch(err){ console.log('ERROR',fmt[f],err); }
+					if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
+					if(fmt[f].length < l){
+						l = fmt[f].length;
+						i = f;
+					}
 				}
 			}
 			return fmt[i];
@@ -1954,200 +1960,204 @@
 		ctx.closePath();
 		
 		for(a in axes){
+			if(axes[a]){
 
-			o = this.options[a].orient || "left";
-			// Set axis direction
-			d = "x";
-			if(o=="left" || o=="right") d = "y";
-			if(!this[d]) continue;
+				o = this.options[a].orient || "left";
+				// Set axis direction
+				d = "x";
+				if(o=="left" || o=="right") d = "y";
+				if(!this[d]) continue;
 
-			// What do we show?
-			var show = {'grid':false,'labels':true,'ticks':true,'domain':true};
-			for(s in show){
-				if(typeof this.options[a][s]==="boolean") show[s] = this.options[a][s];
-				if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
-			}
-			
-			// Set the tick width
-			tw = 0;
-			if(show.ticks) tw = (this.options[a].tickSize||4);
-
-			// Draw axis line
-			if(show.domain){
-				ctx.beginPath();
-				ctx.strokeStyle = (this.options[a].domainColor || this.options.grid.color || 'rgb(0,0,0)');
-				ctx.lineWidth = (this.options[a].domainWidth || this.options.grid.border);
-				lw = 0.5;
-				if(o=="left"){
-					ctx.moveTo(c.left+lw,c.top);
-					ctx.lineTo(c.left+lw,c.top+c.height);
-				}else if(o=="bottom"){
-					ctx.moveTo(c.left,c.top+c.height+lw);
-					ctx.lineTo(c.left+c.width,c.top+c.height+lw);
+				// What do we show?
+				var show = {'grid':false,'labels':true,'ticks':true,'domain':true};
+				for(s in show){
+					if(typeof show[s]!="undefined"){
+						if(typeof this.options[a][s]==="boolean") show[s] = this.options[a][s];
+						if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
+					}
 				}
-				ctx.stroke();
-				ctx.closePath();
-			}
-
-			ctx.lineWidth = 1;
-
-			// Draw label
-			if(this.options[a].title!=""){
-				p = [0,0];
-				ctx.beginPath();
-				ctx.textAlign = "center";
-				ctx.textBaseline = "bottom";
-				fs = this.getFontHeight(d,'title');
-				ctx.font = (this.options[a].titleFontWeight || "bold")+' '+fs+'px '+(this.options[a].titleFont || this.chart.fontfamily);
-				ctx.fillStyle = (this.options[a].titleColor || this.options.labels.color);
-
-				// Work out coordinates
-				if(o=="bottom") p = [c.left+c.width/2,this.options.height-Math.round(fs/2)-this.chart.padding];
-				else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
-
-				if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
-				this.drawTextLabel(this.options[a].title, p[0], p[1]+fs/2, {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:(this.options[a].titleFontWeight || "bold"), 'font':(this.options[a].titleFont || this.chart.fontfamily), 'baseline':'bottom'}});
-				if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
-				ctx.closePath();
-			}
-
-			// Draw axis grid and labels
-			ctx.textAlign = orient[o].textAlign || 'end';
-			ctx.textBaseline = orient[o].textBaseline || 'top';
-
-			// Set font for labels
-			fs = this.getFontHeight(d,'label');
-			ctx.font = fs+'px '+this.chart.fontfamily;
-			ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
-
-			// Get axis properties
-			var axis = this[d];
-
-			if(d=="x"){
-				y1 = orient[o].y1;
-				y2 = orient[o].y2;
-			}
-			if(d=="y"){
-				x1 = orient[o].x1;
-				x2 = orient[o].x2;
-			}
-			// Calculate the number of decimal places for the increment - helps with rounding errors
-			if(this[d].precision){
-				prec = this[d].precision;
-			}else{
-				prec = ""+axis.inc;
-				prec = prec.length-prec.indexOf('.')-1;
-			}
-			fshalf = Math.ceil(fs/2);
-			var oldx = 0;
-			var str,v;
 			
-			mn = axis.gridmin;
-			mx = axis.gridmax;
-			if(axis.log){
-				mn = Math.floor(axis.gridmin);
-				mx = Math.ceil(axis.gridmax);
-			}
+				// Set the tick width
+				tw = 0;
+				if(show.ticks) tw = (this.options[a].tickSize||4);
 
-			for(var ii = 0; ii < axis.ticks.length; ii++) {
-				i = axis.ticks[ii].value;
-				// Investigate here console.log(d,axis.ticks[ii],this.getPos(d,i))
-				p = this.getPos(d,i);
-				if(!p || !isFinite(p)) continue;
-				// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
-				p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-				if(d=="y"){
-					y1 = p;
-					y2 = p;
-				}else if(d=="x"){
-					x1 = p;
-					x2 = p;
-				}
-				v = (typeof i==="object") ? i.toValue() : i;
-				j = (axis.log) ? G.log10(v) : parseFloat(v.toFixed(prec));
-
-				if(p >= r[d+'min'] && p < r[d+'max']){
+				// Draw axis line
+				if(show.domain){
 					ctx.beginPath();
-					ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-					ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
+					ctx.strokeStyle = (this.options[a].domainColor || this.options.grid.color || 'rgb(0,0,0)');
+					ctx.lineWidth = (this.options[a].domainWidth || this.options.grid.border);
+					lw = 0.5;
+					if(o=="left"){
+						ctx.moveTo(c.left+lw,c.top);
+						ctx.lineTo(c.left+lw,c.top+c.height);
+					}else if(o=="bottom"){
+						ctx.moveTo(c.left,c.top+c.height+lw);
+						ctx.lineTo(c.left+c.width,c.top+c.height+lw);
+					}
+					ctx.stroke();
+					ctx.closePath();
+				}
 
-					// Draw tick labels
-					if(show.labels){
-						if(d=="x"){
-							str = axis.ticks[ii].label;
-							if(!str) str = "";
-							var ds = str.split(/\n/);
-							var maxw = 0;
-							for(k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
-							if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
-								ctx.textAlign = 'center';
-								ctx.fillStyle = this.options.labels.color;
-								for(k = 0; k < ds.length ; k++){
-									this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
+				ctx.lineWidth = 1;
+
+				// Draw label
+				if(this.options[a].title!=""){
+					p = [0,0];
+					ctx.beginPath();
+					ctx.textAlign = "center";
+					ctx.textBaseline = "bottom";
+					fs = this.getFontHeight(d,'title');
+					ctx.font = (this.options[a].titleFontWeight || "bold")+' '+fs+'px '+(this.options[a].titleFont || this.chart.fontfamily);
+					ctx.fillStyle = (this.options[a].titleColor || this.options.labels.color);
+
+					// Work out coordinates
+					if(o=="bottom") p = [c.left+c.width/2,this.options.height-Math.round(fs/2)-this.chart.padding];
+					else if(o=="left") p = [-(c.top+(c.height/2)),Math.round(fs/2)+this.chart.padding];
+
+					if(orient[o] && orient[o].rot) ctx.rotate(-orient[o].rot);
+					this.drawTextLabel(this.options[a].title, p[0], p[1]+fs/2, {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:(this.options[a].titleFontWeight || "bold"), 'font':(this.options[a].titleFont || this.chart.fontfamily), 'baseline':'bottom'}});
+					if(orient[o] && orient[o].rot) ctx.rotate(orient[o].rot);
+					ctx.closePath();
+				}
+
+				// Draw axis grid and labels
+				ctx.textAlign = orient[o].textAlign || 'end';
+				ctx.textBaseline = orient[o].textBaseline || 'top';
+
+				// Set font for labels
+				fs = this.getFontHeight(d,'label');
+				ctx.font = fs+'px '+this.chart.fontfamily;
+				ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
+
+				// Get axis properties
+				var axis = this[d];
+
+				if(d=="x"){
+					y1 = orient[o].y1;
+					y2 = orient[o].y2;
+				}
+				if(d=="y"){
+					x1 = orient[o].x1;
+					x2 = orient[o].x2;
+				}
+				// Calculate the number of decimal places for the increment - helps with rounding errors
+				if(this[d].precision){
+					prec = this[d].precision;
+				}else{
+					prec = ""+axis.inc;
+					prec = prec.length-prec.indexOf('.')-1;
+				}
+				fshalf = Math.ceil(fs/2);
+				var oldx = 0;
+				var str,v;
+			
+				mn = axis.gridmin;
+				mx = axis.gridmax;
+				if(axis.log){
+					mn = Math.floor(axis.gridmin);
+					mx = Math.ceil(axis.gridmax);
+				}
+
+				for(var ii = 0; ii < axis.ticks.length; ii++) {
+					i = axis.ticks[ii].value;
+					// Investigate here console.log(d,axis.ticks[ii],this.getPos(d,i))
+					p = this.getPos(d,i);
+					if(!p || !isFinite(p)) continue;
+					// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
+					p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
+					if(d=="y"){
+						y1 = p;
+						y2 = p;
+					}else if(d=="x"){
+						x1 = p;
+						x2 = p;
+					}
+					v = (typeof i==="object") ? i.toValue() : i;
+					j = (axis.log) ? G.log10(v) : parseFloat(v.toFixed(prec));
+
+					if(p >= r[d+'min'] && p < r[d+'max']){
+						ctx.beginPath();
+						ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
+						ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
+
+						// Draw tick labels
+						if(show.labels){
+							if(d=="x"){
+								str = axis.ticks[ii].label;
+								if(!str) str = "";
+								var ds = str.split(/\n/);
+								var maxw = 0;
+								for(k = 0; k < ds.length ; k++) maxw = Math.max(maxw,ctx.measureText(ds[k]).width);
+								if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
+									ctx.textAlign = 'center';
+									ctx.fillStyle = this.options.labels.color;
+									for(k = 0; k < ds.length ; k++){
+										this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
+									}
+									oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 								}
-								oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
+							}else if(d=="y"){
+								ctx.textAlign = 'end';
+								if(j==this.y.gridmax) ctx.textBaseline = 'top';
+								str = axis.ticks[ii].label;
+								ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 							}
-						}else if(d=="y"){
-							ctx.textAlign = 'end';
-							if(j==this.y.gridmax) ctx.textBaseline = 'top';
-							str = axis.ticks[ii].label;
-							ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
+						}
+
+						ctx.stroke();
+								
+						// Draw grid lines
+						ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
+						if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
+							ctx.beginPath();
+							ctx.lineWidth = (this.options[a].gridWidth || 0.5);
+							ctx.moveTo(x1,y1);
+							ctx.lineTo(x2,y2);
+							ctx.stroke();
+						}
+				
+						// Draw tick marks lines
+						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+						if(show.ticks && i > axis.min && i < axis.max){
+							ctx.beginPath();
+							ctx.lineWidth = (this.options[a].tickWidth || 0.5);
+							ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
+							if(d=="x"){
+								ctx.moveTo(x1,y1);
+								ctx.lineTo(x2,y1+tw);
+							}else if(d=="y"){
+								ctx.moveTo(x1,y1);
+								ctx.lineTo(x1-tw,y2);					
+							}
+							ctx.stroke();
+							ctx.closePath();
 						}
 					}
 
-					ctx.stroke();
-								
-					// Draw grid lines
-					ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-					if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
+					// Draw sub grid for log scale
+					if(axis.log && show.grid){
 						ctx.beginPath();
-						ctx.lineWidth = (this.options[a].gridWidth || 0.5);
-						ctx.moveTo(x1,y1);
-						ctx.lineTo(x2,y2);
-						ctx.stroke();
-					}
-				
-					// Draw tick marks lines
-					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
-					if(show.ticks && i > axis.min && i < axis.max){
-						ctx.beginPath();
+						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
 						ctx.lineWidth = (this.options[a].tickWidth || 0.5);
-						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
-						if(d=="x"){
-							ctx.moveTo(x1,y1);
-							ctx.lineTo(x2,y1+tw);
-						}else if(d=="y"){
-							ctx.moveTo(x1,y1);
-							ctx.lineTo(x1-tw,y2);					
+						for(j = 0; j < this.subgrid.length ; j++){
+							di = i*this.subgrid[j];
+							if(di < axis.max && di > axis.min){
+								p = this.getPos(d,di);
+								p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
+								if(p >= r[d+'min'] && p < r[d+'max']){
+									if(d=="x"){
+										ctx.moveTo(p,y1);
+										ctx.lineTo(p,y1+tw);
+									}else if(d=="y"){
+										ctx.moveTo(x1,p);
+										ctx.lineTo(x1-tw,p);
+									}
+								}
+							}
 						}
 						ctx.stroke();
 						ctx.closePath();
 					}
-				}
-
-				// Draw sub grid for log scale
-				if(axis.log && show.grid){
-					ctx.beginPath();
-					ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
-					ctx.lineWidth = (this.options[a].tickWidth || 0.5);
-					for(j = 0; j < this.subgrid.length ; j++){
-						di = i*this.subgrid[j];
-						if(di < axis.max && di > axis.min){
-							p = this.getPos(d,di);
-							p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-							if(p >= r[d+'min'] && p < r[d+'max']){
-								if(d=="x"){
-									ctx.moveTo(p,y1);
-									ctx.lineTo(p,y1+tw);
-								}else if(d=="y"){
-									ctx.moveTo(x1,p);
-									ctx.lineTo(x1-tw,p);
-								}
-							}
-						}
-					}
-					ctx.stroke();
-					ctx.closePath();
 				}
 			}
 		}
@@ -2713,9 +2723,13 @@
 		if(i.yb < i.ya){ t = i.ya; i.ya = i.yb; i.yb = t; }
 
 		for(dir in {'x':'','y':''}){
-			for(bit in {'a':'','b':''}){
-				i[dir+''+bit] *= this.canvas.scale;
-				i[dir+''+bit] = (bit == "a") ? Math.floor(i[dir+''+bit]) : Math.ceil(i[dir+''+bit]);
+			if(dir){
+				for(bit in {'a':'','b':''}){
+					if(bit){
+						i[dir+''+bit] *= this.canvas.scale;
+						i[dir+''+bit] = (bit == "a") ? Math.floor(i[dir+''+bit]) : Math.ceil(i[dir+''+bit]);
+					}
+				}
 			}
 		}
 
