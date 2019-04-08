@@ -90,6 +90,7 @@
 	],
 	"marks":[{
 		"type": "rect",
+		"name": "OGLE-error",
 		"description": "OGLE",
 		"clip": true,
 		"from": {"data": "OGLE"},
@@ -110,6 +111,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "OGLE",
 		"description": "OGLE",
 		"clip": true,
 		"from": {"data": "OGLE"},
@@ -133,6 +135,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "MOA-error",
 		"description": "MOA",
 		"clip": true,
 		"from": {"data": "MOA"},
@@ -153,6 +156,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "MOA",
 		"description": "MOA",
 		"clip": true,
 		"from": {"data": "MOA"},
@@ -356,6 +360,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "MONET-error",
 		"description": "MONET North 1.2m",
 		"clip": true,
 		"from": {"data": "MONET North 1.2m"},
@@ -376,6 +381,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "MONET",
 		"description": "MONET North 1.2m",
 		"clip": true,
 		"from": {"data": "MONET North 1.2m"},
@@ -399,6 +405,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "UTas-error",
 		"description": "UTas 1.0m",
 		"clip": true,
 		"from": {"data": "UTas 1.0m"},
@@ -419,6 +426,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "UTas",
 		"description": "UTas 1.0m",
 		"clip": true,
 		"from": {"data": "UTas 1.0m"},
@@ -442,6 +450,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "SAAO-error",
 		"description": "SAAO 1.0m",
 		"clip": true,
 		"from": {"data": "SAAO 1.0m"},
@@ -462,6 +471,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "SAAO",
 		"description": "SAAO 1.0m",
 		"clip": true,
 		"from": {"data": "SAAO 1.0m"},
@@ -485,6 +495,7 @@
 		}
 	},{
 		"type": "rect",
+		"name": "CTIO-error",
 		"description": "CTIO 1.3m",
 		"clip": true,
 		"from": {"data": "CTIO 1.3m"},
@@ -505,6 +516,7 @@
 		}
 	},{
 		"type": "symbol",
+		"name": "CTIO",
 		"description": "CTIO 1.3m",
 		"clip": true,
 		"from": {"data": "CTIO 1.3m"},
