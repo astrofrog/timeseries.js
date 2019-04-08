@@ -90,7 +90,7 @@
 	],
 	"marks":[{
 		"type": "rect",
-		"name": "OGLE-error",
+		"name": "OGLEmark-error",
 		"description": "OGLE",
 		"clip": true,
 		"from": {"data": "OGLE"},
@@ -111,7 +111,7 @@
 		}
 	},{
 		"type": "symbol",
-		"name": "OGLE",
+		"name": "OGLEmark",
 		"description": "OGLE",
 		"clip": true,
 		"from": {"data": "OGLE"},
@@ -135,7 +135,7 @@
 		}
 	},{
 		"type": "rect",
-		"name": "MOA-error",
+		"name": "MOAmark-error",
 		"description": "MOA",
 		"clip": true,
 		"from": {"data": "MOA"},
@@ -156,7 +156,7 @@
 		}
 	},{
 		"type": "symbol",
-		"name": "MOA",
+		"name": "MOAmark",
 		"description": "MOA",
 		"clip": true,
 		"from": {"data": "MOA"},
