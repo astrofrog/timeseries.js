@@ -28,8 +28,6 @@
 		var path = scripts[scripts.length-1].src.split('?')[0];
 		var idx = path.lastIndexOf("/");
 		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
-
-		var _obj = this;
 		
 		this.log = function(){
 			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
@@ -366,7 +364,7 @@
 	TS.prototype.postProcess = function(){
 
 		this.log('postProcess',this);
-		var i,a,axis;
+		var a,axis,d,el,i,ii,_obj,str;
 
 		// Over-ride the width/height if we are supposed to fit
 		if(this.options.fit){
@@ -398,18 +396,19 @@
 		// Build the graph object
 		this.graph = new Graph(this.el, [], this.options);
 
-		var el = S(this.el);
-		var str = '<div class="loader"><div class="spinner">';
+		el = S(this.el);
+		str = '<div class="loader"><div class="spinner">';
 		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
 		str += '</div></div>';
 		el.addClass('timeseries').append(str);
 		
-		var _obj = this;
+		_obj = this;
 
 		// Build the menu
 		this.makeMenu();
 
 		if(this.json){
+			var addeddefault,view;
 
 			// Build default view/views
 
@@ -499,10 +498,10 @@
 			}
 		}else this.message[id].el.remove();
 		return this;
-	}
+	};
 	
 	TS.prototype.makeMenu = function(){
-		var el,id,k,i,tab,str,html,a,menu;
+		var el,id,i,str,html,menu;
 		el = S(this.el);
 		id = el.attr('id');
 
@@ -575,7 +574,7 @@
 		}
 
 		this.datasets = {};
-		var n,f,files,fn,i,j,ii;
+		var n,f,files,fn,i,j;
 		n = data.length;
 		f = "";
 		files = [];
@@ -583,14 +582,14 @@
 
 		fn = function(data,attr){
 			var json;
-			typ = "json";
+			var typ = "json";
 			if(attr && attr.dataset && attr.dataset.format && attr.dataset.format.type=="csv") typ = "csv";
 			if(typ == "csv") json = CSV2JSON(data,attr.dataset.format.parse);
 			else if(typ == "json") json = data[0];
 			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
 			this.datasets[attr.dataset.name][typ] = data;
 			this.progress.datasets.done++;
-			this.log('loaded dataset',attr.dataset.name)
+			this.log('loaded dataset',attr.dataset.name);
 			if(this.progress.datasets.done==this.progress.datasets.todo) this.processDatasets();
 		};
 
@@ -618,7 +617,7 @@
 
 	// Build the menu for selecting layers
 	TS.prototype.updateLayerMenu = function(){
-		var i,id,styles,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include,added;
+		var i,j,id,styles,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include;
 
 		// Build layer-toggle menu (submenu-layers)
 		layers = this.graph.canvas.container.find('.layers');
@@ -639,122 +638,124 @@
 		}
 		j = 0;
 		for(key in keyitems){
-			if(typeof keyitems[key]!=="undefined"){
-				id = S(this.el).attr('id')+'_'+j;
-				d = this.graph.marks[keyitems[key][0]];
+			if(keyitems[key]){
+				if(typeof keyitems[key]!=="undefined"){
+					id = S(this.el).attr('id')+'_'+j;
+					d = this.graph.marks[keyitems[key][0]];
 
-				layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'">?</span>'+key+'</label></li>');
-				l = layers.find('#'+id);
-				p = l.parent();
-				k = p.find('.key');
-				// We need to add events
-				l.on('change',{me:this,k:keyitems[key]},function(e){
-					var g,i,j;
-					g = e.data.me.graph;
-					for(i = 0; i < e.data.k.length; i++){
-						j = e.data.k[i];
-						g.marks[j].show = !g.marks[j].show;
-					}
-					g.calculateData().draw(true);
-					if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
-					else this.parent().addClass('inactive');
-				}).on('focus',{layers:layers},function(e){
-					e.data.layers.find('li').removeClass('on').removeClass('selected');
-					this.parent().addClass('on');
-				});
-				layers.on('mouseover',{layers:layers},function(e){
-					e.data.layers.find('.selected').removeClass('selected');
-				});
-				lookup[keyitems[key][0]] = l.parent();
+					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'">?</span>'+key+'</label></li>');
+					l = layers.find('#'+id);
+					p = l.parent();
+					k = p.find('.key');
+					// We need to add events
+					l.on('change',{me:this,k:keyitems[key]},function(e){
+						var g,i,j;
+						g = e.data.me.graph;
+						for(i = 0; i < e.data.k.length; i++){
+							j = e.data.k[i];
+							g.marks[j].show = !g.marks[j].show;
+						}
+						g.calculateData().draw(true);
+						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+						else this.parent().addClass('inactive');
+					}).on('focus',{layers:layers},function(e){
+						e.data.layers.find('li').removeClass('on').removeClass('selected');
+						this.parent().addClass('on');
+					});
+					layers.on('mouseover',{layers:layers},function(e){
+						e.data.layers.find('.selected').removeClass('selected');
+					});
+					lookup[keyitems[key][0]] = l.parent();
 
-				// Do we need to draw key items?
-				draw = false;
-				for(i = 0; i < keyitems[key].length; i++){
-					if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
-				}
-			
-				// Create a canvas for each key item if we need to
-				if(draw && k.length==1){
-					styles = window.getComputedStyle(k[0]);
-					w = parseInt(styles.width);
-					h = parseInt(styles.height);
-					k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
-				}
-
-				// Update all the key images
-				if(p.find('canvas').length == 1){
-					c = p.find('canvas')[0];
-					w = parseInt(p.find('canvas').css('width'));
-					h = parseInt(p.find('canvas').css('height'));
-					ctx = c.getContext('2d');
-					scale = window.devicePixelRatio;
-					c.width = w*scale;
-					c.height = h*scale;
-					ctx.scale(scale,scale);
-					ctx.clearRect(0,0,w,h);
-					ctx.fillStyle = "#ffffff";
-					ctx.rect(0,0,w,h);
-					ctx.fill();
+					// Do we need to draw key items?
+					draw = false;
 					for(i = 0; i < keyitems[key].length; i++){
-						d = this.graph.marks[keyitems[key][i]];
-						// Only add them if they are included in this view
-						if(d.include){
-							k.css({'background-color':'none'});
-							// Set the canvas style
-							this.graph.setCanvasStyles(ctx,d.mark[0]);
-							// Draw the different types
-							if(d.type=="symbol"){
-								this.graph.drawShape(clone(d.mark[0]),{'ctx':ctx,'x':w/2,'y':h/2});
-							}else if(d.type=="rect"){
-								if(d.mark[0].props.x1 && d.mark[0].props.x2 && d.mark[0].props.y1 && d.mark[0].props.y2){
-									// If this has x1,x2,y1,y2 it is more like an area
+						if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
+					}
+			
+					// Create a canvas for each key item if we need to
+					if(draw && k.length==1){
+						styles = window.getComputedStyle(k[0]);
+						w = parseInt(styles.width);
+						h = parseInt(styles.height);
+						k.html('<canvas style="width:'+w+'px;height:'+h+'px;"></canvas>');
+					}
+
+					// Update all the key images
+					if(p.find('canvas').length == 1){
+						c = p.find('canvas')[0];
+						w = parseInt(p.find('canvas').css('width'));
+						h = parseInt(p.find('canvas').css('height'));
+						ctx = c.getContext('2d');
+						scale = window.devicePixelRatio;
+						c.width = w*scale;
+						c.height = h*scale;
+						ctx.scale(scale,scale);
+						ctx.clearRect(0,0,w,h);
+						ctx.fillStyle = "#ffffff";
+						ctx.rect(0,0,w,h);
+						ctx.fill();
+						for(i = 0; i < keyitems[key].length; i++){
+							d = this.graph.marks[keyitems[key][i]];
+							// Only add them if they are included in this view
+							if(d.include){
+								k.css({'background-color':'none'});
+								// Set the canvas style
+								this.graph.setCanvasStyles(ctx,d.mark[0]);
+								// Draw the different types
+								if(d.type=="symbol"){
+									this.graph.drawShape(clone(d.mark[0]),{'ctx':ctx,'x':w/2,'y':h/2});
+								}else if(d.type=="rect"){
+									if(d.mark[0].props.x1 && d.mark[0].props.x2 && d.mark[0].props.y1 && d.mark[0].props.y2){
+										// If this has x1,x2,y1,y2 it is more like an area
+										this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
+									}else{
+										// We probably just have x1,x2,y or x,y1,y2 so this is more like a line
+										this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+									}
+								}else if(d.type=="area"){
 									this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
-								}else{
-									// We probably just have x1,x2,y or x,y1,y2 so this is more like a line
-									this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':w/2,'y1':0,'x2':w/2,'y2':h});
+								}else if(d.type=="line"){
+									ctx.beginPath();
+									ctx.moveTo(0,h/2);
+									ctx.lineTo(w,h/2);
+									ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8);
+									ctx.stroke();
+								}else if(d.type=="rule"){
+									ctx.beginPath();
+									ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
+									if(d.data[0].y.value == d.data[0].y2.value){
+										ctx.moveTo(0,h/2 + 0.5);
+										ctx.lineTo(w,h/2 + 0.5);
+									}else if(d.data[0].x.value == d.data[0].x2.value){
+										ctx.moveTo(w/2 + 0.5,0);
+										ctx.lineTo(w/2 + 0.5,h);
+									}else{
+										ctx.moveTo(0,0);
+										ctx.lineTo(w,h);
+									}
+									ctx.stroke();
+								}else if(d.type=="text"){
+									this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
 								}
-							}else if(d.type=="area"){
-								this.graph.drawRect(clone(d.mark[0]),{'ctx':ctx,'x1':0,'y1':0,'x2':w,'y2':h});
-							}else if(d.type=="line"){
-								ctx.beginPath();
-								ctx.moveTo(0,h/2);
-								ctx.lineTo(w,h/2);
-								ctx.lineWidth = (d.encode.enter.strokeWidth.value||0.8);
-								ctx.stroke();
-							}else if(d.type=="rule"){
-								ctx.beginPath();
-								ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
-								if(d.data[0].y.value == d.data[0].y2.value){
-									ctx.moveTo(0,h/2 + 0.5);
-									ctx.lineTo(w,h/2 + 0.5);
-								}else if(d.data[0].x.value == d.data[0].x2.value){
-									ctx.moveTo(w/2 + 0.5,0);
-									ctx.lineTo(w/2 + 0.5,h);
-								}else{
-									ctx.moveTo(0,0);
-									ctx.lineTo(w,h);
-								}
-								ctx.stroke();
-							}else if(d.type=="text"){
-								this.graph.drawTextLabel("T",w/2,h/2,{'ctx':ctx,'format':{'align':'center','baseline':'middle'}});
 							}
 						}
 					}
-				}
 
-				// Work out if the key item should be included and if it is visible
-				include = false;
-				show = false;
-				for(i = 0; i < keyitems[key].length; i++){
-					if(this.graph.marks[keyitems[key][i]].include) include = true;
-					if(this.graph.marks[keyitems[key][i]].show) show = true;
+					// Work out if the key item should be included and if it is visible
+					include = false;
+					show = false;
+					for(i = 0; i < keyitems[key].length; i++){
+						if(this.graph.marks[keyitems[key][i]].include) include = true;
+						if(this.graph.marks[keyitems[key][i]].show) show = true;
+					}
+					parent = layers.find('#'+id).parent();
+					parent.css({'display':(include ? 'block':'none')});
+					if(show) parent.removeClass('inactive');
+					else parent.addClass('inactive');
+					j++;
 				}
-				parent = layers.find('#'+id).parent();
-				parent.css({'display':(include ? 'block':'none')});
-				if(show) parent.removeClass('inactive');
-				else parent.addClass('inactive');
 			}
-			j++;
 		}
 
 		// Add hover event to marks to highlight layers in selector
@@ -770,7 +771,7 @@
 	};
 
 	TS.prototype.getViews = function(){
-		var views,i,j,v;
+		var views,i,v;
 		views = [];
 		v = this.json._views;
 		for(i = 0; i < v.length; i++) views.push({'title':(v[i].title||""),'name':(v[i].name||""),'description':(v[i].description||"")});
@@ -778,10 +779,10 @@
 	};
 	
 	TS.prototype.setView = function(i){
-		var g,j,view,a,m,o,s,lis,li,axis,found,el,str;
+		var g,j,view,a,d,m,o,s,lis,li,axis,found,el,str;
 		j = this.json;
 		if(typeof i!=="number"){
-			str = JSON.stringify(i)
+			str = JSON.stringify(i);
 			for(m = 0; m < j._views.length; m++){
 				if(JSON.stringify(j._views[m]) == str){
 					i = m;
@@ -878,7 +879,7 @@
 	};
 
 	TS.prototype.updateViewMenu = function(){
-		var i,a,s,d,el,id,li,active,alpha;
+		var i,l,el,id,li,active,alpha;
 		alpha = 'abcdefghijklmnopqrstuvwxyz';
 
 		el = this.graph.canvas.container.find('.views');
@@ -927,7 +928,7 @@
 
 		// If the x-axis has a defined input format we can build a format selector
 		if(this._view._extend.x){
-			var i,f,label,html,ok;
+			var f,i,k,label,html,ok;
 
 			// Define the general type for the input format: phase/relative/absolute
 			i = "absolute";
@@ -978,12 +979,12 @@
 			if(!this.xformats[o]) this.log('ERROR','Output format '+o+' is not a known date format');
 		}
 		return this;
-	}
+	};
 
 	TS.prototype.processDatasets = function(){
 		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
 
-		var i,id,mark,m,fn,up,ms,n,_obj,show;
+		var i,id,mark,m,fn,up,ms,n,_obj;
 
 		// Set up the progress object to monitor what we've done for each mark
 		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
@@ -1002,12 +1003,13 @@
 
 		_obj = this;		
 		function updateProperties(d,event){
+			var to,str;
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
 				console.log('updateProps fail',d,event);
 				return;
 			}
-			datum = d.data;
+			var datum = d.data;
 			for(var p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
@@ -1125,7 +1127,7 @@
 
 			// Update the total for this mark
 			this.log('Processed '+e.name,this.progress.marks.mark[e.name]);
-			this.updateMessage(e.name,'')
+			this.updateMessage(e.name,'');
 
 			if(this.attr.showaswego) this.graph.updateData();
 			if(this.progress.marks.done == this.progress.marks.todo) this.finalize();
@@ -1152,9 +1154,11 @@
 			}
 		}
 		for(m in this.graph.marks){
-			for(i = 0; i < this._view.markers.length; i++){
-				if(this.graph.marks[m].name==this._view.markers[i].name){
-					if(!this._view.markers[i].visible) this.graph.marks[m].show = false;
+			if(this.graph.marks[m]){
+				for(i = 0; i < this._view.markers.length; i++){
+					if(this.graph.marks[m].name==this._view.markers[i].name){
+						if(!this._view.markers[i].visible) this.graph.marks[m].show = false;
+					}
 				}
 			}
 		}
@@ -1167,8 +1171,6 @@
 	};
 
 	TS.prototype.finalize = function(){
-		var view,i,addeddefault;
-
 		this.log('finalize',this.attr.showaswego,this.graph.marks);
 		this.updateMessage('main','');
 
@@ -1184,7 +1186,7 @@
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		return this;
-	}
+	};
 
 	// Function to save the output as either an image or JSON
 	// (and optionally send to the online VEGA editor)
@@ -1192,7 +1194,7 @@
 
 		// Bail out if there is no Blob function to save with
 		if(typeof Blob!=="function") return this;
-		var i,txt,v,s,view,opts;
+		var i,txt,m,s,view,opts,output,typ;
 		opts = { 'type': 'text/text', 'file': (this.file ? this.file.replace(/.*\//g,"") : "timeseries.json") };
 		if(!attr) attr = {};
 
@@ -1234,6 +1236,7 @@
 				// Update markers section
 				var marks = [];
 				var done = {};
+				var found;
 
 				for(m = 0; m < view.markers.length; m++){
 					found = false;
@@ -1272,7 +1275,7 @@
 		}
 		if(type == "vegaeditor"){
 			// Open in VEGA editor
-			vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
+			var vegaeditor = window.open("https://vega.github.io/editor/#/", "VEGA", "");
 			setTimeout(function(){
 				vegaeditor.postMessage({
 					"mode": "vega",
@@ -1487,7 +1490,7 @@
 	// Convert a date from an input format to an output format
 	function convertDate(dt,i,o){
 		if(typeof dt==="number") dt = Num(dt);
-		dt2 = new Dates(dt,i);
+		var dt2 = new Dates(dt,i);
 		if(o=="jd") return dt2.toJD();
 		else if(o=="mjd") return dt2.toMJD();
 		else if(o=="tjd") return dt2.toTJD();
@@ -1513,32 +1516,32 @@
 		if(this.jd) return this.jd.toValue();
 		if(this.unix) return this.unix.div(this.d2ms).plus(this.epoch.jd).toValue();
 		return 0;
-	}
+	};
 	Dates.prototype.toUNIX = function(){
 		if(this.unix) return this.unix.toValue();
 		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).toValue();
 		return 0;
-	}
+	};
 	Dates.prototype.toSeconds = function(){
 		if(this.unix) return this.unix.div(1000).toValue();
 		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).div(1000).toValue();
 		return 0;
-	}
+	};
 	Dates.prototype.toMJD = function(){
 		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
 		if(this.jd) return this.jd.minus(this.epoch.mjd).toValue();
 		else return 0;
-	}
+	};
 	Dates.prototype.toTJD = function(){
 		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
 		if(this.jd) return this.jd.minus(this.epoch.tjd).toValue();
 		else return 0;
-	}
+	};
 	Dates.prototype.toDate = function(){
 		if(this.jd) return new Date(this.toUNIX());
 		if(this.unix) return new Date(this.unix.toValue());
 		return new Date();
-	}
+	};
 
 	root.TimeSeries = TimeSeries;
 
