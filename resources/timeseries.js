@@ -32,10 +32,11 @@
 		var _obj = this;
 		
 		this.log = function(){
-			if(this.logging || arguments[0]=="ERROR"){
+			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 				var args = Array.prototype.slice.call(arguments, 0);
 				if(console && typeof console.log==="function"){
 					if(arguments[0] == "ERROR") console.log('%cERROR%c %cTimeSeries%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
+					else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cTimeSeries%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 					else console.log('%cTimeseries%c','font-weight:bold;','',args);
 				}
 			}
@@ -276,10 +277,11 @@
 
 	// Log messages to the console
 	TS.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR"){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
 				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',(args.splice(2).length > 0 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cTS%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else console.log('%cTS%c','font-weight:bold;','',args);
 			}
 		}
@@ -416,7 +418,28 @@
 			// Create default views object
 			if(!this.json._views) this.json._views = [];
 
-			
+
+			// Add some default name fields if they aren't provided			
+			ii = 0;
+			for(i = 0; i < this.json.marks.length ; i++){
+				// Create a name for this mark if one hasn't been given
+				if(!this.json.marks[i].name){
+					this.json.marks[i].name = "fake-id-"+ii;
+					this.log('WARNING','No name for mark '+i+' so naming it '+this.json.marks[i].name);
+				}
+				ii++;
+			}
+			if(this.json._extend.marks){
+				for(i = 0; i < this.json._extend.marks.length ; i++){
+					// Create a name for this mark if one hasn't been given
+					if(!this.json._extend.marks[i].name){
+						this.json._extend.marks[i].name = "fake-id-"+ii;
+						this.log('WARNING','No name for mark '+i+' so naming it '+this.json._extend.marks[i].name);
+					}
+					ii++;
+				}
+			}
+
 			// Create default view
 			addeddefault = false;
 			for(i = 0; i < this.json._views.length; i++){
@@ -552,11 +575,12 @@
 		}
 
 		this.datasets = {};
-		var n,f,files,fn,i,j;
+		var n,f,files,fn,i,j,ii;
 		n = data.length;
 		f = "";
 		files = [];
 		this.progress.datasets = {'todo':n,'done':0};
+
 		fn = function(data,attr){
 			var json;
 			typ = "json";
@@ -968,8 +992,8 @@
 		for(m = 0,n = 0; m < ms.length; m++){
 			for(i = 0; i < ms[m].length ; i++){
 				// Create a name for this mark if one hasn't been given
-				if(!ms[m][i].name) ms[m][i].name = "fake-id-"+n;
-				this.progress.marks.mark[ms[m][i].name] = {'done':-1,'todo':0};
+				if(!ms[m][i].name) this.log('ERROR','No name for '+ms[m][i].title+' ('+i+')');
+				else this.progress.marks.mark[ms[m][i].name] = {'done':-1,'todo':0};
 				n++;
 			}
 		}
@@ -1210,6 +1234,7 @@
 				// Update markers section
 				var marks = [];
 				var done = {};
+
 				for(m = 0; m < view.markers.length; m++){
 					found = false;
 					for(s = 0; s < this.json.marks.length; s++){
@@ -1218,7 +1243,7 @@
 							done[view.markers[m].name] = true;
 						}
 					}
-					if(!done[view.markers[m].name]){
+					if(!done[view.markers[m].name] && this.json._extend && this.json._extend.marks){
 						for(s = 0; s < this.json._extend.marks.length; s++){
 							if(!done[view.markers[m].name] && this.json._extend.marks[s].name == view.markers[m].name){
 								marks.push(clone(this.json._extend.marks[s]));
