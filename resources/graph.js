@@ -1278,25 +1278,6 @@
 		return [];
 	};
 
-	// Find the highest layer in the stack
-	function getTopLayer(l){
-		var max,idx,d,s,w;
-		max = 0;
-		idx = 0;
-		if(l && l.length > 0){
-			for(s = 0; s < l.length; s++){
-				d = l[s].split(':');
-				w = parseFloat(d[2]);
-				if(w > max){
-					max = w;
-					idx = s;
-				}
-			}
-			if(is(l[idx],"string")) return l[idx].split(':');
-		}
-		return;
-	}
-
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
 		if(!datum) return this;
 		var f = datum.props.format;
@@ -1321,8 +1302,9 @@
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
 			this.drawOverlay();
-			var d,t,i,w,clipping,typ,mark,ctx,n,s,val;
+			var d,t,i,w,clipping,typ,mark,ctx,n,s,val,top,topmark,series;
 			ctx = this.canvas.ctx;
+			top = -1;
 
 			// Only highlight the first 10 matches
 			n = Math.min(10,ds.length);
@@ -1368,48 +1350,48 @@
 
 					// Set the clipping
 					if(clipping) ctx.restore();
+					if(parseFloat(w) >= top && mark.props.tooltip){
+						top = parseFloat(w);
+						topmark = mark;
+						series = this.marks[t];
+					}
 				}
 			}
-			
 
-			d = getTopLayer(ds);
+			var cls = 'graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "");
+			if(!this.coordinates){
+				this.canvas.canvasholder.append('<div class="'+cls+'" style="position:absolute;display:none;"></div>');
+				this.coordinates = this.canvas.container.find('.graph-tooltip');
+				this.coordinates.on('mousemove',function(){ disableScroll(); });
+			}
+			var html = "";
 
-			if(d && d.length == 3 && mark){
-				t = d[0];
-				i = d[1];
-				w = d[2];
-				var data = this.marks[t];
-				var cls = 'graph-tooltip aas-series-'+t+' '+(this.options.tooltip && this.options.tooltip.theme ? this.options.tooltip.theme : "");
-
-				if(!this.coordinates){
-					this.canvas.canvasholder.append('<div class="'+cls+'" style="position:absolute;display:none;"></div>');
-					this.coordinates = this.canvas.container.find('.graph-tooltip');
-					this.coordinates.on('mousemove',function(){ disableScroll(); });
-				}
-				if(typeof data.css=="object") this.coordinates.css(data.css);
+			if(topmark){
+				if(typeof series.css=="object") this.coordinates.css(series.css);
 		
 				// Build the hovertext output
 				val = {
-					title: (data.title) ? data.title : "", 
+					title: (series.title) ? series.title : "", 
 					xlabel: (this.x.label.text ? this.x.label.text : (this.x.isDate ? 'Time' : 'x')),
 					ylabel: (this.y.label.text ? this.y.label.text : 'y'),
-					data: data.data[i]
+					data: series.data[i]
 				};
-				var html = removeRoundingErrors(mark.props.tooltip) || "";
-				if(html){
-					var x,y,c;
-					this.coordinates.html(html);
-					x = this.marks[t].mark[i].props.x + this.canvas.c.offsetLeft;
-					y = this.marks[t].mark[i].props.y;
-					this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
-					c = (y < this.chart.height/3 ? 'n' : (y > this.chart.height*2/3 ? 's':''));
-					c += (x < this.chart.width/3 ? 'w' : (x > this.chart.width*2/3 ? 'e' : ''));
-					if(!c) c = 'w';
-					this.coordinates.attr('class',cls+' graph-tooltip-'+c);
-				}else{
-					this.coordinates.css({'display':'none'});
-				}
+				
+				html = removeRoundingErrors(topmark.props.tooltip) || "";
+			}
+			if(html){
+				var x,y,c;
+				this.coordinates.html(html);
+				x = topmark.props.x + this.canvas.c.offsetLeft;
+				y = topmark.props.y;
+				this.coordinates.css({'display':'block','left':Math.round(x)+'px','top':Math.round(y)+'px'});
+				c = (y < this.chart.height/3 ? 'n' : (y > this.chart.height*2/3 ? 's':''));
+				c += (x < this.chart.width/3 ? 'w' : (x > this.chart.width*2/3 ? 'e' : ''));
+				if(!c) c = 'w';
+				this.coordinates.attr('class',cls+' graph-tooltip-'+c);
 				this.annotated = true;
+			}else{
+				this.coordinates.css({'display':'none'});
 			}
 		}else{
 			if(this.annotated){
