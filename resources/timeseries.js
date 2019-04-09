@@ -1151,10 +1151,10 @@
 		};
 		this.updateMessage('main','');
 		for(m = 0; m < this.json.marks.length; m++){
-			mark = this.json.marks[m];
-			if(this.progress.marks.mark[mark.name].done < 0){
+			mark = clone(this.json.marks[m]);
+			if(this.progress.marks.mark[mark.name].done <= 0){
 				this.progress.marks.mark[mark.name].done = 0;
-				addMarks(this,m,clone(mark),{'this':this,'success':fn,'progress':up});
+				addMarks(this,m,mark,{'this':this,'success':fn,'progress':up});
 			}
 		}
 		if(this.json._extend.marks){
