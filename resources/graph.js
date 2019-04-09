@@ -485,8 +485,6 @@
 	function Graph(element, data, options){
 
 		if(!options) options = {};
-		if(typeof options.logging==="boolean") this.logging = options.logging;
-		if(typeof options.logtime==="boolean") this.logtime = options.logtime;
 
 		// Define some variables
 		this.version = "0.3.0";
@@ -503,7 +501,7 @@
 		this.quicktime = 75;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
-		this.log = new Logger({'id':'Graph','logging':this.logging});
+		this.log = new Logger({'id':'Graph','logging':options.logging,'logtime':options.logtime});
 		if(typeof Big==="undefined") this.log.error('ERROR','Unable to find big.js');
 
 		this.log.time("Graph");
@@ -2888,11 +2886,16 @@
 	function Logger(inp){
 		if(!inp) inp = {};
 		this.logging = (inp.logging||false);
+		this.logtime = (inp.logtime||false);
 		this.id = (inp.id||"JS");
 		this.metrics = {};
 		return this;
 	}
-	Logger.prototype.message = function(){
+	Logger.prototype.error = function(){ this.log('ERROR',arguments); };
+	Logger.prototype.warning = function(){ this.log('WARNING',arguments); };
+	Logger.prototype.info = function(){ this.log('INFO',arguments); };
+	Logger.prototype.message = function(){ this.log('MESSAGE',arguments); }
+	Logger.prototype.log = function(){
 		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
 			var args,args2,bold;
 			args = Array.prototype.slice.call(arguments[1], 0);
@@ -2907,9 +2910,6 @@
 		}
 		return this;
 	}
-	Logger.prototype.error = function(){ this.message('ERROR',arguments); };
-	Logger.prototype.warning = function(){ this.message('WARNING',arguments); };
-	Logger.prototype.info = function(){ this.message('INFO',arguments); };
 	Logger.prototype.time = function(key){
 		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
 		if(!this.metrics[key].start) this.metrics[key].start = new Date();
@@ -2934,7 +2934,8 @@
 				this.metrics[key].av = v/tot;
 			}
 			this.metrics[key].times = ts.splice(0);
-			if(this.logtime) console.log('%c'+this.id+'%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
+			if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
+			else this.warning('Unable to log time for '+key);
 			delete this.metrics[key].start;
 		}
 		return this;

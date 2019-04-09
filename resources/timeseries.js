@@ -16,8 +16,8 @@
 		this.version = "0.0.16";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
-			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
-			if(typeof opt.logtime!=="boolean") opt.logtime = this.logtime;
+			if(typeof opt.logging!=="boolean") opt.logging = this.log.logging;
+			if(typeof opt.logtime!=="boolean") opt.logtime = this.log.logtime;
 			return new TS(json,opt);
 		};
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
