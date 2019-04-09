@@ -77,17 +77,29 @@ def resources(path):
     if 'favicon.ico' in path:
         return ''
     else:
-        print(path, {'Content-Type': guess_type(path)[0]})
         return (ds.get_file_contents(path), 200,
                 {'Content-Type': guess_type(path)[0]})
 
 
 def open_in_chrome(path):
-    print(path)
     path = os.path.relpath(path, os.path.join(os.path.dirname(__file__), '..'))
-    print(path)
     capabilities = DesiredCapabilities.CHROME
     capabilities['loggingPrefs'] = {'browser': 'ALL'}
     driver = webdriver.Chrome(desired_capabilities=capabilities)
     driver.get(ds.url + '/' + path)
     return driver
+
+
+def wait_for_finished(driver, timeout=60, number=1):
+    logs = []
+    start = time.time()
+    finished = 0
+    while time.time() - start < timeout:
+        for entry in driver.get_log('browser'):
+            if 'Finished processing' in entry['message']:
+                finished += 1
+            elif 'timeseries.js' not in entry['message']:
+                logs.append(entry)
+        if finished == number:
+            return logs
+    raise TimeoutError('Timed out while waiting for all plots to load')

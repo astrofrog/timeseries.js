@@ -1198,8 +1198,8 @@
 
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
-		
-		this.log.info('Finished '+this.el.getAttribute('id'));
+
+		this.log.info('Finished processing '+this.el.getAttribute('id'));
 		return this;
 	};
 
