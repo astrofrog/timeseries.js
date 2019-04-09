@@ -34,8 +34,8 @@
 			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 				var args = Array.prototype.slice.call(arguments, 0);
 				if(console && typeof console.log==="function"){
-					if(arguments[0] == "ERROR") console.log('%cERROR%c %cTimeSeries%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
-					else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cTimeSeries%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+					if(arguments[0] == "ERROR") console.error('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
+					else if(arguments[0] == "WARNING") console.warn('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 					else console.log('%cTimeseries%c','font-weight:bold;','',args);
 				}
 			}
@@ -317,8 +317,8 @@
 		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.log('%cERROR%c TS: '+args[1],'color:white;background-color:#D60303;padding:2px;','',(args.splice(2).length > 0 ? args.splice(2):""),arguments);
-				else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cTS%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				if(arguments[0] == "ERROR") console.error('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.warn('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else console.log('%cTS%c','font-weight:bold;','',args);
 			}
 		}

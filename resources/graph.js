@@ -749,8 +749,8 @@
 		if(this.logging || arguments[0]=="ERROR"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.log('%cERROR%c %cGraph%c: '+args[1],'color:white;background-color:#D60303;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "WARNING") console.log('%cWARNING%c %cGraph%c: '+args[1],'color:white;background-color:#F9BC26;padding:2px;','','font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				if(arguments[0] == "ERROR") console.error('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.warn('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else console.log('%cGraph%c','font-weight:bold;','',args);
 			}
 		}
