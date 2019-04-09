@@ -746,7 +746,7 @@
 	};
 
 	Graph.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR"){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
 				if(arguments[0] == "ERROR") console.error('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
