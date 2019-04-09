@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.15";
+		this.version = "0.0.16";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
@@ -127,7 +127,7 @@
 				'relative': true,
 				'scale': 1,
 				'formatLabel': function(j,attr){
-					var v = convertDate(j,attr.input,"seconds");
+					var v = (attr.input=="seconds") ? j : convertDate(j,attr.input,"seconds");
 					return {'str':attr.niceDate(v,attr.spacing)};
 				}
 			},

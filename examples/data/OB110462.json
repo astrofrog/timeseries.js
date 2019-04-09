@@ -7,7 +7,9 @@
 	"_extend": {
 		"scales": [{
 			"name": "xscale",
-			"highprecision": true
+			"input": "seconds",
+			"output": "auto",
+			"highprecision": false
 		}]
 	},
 	"data": [{

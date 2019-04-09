@@ -857,7 +857,7 @@
 									v = Num(s);	// Convert to Big number (inside our wrapper)
 								}else{
 									// Otherwise we will just use the date as a standard number
-									v = new Date(v.replace(/(^"|"$)/,"")).getTime();
+									v = new Date(v.replace(/(^"|"$)/,"")).getTime()/1000;
 								}
 							}
 						}else if(format=="boolean"){
