@@ -16,8 +16,8 @@ import pytest
 
 from helpers import open_in_chrome, wait_for_finished
 
-HTML_FILES = glob.glob(os.path.join(os.path.dirname(__file__), '..',
-                       'examples', '*.html'))
+HTML_FILES = sorted(glob.glob(os.path.join(os.path.dirname(__file__), '..',
+                       'examples', '*.html')))
 
 
 @pytest.mark.parametrize('index', HTML_FILES)
