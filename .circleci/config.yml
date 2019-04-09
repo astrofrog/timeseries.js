@@ -12,6 +12,17 @@ jobs:
       - run:
           name: Running jshint
           command: jshint resources/timeseries.js resources/stuquery.js resources/graph.js
+  tests:
+    docker:
+      - image: circleci/python:3.7.1-browsers
+    steps:
+      - checkout
+      - run:
+          name: Installing dependencies
+          command: sudo pip install pytest flask flask-cors selenium
+      - run:
+          name: Running tests
+          command: pytest tests/test_examples.py
 
 
 workflows:
@@ -19,3 +30,4 @@ workflows:
   tests_and_docs:
     jobs:
       - jshint
+      - tests
