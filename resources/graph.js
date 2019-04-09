@@ -829,8 +829,9 @@
 	function parseData(data,opts){
 		var i,key,v,format,s,temporal;
 		var lookup = {};
+		// Is the xaxis highprecision? We'll cheat here by assuming that only the 
+		// xaxis can have this flag and it only applies to format=date
 		if(typeof opts.xaxis.highprecision!=="boolean") opts.xaxis.highprecision = false;
-		console.log(opts.xaxis.highprecision)
 		// Parse the data
 		for(key in data.parse){
 			if(data.parse[key]){

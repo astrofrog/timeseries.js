@@ -4,6 +4,12 @@
 	"height": 450,
 	"padding": 10,
 	"autosize": {"type": "fit", "resize": true},
+	"_extend": {
+		"scales": [{
+			"name": "xscale",
+			"highprecision": true
+		}]
+	},
 	"data": [{
 		"name": "OGLE",
 		"url": "OB110462-ogle.csv",

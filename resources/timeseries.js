@@ -464,7 +464,6 @@
 				}
 			}
 		}
-		console.log(this.options);
 
 		// Build the graph object
 		this.graph = new Graph(this.el, [], this.options);
