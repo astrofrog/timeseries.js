@@ -77,12 +77,14 @@
 		"name": "xscale",
 		"type": "time",
 		"range": "width",
+		"padding": 20,
 		"domain": {"data": "Model", "field": "HJD"}
 	},{
 		"name": "yscale",
 		"type": "linear",
 		"range": "height",
 		"zero": false,
+		"padding": 20,
 		"domain": {"data": "Model", "field": "dmag"}
 	}],
 	"axes": [
