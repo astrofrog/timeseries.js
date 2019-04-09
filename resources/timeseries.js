@@ -136,7 +136,6 @@
 				'relative': true,
 				'scale': 1,
 				'formatLabel': function(val,attr){
-				console.log('format relative',val);
 					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
 					typ = typeof val;
 					if(typ=="string" || typ=="number") val = Num(val);
@@ -364,49 +363,9 @@
 	TS.prototype.postProcess = function(){
 
 		this.log('postProcess',this);
-		var a,axis,d,el,i,ii,_obj,str;
+		var a,axis,d,el,i,ii,_obj,str,s;
 
-		// Over-ride the width/height if we are supposed to fit
-		if(this.options.fit){
-			this.options.width = this.initializedValues.w;
-			this.options.height = this.initializedValues.h;
-		}
-		this.options.logging = this.logging;
-		this.options.logtime = (location.search.indexOf('logtime=true')>0);
-		this.options.scrollWheelZoom = true;
-		if(this.json.scales){
-			for(a = 0; a < this.json.axes.length; a++){
-				for(i = 0; i < this.json.scales.length; i++){
-					if(this.json.axes[a].scale == this.json.scales[i].name){
-						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
-						this.options[axis].type = (this.json.scales[i].type || (axis=="xaxis" ? "utc" : "linear"));
-						this.options[axis].padding = (this.json.scales[i].padding || 0);
-						if(this.json.scales[i].range) this.options[axis].range = this.json.scales[i].range;
-						if(this.json.scales[i].domain){
-							this.options[axis].domain = clone(this.json.scales[i].domain);
-							for(d = 0; d < this.options[axis].domain.length; d++){
-								if(this.options[axis].domain[d].signal) this.options[axis].domain[d] = looseJsonParse(this.options[axis].domain[d].signal);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Build the graph object
-		this.graph = new Graph(this.el, [], this.options);
-
-		el = S(this.el);
-		str = '<div class="loader"><div class="spinner">';
-		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
-		str += '</div></div>';
-		el.addClass('timeseries').append(str);
-		
-		_obj = this;
-
-		// Build the menu
-		this.makeMenu();
-
+		// Post-process the JSON to extend things
 		if(this.json){
 			var addeddefault,view;
 
@@ -466,9 +425,62 @@
 			}
 			this._view = view;
 			// End building view
-			
-			this.loadDatasets(this.json.data);
 		}
+
+
+		// Now construct the options for the Graph object
+		// Over-ride the width/height if we are supposed to fit
+		if(this.options.fit){
+			this.options.width = this.initializedValues.w;
+			this.options.height = this.initializedValues.h;
+		}
+		this.options.logging = this.logging;
+		this.options.logtime = (location.search.indexOf('logtime=true')>0);
+		this.options.scrollWheelZoom = true;
+		if(this.json.scales){
+			for(a = 0; a < this.json.axes.length; a++){
+				for(i = 0; i < this.json.scales.length; i++){
+					if(this.json.axes[a].scale == this.json.scales[i].name){
+						axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
+						this.options[axis].type = (this.json.scales[i].type || (axis=="xaxis" ? "utc" : "linear"));
+						this.options[axis].padding = (this.json.scales[i].padding || 0);
+						if(this.json.scales[i].range) this.options[axis].range = this.json.scales[i].range;
+						if(this.json.scales[i].domain){
+							this.options[axis].domain = clone(this.json.scales[i].domain);
+							for(d = 0; d < this.options[axis].domain.length; d++){
+								if(this.options[axis].domain[d].signal) this.options[axis].domain[d] = looseJsonParse(this.options[axis].domain[d].signal);
+							}
+						}
+					}
+				}
+				// Check for properties in the extended scales
+				if(this._view._extend.scales){
+					for(s = 0; s < this._view._extend.scales.length; s++){
+						if(this.json.axes[a].scale == this._view._extend.scales[s].name){
+							axis = (this.json.axes[a].orient=="left" ? "yaxis":"xaxis");
+							this.options[axis].highprecision = (this._view._extend.scales[s].highprecision || false);
+						}
+					}
+				}
+			}
+		}
+		console.log(this.options);
+
+		// Build the graph object
+		this.graph = new Graph(this.el, [], this.options);
+
+		el = S(this.el);
+		str = '<div class="loader"><div class="spinner">';
+		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
+		str += '</div></div>';
+		el.addClass('timeseries').append(str);
+		
+		_obj = this;
+
+		// Build the menu
+		this.makeMenu();
+
+		if(this.json) this.loadDatasets(this.json.data);
 
 		return this;
 	};
@@ -927,58 +939,68 @@
 		if(el.find('#'+id+'_dateformat').length > 0) el.find('#'+id+'_dateformat').parent().remove();
 
 		// If the x-axis has a defined input format we can build a format selector
-		if(this._view._extend.x){
-			var f,i,k,label,html,ok;
+		if(this._view._extend && this._view._extend.scales){
+			var f,i,k,s,label,html,ok;
+			for(s = 0; s < this._view._extend.scales.length; s++){
+				if(this._view._extend.scales[s].name=="xscale"){
 
-			// Define the general type for the input format: phase/relative/absolute
-			i = "absolute";
-			if(this._view._extend.x.input=="phase") i = "phase";
-			else if(this._view._extend.x.input=="seconds") i = "relative";
+					// Define the general type for the input format: phase/relative/absolute
+					i = "absolute";
+					if(this._view._extend.scales[s].input=="phase") i = "phase";
+					else if(this._view._extend.scales[s].input=="seconds") i = "relative";
 
-			if(i=="phase"){
-				// We are showing phases
-				f = (this._view._extend.x.output || "unity");
-				label = "Phase format";
-			}else{
-				// We are showing dates
-				f = (this._view._extend.x.output || "auto");
-				label = "Date format";
-			}
+					if(i=="phase"){
+						// We are showing phases
+						f = (this._view._extend.scales[s].output || "unity");
+						label = "Phase format";
+					}else{
+						// We are showing dates
+						f = (this._view._extend.scales[s].output || "auto");
+						label = "Date format";
+					}
 
-			html = '<div class="row"><label for="'+id+'_dateformat">'+label+': </label><select id="'+id+'_dateformat">';
-			ok = false;
-			for(k in this.xformats){
-				if(this.xformats[k] && this.xformats[k][i]){
-					html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.xformats[k].title+'</option>';
-					if(f && this.xformats[f] && k==f) this.setDateFormat(f);
-					if(k==f) ok = true;
+					html = '<div class="row"><label for="'+id+'_dateformat">'+label+': </label><select id="'+id+'_dateformat">';
+					ok = false;
+					for(k in this.xformats){
+						if(this.xformats[k] && this.xformats[k][i]){
+							html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.xformats[k].title+'</option>';
+							if(f && this.xformats[f] && k==f) this.setDateFormat(f);
+							if(k==f) ok = true;
+						}
+					}
+					if(!ok) this.log("ERROR",f+" is not an available format");
+					html += '</select></div>';
+					el.find('.menu-panel.submenu-config').append(html);
+					el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
 				}
 			}
-			if(!ok) this.log("ERROR",f+" is not an available format");
-			html += '</select></div>';
-			el.find('.menu-panel.submenu-config').append(html);
-			el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
 		}
 
 		return this;
 	};
 	
 	TS.prototype.setDateFormat = function(o,update){
-		var i = this._view._extend.x.input;
-		if(this.xformats[o]){
-			this.graph.x.labelopts = this.xformats[o];
-			this.graph.x.isDate = (this.xformats[o].absolute ? true : false);
-			this.graph.x.isPhase = (this.xformats[o].phase ? true : false);
-			this.graph.x.labelopts.input = i;
-			this.graph.x.labelopts.output = o;
-			this.graph.x.labelopts.inputscale = (this.xformats[i] ? this.xformats[i].scale : 1);	// Scale the input number if necessary
-			// Define the axis set to the current range
-			this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).calculateData().draw(update);
-		}else{
-			if(!this.xformats[i]) this.log('ERROR','Input format '+i+' is not a known date format');
-			if(!this.xformats[o]) this.log('ERROR','Output format '+o+' is not a known date format');
+		if(this._view._extend.scales){
+			for(s = 0; s < this._view._extend.scales.length; s++){
+				if(this._view._extend.scales[s].name=="xscale"){
+					var i = this._view._extend.scales[s].input;
+					if(this.xformats[o]){
+						this.graph.x.labelopts = this.xformats[o];
+						this.graph.x.isDate = (this.xformats[o].absolute ? true : false);
+						this.graph.x.isPhase = (this.xformats[o].phase ? true : false);
+						this.graph.x.labelopts.input = i;
+						this.graph.x.labelopts.output = o;
+						this.graph.x.labelopts.inputscale = (this.xformats[i] ? this.xformats[i].scale : 1);	// Scale the input number if necessary
+						// Define the axis set to the current range
+						this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).calculateData().draw(update);
+					}else{
+						if(!this.xformats[i]) this.log('ERROR','Input format '+i+' is not a known date format');
+						if(!this.xformats[o]) this.log('ERROR','Output format '+o+' is not a known date format');
+					}
+					return this;
+				}
+			}
 		}
-		return this;
 	};
 
 	TS.prototype.processDatasets = function(){

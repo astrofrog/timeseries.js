@@ -43,10 +43,11 @@
 		"markers": [{"name":"Event","visible":true},{"name":"Nominal","visible":true},{"name":"Baseline","visible":false},{"name":"Data-values","visible":true}]
 	}],
 	"_extend": {
-		"x": {
+		"scales": [{
+			"name": "xscale",
 			"input": "iso",
 			"output": "auto"
-		},
+		}],
 		"marks": [{
 			"type": "rule",
 			"name": "Nominal2",
@@ -168,6 +169,7 @@
 				"tooltip": {"field": "tooltip"}
 			},
 			"update": {
+				"strokeWidth": {"value": 2},
 				"stroke": {"value": "#396bad"}
 			},
 			"hover": {

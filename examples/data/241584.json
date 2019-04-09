@@ -10,10 +10,11 @@
 	"title": "By time of observation",
 	"description": "The default view of the data with points ordered by time",
 	"_extend": {
-		"x": {
+		"scales": [{
+			"name": "xscale",
 			"input": "iso",
 			"output": "auto"
-		}
+		}]
 	},
 	"_views": [{
 		"name": "default",

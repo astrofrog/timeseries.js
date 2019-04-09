@@ -10,10 +10,11 @@
 	"title": "By time of observation",
 	"description": "The default view of the data with points ordered by time",
 	"_extend": {
-		"x": {
+		"scales": [{
+			"name": "xscale",
 			"input": "iso",
 			"output": "auto"
-		},
+		}],
 		"marks": [{
 			"type": "rect",
 			"name": "pointphaseerror",
@@ -123,10 +124,11 @@
 		"title": "By phase",
 		"description": "The data shown by phase",
 		"_extend": {
-			"x": {
+			"scales": [{
+				"name": "xscale",
 				"input": "phase",
 				"output": "unity"
-			}
+			}]
 		},
 		"axes": [{
 			"orient": "bottom",
@@ -158,10 +160,11 @@
 		"title": "By relative time",
 		"description": "The data shown by relative time",
 		"_extend": {
-			"x": {
+			"scales": [{
+				"name": "xscale",
 				"input": "seconds",
 				"output": "relative"
-			}
+			}]
 		},
 		"axes": [{
 			"orient": "bottom",

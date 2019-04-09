@@ -826,9 +826,11 @@
 		return this;
 	};
 
-	function parseData(data){
+	function parseData(data,opts){
 		var i,key,v,format,s,temporal;
 		var lookup = {};
+		if(typeof opts.xaxis.highprecision!=="boolean") opts.xaxis.highprecision = false;
+		console.log(opts.xaxis.highprecision)
 		// Parse the data
 		for(key in data.parse){
 			if(data.parse[key]){
@@ -844,12 +846,18 @@
 						}else if(format=="date"){
 							if(v==null || v=="") v = parseFloat(v);
 							else{
-								// Convert to integer seconds since the epoch as a string
-								s = Math.floor(new Date(v.replace(/(^"|"$)/,"")).getTime()/1000)+'';
-								// Extract anything less than seconds and add it back
-								var m = v.match(/\.([0-9]+)/);
-								if(m && m.length == 2) s += m[0];
-								v = Num(s);	// Convert to big number
+								if(opts.xaxis.highprecision){
+									// If the 'highprecision' flag is set we treat this as a Big number.
+									// Convert to integer seconds since the epoch as a string
+									s = Math.floor(new Date(v.replace(/(^"|"$)/,"")).getTime()/1000)+'';
+									// Extract anything less than seconds and add it back
+									var m = v.match(/\.([0-9]+)/);
+									if(m && m.length == 2) s += m[0];
+									v = Num(s);	// Convert to Big number (inside our wrapper)
+								}else{
+									// Otherwise we will just use the date as a standard number
+									v = new Date(v.replace(/(^"|"$)/,"")).getTime();
+								}
 							}
 						}else if(format=="boolean"){
 							if(v=="1" || v=="true" || v=="Y") v = true;
@@ -871,7 +879,7 @@
 		for(var id in datasets){
 			if(datasets[id]){
 				if(!this.datasets[id]){
-					this.datasets[id] = parseData(clone(datasets[id]));
+					this.datasets[id] = parseData(clone(datasets[id]),this.options);
 				}
 			}
 		}
@@ -901,7 +909,7 @@
 
 		if(this.marks[idx]) this.log('WARNING','addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);
 		else {
-			this.marks[idx] = parseData(data);
+			this.marks[idx] = parseData(data,this.options);
 
 			// Set the default to show the dataset
 			if(typeof this.marks[idx].show!=="boolean") this.marks[idx].show = true;
