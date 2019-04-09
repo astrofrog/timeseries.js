@@ -219,18 +219,20 @@
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
 		if(is(i.scale,n)) this.scale = i.scale;
+		
+		this.log = new Logger({'id':'Canvas','logging':this.logging});
 
-		this.log('Canvas',container,this.wide,this.tall);
+		this.log.message('Canvas',container,this.wide,this.tall);
 
 		// Construct the <canvas> container
 		this.container = S(container);
-		this.log('Container width',this.container.width(),this.container[0],container);
+		this.log.message('Container width',this.container.width(),this.container[0],container);
 
 		this.origcontainer = this.container[0].outerHTML;
 		if(this.container[0].nodeName!=="DIV") this.container = this.container.replaceWith('<div></div>');
 
 		if(this.container.length == 0){
-			this.log('ERROR','No valid container provided');
+			this.log.error('No valid container provided');
 			return;
 		}
 		this.container.css({'position':'relative','width':this.wide,'height':this.tall});
@@ -358,18 +360,6 @@
 			});
 		}
 	}
-	Canvas.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "WARNING") console.warn('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "INFO") console.info('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else console.log('%cCanvas%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
-			}
-		}
-		return this;
-	};
 	// Attach a handler to an event for the Canvas object in a style similar to that used by jQuery
 	//   .on(eventType[,eventData],handler(eventObject));
 	//   .on("resize",function(e){ console.log(e); });
@@ -404,7 +394,7 @@
 	Canvas.prototype.copyToClipboard = function(){
 		var x = Math.min(this.wide,this.ctx.canvas.clientWidth)*this.scale;
 		var y = Math.min(this.tall,this.ctx.canvas.clientHeight)*this.scale;
-		this.log('copyToClipboard',x,y,this);
+		this.log.message('copyToClipboard',x,y,this);
 		if(x > 0 && y > 0){
 			this.clipboard = this.ctx.getImageData(0, 0, x, y);
 			this.clipboardData = this.clipboard.data;
@@ -420,7 +410,7 @@
 	};
 	// Will toggle the <canvas> as a full screen element if the browser supports it.
 	Canvas.prototype.toggleFullScreen = function(){
-		this.log('toggleFullScreen',this.fullscreen);
+		this.log.message('toggleFullScreen',this.fullscreen);
 		this.elem = this.container[0];
 		
 		if(this.fullscreen){
@@ -466,7 +456,7 @@
 	};
 	// Internal function to update the internal variables defining the width and height.
 	Canvas.prototype.setWH = function(w,h,ctx){
-		this.log('setWH',w,h);
+		this.log.message('setWH',w,h);
 		if(!w || !h) return;
 		var c = (typeof ctx=="undefined") ? this.c : ctx;
 		// Set virtual pixel scale
@@ -509,15 +499,15 @@
 		this.updating = false;
 		this.events = [];
 		this.lines = [];
-		this.metrics = {};
 		this.fontscale = 1;
 		this.quicktime = 75;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
 		this.offset = {'x':0,'y':0};
-		if(typeof Big==="undefined") this.log('ERROR','Unable to find big.js');
+		this.log = new Logger({'id':'Graph','logging':this.logging});
+		if(typeof Big==="undefined") this.log.error('ERROR','Unable to find big.js');
 
-		this.logTime("Graph");
-		this.log('init',element,typeof element,data,options);
+		this.log.time("Graph");
+		this.log.message('init',element,typeof element,data,options);
 
 		// Define the drawing canvas
 		var opt = {};
@@ -560,7 +550,7 @@
 				if(g.paper[p]) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
 			}
 			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
-			this.log("Total until end of resize:" + (new Date() - d) + "ms");
+			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event,g,x,y,s,d,t,i,ii,a,m,ds;
 			event = ev.event.originalEvent;
@@ -648,7 +638,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],{'quick':(g.metrics.draw.av >= g.quicktime)});
+					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],{'quick':(g.log.metrics.draw.av >= g.quicktime)});
 				}
 			}
 			g.updating = false;
@@ -717,7 +707,7 @@
 				s = (oe.deltaY > 0 ? 1/f : f);
 				oe.update = ev.update;
 				if(co) co.css({'display':''});
-				g.zoom([c.x,c.y],{'quick':(g.metrics.draw.av >= g.quicktime),'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
+				g.zoom([c.x,c.y],{'quick':(g.log.metrics.draw.av >= g.quicktime),'scalex':(oe.layerX > g.chart.left ? s : 1),'scaley':(oe.layerY < g.chart.top+g.chart.height ? s : 1),'update':false});
 				g.trigger('wheel',{event:oe});
 				g.updating = false;
 			}
@@ -737,25 +727,12 @@
 		// Finally, set the data and update the display
 		this.updateData();
 
-		this.logTime("Graph");
+		this.log.time("Graph");
 		return this;
 	}
 
 	Graph.prototype.toggleFullScreen = function(){
 		this.canvas.toggleFullScreen();
-		return this;
-	};
-
-	Graph.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "WARNING") console.warn('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "INFO") console.info('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else console.log('%cGraph%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
-			}
-		}
 		return this;
 	};
 
@@ -877,7 +854,7 @@
 	}
 
 	Graph.prototype.addDatasets = function(datasets){
-		this.logTime('addDatasets');
+		this.log.time('addDatasets');
 		if(!this.datasets) this.datasets = {};
 		for(var id in datasets){
 			if(datasets[id]){
@@ -886,7 +863,7 @@
 				}
 			}
 		}
-		this.logTime('addDatasets');
+		this.log.time('addDatasets');
 		return this;
 	};
 
@@ -895,7 +872,7 @@
 	// If a dataset already exists we don't over-write
 	Graph.prototype.addMarks = function(data,idx,original,attr){
 		var i,j,t,l,types,pc,update;
-		this.log('addMarks',idx);
+		this.log.message('addMarks',idx);
 		if(typeof idx!=="number"){
 			if(typeof idx==="undefined"){
 				// Create an idx
@@ -910,7 +887,7 @@
 		this.originaldata = original;
 		attr.name = original.name;
 
-		if(this.marks[idx]) this.log('WARNING','addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);
+		if(this.marks[idx]) this.log.warning('addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);
 		else {
 			this.marks[idx] = parseData(data,this.options);
 
@@ -969,7 +946,7 @@
 
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
-		this.log('updateData',this.marks);
+		this.log.message('updateData',this.marks);
 		this.getGraphRange().getChartOffset().resetDataStyles().calculateData().draw(true);
 	};
 
@@ -1034,7 +1011,7 @@
 									}else v.push(d[axes[axis]]);
 								}
 							}else{
-								this.log('no marks');
+								this.log.message('no marks');
 							}
 						}
 					}
@@ -1062,7 +1039,7 @@
 								}else v.push(d[axes[axis]]);
 							}
 						}else{
-							this.log('no marks');
+							this.log.message('no marks');
 						}
 					}
 				}
@@ -1089,7 +1066,7 @@
 	Graph.prototype.panBy = function(dx,dy,attr){
 		this.offset.x = dx;
 		this.offset.y = dy;
-		this.logTime('panBy');
+		this.log.time('panBy');
 		if(!attr) attr = {};
 		if(attr.quick){
 			this.clear();
@@ -1110,7 +1087,7 @@
 			// We don't need to update the lookup whilst panning
 			this.draw(false);
 		}
-		this.logTime('panBy');
+		this.log.time('panBy');
 		return this;
 	};
 
@@ -1121,7 +1098,7 @@
 	Graph.prototype.zoom = function(pos,attr){
 
 		if(!attr) attr = {};
-		if(attr.quick) this.logTime('zoom');
+		if(attr.quick) this.log.time('zoom');
 		if(!pos) pos = [];
 		if(this.coordinates) this.coordinates.css({'display':'none'});
 		// Zoom by a scale around a point [scale,x,y]
@@ -1194,7 +1171,7 @@
 			this.draw(typeof attr.update==="boolean" ? attr.update : true);
 		}
 
-		if(attr.quick) this.logTime('zoom');
+		if(attr.quick) this.log.time('zoom');
 
 		return this;
 	};
@@ -1636,7 +1613,7 @@
 
 	Graph.prototype.makeTicks = function(a){
 		var v,mn,mx,l,sci,precision,fmt,i,d,vmx,calcval;
-		this.logTime('makeTicks');
+		this.log.time('makeTicks');
 		// Get the min/max tick marks
 		mn = this[a].gridmin;
 		mx = this[a].gridmax;
@@ -1659,7 +1636,7 @@
 		}
 
 		if(this[a].ticks.length == 0){
-			this.log('WARNING','No ticks');
+			this.log.warning('No ticks');
 			return this;
 		}
 		mn = this[a].ticks[0].value;
@@ -1707,13 +1684,14 @@
 		if(mx-mn < this.sci_hi && mx-mn > this.sci_lo) sci = false;
 		// Get the number of decimal places to show
 		precision = this[a].precision;
+		var _obj = this;
 		function shortestFormat(fmt){
 			var l = 1e100;
 			var i = "";
 			for(var f in fmt){
 				if(fmt[f]){
 					try { fmt[f] = fmt[f].replace(/\.0+((e[\+\-0-9]+)?)$/,function(m,p1){ return p1; }).replace(/^([^\.]+[\.][^1-9]*)0+$/,function(m,p1){return p1;}).toLocaleString(); }
-					catch(err){ console.log('ERROR',fmt[f],err); }
+					catch(err){ _obj.log.error(fmt[f],err); }
 					if(typeof fmt[f]!=="string" || fmt[f] == "NaN") fmt[f] = "";
 					if(fmt[f].length < l){
 						l = fmt[f].length;
@@ -1806,7 +1784,7 @@
 		}
 
 		this[a].gridrange = this[a].gridmax - this[a].gridmin;
-		this.logTime('makeTicks');
+		this.log.time('makeTicks');
 
 		return this;
 	};
@@ -2190,7 +2168,7 @@
 	};
 
 	Graph.prototype.calculateData = function(update){
-		this.log('calculateData');
+		this.log.message('calculateData');
 		if(typeof update!=="boolean") update = true;
 		
 		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis;
@@ -2282,7 +2260,7 @@
 
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
-				this.logTime('drawData '+sh);
+				this.log.time('drawData '+sh);
 				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
 				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);
 
@@ -2302,7 +2280,7 @@
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 					
-					quickdraw = (this.metrics['drawData '+sh].av > 70);
+					quickdraw = (this.log.metrics['drawData '+sh].av > 70);
 					if(quickdraw){
 						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
 						colour = getRGB(this.marks[sh].mark[0].props.format.fill);
@@ -2329,7 +2307,7 @@
 						}
 					}
 				}
-				this.logTime('drawData '+sh);
+				this.log.time('drawData '+sh);
 				// Apply the clipping if set
 				if(this.marks[sh].clip) this.paper.data.ctx.restore();
 			}
@@ -2773,49 +2751,19 @@
 
 	// Draw everything
 	Graph.prototype.draw = function(updateLookup){
-		this.logTime('draw');
+		this.log.time('draw');
 		this.clear();
 		this.drawAxes();
 		this.drawData(updateLookup);
 		if(updateLookup) this.canvas.copyToClipboard();
 		this.drawOverlay();
-		this.logTime('draw');
+		this.log.time('draw');
 		return this;
 	};
 
 	Graph.prototype.drawOverlay = function(){
 		// Potentially draw things afterwards
 		
-		return this;
-	};
-
-	Graph.prototype.logTime = function(key){
-		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
-		if(!this.metrics[key].start) this.metrics[key].start = new Date();
-		else{
-			var t,w,v,tot,l,i,ts;
-			t = ((new Date())-this.metrics[key].start);
-			ts = this.metrics[key].times;
-			// Define the weights for each time in the array
-			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
-			// Add this time to the start of the array
-			ts.unshift(t);
-			// Remove old times from the end
-			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
-			// Work out the weighted average
-			l = ts.length;
-			this.metrics[key].av = 0;
-			if(l > 0){
-				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
-					v += ts[i]*w[i];
-					tot += w[i];
-				}
-				this.metrics[key].av = v/tot;
-			}
-			this.metrics[key].times = ts.splice(0);
-			if(this.logtime) console.log('%cGraph%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
-			delete this.metrics[key].start;
-		}
 		return this;
 	};
 
@@ -2937,6 +2885,62 @@
 		window.ontouchmove = null;  
 	}
 
+	function Logger(inp){
+		if(!inp) inp = {};
+		this.logging = (inp.logging||false);
+		this.id = (inp.id||"JS");
+		this.metrics = {};
+		return this;
+	}
+	Logger.prototype.message = function(){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
+			var args,args2,bold;
+			args = Array.prototype.slice.call(arguments[1], 0);
+			args2 = (args.length > 1 ? args.splice(1):"");
+			bold = 'font-weight:bold;';
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);
+				else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args2);
+				else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args2);
+				else console.log('%c'+this.id+'%c: '+args[0],bold,'',args2);
+			}
+		}
+		return this;
+	}
+	Logger.prototype.error = function(){ this.message('ERROR',arguments); };
+	Logger.prototype.warning = function(){ this.message('WARNING',arguments); };
+	Logger.prototype.info = function(){ this.message('INFO',arguments); };
+	Logger.prototype.time = function(key){
+		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
+		if(!this.metrics[key].start) this.metrics[key].start = new Date();
+		else{
+			var t,w,v,tot,l,i,ts;
+			t = ((new Date())-this.metrics[key].start);
+			ts = this.metrics[key].times;
+			// Define the weights for each time in the array
+			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
+			// Add this time to the start of the array
+			ts.unshift(t);
+			// Remove old times from the end
+			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
+			// Work out the weighted average
+			l = ts.length;
+			this.metrics[key].av = 0;
+			if(l > 0){
+				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
+					v += ts[i]*w[i];
+					tot += w[i];
+				}
+				this.metrics[key].av = v/tot;
+			}
+			this.metrics[key].times = ts.splice(0);
+			if(this.logtime) console.log('%c'+this.id+'%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
+			delete this.metrics[key].start;
+		}
+		return this;
+	};
+
 	root.Graph = Graph;
+	root.Logger = Logger;
 
 })(window || this);

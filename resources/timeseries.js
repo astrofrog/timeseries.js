@@ -17,12 +17,12 @@
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.logging;
+			if(typeof opt.logtime!=="boolean") opt.logtime = this.logtime;
 			return new TS(json,opt);
 		};
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
 		this.callback = "";
-		this.logging = (location.search.indexOf('logging=true')>0);
-		this.logtime = (location.search.indexOf('logtime=true')>0);
+		this.log = new Logger({'id':'TimeSeries','logging':(location.search.indexOf('logging=true')>0),'logtime':(location.search.indexOf('logtime=true')>0)});
 		
 		// Work out the file path to this code to use for further resources
 		var scripts = document.getElementsByTagName('script');
@@ -30,65 +30,21 @@
 		var idx = path.lastIndexOf("/");
 		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
 
-		this.log = function(){
-			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-				var args = Array.prototype.slice.call(arguments, 0);
-				if(console && typeof console.log==="function"){
-					if(arguments[0] == "ERROR") console.error('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
-					else if(arguments[0] == "WARNING") console.warn('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-					else if(arguments[0] == "INFO") console.info('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-					else console.log('%cTimeseries%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
-				}
-			}
-			return this;
-		};
-		this.logTime = function(key){
-			if(!this.metrics) this.metrics = {};
-			if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
-			if(!this.metrics[key].start) this.metrics[key].start = new Date();
-			else{
-				var t,w,v,tot,l,i,ts;
-				t = ((new Date())-this.metrics[key].start);
-				ts = this.metrics[key].times;
-				// Define the weights for each time in the array
-				w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
-				// Add this time to the start of the array
-				ts.unshift(t);
-				// Remove old times from the end
-				if(ts.length > w.length-1) ts = ts.slice(0,w.length);
-				// Work out the weighted average
-				l = ts.length;
-				this.metrics[key].av = 0;
-				if(l > 0){
-					for(i = 0, v = 0, tot = 0 ; i < l ; i++){
-						v += ts[i]*w[i];
-						tot += w[i];
-					}
-					this.metrics[key].av = v/tot;
-				}
-				this.metrics[key].times = ts.splice(0);
-				if(this.logtime) console.log('%cTimeSeriesMaster%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
-				delete this.metrics[key].start;
-			}
-			return this;
-		};
-
-
 		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
 
 		this.loadFromDataFile = function(f,attr,fn){
 		
-			this.log('loadFromDataFile',f,attr,fn);
+			this.log.message('loadFromDataFile',f,attr,fn);
 			
 			attr.file = f;
 			
 			if(!this.load.data.files[f]){
-				this.logTime('loadFromDataFile '+f);
+				this.log.time('loadFromDataFile '+f);
 				this.load.data.files[f] = {'loaded':false,'callbacks':[]};
 				if(!this.load.counter) this.load.counter = 0;
 				if(!this.load.data.files[f].name) this.load.data.files[f].id = "file-"+(this.load.counter++);
 				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
-				this.log('loading data',f);
+				this.log.message('loading data',f);
 				var _obj = attr['this'];
 				_obj.updateMessage('main'+this.load.data.files[f].id,'Loading '+attr.dataset.name+'...');
 				// Now grab the data
@@ -102,7 +58,7 @@
 						// Remove extra newlines at the end
 						d = d.replace(/[\n\r]$/,"");
 						var cb = this.load.data.files[attr.file].callbacks;
-						this.log('CALLBACKS',attr.file,cb);
+						this.log.message('CALLBACKS',attr.file,cb);
 						_obj.updateMessage('main'+attr.id,'');
 						for(var i = 0; i < cb.length; i++){
 							// Set original context dataset data
@@ -111,8 +67,8 @@
 
 							if(typeof cb[i].fn==="function") cb[i].fn.call(cb[i].attr['this'],this.load.data.files[cb[i].attr.file].data,cb[i].attr);
 						}
-						this.log('loaded from data file '+attr.file);
-						this.logTime('loadFromDataFile '+attr.file);
+						this.log.message('loaded from data file '+attr.file);
+						this.log.time('loadFromDataFile '+attr.file);
 
 					},
 					"error": function(err,attr){
@@ -130,7 +86,6 @@
 					if(typeof fn==="function") fn.call(attr['this'],this.load.data.files[f].data,attr);
 				}
 			}
-			this.log('GROUPEND');
 		};
 
 		return this;
@@ -146,9 +101,9 @@
 			this.json = json;
 			this.vega = JSON.parse(JSON.stringify(json));
 		}else if(typeof json==="string") this.file = json;
-		this.logging = opt.logging || false;
+		this.log = new Logger({'logging':(opt.logging || false),'logtime':(opt.logtime || false),'id':'TS'});
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
-		this.log('TS',json);
+		this.log.message('TS',json);
 		this.progress = {'datasets':{'old':'','used':''},'update':{'todo':0,'done':0}};
 
 		// Set some defaults
@@ -313,55 +268,10 @@
 		return this;
 	}
 
-	// Log messages to the console
-	TS.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
-				else if(arguments[0] == "WARNING") console.warn('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else if(arguments[0] == "INFO") console.info('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else console.log('%cTS%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
-			}
-		}
-		return this;
-	};
-	
-	TS.prototype.logTime = function(key){
-		if(!this.metrics) this.metrics = {};
-		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
-		if(!this.metrics[key].start) this.metrics[key].start = new Date();
-		else{
-			var t,w,v,tot,l,i,ts;
-			t = ((new Date())-this.metrics[key].start);
-			ts = this.metrics[key].times;
-			// Define the weights for each time in the array
-			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
-			// Add this time to the start of the array
-			ts.unshift(t);
-			// Remove old times from the end
-			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
-			// Work out the weighted average
-			l = ts.length;
-			this.metrics[key].av = 0;
-			if(l > 0){
-				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
-					v += ts[i]*w[i];
-					tot += w[i];
-				}
-				this.metrics[key].av = v/tot;
-			}
-			this.metrics[key].times = ts.splice(0);
-			if(this.logtime) console.log('%cTS%c: '+key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)','font-weight:bold;','');
-			delete this.metrics[key].start;
-		}
-		return this;
-	};
-
 	TS.prototype.processJSON = function(d){
 		this.json = clone(d);
 		this.vega = clone(d);
-		this.log('processJSON',d,this.json);
+		this.log.message('processJSON',d,this.json);
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
@@ -375,7 +285,6 @@
 				if(dim) this.options[dim] = d.axes[a];
 			}
 		}
-		this.options.logging = true;
 		return this;
 	};
 
@@ -388,16 +297,16 @@
 	*/
 	TS.prototype.initialize = function(e,callback){
 
-		this.log('initialize',e);
+		this.log.message('initialize',e);
 
 		// Store the callback function
 		if(typeof callback==="function") this.callback = callback;
 
-		if(!e) this.log('ERROR',e,callback);
+		if(!e) this.log.error(e,callback);
 
 		var el = S(e);
 		if(el.length == 0){
-			this.log('ERROR','No DOM element to attach to',e);
+			this.log.error('No DOM element to attach to',e);
 			return this;
 		}
 		this.el = e;
@@ -435,8 +344,8 @@
 
 	TS.prototype.postProcess = function(){
 
-		this.log('postProcess',this);
-		this.logTime('postProcess');
+		this.log.message('postProcess',this);
+		this.log.time('postProcess');
 		var a,axis,d,el,i,ii,_obj,str,s;
 
 		// Post-process the JSON to extend things
@@ -457,7 +366,7 @@
 				// Create a name for this mark if one hasn't been given
 				if(!this.json.marks[i].name){
 					this.json.marks[i].name = "fake-id-"+ii;
-					this.log('WARNING','No name for mark '+i+' so naming it '+this.json.marks[i].name);
+					this.log.warning('No name for mark '+i+' so naming it '+this.json.marks[i].name);
 				}
 				ii++;
 			}
@@ -466,7 +375,7 @@
 					// Create a name for this mark if one hasn't been given
 					if(!this.json._extend.marks[i].name){
 						this.json._extend.marks[i].name = "fake-id-"+ii;
-						this.log('WARNING','No name for mark '+i+' so naming it '+this.json._extend.marks[i].name);
+						this.log.warning('No name for mark '+i+' so naming it '+this.json._extend.marks[i].name);
 					}
 					ii++;
 				}
@@ -508,9 +417,9 @@
 			this.options.width = this.initializedValues.w;
 			this.options.height = this.initializedValues.h;
 		}
-		this.options.logging = this.logging;
-		this.options.logtime = (location.search.indexOf('logtime=true')>0);
-		this.logtime = this.options.logtime;
+		// Pass in the log options
+		this.options.logging = this.log.logging;
+		this.options.logtime = this.log.logtime;
 		this.options.scrollWheelZoom = true;
 		if(this.json.scales){
 			for(a = 0; a < this.json.axes.length; a++){
@@ -556,7 +465,7 @@
 
 		if(this.json) this.loadDatasets(this.json.data);
 
-		this.logTime('postProcess');
+		this.log.time('postProcess');
 
 		return this;
 	};
@@ -652,8 +561,8 @@
 	};
 
 	TS.prototype.loadDatasets = function(data){
-		this.log('loadDatasets',data);
-		this.logTime('loadDatasets');
+		this.log.message('loadDatasets',data);
+		this.log.time('loadDatasets');
 		if(!data) return this;
 		this.updateMessage('main','Loading data...');
 		
@@ -678,7 +587,7 @@
 			this.datasets[attr.dataset.name] = {'json':json,'parse':attr.dataset.format.parse};
 			this.datasets[attr.dataset.name][typ] = data;
 			this.progress.datasets.done++;
-			this.log('loaded dataset',attr.dataset.name);
+			this.log.message('loaded dataset',attr.dataset.name);
 			if(this.progress.datasets.done==this.progress.datasets.todo) this.processDatasets();
 		};
 
@@ -687,7 +596,7 @@
 			if(data[i].url) files.push(this.directory + data[i].url);
 		}
 
-		this.log('files',files);
+		this.log.message('files',files);
 
 		// Process any inline values
 		for(i = 0; i < n; i++){
@@ -701,7 +610,7 @@
 			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},fn);
 		}
 		this.updateMessage('main','');
-		this.logTime('loadDatasets');
+		this.log.time('loadDatasets');
 
 		return this;
 	};
@@ -881,16 +790,16 @@
 				}
 			}
 			if(typeof i!=="number"){
-				this.log('ERROR','Invalid view number provided: '+i);
+				this.log.error('Invalid view number provided: '+i);
 				return this;
 			}
 		}
 		if(typeof i!=="number"){
-			this.log('ERROR','Invalid view index provided: '+i);
+			this.log.error('Invalid view index provided: '+i);
 			return this;
 		}
 		if(i >= j._views.length){
-			this.log('ERROR','The maximum index is '+(j._views.length-1)+'');
+			this.log.error('The maximum index is '+(j._views.length-1)+'');
 			return this;
 		}
 		for(m = 0; m < j._views.length; m++){
@@ -1047,7 +956,7 @@
 							if(k==f) ok = true;
 						}
 					}
-					if(!ok) this.log("ERROR",f+" is not an available format");
+					if(!ok) this.log.error(f+" is not an available format");
 					html += '</select></div>';
 					el.find('.menu-panel.submenu-config').append(html);
 					el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
@@ -1073,8 +982,8 @@
 						// Define the axis set to the current range
 						this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).calculateData().draw(update);
 					}else{
-						if(!this.xformats[i]) this.log('ERROR','Input format '+i+' is not a known date format');
-						if(!this.xformats[o]) this.log('ERROR','Output format '+o+' is not a known date format');
+						if(!this.xformats[i]) this.log.error('Input format '+i+' is not a known date format');
+						if(!this.xformats[o]) this.log.error('Output format '+o+' is not a known date format');
 					}
 					return this;
 				}
@@ -1083,8 +992,8 @@
 	};
 
 	TS.prototype.processDatasets = function(){
-		this.log('processDatasets',this.attr.showaswego,this.graph.marks);
-		this.logTime('processDatasets');
+		this.log.message('processDatasets',this.attr.showaswego,this.graph.marks);
+		this.log.time('processDatasets');
 
 		var i,id,mark,m,fn,up,ms,n,_obj;
 
@@ -1095,7 +1004,7 @@
 		for(m = 0,n = 0; m < ms.length; m++){
 			for(i = 0; i < ms[m].length ; i++){
 				// Create a name for this mark if one hasn't been given
-				if(!ms[m][i].name) this.log('ERROR','No name for '+ms[m][i].title+' ('+i+')');
+				if(!ms[m][i].name) this.log.error('No name for '+ms[m][i].title+' ('+i+')');
 				else this.progress.marks.mark[ms[m][i].name] = {'done':-1,'todo':0};
 				n++;
 			}
@@ -1108,7 +1017,7 @@
 			var to,str;
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
-				console.log('updateProps fail',d,event);
+				_obj.log.message('updateProps fail',d,event);
 				return;
 			}
 			datum = d.data;
@@ -1139,7 +1048,7 @@
 						to = dest[p] || "data";
 						if(typeof d[to][p]==="undefined") d[to][p] = {};
 						try { d[to][p].value = looseJsonParse(event[p].signal,datum); }
-						catch(e) { _obj.log('Error',d.data,event[p]); }
+						catch(e) { _obj.log.error(d.data,event[p]); }
 						// If we now have an object we build a string
 						if(p=="tooltip"){
 							if(typeof d.props[p].value==="object"){
@@ -1206,7 +1115,7 @@
 					if(me.datasets[id]) me.datasets[id].added = true;
 					
 				}else{
-					me.log('No dataset built for '+id,mark);
+					me.log.message('No dataset built for '+id,mark);
 				}
 			}
 			return me;
@@ -1228,7 +1137,7 @@
 			this.progress.marks.mark[e.name].todo = e.total;
 
 			// Update the total for this mark
-			this.log('Processed '+e.name,this.progress.marks.mark[e.name]);
+			this.log.message('Processed '+e.name,this.progress.marks.mark[e.name]);
 			this.updateMessage(e.name,'');
 
 			if(this.attr.showaswego) this.graph.updateData();
@@ -1269,13 +1178,13 @@
 		// to what we've already processed, we will update the graph
 		if(this.progress.datasets.used != this.progress.datasets.old && this.attr.showaswego) this.graph.updateData();
 
-		this.logTime('processDatasets');
+		this.log.time('processDatasets');
 
 		return this;
 	};
 
 	TS.prototype.finalize = function(){
-		this.log('finalize',this.attr.showaswego,this.graph.marks);
+		this.log.message('finalize',this.attr.showaswego,this.graph.marks);
 		this.updateMessage('main','');
 
 		// If we haven't been updating the data for the graph we need to do that now
@@ -1290,7 +1199,7 @@
 		// CALLBACK
 		if(typeof this.callback==="function") this.callback.call(this);
 		
-		this.log('INFO','Finished '+this.el.getAttribute('id'));
+		this.log.info('Finished '+this.el.getAttribute('id'));
 		return this;
 	};
 
@@ -1413,7 +1322,7 @@
 	};
 	
 	TS.prototype.error = function(msg,extra,err){
-		this.log('ERROR',msg,extra,err,'fred');
+		this.log.error(msg,extra,err,'fred');
 		if(S(this.el).find('.loader').length == 0){
 			S(this.el).html('<div class="loader"><div class="spinner"></div></div>').css({'position':'relative','width':'100%','height':'200px'});
 		}
