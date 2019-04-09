@@ -1,3 +1,15 @@
+# This is a simple test suite for the examples. We use pytest to run the tests
+# and selenium to render the example pages. We then make sure that no unexpected
+# warnings or errors are output to the log. To run this test suite, you will
+# need the following Python dependencies:
+#
+#   pip install pytest flask flask-cors selenium
+#
+# as well as the chromedriver for selenium. You can then run the tests with:
+#
+#   pytest tests/test_examples.py
+
+
 import os
 import glob
 import pytest
