@@ -2935,7 +2935,6 @@
 			}
 			this.metrics[key].times = ts.splice(0);
 			if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
-			else this.warning('Unable to log time for '+key);
 			delete this.metrics[key].start;
 		}
 		return this;
