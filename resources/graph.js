@@ -915,7 +915,7 @@
 				max = Math.min(attr.marks.data.length,i+chk);
 				for(i = attr.i; i < max; i++){
 					// If we have sent an update function we'll process it as we go
-					if(update && i > chk && i % Math.round(l/100) == 0) attr.attr.progress.call((attr.attr.this||this),{'mark':original,'i':i,'total':attr.total});
+					if(update && i > chk && i % Math.round(l/100) == 0) attr.attr.progress.call((attr.attr['this']||this),{'mark':original,'i':i,'total':attr.total});
 
 					if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i]};
 
@@ -924,7 +924,7 @@
 						if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
 					}
 					// Should process all the "enter" options here
-					if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr.this,attr.marks.mark[i],attr.marks.encode.enter);
+					if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
 				}
 				attr.i = i;
 				if(i < attr.marks.data.length){
@@ -933,7 +933,7 @@
 					if(typeof attr.attr.success==="function"){
 						attr.attr.i = i;
 						attr.attr.total = attr.total;
-						attr.attr.success.call((attr.attr.this||this),attr.attr);
+						attr.attr.success.call((attr.attr['this']||this),attr.attr);
 					}
 				}
 			}
