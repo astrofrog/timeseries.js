@@ -746,11 +746,12 @@
 	};
 
 	Graph.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING"){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
 			var args = Array.prototype.slice.call(arguments, 0);
 			if(console && typeof console.log==="function"){
 				if(arguments[0] == "ERROR") console.error('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else if(arguments[0] == "WARNING") console.warn('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else if(arguments[0] == "INFO") console.info('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else console.log('%cGraph%c','font-weight:bold;','',args);
 			}
 		}
