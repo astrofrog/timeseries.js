@@ -224,17 +224,13 @@
 
 		// Construct the <canvas> container
 		this.container = S(container);
-		this.log('container width',this.container.width(),this.container[0],container);
+		this.log('Container width',this.container.width(),this.container[0],container);
 
 		this.origcontainer = this.container[0].outerHTML;
-		if(this.container[0].nodeName!=="DIV"){
-			this.log('before',this.container,this.wide,this.tall);
-			this.container = this.container.replaceWith('<div></div>');
-			this.log('after',this.container);
-		}
+		if(this.container[0].nodeName!=="DIV") this.container = this.container.replaceWith('<div></div>');
 
 		if(this.container.length == 0){
-			this.log('Error - no valid container provided');
+			this.log('ERROR','No valid container provided');
 			return;
 		}
 		this.container.css({'position':'relative','width':this.wide,'height':this.tall});
@@ -363,9 +359,14 @@
 		}
 	}
 	Canvas.prototype.log = function(){
-		if(this.logging){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
 			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && is(console.log,"function")) console.log('%cCanvas%c','font-weight:bold;','',args);
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.error('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.warn('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else if(arguments[0] == "INFO") console.info('%cCanvas%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
+				else console.log('%cCanvas%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
+			}
 		}
 		return this;
 	};
@@ -752,7 +753,7 @@
 				if(arguments[0] == "ERROR") console.error('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else if(arguments[0] == "WARNING") console.warn('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else if(arguments[0] == "INFO") console.info('%cGraph%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else console.log('%cGraph%c','font-weight:bold;','',args);
+				else console.log('%cGraph%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
 			}
 		}
 		return this;
@@ -963,7 +964,6 @@
 			}
 			processChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':l});
 		}
-
 		return this;
 	};
 

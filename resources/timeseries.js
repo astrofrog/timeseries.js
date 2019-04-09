@@ -37,7 +37,7 @@
 					if(arguments[0] == "ERROR") console.error('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
 					else if(arguments[0] == "WARNING") console.warn('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 					else if(arguments[0] == "INFO") console.info('%cTimeSeries%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-					else console.log('%cTimeseries%c','font-weight:bold;','',args);
+					else console.log('%cTimeseries%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
 				}
 			}
 			return this;
@@ -130,6 +130,7 @@
 					if(typeof fn==="function") fn.call(attr['this'],this.load.data.files[f].data,attr);
 				}
 			}
+			this.log('GROUPEND');
 		};
 
 		return this;
@@ -320,7 +321,7 @@
 				if(arguments[0] == "ERROR") console.error('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 0 ? args.splice(2):""));
 				else if(arguments[0] == "WARNING") console.warn('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
 				else if(arguments[0] == "INFO") console.info('%cTS%c: '+args[1],'font-weight:bold;','',(args.length > 2 ? args.splice(2):""));
-				else console.log('%cTS%c','font-weight:bold;','',args);
+				else console.log('%cTS%c: '+args[0],'font-weight:bold;','',(args.length > 1 ? args.splice(1):""));
 			}
 		}
 		return this;
