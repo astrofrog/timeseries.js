@@ -19,7 +19,7 @@ jobs:
       - checkout
       - run:
           name: Installing dependencies
-          command: pip install pytest flask flask-cors selenium
+          command: sudo pip install pytest flask flask-cors selenium
       - run:
           name: Running tests
           command: pytest tests/test_examples.py
