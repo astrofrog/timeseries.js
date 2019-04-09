@@ -89,7 +89,6 @@
 				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
 				this.log('loading data',f);
 				var _obj = attr['this'];
-				console.log(attr)
 				_obj.updateMessage('main'+this.load.data.files[f].id,'Loading '+attr.dataset.name+'...');
 				// Now grab the data
 				S().ajax(f,{
@@ -698,6 +697,7 @@
 			// If we've loaded all data we then use the callback we defined above
 			TimeSeries.loadFromDataFile(files[j],{"this":this,"dataset":data[j],"files":files},fn);
 		}
+		this.updateMessage('main','');
 		this.logTime('loadDatasets');
 
 		return this;
