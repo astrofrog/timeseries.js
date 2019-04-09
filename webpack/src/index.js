@@ -1,4 +1,4 @@
-require('../../resources/big.min.js');
+self.Big = require('../../resources/big.min.js');
 require('../../resources/stuquery.js');
 require('../../resources/graph.js');
 require('../../resources/timeseries.js');
