@@ -1097,7 +1097,7 @@
 
 					if(mark.encode && mark.encode.hover){
 						dataset.hoverable = true;
-						if(mark.encode.hover.fill) dataset.css['background-color'] = mark.encode.hover.fill.value;
+						if(mark.encode.hover.tooltip && mark.encode.hover.tooltip.css) dataset.css = mark.encode.hover.tooltip.css;
 					}
 
 					dataset.encode = mark.encode;

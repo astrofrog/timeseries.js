@@ -185,7 +185,7 @@
 				"fill": {"value": "#7F0000"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Title': 'MOA', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
+				"tooltip": {"css":{"background-color":"#7F0000","color":"white"},"signal":"{'Title': 'MOA', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -230,7 +230,7 @@
 				"fill": {"value": "#FF7F00"},
 				"fillOpacity": {"value": 1},
 				"zindex": {"value": 1},
-				"tooltip": {"signal":"{'Title': 'Danish 1.54m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
+				"tooltip": {"css":{"background-color":"#FF7F00","color":"black"},"signal":"{'Title': 'Danish 1.54m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{

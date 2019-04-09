@@ -1356,7 +1356,28 @@
 			var html = "";
 
 			if(topmark){
-				if(typeof series.css=="object") this.coordinates.css(series.css);
+				// Update tooltip styles
+				this.coordinates.attr('css','');
+
+				// Clear any extra rules we added to the tooltip arrow
+				var tta = ".graph-tooltip:after";
+				if(!this.style){
+					// Create a new stylesheet
+					this.style = document.createElement("style");
+					// WebKit hack
+					this.style.appendChild(document.createTextNode(""));
+					// Add the <style> element to the page
+					document.head.appendChild(this.style);
+				}else{
+					this.style.sheet.deleteRule(tta);
+				}
+				if(typeof series.css=="object"){
+					// Set the styles
+					this.coordinates.css(series.css);
+
+					// Add a rule for the tooltip arrow
+					if(series.css['background-color']) this.style.sheet.insertRule(tta+" { border-color: "+series.css['background-color']+"!important; }");
+				}
 		
 				// Build the hovertext output
 				val = {
@@ -2882,7 +2903,6 @@
 		window.onwheel = null; 
 		window.ontouchmove = null;  
 	}
-
 	function Logger(inp){
 		if(!inp) inp = {};
 		this.logging = (inp.logging||false);
