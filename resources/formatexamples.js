@@ -56,8 +56,10 @@ for(var i = 0; i < examples.length; i++){
 	showtitle = true;
 	if(S(examples[i]).attr('data-title')=="false") showtitle = false;
 
+	code = deindent(code);
+
 	// Append the 'How to do it' content
-	S(examples[i]).append((showtitle ? '<h3>How to do it</h3><h4>HTML</h4>':'')+'<pre class="prettyprint lang-html">'+deindent(code)+'</pre>'+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':''))
+	S(examples[i]).append((showtitle ? '<h3>How to do it</h3>':'')+(code && showtitle ? '<h4>HTML</h4>':'')+(code ? '<pre class="prettyprint lang-html">'+deindent(code)+'</pre>':'')+(css ? (showtitle ? '<h4>CSS</h4>':'')+'<pre class="prettyprint lang-css">'+deindent(sanitise(css))+'</pre>':'')+(js ? (showtitle ? '<h4>Javascript</h4>':'')+'<pre class="prettyprint lang-js">'+deindent(sanitise(js))+'</pre>':''))
 
 	highlight(i);
 }
