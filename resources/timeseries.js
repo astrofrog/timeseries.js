@@ -275,7 +275,7 @@
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
-		
+	
 		// Work out axes
 		if(d.axes){
 			for(var a = 0; a < d.axes.length; a++){
@@ -326,9 +326,12 @@
 				"this": this,
 				"cache": true,
 				"success": function(d,attr){
-					this.processJSON(d);
-					this.postProcess();
-					return this;
+					if(!d){
+						this.error(attr.url+' is invalid','');
+					}else{
+						this.processJSON(d);
+						this.postProcess();
+					}
 				},
 				"error": function(err,attr){
 					this.error("Unable to load configuration",attr.url,err);
@@ -1097,7 +1100,7 @@
 
 					if(mark.encode && mark.encode.hover){
 						dataset.hoverable = true;
-						if(mark.encode.hover.tooltip && mark.encode.hover.tooltip.css) dataset.css = mark.encode.hover.tooltip.css;
+						//if(mark.encode.hover.tooltip && mark.encode.hover.tooltip.css) dataset.css = mark.encode.hover.tooltip.css;
 					}
 
 					dataset.encode = mark.encode;
@@ -1322,7 +1325,7 @@
 	};
 	
 	TS.prototype.error = function(msg,extra,err){
-		this.log.error(msg,extra,err,'fred');
+		this.log.error(msg,extra,err);
 		if(S(this.el).find('.loader').length == 0){
 			S(this.el).html('<div class="loader"><div class="spinner"></div></div>').css({'position':'relative','width':'100%','height':'200px'});
 		}

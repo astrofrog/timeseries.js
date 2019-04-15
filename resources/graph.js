@@ -1357,6 +1357,7 @@
 
 			if(topmark){
 				// Update tooltip styles
+				/*
 				this.coordinates.attr('css','');
 
 				// Clear any extra rules we added to the tooltip arrow
@@ -1377,7 +1378,7 @@
 
 					// Add a rule for the tooltip arrow
 					if(series.css['background-color']) this.style.sheet.insertRule(tta+" { border-color: "+series.css['background-color']+"!important; }");
-				}
+				}*/
 		
 				// Build the hovertext output
 				val = {

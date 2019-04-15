@@ -132,14 +132,7 @@
 				"size": {"value": 10},
 				"fill": {"value": "#000000"}
 			},
-			"update": {
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
-			},
 			"hover": {
-				"fill": {"value": "#000000"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'OGLE', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -174,18 +167,11 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#7F0000"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#7F0000"}
 			},
 			"hover": {
-				"fill": {"value": "#7F0000"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
-				"tooltip": {"css":{"background-color":"#7F0000","color":"white"},"signal":"{'Title': 'MOA', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
+				"tooltip": {"signal":"{'Title': 'MOA', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
 	},{
@@ -219,17 +205,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#FF7F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#FF7F00"}
 			},
 			"hover": {
-				"fill": {"value": "#FF7F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"css":{"background-color":"#FF7F00","color":"black"},"signal":"{'Title': 'Danish 1.54m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -264,17 +243,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#00FFFF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#00FFFF"}
 			},
 			"hover": {
-				"fill": {"value": "#00FFFF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Faulkes North 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -309,17 +281,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#007F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#007F00"}
 			},
 			"hover": {
-				"fill": {"value": "#007F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Faulkes South 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -354,17 +319,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#00A0A0"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#00A0A0"}
 			},
 			"hover": {
-				"fill": {"value": "#00A0A0"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Liverpool 2.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -399,17 +357,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#7F007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#7F007F"}
 			},
 			"hover": {
-				"fill": {"value": "#7F007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'MONET North 1.2m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -444,17 +395,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#FF00FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#FF00FF"}
 			},
 			"hover": {
-				"fill": {"value": "#FF00FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'UTas 1.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -489,17 +433,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#00FF00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#00FF00"}
 			},
 			"hover": {
-				"fill": {"value": "#00FF00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'SAAO 1.0m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -534,17 +471,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#0000FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#0000FF"}
 			},
 			"hover": {
-				"fill": {"value": "#0000FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'CTIO 1.3m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -579,17 +509,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#007F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#007F00"}
 			},
 			"hover": {
-				"fill": {"value": "#007F00"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Auckland 0.4m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -624,17 +547,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#0000FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#0000FF"}
 			},
 			"hover": {
-				"fill": {"value": "#0000FF"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Farm Cove 0.35m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -669,17 +585,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#00007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#00007F"}
 			},
 			"hover": {
-				"fill": {"value": "#00007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Kumeu Obs 0.35m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
@@ -714,17 +623,10 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "HJD"},
 				"y": {"scale": "yscale", "field": "dmag"},
-				"size": {"value": 10}
-			},
-			"update": {
-				"fill": {"value": "#7F007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 0}
+				"size": {"value": 10},
+				"fill": {"value": "#7F007F"}
 			},
 			"hover": {
-				"fill": {"value": "#7F007F"},
-				"fillOpacity": {"value": 1},
-				"zindex": {"value": 1},
 				"tooltip": {"signal":"{'Title': 'Vintage Lane 0.4m', 'Time': datum.HJD, 'Dmag': datum.dmag, 'Error': datum.err}"}
 			}
 		}
