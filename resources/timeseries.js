@@ -327,7 +327,7 @@
 				"cache": true,
 				"success": function(d,attr){
 					if(!d){
-						this.error(attr.url+' is invalid','');
+						this.error('JSON is invalid',attr.url);
 					}else{
 						this.processJSON(d);
 						this.postProcess();

@@ -2191,16 +2191,23 @@
 		this.log.message('calculateData');
 		if(typeof update!=="boolean") update = true;
 		
-		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis;
+		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
 		axes = ['x','y'];
 
 		if(!update) return this;
 		
-		// Process all the series updates here
+		var _obj = this;
+		var series = {};
+		var chunk = 1000;
 		for(sh in this.marks){
-			if(this.marks[sh].show){
-				for(i = 0; i < this.marks[sh].mark.length ; i++){
-					d = this.marks[sh].mark[i];
+			if(this.marks[sh]) series[sh] = {done:0};
+		}
+		
+		function processSeries(sh){
+			if(_obj.marks[sh].show && series[sh].done < _obj.marks[sh].mark.length){
+				mx = Math.min(_obj.marks[sh].mark.length,series[sh].done+chunk);
+				for(i = series[sh].done; i < mx ; i++){
+					d = _obj.marks[sh].mark[i];
 
 					// Store IDs for the layer and the item
 					if(!d.id) d.id = parseInt(sh)+':'+i;
@@ -2210,17 +2217,17 @@
 						a2 = a+'2';
 						if(d.data[a]!=null){
 
-							v = this.getPos(a,d.data[a]);
+							v = _obj.getPos(a,d.data[a]);
 
 							d.props[a] = parseFloat(v.toFixed(1));
 
 							// Add properties for rule lines
-							if(this.marks[sh].type=="rule"){
+							if(_obj.marks[sh].type=="rule"){
 								if(!d.data[a2] && d.data[a]) d.data[a2] = clone(d.data[a]);
 							}
 
 							if(typeof d.data[a2]!=="undefined"){
-								d.props[a2] = this.getPos(a,d.data[a2]);
+								d.props[a2] = _obj.getPos(a,d.data[a2]);
 								d.props[a1] = v;
 								d.props[a] = v + (d.props[a2]-v)/2;
 							}else{
@@ -2233,8 +2240,16 @@
 						}
 					}
 				}
+				series[sh].done = mx;
+				if(series[sh].done < _obj.marks[sh].mark.length) setTimeout(processSeries(sh),0);
 			}
 		}
+//processChunk
+		// Process all the series updates here
+		for(sh in this.marks){
+			if(this.marks[sh]) processSeries(sh);
+		}
+
 		return this;
 	};
 	
