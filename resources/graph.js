@@ -548,9 +548,7 @@
 			for(var p in g.paper){
 				if(g.paper[p]) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
 			}
-			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().redraw(true,function(){
-				this.trigger("resize",{event:ev.event});
-			});
+			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().redraw({'update':true,'callback':function(){ this.trigger("resize",{event:ev.event}); }});
 			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event,g,x,y,s,d,t,i,ii,a,m,ds;
@@ -718,9 +716,12 @@
 			var g = ev.data.me;
 			g.updating = false;
 			g.resetDataStyles();
-			g.redraw(true,function(){
-				this.timeout.wheel = undefined;
-				this.trigger('wheelstop',{event:ev.event});
+			g.redraw({
+				'update':true,
+				'callback': function(){
+					this.timeout.wheel = undefined;
+					this.trigger('wheelstop',{event:ev.event});
+				}
 			});
 		});
 
@@ -950,7 +951,7 @@
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log.message('updateData',this.marks);
-		this.getGraphRange().getChartOffset().resetDataStyles().redraw(true);
+		this.getGraphRange().getChartOffset().resetDataStyles().redraw({'cancelable':false,'update':true});
 	};
 
 	Graph.prototype.getGraphRange = function(){
@@ -1090,12 +1091,8 @@
 			this.canvas.copyToClipboard();
 		}else{
 			// Update the graph
-			this.clear();
 			this.getChartOffset().resetDataStyles();
-			this.redraw(false,function(){
-				// We don't need to update the lookup whilst panning
-				this.draw(false);
-			});
+			this.redraw({'update':false});
 		}
 		this.log.time('panBy');
 		return this;
@@ -1167,10 +1164,10 @@
 		}
 
 		this.getChartOffset();
-		this.clear();
 		if(!attr.quick){
-			this.resetDataStyles().redraw(typeof attr.update==="boolean" ? attr.update : true);
+			this.resetDataStyles().redraw({'update':typeof attr.update==="boolean" ? attr.update : true});
 		}else{
+			this.clear();
 			this.clear(this.paper.temp.ctx);
 			this.drawAxes();
 			var ctx = this.canvas.ctx;
@@ -1827,7 +1824,7 @@
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
 		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
-		this.getChartOffset().resetDataStyles().redraw(true);
+		this.getChartOffset().resetDataStyles().redraw({'update':true});
 		return this;
 	};
 	
@@ -2202,12 +2199,15 @@
 	};
 
 	/* Replacement function to combine calculateData() and draw() but allow interrupt */
-	Graph.prototype.redraw = function(update,callback){
+	Graph.prototype.redraw = function(attr){
 		this.log.message('redraw');
 		this.log.time('redraw');
 
+		if(!attr) attr = {};
+		if(typeof attr.update!=="boolean") attr.update = true;
+		if(typeof attr.cancelable!=="boolean") attr.cancelable = true;
+
 		var sh,chunk,series;
-		if(typeof update!=="boolean") update = true;
 
 		// The calculation can lock up the process if there are a lot of points.
 		// In order to be able to interrupt/cancel the calculation we need to 
@@ -2220,7 +2220,7 @@
 		}
 
 		// Function to process all the series chunk-by-chunk	
-		function processChunk(self,s,update,callback){
+		function processChunk(self,s,attr){
 			var sh,d,x,y,i,j,x2,v,a,a1,a2,axes,axis,mx;
 			axes = ['x','y'];
 			j = 0;
@@ -2275,24 +2275,25 @@
 				self.log.time('redraw');
 
 				// Draw the points
-				self.draw(update);
+				self.draw(attr.update);
 
 				// Call the callback if we have one
-				if(typeof callback==="function") callback.call(self,{});
+				if(typeof attr.callback==="function") attr.callback.call(self,{});
 			}else{
 				// Loop again
-				self.timeout.redraw = setTimeout(processChunk,0,self,s,update,callback);
+				if(attr.cancelable) self.timeout.redraw = setTimeout(processChunk,0,self,s,attr);
+				else processChunk(self,s,attr);
 			}
 		}
 
 		// Start processing
-		this.timeout.redraw = setTimeout(processChunk,0,this,0,update,callback);
-
+		if(attr.cancelable) this.timeout.redraw = setTimeout(processChunk,0,this,0,attr);
+		else processChunk(this,0,attr)
+		
 		return this;
 	};
 
 	Graph.prototype.calculateData = function(update){
-		this.log.warning('calculateData is deprecated');
 		this.log.message('calculateData');
 		this.log.time('calculateData');
 

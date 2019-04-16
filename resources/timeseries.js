@@ -658,7 +658,7 @@
 							j = e.data.k[i];
 							g.marks[j].show = !g.marks[j].show;
 						}
-						g.redraw(true);
+						g.redraw({'update':true,'cancelable':false});
 						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
 						else this.parent().addClass('inactive');
 					}).on('focus',{layers:layers},function(e){
@@ -727,6 +727,8 @@
 								}else if(d.type=="rule"){
 									ctx.beginPath();
 									ctx.lineWidth = (d.encode.enter.strokeWidth.value||1);
+									if(!d.data[0].x2) d.data[0].x2 = clone(d.data[0].x);
+									if(!d.data[0].y2) d.data[0].y2 = clone(d.data[0].y);
 									if(d.data[0].y.value == d.data[0].y2.value){
 										ctx.moveTo(0,h/2 + 0.5);
 										ctx.lineTo(w,h/2 + 0.5);
