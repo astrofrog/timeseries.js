@@ -492,6 +492,7 @@
 		this.marks = {};
 		this.chart = {};
 		this.options = {};
+		this.timeout = {};
 		this.selecting = false;
 		this.panning = false;
 		this.updating = false;
@@ -547,7 +548,9 @@
 			for(var p in g.paper){
 				if(g.paper[p]) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
 			}
-			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().calculateData().draw(true).trigger("resize",{event:ev.event});
+			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().redraw(true,function(){
+				this.trigger("resize",{event:ev.event});
+			});
 			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event,g,x,y,s,d,t,i,ii,a,m,ds;
@@ -558,7 +561,7 @@
 			x = event.layerX;
 			y = event.layerY;
 			ds = g.dataAtMousePosition(x,y);
-
+			
 			// No data (but the alt key is pressed) so we'll start the zoom selection
 			if(g.within(x,y) && g.options.zoomable){
 				g.selectfrom = [x,y];
@@ -593,7 +596,7 @@
 			x = event.layerX;
 			y = event.layerY;
 			// Attach hover event
-			if(!g.selecting && !g.panning && !g.wheelid){
+			if(!g.selecting && !g.panning && !g.timeout.wheel){
 				ds = g.dataAtMousePosition(event.offsetX,event.offsetY);
 				g.highlight(ds);
 				m = [];
@@ -695,7 +698,7 @@
 			var oe,g,c,co,f,s;
 			oe = ev.event.originalEvent;
 			g = ev.data.me;
-			if(g.wheelid) clearTimeout(g.wheelid);
+			if(g.timeout.wheel) clearTimeout(g.timeout.wheel);
 			if(!g.updating){
 				g.updating = true;
 				c = {'x':oe.layerX,'y':oe.layerY};
@@ -710,13 +713,15 @@
 				g.updating = false;
 			}
 			// Set a timeout to trigger a wheelstop event
-			g.wheelid = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },100,{event:oe});
+			g.timeout.wheel = setTimeout(function(e){ g.canvas.trigger('wheelstop',{event:e}); },100,{event:oe});
 		}).on("wheelstop",{me:this,options:options},function(ev){
 			var g = ev.data.me;
 			g.updating = false;
-			g.resetDataStyles().calculateData().draw(true);
-			g.wheelid = undefined;
-			g.trigger('wheelstop',{event:ev.event});
+			g.resetDataStyles();
+			g.redraw(true,function(){
+				this.timeout.wheel = undefined;
+				this.trigger('wheelstop',{event:ev.event});
+			});
 		});
 
 		// Extend the options with those provided by the user
@@ -928,7 +933,7 @@
 				}
 				attr.i = i;
 				if(i < attr.marks.data.length){
-					setTimeout(processChunk,100,attr);
+					attr['this'].timeout.addMark = setTimeout(processChunk,100,attr);
 				}else{
 					if(typeof attr.attr.success==="function"){
 						attr.attr.i = i;
@@ -937,7 +942,7 @@
 					}
 				}
 			}
-			processChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':l});
+			this.timeout.addMark = processChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':l});
 		}
 		return this;
 	};
@@ -945,7 +950,7 @@
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log.message('updateData',this.marks);
-		this.getGraphRange().getChartOffset().resetDataStyles().calculateData().draw(true);
+		this.getGraphRange().getChartOffset().resetDataStyles().redraw(true);
 	};
 
 	Graph.prototype.getGraphRange = function(){
@@ -1062,6 +1067,10 @@
 	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
 	// than recalculate everything as that can be slow when there is a lot of data.
 	Graph.prototype.panBy = function(dx,dy,attr){
+
+		// Stop any existing processing
+		if(this.timeout.redraw) clearTimeout(this.timeout.redraw);
+
 		this.offset.x = dx;
 		this.offset.y = dy;
 		this.log.time('panBy');
@@ -1078,12 +1087,15 @@
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y,this.paper.data.width,this.paper.data.height);
 			ctx.restore();
+			this.canvas.copyToClipboard();
 		}else{
-			this.getChartOffset().resetDataStyles().calculateData();
 			// Update the graph
 			this.clear();
-			// We don't need to update the lookup whilst panning
-			this.draw(false);
+			this.getChartOffset().resetDataStyles();
+			this.redraw(false,function(){
+				// We don't need to update the lookup whilst panning
+				this.draw(false);
+			});
 		}
 		this.log.time('panBy');
 		return this;
@@ -1094,6 +1106,9 @@
 	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
 	// than recalculate everything as that can be slow when there is a lot of data.
 	Graph.prototype.zoom = function(pos,attr){
+
+		// Stop any existing processing
+		if(this.timeout.redraw) clearTimeout(this.timeout.redraw);
 
 		if(!attr) attr = {};
 		if(attr.quick) this.log.time('zoom');
@@ -1152,9 +1167,10 @@
 		}
 
 		this.getChartOffset();
-		if(!attr.quick) this.resetDataStyles().calculateData();
 		this.clear();
-		if(attr.quick){
+		if(!attr.quick){
+			this.resetDataStyles().redraw(typeof attr.update==="boolean" ? attr.update : true);
+		}else{
 			this.clear(this.paper.temp.ctx);
 			this.drawAxes();
 			var ctx = this.canvas.ctx;
@@ -1165,8 +1181,6 @@
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,x,y,Math.round(this.canvas.wide/this.paper.data.scale.x),Math.round(this.canvas.tall/this.paper.data.scale.y));
 			ctx.restore();
-		}else{
-			this.draw(typeof attr.update==="boolean" ? attr.update : true);
 		}
 
 		if(attr.quick) this.log.time('zoom');
@@ -1813,7 +1827,7 @@
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
 		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
-		this.getChartOffset().resetDataStyles().calculateData().draw(true);
+		this.getChartOffset().resetDataStyles().redraw(true);
 		return this;
 	};
 	
@@ -2190,29 +2204,32 @@
 	/* Replacement function to combine calculateData() and draw() but allow interrupt */
 	Graph.prototype.redraw = function(update,callback){
 		this.log.message('redraw');
-		if(typeof update!=="boolean") update = true;
-		
-		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
-		axes = ['x','y'];
+		this.log.time('redraw');
 
-		if(!update) return this;
-		
+		var sh,chunk,series;
+		if(typeof update!=="boolean") update = true;
+
 		// The calculation can lock up the process if there are a lot of points.
 		// In order to be able to interrupt/cancel the calculation we need to 
 		// put it into a setTimeout loop.
-		var _obj = this;
-		var chunk = 1000;	// Number of points to process at a time
+		chunk = 10000;	// Number of points to process at a time
 		// Build a temporary array to store how many points we've processed for each series
-		var series = {};
+		series = [];
 		for(sh in this.marks){
-			if(this.marks[sh]) series[sh] = {done:0};
+			if(this.marks[sh] && this.marks[sh].show) series.push({'id':sh,'done':0});
 		}
-		// Function to process a series (sh) bit-by-bit	
-		function processSeries(sh){
-			if(_obj.marks[sh].show && series[sh].done < _obj.marks[sh].mark.length){
-				mx = Math.min(_obj.marks[sh].mark.length,series[sh].done+chunk);
-				for(i = series[sh].done; i < mx ; i++){
-					d = _obj.marks[sh].mark[i];
+
+		// Function to process all the series chunk-by-chunk	
+		function processChunk(self,s,update,callback){
+			var sh,d,x,y,i,j,x2,v,a,a1,a2,axes,axis,mx;
+			axes = ['x','y'];
+			j = 0;
+			while(j < chunk && s < series.length){
+				sh = series[s].id;
+
+				// If we haven't yet finished this series
+				for(i = series[s].done; i < self.marks[sh].mark.length && j < chunk ; i++, j++){
+					d = self.marks[sh].mark[i];
 
 					// Store IDs for the layer and the item
 					if(!d.id) d.id = parseInt(sh)+':'+i;
@@ -2222,17 +2239,17 @@
 						a2 = a+'2';
 						if(d.data[a]!=null){
 
-							v = _obj.getPos(a,d.data[a]);
+							v = self.getPos(a,d.data[a]);
 
 							d.props[a] = parseFloat(v.toFixed(1));
 
 							// Add properties for rule lines
-							if(_obj.marks[sh].type=="rule"){
+							if(self.marks[sh].type=="rule"){
 								if(!d.data[a2] && d.data[a]) d.data[a2] = clone(d.data[a]);
 							}
 
 							if(typeof d.data[a2]!=="undefined"){
-								d.props[a2] = _obj.getPos(a,d.data[a2]);
+								d.props[a2] = self.getPos(a,d.data[a2]);
 								d.props[a1] = v;
 								d.props[a] = v + (d.props[a2]-v)/2;
 							}else{
@@ -2245,21 +2262,40 @@
 						}
 					}
 				}
-				series[sh].done = mx;
-				if(series[sh].done < _obj.marks[sh].mark.length) setTimeout(processSeries(sh),0);
+				series[s].done = i;
+
+				// If we've finished this series we increment the counter
+				if(series[s].done >= self.marks[sh].mark.length) s++;
+			}
+
+			// Have we finished or should we loop again?
+			if(s >= series.length){
+
+				// Done
+				self.log.time('redraw');
+
+				// Draw the points
+				self.draw(update);
+
+				// Call the callback if we have one
+				if(typeof callback==="function") callback.call(self,{});
+			}else{
+				// Loop again
+				self.timeout.redraw = setTimeout(processChunk,0,self,s,update,callback);
 			}
 		}
 
-		// Process all the series updates here
-		for(sh in this.marks){
-			if(this.marks[sh]) processSeries(sh);
-		}
+		// Start processing
+		this.timeout.redraw = setTimeout(processChunk,0,this,0,update,callback);
 
 		return this;
 	};
 
 	Graph.prototype.calculateData = function(update){
+		this.log.warning('calculateData is deprecated');
 		this.log.message('calculateData');
+		this.log.time('calculateData');
+
 		if(typeof update!=="boolean") update = true;
 		
 		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
@@ -2305,6 +2341,8 @@
 				}
 			}
 		}
+
+		this.log.time('calculateData');
 
 		return this;
 	};

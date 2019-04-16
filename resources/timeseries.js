@@ -13,7 +13,7 @@
 
 	// Main object to coordinate data loading
 	function TimeSeriesMaster(){
-		this.version = "0.0.16";
+		this.version = "0.0.17";
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.log.logging;
@@ -658,7 +658,7 @@
 							j = e.data.k[i];
 							g.marks[j].show = !g.marks[j].show;
 						}
-						g.calculateData().draw(true);
+						g.redraw(true);
 						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
 						else this.parent().addClass('inactive');
 					}).on('focus',{layers:layers},function(e){
@@ -983,7 +983,7 @@
 						this.graph.x.labelopts.output = o;
 						this.graph.x.labelopts.inputscale = (this.xformats[i] ? this.xformats[i].scale : 1);	// Scale the input number if necessary
 						// Define the axis set to the current range
-						this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).calculateData().draw(update);
+						this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).redraw(update);
 					}else{
 						if(!this.xformats[i]) this.log.error('Input format '+i+' is not a known date format');
 						if(!this.xformats[o]) this.log.error('Output format '+o+' is not a known date format');
@@ -1149,7 +1149,12 @@
 		up = function(e){
 			this.progress.marks.mark[e.mark.name].done = e.i;
 			this.progress.marks.mark[e.mark.name].todo = e.total;
-			this.updateMessage(e.mark.name,'Processing '+(e.mark.description||e.mark.name),100*e.i/e.total,(e.mark.encode && e.mark.encode.update && e.mark.encode.update.fill ? e.mark.encode.update.fill.value : ''));
+			var colour = '';
+			if(e.mark.encode && e.mark.encode.update){
+				if(e.mark.encode.update.fill) colour = e.mark.encode.update.fill.value;
+				if(!colour && e.mark.encode.update.stroke) colour = e.mark.encode.update.stroke.value;
+			}
+			this.updateMessage(e.mark.name,'Processing '+(e.mark.description||e.mark.name),100*e.i/e.total,colour);
 			return this;
 		};
 		this.updateMessage('main','');
