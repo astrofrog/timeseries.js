@@ -2196,13 +2196,17 @@
 
 		if(!update) return this;
 		
+		// The calculation can lock up the process if there are a lot of points.
+		// In order to be able to interrupt/cancel the calculation we need to 
+		// put it into a setTimeout loop.
 		var _obj = this;
+		var chunk = 1000;	// Number of points to process at a time
+		// Build a temporary array to store how many points we've processed for each series
 		var series = {};
-		var chunk = 1000;
 		for(sh in this.marks){
 			if(this.marks[sh]) series[sh] = {done:0};
 		}
-		
+		// Function to process a series (sh) bit-by-bit	
 		function processSeries(sh){
 			if(_obj.marks[sh].show && series[sh].done < _obj.marks[sh].mark.length){
 				mx = Math.min(_obj.marks[sh].mark.length,series[sh].done+chunk);
@@ -2244,7 +2248,7 @@
 				if(series[sh].done < _obj.marks[sh].mark.length) setTimeout(processSeries(sh),0);
 			}
 		}
-//processChunk
+
 		// Process all the series updates here
 		for(sh in this.marks){
 			if(this.marks[sh]) processSeries(sh);
