@@ -487,7 +487,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.0";
+		this.version = "0.3.1";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -2187,8 +2187,9 @@
 		return this;
 	};
 
-	Graph.prototype.calculateData = function(update){
-		this.log.message('calculateData');
+	/* Replacement function to combine calculateData() and draw() but allow interrupt */
+	Graph.prototype.redraw = function(update,callback){
+		this.log.message('redraw');
 		if(typeof update!=="boolean") update = true;
 		
 		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
@@ -2252,6 +2253,57 @@
 		// Process all the series updates here
 		for(sh in this.marks){
 			if(this.marks[sh]) processSeries(sh);
+		}
+
+		return this;
+	};
+
+	Graph.prototype.calculateData = function(update){
+		this.log.message('calculateData');
+		if(typeof update!=="boolean") update = true;
+		
+		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
+		axes = ['x','y'];
+
+		if(!update) return this;
+
+		for(sh in this.marks){
+			if(this.marks[sh]){
+				for(i = 0; i < this.marks[sh].mark.length ; i++){
+					d = this.marks[sh].mark[i];
+
+					// Store IDs for the layer and the item
+					if(!d.id) d.id = parseInt(sh)+':'+i;
+					for(axis = 0; axis < axes.length; axis++){
+						a = axes[axis];
+						a1 = a+'1';
+						a2 = a+'2';
+						if(d.data[a]!=null){
+
+							v = this.getPos(a,d.data[a]);
+
+							d.props[a] = parseFloat(v.toFixed(1));
+
+							// Add properties for rule lines
+							if(this.marks[sh].type=="rule"){
+								if(!d.data[a2] && d.data[a]) d.data[a2] = clone(d.data[a]);
+							}
+
+							if(typeof d.data[a2]!=="undefined"){
+								d.props[a2] = this.getPos(a,d.data[a2]);
+								d.props[a1] = v;
+								d.props[a] = v + (d.props[a2]-v)/2;
+							}else{
+								// Clear x1/x2 values in props if they aren't in data
+								if(typeof d.props[a2]!=="undefined"){
+									d.props[a1] = null;
+									d.props[a2] = null;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		return this;
