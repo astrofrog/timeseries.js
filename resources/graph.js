@@ -3031,6 +3031,8 @@
 			var args,args2,bold;
 			args = Array.prototype.slice.call(arguments[1], 0);
 			args2 = (args.length > 1 ? args.splice(1):"");
+			// Remove array if only 1 element
+			if(args2.length == 1) args2 = args2[0];
 			bold = 'font-weight:bold;';
 			if(console && typeof console.log==="function"){
 				if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);

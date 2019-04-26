@@ -1072,9 +1072,14 @@
 		
 		function addMarks(me,m,mark,attr){
 			var id = "";
+			
 			if(mark.from && mark.from.data){
-				id = mark.from.data;
-				if(me.datasets[id]) me.progress.datasets.used += id;
+				if(typeof me.datasets[mark.from.data]==="undefined"){
+					me.log.error('Data source '+mark.from.data+' doesn\'t seem to exist.');
+				}else{
+					id = mark.from.data;
+					if(me.datasets[id]) me.progress.datasets.used += id;
+				}
 			}
 			// Only bother building this dataset if it hasn't already been added
 			if((!id || me.datasets[id]) && !me.graph.marks[m]){
