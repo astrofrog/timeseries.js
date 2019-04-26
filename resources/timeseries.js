@@ -854,12 +854,16 @@
 			if(g.marks[m]){
 				found = -1;
 				g.marks[m].include = false;
-				for(s = 0; s < view.markers.length; s++){
-					if(g.marks[m].name == view.markers[s].name){
-						found = s;
-						g.marks[m].include = true;
-						g.marks[m].show = view.markers[s].visible;
+				if(view.markers){
+					for(s = 0; s < view.markers.length; s++){
+						if(g.marks[m].name == view.markers[s].name){
+							found = s;
+							g.marks[m].include = true;
+							g.marks[m].show = view.markers[s].visible;
+						}
 					}
+				}else{
+					this.log.warning('No markers for '+g.marks[m].name);
 				}
 			}
 		}
