@@ -1526,7 +1526,7 @@
 				else{
 					if(!t_div || (n > 3 && n < t_div)){
 						t_div = n;
-						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp],'scale':scale};
+						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp],'scale':scale,'div':steps[st].div};
 						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'div':steps[st].div,'scale':scale};
 					}
 				}

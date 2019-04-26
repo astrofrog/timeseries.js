@@ -235,7 +235,12 @@
 					{'name': 'degrees','div':1/360,'spacings':[1,2,5,10,15,20,30,60,90,120,180,360]},
 				],
 				'formatLabel': function(j,attr){
-					return {'str':Math.round(j*360)+'°'};
+					if(attr.spacing.div < 1/360){
+						var spacing = attr.spacing.fract/1000;
+						return {'str':Num(Math.round(j.times(360).toValue()/spacing)).times(spacing).toString()+'°'};
+					}else{
+						return {'str':Math.round(j*360)+'°'};
+					}
 				}
 			},
 			'radians': {
@@ -243,13 +248,11 @@
 				'phase': true,
 				'scale': 1,
 				'steps': [
-					{'name': 'millirad', 'div': 1e-3/Math.PI, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'radians','div':1/Math.PI,'spacings':[1,Math.PI/2,2,Math.PI]},
+					{'name': 'millirad', 'div': 1e-3/2, 'spacings':[1,2,5,10,20,50,100,200,500]},
+					{'name': 'radians','div':1/2,'spacings':[1,2,5]},
 				],
 				'formatLabel': function(j,attr){
-					var r = (j*2*Math.PI)+'';
-					r = r.replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; });
-					return {'str':r+'π'};
+					return {'str':j.times(2).toString()+'π'};
 				}
 			}
 		};
