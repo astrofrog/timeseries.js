@@ -522,7 +522,11 @@
 			},{
 				'key': 'save',
 				'title': 'Save',
-				'html': '<button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open selected view in VEGA</button><br style="clear:both;">'
+				'html': '<div class="row"><button class="savepng" data="white">Save as PNG</button><button class="savepng">Save as transparent PNG</button><button class="savevega">Save as JSON (VEGA-compatible)</button><button class="editvega">Open selected view in VEGA</button></div>'
+			},{
+				'key': 'about',
+				'title': 'About',
+				'html': '<p>Figure produced with the <a href="https://aperiosoftware.github.io/timeseries.js/">AAS timeseries.js</a> package version '+TimeSeries.version+'.</p>'
 			}];
 			str = '';
 			html = '';
@@ -1371,7 +1375,8 @@
 			'layers': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,6 l 12,6.5 -12,6.5 -12,-6.5Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,10.5 l 12,6.5 -12,6.5 -12,-6.5 Z" /><path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,15 l 12,6.5 -12,6.5 -12,-6.5 Z" />',
 			'views': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 5,5 l 10,0 0,10 -10,0 0,-2 4,0 0,-2.5 2,0 0,2.5 1,0 0,-5 -1,-1 -2,0 -1,1 3,0 0,1.5 -2,0 0,-1.5 -1,0 0,5 -3,0Z M 17,5 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-1 -1,-1 1,-1 0,-1 -1,-1 -2,0 0,1 2,0 0,1 -0.5,0.5 -1.5,0 0,1 1.5,0 0.5,0.5 0,1 -2,0 0,-5 -1,0 0,6 -3,0Z M 5,17 l 10,0 0,10 -10,0 0,-2 4,0 3,0 0,-1 -3,0 0,-4 3,0 0,-1 -3,0 -1,1 0,4 1,1 -4,0Z M 17,17 l 10,0 0,10 -10,0 0,-2 6,0 1,-1 0,-4 -1,-1 -3,0 0,1 3,0 0,4 -2,0 0,-4 -1,0 0,5 -3,0Z" />',
 			'config': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 13.971 4.5996 L 13.377 7.6992 L 13.453 7.6992 A 8.661 8.661 0 0 0 12.008 8.291 L 9.4785 6.5 L 6.5781 9.4004 L 8.3926 11.865 A 8.661 8.661 0 0 0 7.707 13.551 L 7.707 13.4 L 4.6074 13.9 L 4.6074 18 L 7.707 18.5 L 7.707 18.361 A 8.661 8.661 0 0 0 8.3945 20.033 L 6.5781 22.5 L 9.4785 25.4 L 12.01 23.609 A 8.661 8.661 0 0 0 13.395 24.189 L 13.971 27.199 L 18.033 27.199 L 18.547 24.215 A 8.661 8.661 0 0 0 20.014 23.621 L 22.529 25.4 L 25.43 22.5 L 23.635 20.059 A 8.661 8.661 0 0 0 24.289 18.496 L 27.369 18 L 27.369 13.9 L 24.283 13.402 A 8.661 8.661 0 0 0 23.631 11.848 L 25.43 9.4004 L 22.529 6.5 L 20.01 8.2832 A 8.661 8.661 0 0 0 18.564 7.6836 L 18.033 4.5996 L 13.971 4.5996 z M 15.988 10.828 A 5.0719 5.0719 0 0 1 21.061 15.9 A 5.0719 5.0719 0 0 1 15.988 20.973 A 5.0719 5.0719 0 0 1 10.916 15.9 A 5.0719 5.0719 0 0 1 15.988 10.828 z" />',
-			'save': '<path style="fill:%COLOUR%;fill-opacity: 0.8;" d="M 6,26 l 20,0 0,-6 -6,0 -4,3 -4,-3 -6,0 Z M 16,20 l 8,-8 -5,0 0,-6 -6,0 0,6 -5,0" />'
+			'save': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 6,26 l 20,0 0,-6 -6,0 -4,3 -4,-3 -6,0 Z M 16,20 l 8,-8 -5,0 0,-6 -6,0 0,6 -5,0" />',
+			'about': '<path style="fill:%COLOUR%;fill-opacity:0.8;" d="M 16,24 m -3,0 c 0,-4 6,-4 6,0 c 0,4 -6,4 -6,0 Z M 13,19 l 6,0 0,-4 c 6,0 6,-11 -3,-11 c -3,0 -8,2 -8,8 l 4,0 c 2,-10 11,0 2,2Z" />'
 		};
 		return '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">'+(icons[icon]||"").replace(/%COLOUR%/g,(colour||"black"))+'</svg>';
 	}

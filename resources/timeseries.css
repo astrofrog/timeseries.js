@@ -123,8 +123,11 @@
 }
 .timeseries menu button { border: 0px; font-size: 1em; text-decoration: none!important; display: inline-block; padding: 2px; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; float: left; line-height: 1em; tab-index: -1; background-color: inherit; }
 .timeseries menu .menu-panel button { padding: 0.5em; background-color: #efefef; color: black; }
+.timeseries menu .menu-panel p:first-child { margin-top: 0px; }
+.timeseries menu .menu-panel p:last-child { margin-bottom: 0px; }
 .timeseries menu select { font-size: 1em; display: inline-block; cursor: pointer; margin-right: 0.5em; margin-bottom: 0.5em; tab-index: -1; }
 .timeseries menu h2 { color: inherit; margin: 0; line-height: 2em; font-size: 1em; }
+.timeseries menu a { color: inherit; text-decoration: underline; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger { opacity: 1; z-index: 3; }
 .timeseries input.hamburger:hover ~ label.hamburger, .timeseries input.hamburger:focus ~ label.hamburger, .timeseries input.hamburger:checked ~ label.hamburger, .timeseries menu { background-color: rgba(0, 110, 178, 0.85); color: white; }
 .timeseries input.hamburger:checked ~ label.hamburger:after, .timeseries menu ul.submenu li button,.timeseries menu ul.submenu li:last-child { background-color: rgb(0,0,0,0.4); }
@@ -141,7 +144,7 @@
 .timeseries menu ul.submenu li:last-child { flex-grow: 1; right: 0px; height: 36px; left: 0px; position: relative; }
 .timeseries menu .menu-panel { padding: 1em; display: none; min-height: calc(100% - 2em); }
 .timeseries menu .menu-panel.on { display: block; }
-.timeseries menu .row { margin-bottom: 0em; clear: both; }
+.timeseries menu .row { margin-bottom: -0.5em; clear: both; }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
 .timeseries menu label { color: white; }
