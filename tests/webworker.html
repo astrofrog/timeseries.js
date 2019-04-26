@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<head>
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<script>
+	S().ready(function(){
+		start();
+	});
+
+	function start(){
+		var max = 100;
+		var types = {
+			'worker': {'colour':'#D60303','count':0,'max':max,'start':null,'callstart':null},
+			'func': {'colour':'#722EA5','count':0,'max':max,'start':null}
+		};
+
+		var a = function(e){
+			var d = {'message':'Fred ','value':e.data};
+			function calculateStuff(n){
+				for(i = 0; i < 10000*n; i++){
+					j = Math.pow(i,2);
+				}
+				return;
+			}
+			calculateStuff(e.data);
+			postMessage(d);
+		}
+
+		function calculateStuff(n){
+			for(i = 0; i < 10000*n; i++){
+				j = Math.pow(i,2);
+			}
+			return;
+		}
+		
+		var b = function(e){
+			var d = {'message':'Fred ','value':e};
+			calculateStuff(e);
+			console.log(d);
+			log('func','Took '+((new Date()) - types.func.start)+' ms to finish function with 0ms setTimeout '+e);
+			if(types.func.count < types.func.max){
+				types.func.start = new Date();
+				types.func.count++;
+				setTimeout(b,0,types.func.count);
+			}
+		}
+
+		if(window.Worker){
+			types.worker.start = new Date();
+			var str = "self.addEventListener('message', "+a.toString()+");"
+			var blob = new Blob([str]);
+			var worker = new Worker(window.URL.createObjectURL(blob));
+			log('worker','Took '+((new Date()) - types.worker.start)+' ms to create new Worker');
+			var _obj = new Array(1e4);
+			for(var i = 0; i < _obj.length; i++){
+				_obj[i] = Math.random();
+			}
+			worker.onmessage = function(e) {
+				console.log(e.data);
+				log('worker','Took '+((new Date()) - types.worker.callstart)+' ms from postMessage to response '+types.worker.count);
+				if(types.worker.count < types.worker.max){
+					types.worker.callstart = new Date();
+					types.worker.count++;
+					worker.postMessage(types.worker.count);
+				}
+			}
+			log('worker','Took '+((new Date()) - types.worker.start)+' ms to finish building worker');
+			types.worker.callstart = new Date();
+			types.worker.count++;
+			worker.postMessage(types.worker.count); // Start the worker.
+		}else{
+			a.call();
+		}
+	
+		function log(typ,msg){
+			console.log('LOG',msg);
+			S('#output').append('<p><strong style="background-color:'+(types[typ].colour)+';color:white;line-height:1.5em;display:inline-block;">'+typ+'</strong> '+msg+'</p>');
+		}
+
+		// Now call function
+		types.func.start = new Date();
+		types.func.count++;
+		b(types.func.count);
+	}
+	</script>
+	<style>
+	p { margin: 0.25em 0; }
+	</style>
+</head>
+<body>
+
+	<div id="output"></div>
+
+</body>
+</html>
