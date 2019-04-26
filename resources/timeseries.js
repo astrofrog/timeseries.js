@@ -850,11 +850,11 @@
 		// Set the options
 		g = this.graph;
 		g.setOptions(o);
-		for(m in g.marks){
-			if(g.marks[m]){
-				found = -1;
-				g.marks[m].include = false;
-				if(view.markers){
+		if(view.markers){
+			for(m in g.marks){
+				if(g.marks[m]){
+					found = -1;
+					g.marks[m].include = false;
 					for(s = 0; s < view.markers.length; s++){
 						if(g.marks[m].name == view.markers[s].name){
 							found = s;
@@ -862,10 +862,10 @@
 							g.marks[m].show = view.markers[s].visible;
 						}
 					}
-				}else{
-					this.log.warning('No markers for '+g.marks[m].name);
 				}
 			}
+		}else{
+			this.log.warning('No markers provided for view.'+(view.marks ? ' You may have accidentally used "marks" as the key.':''));
 		}
 		
 		this.updateLayerMenu();
@@ -1076,17 +1076,20 @@
 		
 		function addMarks(me,m,mark,attr){
 			var id = "";
-			
+			var exists = true;
+
 			if(mark.from && mark.from.data){
 				if(typeof me.datasets[mark.from.data]==="undefined"){
 					me.log.error('Data source '+mark.from.data+' doesn\'t seem to exist.');
-				}else{
-					id = mark.from.data;
-					if(me.datasets[id]) me.progress.datasets.used += id;
+					exists = false;
 				}
+				id = mark.from.data;
+				if(me.datasets[id]) me.progress.datasets.used += id;
 			}
+
 			// Only bother building this dataset if it hasn't already been added
-			if((!id || me.datasets[id]) && !me.graph.marks[m]){
+			// A mark can have no dataset associated with it if it is "text" or a "rule"
+			if((!id || me.datasets[id] || !exists) && !me.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
 				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
 
@@ -1097,11 +1100,11 @@
 				else if(mark.type == "area") dataset.area = {show:true};
 				else if(mark.type == "text") dataset.text = {show:true};
 				
-
 				if(me.datasets[id]){
 					dataset.data = clone(me.datasets[id].json);
 					dataset.parse = me.datasets[id].parse;
 				}else{
+					if(id && !me.datasets[id]) me.log.error('No dataset for '+mark.name);
 					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
 					dataset.parse = {};
 				}
