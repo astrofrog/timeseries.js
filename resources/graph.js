@@ -1,27 +1,54 @@
 /* graph.js */
 (function(root){
-	
+
 	// First we will include all the useful helper functions
 
-	// Make a copy of the object (to avoid over-writing it)
+	/**
+	 * @desc Make a copy of the object (to avoid over-writing it)
+	 */
 	function clone(a){ return JSON.parse(JSON.stringify(a)); }
-	// Remove trailing zeroes after decimal point
+
+	/**
+	 * @desc Remove trailing zeroes after decimal point
+	 */
 	function clip(a){ return a.replace(/(\.[0-9]+?)0+$/,function(m,p1){return p1;}); }
 
-	// Convert a "#xxxxxx" colour into an "rgb(x,x,x)" or "rgba(x,x,x,x)" colour
+	/**
+	 * @desc Convert a "#xxxxxx" colour into an "rgba(r,g,b,a)" colour
+	 */
 	function hex2rgba(hex,a){
-		var r = parseInt(hex.substr(1,2),16);
-		var g = parseInt(hex.substr(3,2),16);
-		var b = parseInt(hex.substr(5,2),16);
-		return 'rgba('+r+','+g+','+b+(a ? ','+a:'')+')';
+		var o = getRGB(hex,a);
+		return 'rgba('+o.r+','+o.g+','+o.b+','+o.a+')';
+	}
+
+	/**
+	 * @desc Extract the RGB values
+	 */
+	function getRGB(c,a){
+		var r,g,b;
+		a = (a||1);
+		if(c.indexOf('#')==0){
+			r = parseInt(c.substr(1,2),16);
+			g = parseInt(c.substr(3,2),16);
+			b = parseInt(c.substr(5,2),16);
+		}else if(c.indexOf("rgba")==0){
+			c.replace(/rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9\.]+)\)/,function(m,p1,p2,p3,p4){ r = parseInt(p1); g = parseInt(p2); b = parseInt(p3); a = parseFloat(p4); return m; });
+		}else if(c.indexOf("rgb(")==0){
+			c.replace(/rgb\(([0-9]+),([0-9]+),([0-9]+)\)/,function(m,p1,p2,p3){ r = p1; g = p2; b = p3; return m; });
+		}
+		return {'r':r,'g':g,'b':b,'a':a};
 	}
 
 	var hasbig = false;
 	if(typeof Big==="function") hasbig = true;
 
-	// Basic wrapper around big.js to avoid problems and add features
+	/**
+	 * @desc Basic wrapper around big.js to avoid problems and add features
+	 */
 	function Num(v){
-		// Create a BigNumber object
+		/**
+		 * @desc Create an object that has similar properties to Big
+		 */
 		function N(v){
 			this.type = "Num";
 			this.o = v;
@@ -107,6 +134,9 @@
 	root.fullScreenApi = fullScreenApi;
 	// End of Full Screen API
 
+	// Polyfill for isArray()
+	if(!Array.isArray) Array.isArray = function(arg){ return Object.prototype.toString.call(arg) === '[object Array]'; };
+
 	// Extra mathematical/helper functions that will be useful - inspired by http://alexyoung.github.com/ico/
 	var G = {};
 	G.sum = function(a) { var i, sum; for (i = 0, sum = 0; i < a.length; sum += a[i++]){} return sum; };
@@ -134,8 +164,6 @@
 		}
 		return destination;
 	};
-	// Polyfill for isArray()
-	if(!Array.isArray) Array.isArray = function(arg){ return Object.prototype.toString.call(arg) === '[object Array]'; };
 	if(typeof Object.extend === 'undefined') {
 		G.extend = function(destination, source) {
 			for (var property in source) {
@@ -156,16 +184,23 @@
 		};
 	}
 
-	// Define a shortcut for checking variable types
+	/**
+	 * @desc Define a shortcut for checking variable types
+	 */
 	function is(a,b){ return (typeof a == b) ? true : false; }
 
+	/**
+	 * @desc Fill a number with zeroes
+	 */
 	function zeroFill(number, width){
 		width -= number.toString().length;
 		if(width > 0) return new Array( width + (/\./.test( number ) ? 2 : 1) ).join( '0' ) + number;
 		return number + ""; // always return a string
 	}
-	
-	// A non-jQuery dependent function to get a style
+
+	/**
+	 * @desc A non-jQuery dependent function to get a style
+	 */
 	function getStyle(el, styleProp) {
 		if (typeof window === 'undefined') return;
 		var style;
@@ -177,10 +212,19 @@
 	}
 	// End of helper functions
 
-	// Define the class to deal with <canvas>.
-	// i = {
-	//    'container': HTMLelement
-	// }
+	/**
+	 * @desc Define the class to deal with <code>canvas</code>.
+	 * @param {HTMLelement} container - the container to create a canvas within
+	 * @param {object} i - properties for the canvas
+	 * @param {boolean} i.logging - do we log to the console?
+	 * @param {string} i.background - the hex code to use for the background color
+	 * @param {string} i.color - the hex code to use for the foreground color
+	 * @param {number} i.width - the width of the canvas
+	 * @param {number} i.height - the height of the canvas
+	 * @param {boolean} i.fullwindow - is the canvas full screen?
+	 * @param {boolean} i.transparent - is the canvas transparent?
+	 * @param {number} i.scale - how much to scale the pixels by
+	 */
 	function Canvas(container,i){
 
 		if(typeof container!=="object") return;
@@ -219,7 +263,7 @@
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
 		if(is(i.scale,n)) this.scale = i.scale;
-		
+	
 		this.log = new Logger({'id':'Canvas','logging':this.logging});
 
 		this.log.message('Canvas',container,this.wide,this.tall);
@@ -246,7 +290,7 @@
 		this.wide = this.container.width();
 		if(this.tall > 0) this.container.css({'height':this.tall+'px'});
 		this.tall = this.container.height();
-		
+	
 		// Add a <canvas> to it
 		this.container.html('<div class="canvasholder"><canvas class="canvas" style="display:block;font:inherit;"></canvas></div>');
 		this.containerbg = this.container.css('background');
@@ -257,7 +301,7 @@
 		this.c = this.canvas[0];
 		// For excanvas we need to initialise the newly created <canvas>
 		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
-	
+
 		if(this.c && this.c.getContext){
 			this.ctx = this.c.getContext('2d');
 			this.setWH(this.wide,this.tall);
@@ -280,9 +324,9 @@
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
 		this.canvasholder.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
-			var ongoingTouches = [];
-			function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
-			function copyTouch(touch){ return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY }; }
+			//var ongoingTouches = [];
+			//function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
+			//function copyTouch(touch){ return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY }; }
 			function updateEvent(e,touches){
 				var el = e.currentTarget;
 				var oe = clone(e.originalEvent);
@@ -360,10 +404,16 @@
 			});
 		}
 	}
-	// Attach a handler to an event for the Canvas object in a style similar to that used by jQuery
-	//   .on(eventType[,eventData],handler(eventObject));
-	//   .on("resize",function(e){ console.log(e); });
-	//   .on("resize",{me:this},function(e){ console.log(e.data.me); });
+
+	/**
+	 * @desc Attach a handler to an event for the Canvas object
+	 * @usage canvas.on(eventType[,eventData],handler(eventObject));
+	 * @usage canvas.on("resize",function(e){ console.log(e); });
+	 * @usage canvas.on("resize",{me:this},function(e){ console.log(e.data.me); });
+	 * @param {string} ev - the event type
+	 * @param {object} e - any properties to add to the output as e.data
+	 * @param {function} fn - a callback function
+	 */
 	Canvas.prototype.on = function(ev,e,fn){
 		if(typeof ev!="string") return this;
 		if(is(fn,"undefined")){
@@ -377,8 +427,10 @@
 		else this.events[ev] = [{e:e,fn:fn}];
 		return this;
 	};
-	// Trigger a defined event with arguments. This is for internal-use to be 
-	// sure to include the correct arguments for a particular event
+
+	/**
+	 * @desc Trigger a defined event with arguments. This is for internal-use to be sure to include the correct arguments for a particular event
+	 */
 	Canvas.prototype.trigger = function(ev,args){
 		if(typeof ev != "string") return;
 		if(typeof args != "object") args = {};
@@ -391,6 +443,10 @@
 		}
 		if(o.length > 0) return o;
 	};
+
+	/**
+	 * @desc Copy to the <code>canvas</code> clipboard
+	 */
 	Canvas.prototype.copyToClipboard = function(){
 		var x = Math.min(this.wide,this.ctx.canvas.clientWidth)*this.scale;
 		var y = Math.min(this.tall,this.ctx.canvas.clientHeight)*this.scale;
@@ -401,6 +457,10 @@
 		}
 		return this;
 	};
+
+	/**
+	 * @desc Paste from the <code>canvas</code> clipboard onto the canvas
+	 */
 	Canvas.prototype.pasteFromClipboard = function(){
 		if(this.clipboardData){
 			this.clipboard.data = this.clipboardData;
@@ -408,11 +468,14 @@
 		}
 		return this;
 	};
-	// Will toggle the <canvas> as a full screen element if the browser supports it.
+
+	/**
+	 * @desc Will toggle the <code>canvas</code> as a full screen element if the browser supports it.
+	 */
 	Canvas.prototype.toggleFullScreen = function(){
 		this.log.message('toggleFullScreen',this.fullscreen);
 		this.elem = this.container[0];
-		
+	
 		if(this.fullscreen){
 			if(document.exitFullscreen) document.exitFullscreen();
 			else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
@@ -427,15 +490,17 @@
 		return this;
 	};
 
-	// A function to be called whenever the <canvas> needs to be resized.
-	//   .resize();
-	//   .resize(400,250)
+	/**
+	 * @desc A function to be called whenever the <code>canvas</code> needs to be resized.
+	 * @usage canvas.resize()
+	 * @usage canvas.resize(400,250)
+	 */
 	Canvas.prototype.resize = function(w,h){
 		if(!this.canvas) return;
 		if(!w || !h){
 			if(this.fullscreen) this.container.css({'background':'white'});
 			else this.container.css({'background':this.containerbg});
-			
+		
 			// We have to zap the width of the canvas to let it take the width of the container
 			this.canvas.css({'width':'','height':'','max-width':'100%'});
 			if(this.fullwindow){
@@ -454,7 +519,10 @@
 		// Trigger callback
 		this.trigger("resize",{w:w,h:h});
 	};
-	// Internal function to update the internal variables defining the width and height.
+
+	/**
+	 * @desc Internal function to update the internal variables defining the width and height.
+	 */
 	Canvas.prototype.setWH = function(w,h,ctx){
 		this.log.message('setWH',w,h);
 		if(!w || !h) return;
@@ -468,26 +536,25 @@
 
 		// Normalize coordinate system to use css pixels.
 		if(this.ctx) this.ctx.scale(this.scale, this.scale);
-	
+
 		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
 		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvasholder.css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	};
 
-	// Now we define the Graph class
-	// mygraph = new Graph(stuQuery reference, {data:series,color: "#9944ff",type:"symbol",format:{width:4}}, options);
-	// where:
-	//   id (HTMLelement) is the HTML element to attach the canvas to
-	//   series (array) contains the data series e.g. series = [[x,y],[x2,y2],[x3,y3],...[xn,yn]] or an array of data series;
-	//   options (object) contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
-	//     type: symbol, rect, line, area
-	function Graph(element, data, options){
+	/**
+	 * @desc Function for making a graph object
+	 * @usage mygraph = new Graph(id, data, options);
+	 * @param {HTMLelement} id - the HTML element to attach the canvas to
+	 * @param {object} options - contains any customisation options for the graph as a whole e.g. options = { xaxis:{ label:'Time (HJD)' },yaxis: { label: 'Delta (mag)' }};
+	 */
+	function Graph(element, options){
 
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.1";
+		this.version = "0.3.2";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -506,7 +573,7 @@
 		if(typeof Big==="undefined") this.log.error('ERROR','Unable to find big.js');
 
 		this.log.time("Graph");
-		this.log.message('init',element,typeof element,data,options);
+		this.log.message('init',element,typeof element,options);
 
 		// Define the drawing canvas
 		var opt = {};
@@ -528,7 +595,7 @@
 			p.c.width = Math.round(w*s);
 			p.c.height = Math.round(h*s);
 			p.ctx = p.c.getContext('2d');
-			p.ctx.scale(s, s);
+			p.ctx.scale(s,s);
 			return p;
 		}
 		// Set canvas scaling for retina-type screens
@@ -548,7 +615,7 @@
 			for(var p in g.paper){
 				if(g.paper[p]) g.paper[p] = setWH(g.paper[p],g.canvas.wide,g.canvas.tall,s);
 			}
-			g.setOptions().defineAxis("x").getChartOffset().resetDataStyles().redraw({'update':true,'callback':function(){ this.trigger("resize",{event:ev.event}); }});
+			g.setOptions().defineAxis("x").setChartOffset().resetDataStyles().redraw({'update':true,'callback':function(){ this.trigger("resize",{event:ev.event}); }});
 			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
 			var event,g,x,y,s,d,t,i,ii,a,m,ds;
@@ -559,7 +626,7 @@
 			x = event.layerX;
 			y = event.layerY;
 			ds = g.dataAtMousePosition(x,y);
-			
+		
 			// No data (but the alt key is pressed) so we'll start the zoom selection
 			if(g.within(x,y) && g.options.zoomable){
 				g.selectfrom = [x,y];
@@ -618,7 +685,7 @@
 					g.selectto = [x,y];
 					var to = clone(g.selectto);
 					var from = clone(g.selectfrom);
-					
+				
 					if(g.options.zoommode == "x"){
 						from[1] = g.getPos("y",g.y.min);
 						to[1] = g.getPos("y",g.y.max);
@@ -664,13 +731,13 @@
 				else{
 					if(g.options.zoommode == "x"){
 						// If we are only zooming in the x-axis we don't change the y values
-						r[2] = g.y.datamin;
-						r[3] = g.y.datamax;
+						r[2] = g.y.data.min;
+						r[3] = g.y.data.max;
 					}
 					if(g.options.zoommode == "y"){
 						// If we are only zooming in the y-axis we don't change the x values
-						r[0] = g.x.datamin;
-						r[1] = g.x.datamax;
+						r[0] = g.x.data.min;
+						r[1] = g.x.data.max;
 					}
 					g.zoom(r,{'update':true});
 				}
@@ -689,7 +756,6 @@
 				g.panning = false;
 			}
 			g.canvas.pasteFromClipboard();
-			g.drawOverlay();
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
@@ -727,7 +793,7 @@
 
 		// Extend the options with those provided by the user
 		this.setOptions(options);
-		
+	
 		// Finally, set the data and update the display
 		this.updateData();
 
@@ -735,15 +801,23 @@
 		return this;
 	}
 
+	/**
+	 * @desc Make the graph fullscreen or not
+	 */
 	Graph.prototype.toggleFullScreen = function(){
 		this.canvas.toggleFullScreen();
 		return this;
 	};
 
-	// Attach a handler to an event for the Graph object in a style similar to that used by jQuery
-	//   .on(eventType[,eventData],handler(eventObject));
-	//   .on("resize",function(e){ console.log(e); });
-	//   .on("resize",{me:this},function(e){ console.log(e.data.me); });
+	/**
+	 * @desc Attach a handler to an event for the Graph object
+	 * @param {string} ev - the event type
+	 * @param {object} e - any data to add to e.data
+	 * @param {function} fn - the callback function
+	 * @usage graph.on(eventType[,eventData],handler(eventObject));
+	 * @usage graph.on("resize",function(e){ console.log(e); });
+	 * @usage graph.on("resize",{me:this},function(e){ console.log(e.data.me); });
+	 */
 	Graph.prototype.on = function(ev,e,fn){
 		if(typeof ev!="string") return this;
 		if(typeof fn=="undefined"){ fn = e; e = {}; }
@@ -753,8 +827,12 @@
 		else this.events[ev] = [{e:e,fn:fn}];
 		return this;
 	};
-	// Trigger a defined event with arguments. This is for internal-use to be 
-	// sure to include the correct arguments for a particular event
+
+	/**
+	 * @desc Trigger a defined event with arguments. This is for internal-use to be sure to include the correct arguments for a particular event
+	 * @param {string} ev - the event to trigger
+	 * @param {object} args - any arguments to add to the event
+	 */
 	Graph.prototype.trigger = function(ev,args){
 		if(typeof ev != "string") return;
 		if(typeof args != "object") args = {};
@@ -767,6 +845,17 @@
 		}
 		if(o.length > 0) return o;
 	};
+
+	/**
+	 * @desc Set Options
+	 * @param {object} options - set any options
+	 * @param {number} options.width - the width of the graph in pixels
+	 * @param {number} options.height - the height of the graph in pixels
+	 * @param {object} options.grid - properties of the grid
+	 * @param {boolean} options.grid.show - Do we show the grid?
+	 * @param {number} options.grid.border - the border width in pixels
+	 * @param {string} options.grid.color - the color of the border
+	 */
 	Graph.prototype.setOptions = function(options){
 		options = options || {};
 		if(typeof this.options!="object") this.options = {};
@@ -809,8 +898,16 @@
 		return this;
 	};
 
+	/**
+	 * @desc Parse a dataset converting numbers and dates
+	 * @param {object} data - the input dataset
+	 * @param {array} data.data - the dataset as a 1D array of objects e.g. data.data[i][key]
+	 * @param {object} data.parse - each key in the data has a string defining the format e.g. "number", "string", "date", "boolean"  
+	 * @param {object} opts - options to customise parsing
+	 * @param {boolean} opts.xaxis.highprecision - Do we need to use high precision numbers for dates? 
+	 */
 	function parseData(data,opts){
-		var i,key,v,format,s,temporal;
+		var i,key,v,format,s;
 		var lookup = {};
 		// Is the xaxis highprecision? We'll cheat here by assuming that only the 
 		// xaxis can have this flag and it only applies to format=date
@@ -822,7 +919,7 @@
 				for(i = 0 ; i < data.data.length; i++){
 				// Loop over each column in the line
 					v = data.data[i][key];
-				
+			
 					if(format!="string"){
 						// "number", "boolean" or "date" https://github.com/vega/vega/wiki/Data#-csv
 						if(format=="number"){
@@ -857,6 +954,10 @@
 		return data;
 	}
 
+	/**
+	 * @desc Add datasets to the graph using parseData() for each one
+	 * @param {object} datasets - each dataset has a unique key to refer to it.
+	 */
 	Graph.prototype.addDatasets = function(datasets){
 		this.log.time('addDatasets');
 		if(!this.datasets) this.datasets = {};
@@ -871,11 +972,25 @@
 		return this;
 	};
 
-	// Only send one dataset at a time with this function
-	// If an index is provided use it otherwise add sequentially
-	// If a dataset already exists we don't over-write
+	/**
+	 * @desc Only send one dataset at a time with this function. If an index is provided use it otherwise add sequentially. If a dataset already exists we don't over-write.
+	 * @param {object} data - one set of marks to add
+	 * @param {number} idx - the index for this set of marks
+	 * @param {object} original - a copy of the original properties for this mark set
+	 * @param {boolean} original.clip - are the marks clipped to the chart area?
+	 * @param {string} original.description - a text-based description for the mark set (doesn't have to be unique).
+	 * @param {object} original.encode - VEGA properties for enter, update, and hover e.g. { enter: {…}, update: {…} }
+	 * @param {object} original.from - the key for the source of this dataset { data: "62a5a561-c30a-4047-9a78-5c55ab563031" }
+	 * @param {boolean} original.include - does this mark set get included in the plot? Useful for turning on/off.
+	 * @param {string} original.name - the unique key for this mark set e.g. "69119b81-e09d-47f5-aa44-3d718e5ab494-symbol"
+	 * @param {string} original.type - the type of mark e.g. "symbol"
+	 * @param {object} attr - some configuration attributes
+	 * @param {function} attr.progress - a function called during the creation of the mark set
+	 * @param {function} attr.success - a function that is called once the marks are all added
+	 * @param {object} attr.this - set the context for the callback
+	 */
 	Graph.prototype.addMarks = function(data,idx,original,attr){
-		var i,j,t,l,types,pc,update;
+		var i,j,l,types,update;
 		this.log.message('addMarks',idx);
 		if(typeof idx!=="number"){
 			if(typeof idx==="undefined"){
@@ -916,7 +1031,7 @@
 			// So that we can present a progress bar for big datasets,
 			// we'll chunk up the processing into blocks of 5000
 			function processChunk(attr){
-				var t,max,pc,chk;
+				var t,max,chk;
 				chk = 10000;
 				max = Math.min(attr.marks.data.length,i+chk);
 				for(i = attr.i; i < max; i++){
@@ -930,7 +1045,10 @@
 						if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
 					}
 					// Should process all the "enter" options here
-					if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
+					if(attr.marks.enter){
+						//console.log('enter',clone(attr.marks.encode.enter))
+						attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
+					}
 				}
 				attr.i = i;
 				if(i < attr.marks.data.length){
@@ -948,19 +1066,25 @@
 		return this;
 	};
 
+	/**
+	 * @desc Update the data on the graph. This calls getGraphRange(), setChartOffset(), resetDataStyles() and redraw()
+	 */
 	Graph.prototype.updateData = function() {
 		// Should process all the "update" options here;
 		this.log.message('updateData',this.marks);
-		this.getGraphRange().getChartOffset().resetDataStyles().redraw({'cancelable':false,'update':true});
+		this.getGraphRange().setChartOffset().resetDataStyles().redraw({'cancelable':false,'update':true});
 	};
 
+	/**
+	 * @desc Get the graph ranges for both axes. This sets various properties such as datamin, datamax, and datarange for each axis before calling defineAxis() on each
+	 */
 	Graph.prototype.getGraphRange = function(){
-		var d,i,j,k,f,max,axes,axis,v,domain,keepers,keep;
+		var d,i,j,k,max,axes,axis,v,domain,keepers;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
 		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
-		
+	
 		if(this.options.xaxis.type=="time" || this.options.xaxis.type=="utc") this.x.isDate = true;
 
 		if(this.marks.length <= 0) return this;
@@ -1047,26 +1171,26 @@
 						}
 					}
 				}
-				this[axes[axis]] = calc(this[axes[axis]],v);				
+				this[axes[axis]] = calc(this[axes[axis]],v);			
 			}
 		}
 
 		// Keep a record of the data min/max
-		this.x.datamin = this.x.min;
-		this.x.datamax = this.x.max;
-		this.x.datarange = this.x.max-this.x.min;
-		this.y.datamin = this.y.min;
-		this.y.datamax = this.y.max;
-		this.y.datarange = this.y.max-this.y.min;
+		this.x.data = {'min':this.x.min,'max':this.x.max,'range':Num(this.x.max).minus(this.x.min).toValue()};
+		this.y.data = {'min':this.y.min,'max':this.y.max,'range':Num(this.y.max).minus(this.y.min).toValue()};
 
 		this.defineAxis("x");
 		this.defineAxis("y");
 		return this;
 	};
 
-	// Pan the graph.
-	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
-	// than recalculate everything as that can be slow when there is a lot of data.
+	/**
+	 * @desc Pan the graph.
+	 * @param {number} dx - an amount to move by horizontally in pixels.
+	 * @param {number} dy - an amount to move by vertically in pixels.
+	 * @param {object} attr - configuration attributes
+	 * @param {boolean} attr.quick - If set to true, we do a very quick draw of the data canvas rather than recalculate everything as that can be slow when there is a lot of data.
+	 */
 	Graph.prototype.panBy = function(dx,dy,attr){
 
 		// Stop any existing processing
@@ -1084,24 +1208,29 @@
 			// Build the clip path
 			ctx.save();
 			ctx.beginPath();
-			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);	
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y,this.paper.data.width,this.paper.data.height);
 			ctx.restore();
 			this.canvas.copyToClipboard();
 		}else{
 			// Update the graph
-			this.getChartOffset().resetDataStyles();
+			this.setChartOffset().resetDataStyles();
 			this.redraw({'update':false});
 		}
 		this.log.time('panBy');
 		return this;
 	};
 
-	// Zoom the graph.
-	// We can zoom around a point or we can zoom to a defined region.
-	// If attr.quick is set to true, we do a very quick draw of the data canvas rather
-	// than recalculate everything as that can be slow when there is a lot of data.
+	/**
+	 * @desc Zoom the graph. We can zoom around a point or we can zoom to a defined region.
+	 * @param {array} pos - if this is 2 elements we treat this as a zoom around a point [x,y]. If it is 4 elements we zoom to the defined range [xmin,xmax,ymin,ymax]. If no values are given we reset the view to the original data range.
+	 * @param {boolean} attr.quick - if set to true, we do a very quick draw of the data canvas rather than recalculate everything as that can be slow when there is a lot of data.
+	 * @param {number} attr.scale - a factor to zoom by (1==no zoom)
+	 * @param {number} attr.scalex - a factor to zoom the x-axis by
+	 * @param {number} attr.scaley - a factor to zoom the y-axis by
+	 * @param {boolean} attr.update - whether redraw() does an update or not
+	 */
 	Graph.prototype.zoom = function(pos,attr){
 
 		// Stop any existing processing
@@ -1155,15 +1284,15 @@
 
 		// No parameters set so reset the view
 		if(!attr.quick && pos.length == 0){
-			this.x.min = this.x.datamin;
-			this.x.max = this.x.datamax;
-			this.y.min = this.y.datamin;
-			this.y.max = this.y.datamax;
+			this.x.min = this.x.data.min;
+			this.x.max = this.x.data.max;
+			this.y.min = this.y.data.min;
+			this.y.max = this.y.data.max;
 			this.defineAxis("x");
 			this.defineAxis("y");
 		}
 
-		this.getChartOffset();
+		this.setChartOffset();
 		if(!attr.quick){
 			this.resetDataStyles().redraw({'update':typeof attr.update==="boolean" ? attr.update : true});
 		}else{
@@ -1174,7 +1303,7 @@
 			// Build the clip path
 			ctx.save();
 			ctx.beginPath();
-			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);		
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);	
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,x,y,Math.round(this.canvas.wide/this.paper.data.scale.x),Math.round(this.canvas.tall/this.paper.data.scale.y));
 			ctx.restore();
@@ -1184,11 +1313,16 @@
 
 		return this;
 	};
-	
-	Graph.prototype.addAxisPadding = function(t){
+
+	/**
+	 * @desc Add some padding to an axis.
+	 * @param {string} t - the axis to add the padding to e.g. "x" or "y"
+	 * @param {number} p - the number of pixels to add as padding to this axis
+	 */
+	Graph.prototype.addAxisPadding = function(t,p){
 
 		// Update the range
-		this[t].range = this[t].max - this[t].min;
+		this[t].range = Num(this[t].max).minus(this[t].min).toValue();
 
 		// First we need to calculate the log min/max/range
 		if(this[t].log){
@@ -1199,7 +1333,6 @@
 		}
 
 		if(this[t].min < 1e100){
-			var p = (this.options[t+'axis'].padding||0);
 			// Work out the number of pixels for the chart dimension e.g. width - padding*2
 			var dim = (t=="x" ? this.chart.width : this.chart.height)-(p*2);
 			// Work out the data range to add/subtract
@@ -1214,18 +1347,25 @@
 				this[t].max += d;
 			}
 			// Update range
-			this[t].range = this[t].max - this[t].min;
+			this[t].range = Num(this[t].max).minus(this[t].min).toValue();
 		}
 		return this;
 	};
-		
+
+	/**
+	 * @desc Convert a pixel-based bounding box into a data-based bounding box
+	 */
 	Graph.prototype.getDataRange = function(x1,x2,y1,y2){
 		var c1 = this.pixel2data(x1,y1);
 		var c2 = this.pixel2data(x2,y2);
 		return [Math.min(c1.x,c2.x),Math.max(c1.x,c2.x),Math.min(c1.y,c2.y),Math.max(c1.y,c2.y)];
 	};
-	
-	// Given an axis (t) and value (c) return the pixel position
+
+	/**
+	 * @desc Return the pixel value for a data value on a given axis
+	 * @param {string} t - the axis e.g. "x" or "y"
+	 * @param {number} c - the value
+	 */
 	Graph.prototype.getPos = function(t,c){
 		if(!this[t]) return;
 		var k,mn,mx,rn,v,off,dim;
@@ -1251,16 +1391,28 @@
 		else return (this.offset[t]||0)+(this[t].dir=="reverse" ? off + dim*((mx-v)/(rn)) : off + dim*((v-mn)/rn));
 	};
 
-	// For an input data value find the pixel locations
+	/**
+	 * @desc For an input data value find the pixel locations
+	 * @param {number} x - the horizontal axis value
+	 * @param {number} y - the vertical axis value
+	 */
 	Graph.prototype.getPixPos = function(x,y){ return [this.getPos("x",x),this.getPos("y",y)]; };
-	
-	// Are the x,y pixel coordinates in the displayed chart area?
+
+	/**
+	 * @desc Are the x,y pixel coordinates in the displayed chart area?
+	 * @param {number} x - horizontal pixel value
+	 * @param {number} y - vertical pixel value
+	 */
 	Graph.prototype.within = function(x,y){
 		if(x > this.chart.left && y < this.chart.top+this.chart.height) return true;
 		return false;
 	};
-	
-	// Provide the pixel coordinates (x,y) and return the data-space values
+
+	/**
+	 * @desc Provide the pixel coordinates (x,y) and return the data-space values {x:number,y:number}
+	 * @param {number} x - horizontal pixel value
+	 * @param {number} y - vertical pixel value
+	 */
 	Graph.prototype.pixel2data = function(x,y){
 		// x-axis
 		x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
@@ -1269,7 +1421,12 @@
 		else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
 		return {x:x,y:y};
 	};
-	
+
+	/**
+	 * @desc An array of mark sets that match with the pixel position
+	 * @param {number} x - horizontal pixel value
+	 * @param {number} y - vertical pixel value
+	 */
 	Graph.prototype.dataAtMousePosition = function(x,y){
 		x = Math.round(x*this.canvas.scale);
 		y = Math.round(y*this.canvas.scale);
@@ -1278,6 +1435,22 @@
 		return [];
 	};
 
+	/**
+	 * @desc Set the canvas styles
+	 * @param {context} ctx - a canvas context to apply the styles to
+	 * @param {object} datum - an object for the mark datum
+	 * @param {object} datum.props.format - formatting options for this datum
+	 * @param {string} datum.props.format.fill - the fill colour
+	 * @param {number} datum.props.format.fill - an index in the colour pallette
+	 * @param {number} datum.props.format.fillOpacity - the opacity of the fill
+	 * @param {string} datum.props.format.stroke - the stroke colour
+	 * @param {string} datum.props.format.strokeOpacity - the stroke opacity
+	 * @param {string} datum.props.format.strokeCap - the cap for the stroke e.g. "square"
+	 * @param {array} datum.props.format.strokeDash - the dash styles
+	 * @param {string} datum.props.format.fontSize - the font size
+	 * @param {string} datum.props.format.baseline - the textBaseline
+	 * @param {string} datum.props.format.align - the alignment
+	 */
 	Graph.prototype.setCanvasStyles = function(ctx,datum){
 		if(!datum) return this;
 		var f = datum.props.format;
@@ -1296,12 +1469,15 @@
 		return this;
 	};
 
+	/**
+	 * @desc Highlight a particular set of marks (up to 10). This can also trigger a tooltip.
+	 * @param {array} ds - an array of "marksetid:markid:weight" mark references
+	 */
 	Graph.prototype.highlight = function(ds){
 		if(this.selecting) return;	// If we are panning we don't want to highlight symbols
 		if(this.lookup && ds && ds.length > 0){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
-			this.drawOverlay();
 			var d,t,i,w,clipping,typ,mark,ctx,n,s,val,top,topmark,series;
 			ctx = this.canvas.ctx;
 			top = -1;
@@ -1390,7 +1566,7 @@
 					// Add a rule for the tooltip arrow
 					if(series.css['background-color']) this.style.sheet.insertRule(tta+" { border-color: "+series.css['background-color']+"!important; }");
 				}*/
-		
+	
 				// Build the hovertext output
 				val = {
 					title: (series.title) ? series.title : "", 
@@ -1398,7 +1574,7 @@
 					ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 					data: series.data[i]
 				};
-				
+			
 				html = removeRoundingErrors(topmark.props.tooltip) || "";
 			}
 			if(html){
@@ -1420,38 +1596,49 @@
 				this.annotated = false;
 				this.coordinates.css({'display':'none'});
 				this.canvas.pasteFromClipboard();
-				this.drawOverlay();
 			}
 		}
 		return this;
 	};
 
+	/**
+	 * @desc Set the increment size for this axis
+	 * @param {string} a - the axis e.g. "x" or "y"
+	 * @param {number} inc - the axis tick mark increment
+	 */
 	Graph.prototype.setInc = function(a,inc){
 		if(typeof inc=="number"){
-			this[a].inc = inc;
-			this[a].tinc = Num(inc);
+			//this[a].inc = inc;
+			this[a].ticks.inc = Num(inc);
 		}else{
 			if(inc.type!="Num") inc = Num(inc);
-			this[a].tinc = inc;
-			this[a].inc = inc.toValue();
+			this[a].ticks.inc = inc;
+			//this[a].inc = inc.toValue();
 		}
 		return this;
 	};
 
-	// Defines this.x.max, this.x.min, this.x.inc, this.x.range
+	/**
+	 * @desc Defines max, min, inc, range, logmax, logmin, logrange, ticks, ticks.min, ticks.max, ticks.range, ticks.inc, spacing, precision
+	 * @param {string} a - the axis e.g. "x" or "y"
+	 * @param {number} min - the minimum value for the axis
+	 * @param {number} max - the maximum value for the axis
+	 */
 	Graph.prototype.defineAxis = function(a,min,max){
 
 		// Immediately return if the input seems wrong
 		if(typeof a != "string" || (a != "x" && a != "y")) return this;
+
+		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn;
 
 		// Set the min/max if provided
 		if(typeof max=="number" && typeof min=="number"){
 			this[a].max = max;
 			this[a].min = min;
 		}else{
-			this[a].max = this[a].datamax;
-			this[a].min = this[a].datamin;
-			this.addAxisPadding(a);
+			this[a].max = this[a].data.max;
+			this[a].min = this[a].data.min;
+			this.addAxisPadding(a,(this.options[a+'axis'].padding||0));
 		}
 
 		// Sort out what to do for log scales
@@ -1463,43 +1650,50 @@
 		}
 
 		// Set the range of the data
-		this[a].range = this[a].max - this[a].min;
-		this[a].ticks = [];
+		this[a].range = Num(this[a].max).minus(this[a].min).toValue();
+		// We'll create an object that behaves a bit like an array but contains other properties
+		if(!this[a].ticks){
+			this[a].ticks = {};
+		}else{
+			// Delete any existing ticks
+			for(i = 0; i < this[a].ticks.length; i++) delete this[a].ticks[i];
+			this[a].ticks.length = 0;
+		}
+		if(!this[a].ticks.props) this[a].ticks.props = {};
 
 		// Sort out what to do for log scales
 		if(this[a].log){
-			this[a].gridmin = this[a].logmin+0;
-			this[a].gridmax = this[a].logmax+0;
+			this[a].ticks.min = this[a].logmin+0;
+			this[a].ticks.max = this[a].logmax+0;
 			this.setInc(a,1);
 			this[a].range = this[a].max-this[a].min;
-			this[a].gridrange = this[a].logrange+0;
+			this[a].ticks.range = this[a].logrange+0;
 			this.makeTicks(a);
 			return this;
 		}
 		// If we have zero range we need to expand it
 		if(this[a].range < 0){
 			this.setInc(a,0.0);
-			this[a].gridrange = 0.0;
+			this[a].ticks.range = 0.0;
 			return this;
 		}else if(this[a].range == 0){
-			this[a].gridmin = Math.ceil(this[a].max)-1;
-			this[a].gridmax = Math.ceil(this[a].max);
-			this[a].min = this[a].gridmin;
-			this[a].max = this[a].gridmax;
+			this[a].ticks.min = Math.ceil(this[a].max)-1;
+			this[a].ticks.max = Math.ceil(this[a].max);
+			this[a].min = this[a].ticks.min;
+			this[a].max = this[a].ticks.max;
 			this.setInc(a,1.0);
 			this[a].range = this[a].max-this[a].min;
-			this[a].gridrange = this[a].gridmax-this[a].gridmin;
+			this[a].ticks.range = this[a].ticks.max-this[a].ticks.min;
 			this.makeTicks(a);
 			return this;
 		}
 
-		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn,dv,log10_dv,base,frac;
 		rg = this[a].range;
 		mx = this[a].max;
 		mn = this[a].min;
-		if(!this[a].labelopts) this[a].labelopts = {};
+		
 		// Set the label scaling
-		var scale = (a=="x" && this[a].labelopts.inputscale) ? this[a].labelopts.inputscale : 1;
+		var scale = (a=="x" && this[a].ticks.props.scale) ? this[a].ticks.props.scale : 1;
 
 
 		// Calculate reasonable grid line spacings
@@ -1517,36 +1711,58 @@
 				{'name': 'weeks', 'div':7*86400,'spacings':[1,2]},
 				{'name': 'months', 'div': 30*86400, 'spacings':[1,3,6]},
 				{'name': 'years', 'div':365.2425*86400,'spacings':[1,2,5,10,20,50,100,200,500,1000,2000,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6]}];
-		steps = (this[a].labelopts.steps || steps);
+		steps = (this[a].ticks.props.steps || steps);
+		t_div = 1e100;
 
 		for(st = 0; st < steps.length ; st++){
 			for(sp = 0; sp < steps[st].spacings.length; sp++){
-				n = Math.ceil(this[a].range*scale/(steps[st].div*steps[st].spacings[sp]));
+				n = Math.ceil(Num(this[a].range).times(scale).div(Num(steps[st].div).times(steps[st].spacings[sp])).toValue());
 				if(n < 1 || n > 20) continue;
 				else{
-					if(!t_div || (n > 3 && n < t_div)){
+					if(n >= 3 && n < t_div){
 						t_div = n;
-						this[a].spacing = {'name':steps[st].name,'fract':steps[st].spacings[sp],'scale':scale,'div':steps[st].div};
-						this[a].datestep = {'name':steps[st].name,'spacing':steps[st].spacings[sp],'div':steps[st].div,'scale':scale};
+						this[a].spacing = {
+							'name':steps[st].name,
+							'fract':steps[st].spacings[sp],
+							'scale':scale,
+							'div':steps[st].div
+						};
+						//console.log('n',n,this[a].spacing,this[a].range,scale,steps[st].div,steps[st].spacings[sp])
 					}
 				}
 			}
 		}
 
+		// If we have a function that converts the number, we now convert the min and max
+		// to the current format from the input format (this[a].units)
+		if(typeof this[a].ticks.props.convert==="function"){
+
+			mn = this[a].ticks.props.convert.call(this,this[a].min,this[a].units);
+			mx = this[a].ticks.props.convert.call(this,this[a].max,this[a].units);
+			this[a].spacing = {'div':defaultSpacing(mn,mx,(this[a].isDate ? 3 : 5)),'fract':1};
+			// See if we have a custom spacing function
+			if(typeof this[a].ticks.props.spacing==="function"){
+				sp = this[a].ticks.props.spacing.call(this,mx-mn);
+				if(sp > 0) this[a].spacing.div = sp;
+			}
+		}
+		
 		// If the output format is a "date" type and the input scale is set to 1 we use base 60/24 as appropriate
 		if(this[a].isDate && scale==1){
-		
+
 			// The displayed labels are shown as dates (this uses date rounding)
 			this[a].showAsDate = true;
 
 			// Set the min and max values by rounding the dates
-			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
-			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'floor'}));
-			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].datestep.name,'inc':t_inc,'n':this[a].datestep.spacing,'method':'ceil'}));
+			t_inc = Num(this[a].spacing.div).times(this[a].spacing.fract);
+			t_min = (roundDate(mn,{'range':this[a].range,'unit':this[a].spacing.name,'inc':t_inc,'n':this[a].spacing.fract,'method':'floor'}));
+			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].spacing.name,'inc':t_inc,'n':this[a].spacing.fract,'method':'ceil'}));
 
 		}else if(this[a].isPhase){
+		
+			this[a].showAsDate = false;
 
-			t_inc = Num(this[a].datestep.div).times(this[a].datestep.spacing);
+			t_inc = Num(this[a].spacing.div).times(this[a].spacing.fract);
 			t_min = Math.floor(mn/t_inc.toValue())*t_inc.toValue();
 			t_max = Math.ceil(mx/t_inc.toValue())*t_inc.toValue();
 
@@ -1554,54 +1770,16 @@
 
 			// Do we do date-based rounding
 			this[a].showAsDate = false;
-
-			// If the output type is a date but the scale is not in seconds, 
-			// we switch to using the native scale of the input
-			if(this[a].isDate) scale = 1;
-			
+	
 			// Scale the range before we work out the spacings
-			if(scale!=1){
-				mn = mn/scale;
-				mx = mx/scale;
-			}
 
-			// Start off by finding the exact spacing
-			dv = Math.abs(mx - mn) / (this[a].isDate ? 3 : 5);
+			t_inc = defaultSpacing(Num(mn).div(scale).toValue(),Num(mx).div(scale).toValue(),(this[a].isDate ? 3 : 5));
+			t_inc = Num(t_inc).times(scale).toValue();
 
-			// In any given order of magnitude interval, we allow the spacing to be
-			// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
-			// log of the spacing value, then splitting this into the integer and
-			// fractional part (note that for negative values, we consider the base to
-			// be the next value 'down' where down is more negative, so -3.6 would be
-			// split into -4 and 0.4).
-			log10_dv = Math.log10(dv);
-			base = Math.floor(log10_dv);
-			frac = log10_dv - base;
+			// Round to nearest t_inc (because of precision issues)
+			t_min = Num(mn).div(t_inc).round(0,mn < 0 ? 3:0).times(t_inc).toValue();
+			t_max = Num(mx).div(t_inc).round(0,mx < 0 ? 0:3).times(t_inc).toValue();
 
-			// We now want to check whether frac falls closest to 1, 2, 5, or 10 (in log
-			// space). There are more efficient ways of doing this but this is just for clarity.
-			var options = [1,2,5,10];
-			var distance = new Array(options.length);
-			var imin = -1;
-			var tmin = 1e100;
-			for(i = 0; i < options.length; i++){
-				distance[i] = Math.abs(frac - Math.log10(options[i]));
-				if(distance[i] < tmin){
-					tmin = distance[i];
-					imin = i;
-				}
-			}
-
-			// Now determine the actual spacing
-			var spacing = Math.pow(10,(base))*options[imin];
-			t_inc = spacing;
-
-			// Normalise the tick mark min/max
-			t_max = Math.ceil(mx/t_inc)*t_inc;
-			if(t_max < mx-t_inc*0.2) t_max += t_inc;
-			t_min = Math.floor(mn/t_inc)*t_inc;
-			if(t_min > mn+t_inc*0.2) t_min -= t_inc;
-			
 			// Determine the number of decimal places to show
 			// Quicker to do it here than in makeTicks.
 			this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc)));
@@ -1613,28 +1791,15 @@
 				this[a].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
 				this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
 			}
-
-			// Now scale the range back
-			if(scale!=1){
-				t_min = t_min*scale;
-				t_max = t_max*scale;
-				t_inc = t_inc*scale;
-				// Fix precision errors introduced by the multiplication
-				t_inc = parseFloat(t_inc.toPrecision(this[a].precisionlabel));
-			}
-
-			// Round to nearest t_inc (because of precision issues)
-			t_min = Num(t_min).div(t_inc).round(0,0).times(t_inc).toValue();
-			t_max = Num(t_max).div(t_inc).round(0,0).times(t_inc).toValue();
 			t_inc = Num(t_inc);
 
 		}
 
 		// Set the first/last gridline values as well as the spacing
-		this[a].gridmin = t_min;
-		this[a].gridmax = t_max;
+		this[a].ticks.min = t_min;
+		this[a].ticks.max = t_max;
 		this.setInc(a,t_inc);
-		this[a].gridrange = this[a].gridmax-this[a].gridmin;
+		this[a].ticks.range = this[a].ticks.max-this[a].ticks.min;
 		this[a].precision = this[a].precisionlabel+Math.floor(Math.log10(Math.abs(scale)));
 
 		this.makeTicks(a);
@@ -1642,13 +1807,39 @@
 		return this;
 	};
 
+	/**
+	 * @desc Define the output format for an axis
+	 * @param {string} a - the axis e.g. "x" or "y"
+	 * @param {string} type - the axis output units e.g. "unity", "jd", "radians", "relative"
+	 * @param {object} types - the formats object that defines the types
+	 */
+	Graph.prototype.setAxisFormat = function(a,type,types){
+		this[a].formats = types;
+		// Update the tick properties
+		this[a].ticks.props = types[type];
+		// Update the tick label units
+		this[a].ticks.units = type;
+		if(types[type].types){
+			this[a].isDate = (types[type].types.absolute ? true : false);
+			this[a].isPhase = (types[type].types.phase ? true : false);
+		}else{
+			this[a].isDate = false;
+			this[a].isPhase = false;
+		}
+		return this;
+	};
+
+	/**
+	 * @desc Make the tick marks. Sets this[a].ticks.min, this[a].ticks.max, this[a].ticks.range, and this[a].ticks[i]
+	 * @param {string} a - the axis e.g. "x" or "y"
+	 */
 	Graph.prototype.makeTicks = function(a){
 		var v,mn,mx,l,sci,precision,fmt,i,d,vmx,calcval;
 		this.log.time('makeTicks');
 		// Get the min/max tick marks
-		mn = this[a].gridmin;
-		mx = this[a].gridmax;
-		
+		mn = this[a].ticks.min;
+		mx = this[a].ticks.max;
+	
 		if(this[a].log){
 			mn = Math.floor(mn);
 			mx = Math.ceil(mx);
@@ -1659,12 +1850,15 @@
 		mn = Num(mn);
 		mx = Num(mx);
 
-		this[a].ticks = [];
-		vmx = mx.plus(this[a].tinc.times(0.2)).toValue();
-		for(v = mn; v.toValue() <= vmx; v = v.plus(this[a].tinc)){
-			if(this[a].showAsDate) this[a].ticks.push({'value':roundDate(v,{'range':this[a].range,'unit':this[a].datestep.name,'n':this[a].datestep.spacing,'inc':this[a].tinc}),'label':''});
-			else this[a].ticks.push({'value':v,'label':''});
+
+		this[a].ticks.length = 0;
+		vmx = mx.plus(this[a].ticks.inc.times(0.2)).toValue();
+		for(v = mn, i = 0; v.toValue() <= vmx; v = v.plus(this[a].ticks.inc), i++){
+			if(this[a].showAsDate) this[a].ticks[i] = {'value':roundDate(v,{'range':this[a].range,'unit':this[a].spacing.name,'n':this[a].spacing.fract,'inc':this[a].ticks.inc}),'label':''};
+			else this[a].ticks[i] = {'value':v,'label':''};
+			this[a].ticks.length++;
 		}
+
 
 		if(this[a].ticks.length == 0){
 			this.log.warning('No ticks');
@@ -1672,7 +1866,7 @@
 		}
 		mn = this[a].ticks[0].value;
 		mx = this[a].ticks[this[a].ticks.length-1].value;
-		
+	
 		// A function to format the date nicely
 		function niceDate(d,sp){
 			var hr,mn,sc,dy,mo,yr,n,f,fs,str,idx,bits;
@@ -1732,7 +1926,7 @@
 			}
 			return fmt[i];
 		}
-		
+	
 		if(this[a].log){
 			// Format labels for log scale
 			for(i = 0; i < this[a].ticks.length; i++){
@@ -1745,7 +1939,7 @@
 					fmt.exp = tidy(v.toExponential(precision));
 				}else{
 					precision = Math.abs(this[a].ticks[i].value);
-					if(this[a].inc > 1) fmt.round = ""+Math.round(v);
+					if(this[a].ticks.inc.toValue() > 1) fmt.round = ""+Math.round(v);
 					else fmt.fixed = (Math.abs(v/this[a].range) < 1e-12) ? "0" : v.toFixed(precision);
 				}
 
@@ -1765,14 +1959,14 @@
 					fmt = {};
 					precision = this[a].precision;
 					// Find the differential precision
-					if(v.gt(this.sci_hi) || v.lt(this.sci_lo)) precision = Math.floor(Math.log10(v.abs().toValue())) - Math.floor(Math.log10(Math.abs(this[a].inc)));
+					if(v.gt(this.sci_hi) || v.lt(this.sci_lo)) precision = Math.floor(Math.log10(v.abs().toValue())) - Math.floor(Math.log10(Math.abs(this[a].ticks.inc.toValue())));
 					if(this[a].isDate) precision = 1;
 					if(precision < 1) precision = this[a].precisionlabel;
 					if(sci){
 						if(this[a].isDate) fmt.date = ""+v;
 						else fmt.exp = v.toValue().toExponential(precision);
 					}else{
-						if(this[a].inc > 1) fmt.round = ""+v.round(0,1).toString();
+						if(this[a].ticks.inc.toValue() > 1) fmt.round = ""+v.round(0,1).toString();
 						else fmt.fixed = v.toString();
 					}
 
@@ -1791,11 +1985,12 @@
 				this[a].ticks[i].value = (typeof calcval==="number") ? calcval : parseFloat(this[a].ticks[i].label);
 			}
 		}
+
 		// If formatLabel is set we use that to format the label
-		if(this[a].labelopts && typeof this[a].labelopts.formatLabel==="function"){
+		if(this[a].ticks.props && typeof this[a].ticks.props.formatLabel==="function"){
 			for(i = 0; i < this[a].ticks.length; i++){
 				var str = '';
-				var o = this[a].labelopts.formatLabel.call(this,this[a].ticks[i].value,{'axis':a,'dp':this[a].precisionlabeldp,'ticks':this[a].ticks,'input':(this[a].labelopts.input||""),'output':(this[a].labelopts.output||""),'niceDate':niceDate,'spacing':this[a].spacing});
+				var o = this[a].ticks.props.formatLabel.call(this,this[a].ticks[i].value,{'i':i,'axis':a,'dp':this[a].precisionlabeldp,'ticks':this[a].ticks,'input':(this[a].units||""),'output':(this[a].ticks.units||""),'niceDate':niceDate,'spacing':this[a].spacing});
 				if(o) str = tidy(o.truncated || o.str);
 				this[a].ticks[i].label = str;
 			}
@@ -1807,34 +2002,52 @@
 		if(this[a].log){
 			// Update all the values for the log scale
 			for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].value = Math.pow(10,this[a].ticks[i].value);
-			this[a].gridmin = G.log10(this[a].ticks[0].value);
-			this[a].gridmax = G.log10(this[a].ticks[this[a].ticks.length-1].value);
+			this[a].ticks.min = G.log10(this[a].ticks[0].value);
+			this[a].ticks.max = G.log10(this[a].ticks[this[a].ticks.length-1].value);
 		}else{
-			this[a].gridmin = this[a].ticks[0].value;
-			this[a].gridmax = this[a].ticks[this[a].ticks.length-1].value;
+			this[a].ticks.min = this[a].ticks[0].value;
+			this[a].ticks.max = this[a].ticks[this[a].ticks.length-1].value;
+		}
+		
+		// We want to convert the values back to the input format so that
+		// they appear in the correct place on the graph
+		for(i = 0; i < this[a].ticks.length; i++){
+			if(this[a].units && typeof this[a].formats[this[a].units].convert==="function"){
+				this[a].ticks[i].value = Num(this[a].formats[this[a].units].convert.call(this,this[a].ticks[i].value,this[a].ticks.units));
+			}
 		}
 
-		this[a].gridrange = this[a].gridmax - this[a].gridmin;
+		this[a].ticks.range = this[a].ticks.max - this[a].ticks.min;
 		this.log.time('makeTicks');
 
 		return this;
 	};
 
-	// A factor to scale the overall font size then redraw the graph
+	/**
+	 * @desc A factor to scale the overall font size then redraw the graph
+	 */
 	Graph.prototype.scaleFont = function(s){
 		if(s == 0) this.fontscale = 1;
 		else this.fontscale *= (s>0 ? 1.1 : 1/1.1);
-		this.getChartOffset().resetDataStyles().redraw({'update':true});
+		this.setChartOffset().resetDataStyles().redraw({'update':true});
 		return this;
 	};
-	
+
+	/**
+	 * @desc Get the font height for an axis and type
+	 * @param {string} a - the axis e.g. "x" or "y"
+	 * @param {string} t - the chart element to style e.g. "title" or "label"
+	 */
 	Graph.prototype.getFontHeight = function(a,t){
 		var fs = this.chart.fontsize;
 		if(this.options[a+'axis'] && this.options[a+'axis'][t+'FontSize']) fs = this.options[a+'axis'][t+'FontSize'];
 		return fs*this.fontscale;
 	};
 
-	Graph.prototype.getChartOffset = function(){
+	/**
+	 * @desc Set the chart offsets such as left, right, top, bottom, width, height, padding, fontsize, and fontfamily
+	 */
+	Graph.prototype.setChartOffset = function(){
 		if(typeof this.chart!="object") this.chart = {};
 		var fs,ff,o,c,a,ax,offx,dp,b;
 		fs = getStyle(this.canvas.container[0], 'font-size');
@@ -1843,7 +2056,7 @@
 		c = this.chart;
 		if(!c.left) c.left = 0;
 		// Set the target
-		
+	
 		c.padding = (this.canvas.fullscreen) ? 36 : 0;
 		c.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
 		c.fontfamily = (typeof ff=="string") ? ff : "";
@@ -1883,7 +2096,10 @@
 		this.chart = c;
 		return this;
 	};
-	
+
+	/**
+	 * @desc Get the maximum width of y-axis labels in pixels.
+	 */
 	Graph.prototype.getLabelWidth = function(){
 		// If we aren't showing labels the width is 0
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
@@ -1900,12 +2116,12 @@
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 
-		mn = this.y.gridmin;
-		mx = this.y.gridmax;
+		mn = this.y.ticks.min;
+		mx = this.y.ticks.max;
 
 		if(this.y.log){
-			mn = Math.ceil(this.y.gridmin);
-			mx = Math.floor(this.y.gridmax);
+			mn = Math.ceil(this.y.ticks.min);
+			mx = Math.floor(this.y.ticks.max);
 		}
 
 		if(this.y.ticks){
@@ -1932,7 +2148,9 @@
 		return Math.max(s*2,Math.round(Math.ceil(maxw/s)*s)) + 4;
 	};
 
-	// Draw the axes and grid lines for the graph
+	/**
+	 * @desc Draw the axes and grid lines for the graph
+	 */
 	Graph.prototype.drawAxes = function(){
 		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,fshalf,di;
 		c = this.chart;
@@ -1977,7 +2195,7 @@
 			ctx.fillRect(c.left,c.top,c.width,c.height);
 		}
 		ctx.closePath();
-		
+	
 		for(a in axes){
 			if(axes[a]){
 
@@ -1995,7 +2213,7 @@
 						if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
 					}
 				}
-			
+		
 				// Set the tick width
 				tw = 0;
 				if(show.ticks) tw = (this.options[a].tickSize||4);
@@ -2063,18 +2281,18 @@
 				if(this[d].precision){
 					prec = this[d].precision;
 				}else{
-					prec = ""+axis.inc;
+					prec = ""+axis.ticks.inc.toValue();
 					prec = prec.length-prec.indexOf('.')-1;
 				}
 				fshalf = Math.ceil(fs/2);
 				var oldx = 0;
 				var str,v;
-			
-				mn = axis.gridmin;
-				mx = axis.gridmax;
+		
+				mn = axis.ticks.min;
+				mx = axis.ticks.max;
 				if(axis.log){
-					mn = Math.floor(axis.gridmin);
-					mx = Math.ceil(axis.gridmax);
+					mn = Math.floor(axis.ticks.min);
+					mx = Math.ceil(axis.ticks.max);
 				}
 
 				for(var ii = 0; ii < axis.ticks.length; ii++) {
@@ -2113,28 +2331,28 @@
 									for(k = 0; k < ds.length ; k++){
 										this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
 									}
-									oldx = x1 + (j == axis.gridmin ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
+									oldx = x1 + (j == axis.ticks.min ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 								}
 							}else if(d=="y"){
 								ctx.textAlign = 'end';
-								if(j==this.y.gridmax) ctx.textBaseline = 'top';
+								if(j==this.y.ticks.max) ctx.textBaseline = 'top';
 								str = axis.ticks[ii].label;
 								ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
 							}
 						}
 
 						ctx.stroke();
-								
+							
 						// Draw grid lines
 						ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-						if(show.grid && j >= axis.gridmin && j <= axis.gridmax){
+						if(show.grid && j >= axis.ticks.min && j <= axis.ticks.max){
 							ctx.beginPath();
 							ctx.lineWidth = (this.options[a].gridWidth || 0.5);
 							ctx.moveTo(x1,y1);
 							ctx.lineTo(x2,y2);
 							ctx.stroke();
 						}
-				
+			
 						// Draw tick marks lines
 						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
 						if(show.ticks && i > axis.min && i < axis.max){
@@ -2146,7 +2364,7 @@
 								ctx.lineTo(x2,y1+tw);
 							}else if(d=="y"){
 								ctx.moveTo(x1,y1);
-								ctx.lineTo(x1-tw,y2);					
+								ctx.lineTo(x1-tw,y2);				
 							}
 							ctx.stroke();
 							ctx.closePath();
@@ -2184,7 +2402,9 @@
 	};
 
 
-	// Reset all the styles for the datasets
+	/**
+	 * @desc Reset all the styles for the datasets
+	 */
 	Graph.prototype.resetDataStyles = function(){
 		var sh,i;
 		for(sh in this.marks){
@@ -2198,7 +2418,12 @@
 		return this;
 	};
 
-	/* Replacement function to combine calculateData() and draw() but allow interrupt */
+	/**
+	 * @desc Replacement function to combine calculateData() and draw() but allow interrupt
+	 * @param {object} attr - attributes
+	 * @param {boolean} attr.update - do we update things as we go?
+	 * @param {boolean} attr.cancelable - can we cancel this redraw part-way through?
+	 */
 	Graph.prototype.redraw = function(attr){
 		this.log.message('redraw');
 		this.log.time('redraw');
@@ -2219,9 +2444,9 @@
 			if(this.marks[sh] && this.marks[sh].show) series.push({'id':sh,'done':0});
 		}
 
-		// Function to process all the series chunk-by-chunk	
+		// Function to process all the series chunk-by-chunk
 		function processChunk(self,s,attr){
-			var sh,d,x,y,i,j,x2,v,a,a1,a2,axes,axis,mx;
+			var sh,d,i,j,v,a,a1,a2,axes,axis;
 			axes = ['x','y'];
 			j = 0;
 			while(j < chunk && s < series.length){
@@ -2288,21 +2513,24 @@
 
 		// Start processing
 		if(attr.cancelable) this.timeout.redraw = setTimeout(processChunk,0,this,0,attr);
-		else processChunk(this,0,attr)
-		
+		else processChunk(this,0,attr);
+	
 		return this;
 	};
 
+	/**
+	 * @desc Calculate all the data
+	 * @param {boolean} update - if set to false we don't bother calculating anything
+	 */
 	Graph.prototype.calculateData = function(update){
 		this.log.message('calculateData');
 		this.log.time('calculateData');
 
 		if(typeof update!=="boolean") update = true;
-		
-		var d,x,y,sh,i,x2,v,a,a1,a2,axes,axis,mx;
-		axes = ['x','y'];
-
 		if(!update) return this;
+	
+		var d,sh,i,v,a,a1,a2,axes,axis;
+		axes = ['x','y'];
 
 		for(sh in this.marks){
 			if(this.marks[sh]){
@@ -2347,8 +2575,11 @@
 
 		return this;
 	};
-	
-	// Draw the data onto the graph
+
+	/**
+	 * @desc Draw the data onto the graph
+	 * @param {boolean} updateLookup - do we update the pixel-based lookup? It can take a while so if a quick update is needed set this to false.
+	 */
 	Graph.prototype.drawData = function(updateLookup){
 
 		var p,sh,ctx,i,j,m,update,px,quickdraw,colour;
@@ -2372,22 +2603,6 @@
 		this.paper.data.scale = {'x':1,'y':1};
 		ctx = this.canvas.ctx;
 
-		// Define a function to extract the RGB values
-		function getRGB(c){
-			var r,g,b,a;
-			a = 1;
-			if(c.indexOf('#')==0){
-				r = parseInt(c.substr(1,2),16);
-				g = parseInt(c.substr(3,2),16);
-				b = parseInt(c.substr(5,2),16);
-			}else if(c.indexOf("rgba")==0){
-				c.replace(/rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9\.]+)\)/,function(m,p1,p2,p3,p4){ r = parseInt(p1); g = parseInt(p2); b = parseInt(p3); a = parseFloat(p4); return m; });
-			}else if(c.indexOf("rgb(")==0){
-				c.replace(/rgb\(([0-9]+),([0-9]+),([0-9]+)\)/,function(m,p1,p2,p3){ r = p1; g = p2; b = p3; return m; });
-			}
-			return {'r':r,'g':g,'b':b,'a':a};
-		}
-
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
 				this.log.time('drawData '+sh);
@@ -2409,11 +2624,11 @@
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
-					
+				
 					quickdraw = (this.log.metrics['drawData '+sh].av > 70);
 					if(quickdraw){
 						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
-						colour = getRGB(this.marks[sh].mark[0].props.format.fill);
+						colour = getRGB(this.marks[sh].mark[0].props.format.fill,this.marks[sh].mark[0].props.format.fillOpacity);
 						for(i = 0; i < 4; i+=4){
 							px.data[i + 0] = colour.r;
 							px.data[i + 1] = colour.g;
@@ -2448,11 +2663,27 @@
 		return this;
 	};
 
+	/**
+	 * @desc Remove the canvas from DOM
+	 */
 	Graph.prototype.remove = function(){
 		this.canvas.canvasholder.remove();
 		return {};
 	};
 
+	/**
+	 * @desc Draw a rectangle
+	 * @param {object} datum - the data point's attributes
+	 * @param {object} attr - extra attributes
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {number} attr.x - the x-axis centre value (used in conjunction with datum.props.format.width)
+	 * @param {number} attr.y - the y-axis centre value (used in conjunction with datum.props.format.height)
+	 * @param {number} attr.x1 - the x-axis value x1 value
+	 * @param {number} attr.y1 - the y-axis value y1 value
+	 * @param {number} attr.x2 - the x-axis value x2 value
+	 * @param {number} attr.y2 - the y-axis value y2 value
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawRect = function(datum,attr){
 		var x1,y1,x2,y2,dx,dy,o,ctx,n,l,r,t,b,ok;
 		n = "number";
@@ -2501,6 +2732,12 @@
 		return "";
 	};
 
+	/**
+	 * @desc Draw a rule
+	 * @param {number} sh - the index of the mark set
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
 		var ctx,i,p;
@@ -2543,6 +2780,13 @@
 		return this;
 	};
 
+	/**
+	 * @desc Draw a visible line segment (deprecated)
+	 * @param {number} ax - starting x position
+	 * @param {number} ay - starting y position
+	 * @param {number} bx - ending x position
+	 * @param {number} by - ending y position
+	 */
 	Graph.prototype.drawVisibleLineSegment = function(ax,ay,bx,by){
 		// If the two points are both off to the left, right, top, or bottom the line won't be visible
 		if((ax < 0 && bx < 0) || (ax > this.canvas.wide && bx > this.canvas.wide) || (ay < 0 && by < 0) || (ay > this.canvas.tall && by > this.canvas.tall)) return 0;
@@ -2571,6 +2815,12 @@
 		return 1;
 	};
 
+	/**
+	 * @desc Draw a line
+	 * @param {number} sh - the index of the mark set
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawLine = function(sh,attr){
 		var ctx,ps,oldp,i,p;
 		ctx = (attr.ctx || this.paper.data.ctx);
@@ -2591,7 +2841,13 @@
 
 		return this;
 	};
-	
+
+	/**
+	 * @desc Draw an area on the chart
+	 * @param {number} sh - the index of the mark set
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawArea = function(sh,attr){
 		var ctx,oldp,areas,a,i,j,k,p,y1,y2;
 		ctx = (attr.ctx || this.paper.data.ctx);
@@ -2641,7 +2897,7 @@
 
 		this.paper.temp.ctx.fill();
 		if(this.marks[sh].mark[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
-		
+	
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
 		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.4});
@@ -2649,7 +2905,16 @@
 		return this;
 	};
 
-	// Draw text
+	/**
+	 * @desc Draw text on the chart
+	 * @param {object} datum - the data point
+	 * @param {number} datum.props.x - the x-axis value to draw the text
+	 * @param {number} datum.props.y - the y-axis value to draw the text
+	 * @param {number} attr.x - over-ride the x-axis value
+	 * @param {number} attr.y - over-ride the y-axis value
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawText = function(datum,attr){
 		var ctx,t,f,o,x,y;
 		ctx = (attr.ctx || this.paper.data.ctx);
@@ -2665,6 +2930,19 @@
 		return o;
 	};
 
+	/**
+	 * @desc Draw a text label
+	 * @param {string} txt - the text to show
+	 * @param {number} x - the x-axis value to draw the text
+	 * @param {number} y - the y-axis value to draw the text
+	 * @param {context} attr.ctx - the context of the canvas
+	 * @param {object} attr.format - formatting properties for the text
+	 * @param {string} attr.format.font - the font family to use
+	 * @param {string} attr.format.fontSize - the font size to use
+	 * @param {string} attr.format.fontWeight - the font weight to use
+	 * @param {string} attr.format.align - the text alignment
+	 * @param {string} attr.format.baseline - the text baseline
+	 */
 	Graph.prototype.drawTextLabel = function(txt,x,y,attr){
 		if(!attr) attr = {};
 		var str,w,b,l,bits,f,fs,s,ctx,dy;
@@ -2717,18 +2995,36 @@
 		return {xa:Math.floor(xo),xb:Math.ceil(l),ya:Math.floor(y),yb:Math.ceil(y + f.fontSize)};
 	};
 
-	// Draw a shape
-	// Override the datum.x and datum.y with attr.x,attr.y if provided
-	// Draw to attr.ctx if provided; otherwise to this.paper.data.ctx
+	/**
+	 * @desc Draw a shape
+	 * @param {object} datum - the data point
+	 * @param {number} datum.id - the index of the data point
+	 * @param {string} data.props.symbol.shape - the shape to draw e.g. "circle", "rect", "cross", "diamond", "triangle-up", "triangle-down", "triangle-left", and "triangle-right"
+	 * @param {number} datum.props.x - the x-axis value to draw the data point (use with width or x2)
+	 * @param {number} datum.props.y - the y-axis value to draw the data point (use with height or y2)
+	 * @param {number} datum.props.x2 - the second x value for type "rect" (used with x)
+	 * @param {number} datum.props.y2 - the second y value for type "rect" (used with y)
+	 * @param {number} datum.props.xc - a centre x value for type "rect" (used with width)
+	 * @param {number} datum.props.yc - a centre y value for type "rect" (used with height)
+	 * @param {number} datum.props.format.size - the size of the object (related to area)
+	 * @param {number} datum.props.format.width - default width used for type "rect"
+	 * @param {number} datum.props.format.height - default height for type "rect"
+	 * @param {number} datum.props.width - width used for type "rect"
+	 * @param {number} datum.props.height - height for type "rect"
+	 * @param {number} attr.x - over-ride the x-axis value
+	 * @param {number} attr.y - over-ride the y-axis value
+	 * @param {context} attr.ctx - the context of the canvas (default is this.paper.data.ctx)
+	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
+	 */
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
 		var ctx,p,x1,y1,s,w,h,o,dw,s2;
 		ctx = attr.ctx;
 		p = datum.props;
-		
+	
 		x1 = (typeof attr.x==="number") ? attr.x : p.x;
 		y1 = (typeof attr.y==="number") ? attr.y : p.y;
-		
+	
 		ctx.moveTo(x1,y1);
 		ctx.beginPath();
 
@@ -2807,7 +3103,11 @@
 		return o;
 	};
 
-	// Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
+	/**
+	 * @desc Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
+	 * @param {number} attr.id - the index of this data point
+	 * @param {number} attr.weight - the weighting for this data point at this pixel
+	 */
 	Graph.prototype.addTempToLookup = function(attr){
 		if(!attr.id) return;
 		var a,px,i,p,x,y,l,w,h;
@@ -2831,7 +3131,16 @@
 		return this;
 	};
 
-	// We'll use a bounding box to define the lookup area
+	/**
+	 * @desc Use a bounding box to define the lookup area
+	 * @param {object} i - the datum to use
+	 * @param {number} i.id - the index of this data point
+	 * @param {number} i.xa - the starting x value
+	 * @param {number} i.xb - the ending x value
+	 * @param {number} i.ya - the starting y value
+	 * @param {number} i.yb - the ending y value
+	 * @param {number} i.weight - the weighting for this data point at this pixel
+	 */
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.id) return;
 		var x,y,p,a,t,dir,bit;
@@ -2869,7 +3178,9 @@
 		return this;
 	};
 
-	// Clear the canvas
+	/**
+	 * @desc Clear the canvas
+	 */
 	Graph.prototype.clear = function(ctx){
 		var w,h;
 		w = ctx ? ctx.canvas.width : this.canvas.wide;
@@ -2879,48 +3190,99 @@
 		return this;
 	};
 
-	// Draw everything
+	/**
+	 * @desc Draw everything - the axes, the data, and overlays
+	 * @param {boolean} updateLookup - do we need to update the pixel lookup?
+	 */
 	Graph.prototype.draw = function(updateLookup){
 		this.log.time('draw');
 		this.clear();
 		this.drawAxes();
 		this.drawData(updateLookup);
 		if(updateLookup) this.canvas.copyToClipboard();
-		this.drawOverlay();
 		this.log.time('draw');
 		return this;
 	};
 
-	Graph.prototype.drawOverlay = function(){
-		// Potentially draw things afterwards
-		
-		return this;
-	};
-
+	/**
+	 * @desc Tidy up a string with rounding errors
+	 * @param {string} v - the string to tidy
+	 */
 	function tidy(v){
 		if(typeof v!=="string") return "";
 		if(v=="0") return v;
 		return v.replace(/\.0+e/,"e").replace(/\.0{6}[0-9]+e/,"e").replace(/([0-9]+)\.9{6}[0-9]+e/,function(m,p1){ var val = parseFloat(p1); return (val+(val < 0 ? -1 : 1))+"e"; }).replace(/(\.[1-9]+)0+e/,function(m,p1){ return p1+"e"; }).replace(/\.0$/,"").replace(/\.([0-9]+?)0+$/g,function(m,p1){ return "."+p1; });
 	}
 
+	/**
+	 * @desc Remove rounding errors from a string
+	 * @param {number} e - the value tidy
+	 */
 	function removeRoundingErrors(e){
 		return (e) ? e.toString().replace(/(\.[0-9]+[1-9])[0]{6,}[1-9]*/,function(m,p1){ return p1; }).replace(/(\.[0-9]+[0-8])[9]{6,}[0-8]*/,function(m,p1){ var l = (p1.length-1); return parseFloat(p1).toFixed(l); }).replace(/^0+([0-9]+\.)/g,function(m,p1){ return p1; }) : "";
 	}
-	
+
+	/**
+	 * @desc Build the canvas font string
+	 * @param {string} f.fontWeight - the weight of the font e.g. "bold"
+	 * @param {number} f.fontSize - the font size in pixels
+	 * @param {string} f.font - the font family
+	 */
 	function buildFont(f){ return f.fontWeight+" "+f.fontSize+"px "+f.font; }
-	
-	// Round the date to a suitable place
-	// Inputs:
-	//   s = (big.js number) The date
-	//   attr = {
-	//             'range': 0.5      // time range in seconds
-	//             'inc': 0.2        // the increment size
-	//             'n': 1,           // spacing between ticks in multiples of 'unit'
-	//             'unit': 'years',  // The unit of rounding e.g. "years", "months", "seconds", "decimal"
-	//             'method': 'floor' // the rounding method
-	//          }
+
+	/**
+	 * @desc Get some spacing given a minimum and maximum value
+	 * @param {number} mn - the minimum value
+	 * @param {number} mx - the maximum value
+	 * @param {number} n - the minimum number of steps
+	 */
+	function defaultSpacing(mn,mx,n){
+
+		var dv,log10_dv,base,frac,options,distance,imin,tmin,i;
+
+		// Start off by finding the exact spacing
+		dv = Math.abs(mx - mn) / n;
+
+		// In any given order of magnitude interval, we allow the spacing to be
+		// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
+		// log of the spacing value, then splitting this into the integer and
+		// fractional part (note that for negative values, we consider the base to
+		// be the next value 'down' where down is more negative, so -3.6 would be
+		// split into -4 and 0.4).
+		log10_dv = Math.log10(dv);
+		base = Math.floor(log10_dv);
+		frac = log10_dv - base;
+
+		// We now want to check whether frac falls closest to 1, 2, 5, or 10 (in log
+		// space). There are more efficient ways of doing this but this is just for clarity.
+		options = [1,2,5,10];
+		distance = new Array(options.length);
+		imin = -1;
+		tmin = 1e100;
+		for(i = 0; i < options.length; i++){
+			distance[i] = Math.abs(frac - Math.log10(options[i]));
+			if(distance[i] < tmin){
+				tmin = distance[i];
+				imin = i;
+			}
+		}
+
+		// Now determine the actual spacing
+		return Math.pow(10,(base))*options[imin];
+	}
+
+	/**
+	 * @desc Round the date to a suitable place
+	 * @param {number} s - the date (also as a <code>Num</code>)
+	 * @param {object} attr - some attributes
+	 * @param {number} attr.range - the time range in seconds
+	 * @param {number} attr.inc - the increment size
+	 * @param {number} attr.n - spacing between ticks in multiples of 'unit'
+	 * @param {number} attr.unit - the unit of rounding e.g. "years", "months", "seconds", "decimal"
+	 * @param {number} attr.method - the rounding method e.g. "floor"
+	*/
 	function roundDate(s,attr){
-		var d,d2,df,a,a2,time,o,f,months,ly,ms,bits,idx,str,norder;
+		var d,d2,df,a,a2,time,f,months,ly,ms,bits,idx,str;
 		str = (typeof s==="number" ? Num(s):s).toString();
 		idx = str.indexOf(".");
 		bits = [Num(str),Num(0)];
@@ -2985,7 +3347,7 @@
 			else if(attr.unit == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600; }
 			else if(attr.unit == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400; }
 			else{ a = d.s; f = 1; }
-			
+		
 			a = Num(a).plus(bits[1].div(f));
 			a2 = a.div(attr.n).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.n).times(f);
 			a = a.times(f);
@@ -2996,36 +3358,57 @@
 		return bits[0].minus(df);
 	}
 
-	// Functions to prevent scrolling on mouse wheel events
+	/**
+	 * @desc Prevent scrolling on mouse wheel events
+	 */
 	function preventDefault(e) {
 		e = e || window.event;
 		if (e.preventDefault) e.preventDefault();
 		e.returnValue = false;  
 	}
+
+	/**
+	 * @desc Disable the scroll event
+	 */
 	function disableScroll() {
 		if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
 		window.onwheel = preventDefault; // modern standard
 		window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
 		window.ontouchmove  = preventDefault; // mobile
 	}
+
+	/**
+	 * @desc Enable the scroll event
+	 */
 	function enableScroll() {
 		if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
 		window.onmousewheel = document.onmousewheel = null; 
 		window.onwheel = null; 
 		window.ontouchmove = null;  
 	}
+
+	/**
+	 * @desc Create a logger for console messages and timing
+	 * @param {boolean} inp.logging - do we log messages to the console?
+	 * @param {boolean} inp.logtime - do we want to log execution times?
+	 * @param {string} inp.id - an ID to use for the log messages (default "JS")
+	 */
 	function Logger(inp){
 		if(!inp) inp = {};
 		this.logging = (inp.logging||false);
 		this.logtime = (inp.logtime||false);
 		this.id = (inp.id||"JS");
 		this.metrics = {};
+		this.error = function(){ this.log('ERROR',arguments); };
+		this.warning = function(){ this.log('WARNING',arguments); };
+		this.info = function(){ this.log('INFO',arguments); };
+		this.message = function(){ this.log('MESSAGE',arguments); };
 		return this;
 	}
-	Logger.prototype.error = function(){ this.log('ERROR',arguments); };
-	Logger.prototype.warning = function(){ this.log('WARNING',arguments); };
-	Logger.prototype.info = function(){ this.log('INFO',arguments); };
-	Logger.prototype.message = function(){ this.log('MESSAGE',arguments); }
+
+	/**
+	 * @desc A wrapper for log messages. The first argument is the type of message e.g. "ERROR", "WARNING", "INFO", or "MESSAGE". Other arguments are any objects/values you want to include.
+	 */
 	Logger.prototype.log = function(){
 		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
 			var args,args2,bold;
@@ -3042,7 +3425,12 @@
 			}
 		}
 		return this;
-	}
+	};
+
+	/**
+	 * @desc Start/stop a timer. This will build metrics for the key containing the start time ("start"), weighted average ("av"), and recent durations ("times")
+	 * @param {string} key - the key for this timer
+	 */
 	Logger.prototype.time = function(key){
 		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
 		if(!this.metrics[key].start) this.metrics[key].start = new Date();

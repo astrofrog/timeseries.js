@@ -11,9 +11,16 @@
 	// Base directory for timeseries.js
 	var basedir = "";
 
-	// Main object to coordinate data loading
+	/**
+	 * @desc Main object to coordinate data loading
+	 */
 	function TimeSeriesMaster(){
-		this.version = "0.0.17";
+		this.version = "0.0.18";
+		/**
+		 * @desc Create a new timeseries object
+		 * @param {boolean} opt.logging - do we log messages to the console?
+		 * @param {boolean} opt.logtime - do we log execution times to the console?
+		 */
 		this.create = function(json,opt){
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.log.logging;
@@ -32,6 +39,12 @@
 
 		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
 
+		/**
+		 * @desc Load data from a file
+		 * @param {string} f - the file URL
+		 * @param {object} attr - attributes
+		 * @param {function} fn - a callback function for once we finish loading
+		 */
 		this.loadFromDataFile = function(f,attr,fn){
 		
 			this.log.message('loadFromDataFile',f,attr,fn);
@@ -93,7 +106,10 @@
 
 	TimeSeries = new TimeSeriesMaster();
 
-	// Object for each individual timeseries
+	/**
+	 * @desc Object for each individual timeseries
+	 * @param {object} json - the VEGA json to use
+	 */
 	function TS(json,opt){
 		if(!opt) opt = {};
 		this.attr = opt;
@@ -119,17 +135,16 @@
 		this.xformats = {
 			'auto': {
 				'title': 'Auto',
-				'absolute': true,
-				'relative': true,
+				'types': { 'absolute': true, 'relative': true},
 				'scale': 1,
 				'formatLabel': function(j,attr){
-					var v = (attr.input=="seconds") ? j : convertDate(j,attr.input,"seconds");
+					var v = (attr.input=="seconds" || attr.input=="") ? j : convertDate(j,attr.input,"seconds");
 					return {'str':attr.niceDate(v,attr.spacing)};
 				}
 			},
 			'relative': {
 				'title': 'Relative date',
-				'relative': true,
+				'types': {'relative': true},
 				'scale': 1,
 				'formatLabel': function(val,attr){
 					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
@@ -177,15 +192,13 @@
 			'locale': {
 				'title': 'Locale',
 				'scale': 1,
-				'absolute': true,
-				'formatLabel': function(j,attr){
-					return {'str':(new Date(convertDate(j,attr.input,'unix'))).toLocaleString()};
-				}
+				'types': {'absolute': true},
+				'formatLabel': function(j,attr){ return {'str':(new Date(convertDate(j,attr.input,'unix'))).toLocaleString()}; }
 			},
 			'iso': {
 				'title': 'ISO8601',
 				'scale': 1,
-				'absolute': true,
+				'types': {'absolute': true},
 				'formatLabel': function(j,attr){
 					var o = {'str':'?'};
 					var v = convertDate(j,attr.input,attr.output);
@@ -197,63 +210,56 @@
 			'jd': {
 				'title': 'Julian date',
 				'scale': 86400,
-				'absolute': true,
-				'formatLabel': function(j,attr){
-					return {'str':convertDate(j,attr.input,attr.output)+''};
-				}
+				'types': {'absolute': true},
+				'formatLabel': function(j,attr){ return {'str':convertDate(j,attr.input,attr.output)+''}; }
 			},
 			'mjd': {
 				'title': 'Modified Julian date',
 				'scale': 86400,
-				'absolute': true,
-				'formatLabel': function(j,attr){
-					return {'str':convertDate(j,attr.input,attr.output)+''};
-				}
+				'types': {'absolute': true},
+				'formatLabel': function(j,attr){ return {'str':convertDate(j,attr.input,attr.output)+''}; }
 			},
 			'tjd': {
 				'title': 'Truncated Julian date',
 				'scale': 86400,
-				'absolute': true,
-				'formatLabel': function(j,attr){
-					return {'str':convertDate(j,attr.input,attr.output)+''};
-				}
+				'types': {'absolute': true},
+				'formatLabel': function(j,attr){ return {'str':convertDate(j,attr.input,attr.output)+''}; }
 			},
 			'unity': {
 				'title': 'Phase (unity)',
-				'phase': true,
-				'scale': 1,
-				'formatLabel': function(j,attr){
-					return {'str':j+''};
-				}
+				'types': {'phase': true},
+				'convert': function(v,input){
+					if(input == "degrees") return Num(v).div(360).toValue();
+					else if(input == "radians") return Num(v).div(2).toValue();
+					return v;
+				},
+				'formatLabel': function(j,attr){ return {'str':j.toString()}; }
 			},
 			'degrees': {
 				'title': 'Phase (degrees)',
-				'phase': true,
-				'scale': 1,
-				'steps': [
-					{'name': 'millidegrees', 'div': 1e-3/360, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'degrees','div':1/360,'spacings':[1,2,5,10,15,20,30,60,90,120,180,360]},
-				],
-				'formatLabel': function(j,attr){
-					if(attr.spacing.div < 1/360){
-						var spacing = attr.spacing.fract/1000;
-						return {'str':Num(Math.round(j.times(360).toValue()/spacing)).times(spacing).toString()+'°'};
-					}else{
-						return {'str':Math.round(j*360)+'°'};
-					}
-				}
+				'types': {'phase': true},
+				'convert': function(v,input){
+					if(input == "unity") v = Num(v).times(360).toValue();
+					else if(input == "radians") v = Num(v).times(180).toValue();
+					return v;
+				},
+				'spacing': function(r){
+					if(r > 300) return 90;
+					if(r > 200) return 60;
+					if(r > 100) return 30;
+					else return 0;
+				},
+				'formatLabel': function(j,attr){ return {'str':j.toString()+'°'}; }
 			},
 			'radians': {
 				'title': 'Phase (radians)',
-				'phase': true,
-				'scale': 1,
-				'steps': [
-					{'name': 'millirad', 'div': 1e-3/2, 'spacings':[1,2,5,10,20,50,100,200,500]},
-					{'name': 'radians','div':1/2,'spacings':[1,2,5]},
-				],
-				'formatLabel': function(j,attr){
-					return {'str':j.times(2).toString()+'π'};
-				}
+				'types': {'phase': true},
+				'convert': function(v,input){
+					if(input == "unity") return Num(v).times(2).toValue();
+					else if(input == "degrees") return Num(v).div(180).toValue();
+					return v;
+				},
+				'formatLabel': function(j,attr){ return {'str':j.toString()+'π'}; }
 			}
 		};
 		this.datasets = [];
@@ -271,6 +277,10 @@
 		return this;
 	}
 
+	/**
+	 * @desc Process the VEGA-compatible JSON. Only a sub-set of VEGA JSON will be processed.
+	 * @param {object} d - the JSON object
+	 */
 	TS.prototype.processJSON = function(d){
 		this.json = clone(d);
 		this.vega = clone(d);
@@ -291,13 +301,11 @@
 		return this;
 	};
 
-	/*
-		Render a TimeSeries from an HTML element 
-		We look for attributes vega-src and vega-scale
-		Arguments:
-		e - the DOM element to attach the time series to
-		callback - a function to call once finished
-	*/
+	/**
+	 * @desc Render a TimeSeries from an HTML element (we will process the attributes <code>vega-src</code> and <code>vega-scale</code>)
+	 * @param {HTMLelement} e - the DOM element to attach the time series to
+	 * @param {function} callback - a function to call once finished
+	 */
 	TS.prototype.initialize = function(e,callback){
 
 		this.log.message('initialize',e);
@@ -348,6 +356,9 @@
 		return this;
 	};
 
+	/**
+	 * @desc A function to call once we've finished.
+	 */
 	TS.prototype.postProcess = function(){
 
 		this.log.message('postProcess',this);
@@ -456,7 +467,7 @@
 		}
 
 		// Build the graph object
-		this.graph = new Graph(this.el, [], this.options);
+		this.graph = new Graph(this.el, this.options);
 
 		el = S(this.el);
 		str = '<div class="loader"><div class="spinner">';
@@ -476,6 +487,13 @@
 		return this;
 	};
 
+	/** 
+	 * @desc Update a message that sits on top of the graph
+	 * @param {string} id - the CSS ID to use for the message
+	 * @param {string} msg - the message to display
+	 * @param {number} pc - (optional) if provided this will set the percentage of a progress bar
+	 * @param {string} c - the colour of the progress bar
+	 */
 	TS.prototype.updateMessage = function(id,msg,pc,c){
 		var el = S(this.el).find('.loader');
 		if(!id){
@@ -502,7 +520,10 @@
 		}else this.message[id].el.remove();
 		return this;
 	};
-	
+
+	/**
+	 * @desc Make the menu if it isn't already made
+	 */
 	TS.prototype.makeMenu = function(){
 		var el,id,i,str,html,menu;
 		el = S(this.el);
@@ -570,6 +591,10 @@
 		return this;
 	};
 
+	/**
+	 * @desc Load the datasets
+	 * @param {array} data - the VEGA <code>data</code> structure
+	 */
 	TS.prototype.loadDatasets = function(data){
 		this.log.message('loadDatasets',data);
 		this.log.time('loadDatasets');
@@ -625,7 +650,9 @@
 		return this;
 	};
 
-	// Build the menu for selecting layers
+	/**
+	 * @desc Build the menu for selecting layers
+	 */
 	TS.prototype.updateLayerMenu = function(){
 		var i,j,id,styles,layers,l,p,k,w,h,draw,d,key,keyitems,lookup,scale,ctx,c,parent,show,include;
 
@@ -782,6 +809,9 @@
 		return this;
 	};
 
+	/**
+	 * @desc Get an array of the available views. Each will have a "title", "name", and "description".
+	 */
 	TS.prototype.getViews = function(){
 		var views,i,v;
 		views = [];
@@ -789,7 +819,11 @@
 		for(i = 0; i < v.length; i++) views.push({'title':(v[i].title||""),'name':(v[i].name||""),'description':(v[i].description||"")});
 		return views;
 	};
-	
+
+	/**
+	 * @desc Choose a view
+	 * @param {number} i - the index of the view to select
+	 */
 	TS.prototype.setView = function(i){
 		var g,j,view,a,d,m,o,s,lis,li,axis,found,el,str;
 		j = this.json;
@@ -876,9 +910,14 @@
 		}
 		
 		this.updateLayerMenu();
+
+		// Update the Options menu
+		this.updateOptionsMenu();
 	
 		// Update the graph data
 		g.updateData();
+
+		// Update the DOM to show which is selected
 		el = g.canvas.container.find('.views');
 		lis = el.find('li');
 		for(m = 0; m < lis.length; m++){
@@ -888,12 +927,13 @@
 			else li.removeClass('selected').find('input').attr('checked','');
 		}
 		
-		// Update the Options menu
-		this.updateOptionsMenu();
 
 		return this;
 	};
 
+	/**
+	 * @desc Update the view menu
+	 */
 	TS.prototype.updateViewMenu = function(){
 		var i,l,el,id,li,active,alpha;
 		alpha = 'abcdefghijklmnopqrstuvwxyz';
@@ -935,12 +975,15 @@
 		return this;
 	};
 
+	/**
+	 * @desc Update the options menu
+	 */
 	TS.prototype.updateOptionsMenu = function(){
 		var el = S(this.el);
 		var id = el.attr('id');
 
 		// Remove any existing date format drop down selector
-		if(el.find('#'+id+'_dateformat').length > 0) el.find('#'+id+'_dateformat').parent().remove();
+		if(el.find('#'+id+'_axisformat').length > 0) el.find('#'+id+'_axisformat').parent().remove();
 
 		// If the x-axis has a defined input format we can build a format selector
 		if(this._view._extend && this._view._extend.scales){
@@ -951,6 +994,9 @@
 					// Define the general type for the input format: phase/relative/absolute
 					i = "absolute";
 					if(this._view._extend.scales[s].input=="phase") i = "phase";
+					else if(this._view._extend.scales[s].input=="unity") i = "phase";
+					else if(this._view._extend.scales[s].input=="radians") i = "phase";
+					else if(this._view._extend.scales[s].input=="degrees") i = "phase";
 					else if(this._view._extend.scales[s].input=="seconds") i = "relative";
 
 					if(i=="phase"){
@@ -962,51 +1008,57 @@
 						f = (this._view._extend.scales[s].output || "auto");
 						label = "Date format";
 					}
-
-					html = '<div class="row"><label for="'+id+'_dateformat">'+label+': </label><select id="'+id+'_dateformat">';
+					html = '<div class="row"><label for="'+id+'_axisformat">'+label+': </label><select id="'+id+'_axisformat">';
 					ok = false;
 					for(k in this.xformats){
-						if(this.xformats[k] && this.xformats[k][i]){
+						if(this.xformats[k] && this.xformats[k].types[i]){
 							html += '<option value="'+k+'"'+(k==f ? ' selected="selected"':'')+'>'+this.xformats[k].title+'</option>';
-							if(f && this.xformats[f] && k==f) this.setDateFormat(f);
+							if(f && this.xformats[f] && k==f) this.setAxisFormat("x",f);
 							if(k==f) ok = true;
 						}
 					}
-					if(!ok) this.log.error(f+" is not an available format");
+					if(!ok) this.log.error(f+" is not an available format",this.xformats);
 					html += '</select></div>';
 					el.find('.menu-panel.submenu-config').append(html);
-					el.find('#'+id+'_dateformat').on('change',{'me':this},function(e){ e.data.me.setDateFormat(this[0].value,true); });
+					el.find('#'+id+'_axisformat').on('change',{'me':this},function(e){ e.data.me.setAxisFormat("x",this[0].value,false); });
 				}
 			}
 		}
 
 		return this;
 	};
-	
-	TS.prototype.setDateFormat = function(o,update){
-		if(this._view._extend.scales){
-			for(s = 0; s < this._view._extend.scales.length; s++){
-				if(this._view._extend.scales[s].name=="xscale"){
-					var i = this._view._extend.scales[s].input;
-					if(this.xformats[o]){
-						this.graph.x.labelopts = this.xformats[o];
-						this.graph.x.isDate = (this.xformats[o].absolute ? true : false);
-						this.graph.x.isPhase = (this.xformats[o].phase ? true : false);
-						this.graph.x.labelopts.input = i;
-						this.graph.x.labelopts.output = o;
-						this.graph.x.labelopts.inputscale = (this.xformats[i] ? this.xformats[i].scale : 1);	// Scale the input number if necessary
-						// Define the axis set to the current range
-						this.graph.defineAxis("x",this.graph.x.min,this.graph.x.max).redraw(update);
-					}else{
-						if(!this.xformats[i]) this.log.error('Input format '+i+' is not a known date format');
-						if(!this.xformats[o]) this.log.error('Output format '+o+' is not a known date format');
-					}
-					return this;
-				}
+
+	/**
+	 * @desc Set the x-axis format
+	 * @param {string} axis - the axis to use e.g. "x" or "y"
+	 * @param {string} output - the output format key e.g. "unity" or "jd"
+	 * @param {boolean} update - do we redraw the graph?
+	 */
+	TS.prototype.setAxisFormat = function(axis,output,update){
+
+		var input = "";
+		if(this._view && this._view._extend.scales){
+			for(var s = 0; s < this._view._extend.scales.length; s++){
+				if(this._view._extend.scales[s].name=="xscale") input = this._view._extend.scales[s].input;
 			}
 		}
+		if(this.graph){
+			if(this.xformats[output]){
+				this.graph[axis].units = input;	// TO DO: Do we need to update the input units?
+				this.graph.setAxisFormat(axis,output,this.xformats);
+				// Define the axis set to the current range
+				this.graph.defineAxis(axis,this.graph[axis].min,this.graph[axis].max).redraw(update);
+			}else{
+				if(!this.xformats[input]) this.log.error('Input format '+input+' is not a known format');
+				if(!this.xformats[output]) this.log.error('Output format '+output+' is not a known format');
+			}
+		}
+		return this;
 	};
 
+	/**
+	 * @desc Process the datasets. This updates the properties of each mark.
+	 */
 	TS.prototype.processDatasets = function(){
 		this.log.message('processDatasets',this.attr.showaswego,this.graph.marks);
 		this.log.time('processDatasets');
@@ -1048,9 +1100,8 @@
 						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
 						if(event[p].field){
 							if(typeof event[p].field==="string"){
-								if(typeof datum[event[p].field]!=="undefined"){
-									d.data[p] = datum[event[p].field];
-								}
+								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
+								else _obj.log.error('The field "'+event[p].field+'" ('+p+'-axis) seems to be missing.',clone(d),event);
 							}else if(typeof event[p].field==="object"){
 								d.data[p] = clone(event[p]);
 							}
@@ -1212,6 +1263,9 @@
 		return this;
 	};
 
+	/**
+	 * @desc Once we've finished updating the marks we can update the menus
+	 */
 	TS.prototype.finalize = function(){
 		this.log.message('finalize',this.attr.showaswego,this.graph.marks);
 		this.updateMessage('main','');
@@ -1232,8 +1286,12 @@
 		return this;
 	};
 
-	// Function to save the output as either an image or JSON
-	// (and optionally send to the online VEGA editor)
+	/**
+	 * @desc Save the output as either an image or JSON (and optionally send to the online VEGA editor)
+	 * @param {string} type - the file type e.g. "text/text"
+	 * @param {string} attr.file - the file name to use (defaults to timeseries.json)
+	 * @param {string} attr.background - the colour to use for the background
+	 */
 	TS.prototype.save = function(type,attr){
 
 		// Bail out if there is no Blob function to save with
@@ -1349,7 +1407,10 @@
 
 		return this;
 	};
-	
+
+	/**
+	 * @desc Show an error message on the DOM
+	 */
 	TS.prototype.error = function(msg,extra,err){
 		this.log.error(msg,extra,err);
 		if(S(this.el).find('.loader').length == 0){
@@ -1365,12 +1426,20 @@
 		return this;	
 	};
 
+	/**
+	 * @desc Remove a timeseries
+	 */
 	TS.prototype.remove = function(){
 		S(this.el).find('.menuholder').remove();
 		S(this.el).find('.canvasholder').remove();
 		return {};
 	};
 
+	/**
+	 * @desc Get an SVG icon
+	 * @param {string} icon - the key for the icon
+	 * @param {string} colour - the colour to use for the icon
+	 */
 	function getIcon(icon,colour){
 		var icons = {
 			'menu': '<path style="fill:%COLOUR%;fill-opacity: 0.8;" d="M 5,6 l 22,0 0,4 -22,0 0,-4 M 5,14 l 22,0 0,4 -22,0 0,-4 M 5,22 l 22,0 0,4 -22,0 0,-4 " />',
@@ -1385,13 +1454,12 @@
 	}
 
 	/**
-	 * CSVToArray parses any String of Data including '\r' '\n' characters,
-	 * and returns an array with the rows of data.
-	 * @param {String} CSV_string - the CSV string you need to parse
+	 * @desc Parses any String of Data including '\r' '\n' characters, and returns an array with the rows of data.
+	 * @param {String} str - the CSV string you need to parse
 	 * @param {String} delimiter - the delimeter used to separate fields of data
 	 * @returns {Array} rows - rows of CSV where first row are column headers
 	 */
-	function CSVToArray (CSV_string, delimiter) {
+	function CSVToArray(str, delimiter){
 		delimiter = (delimiter || ","); // user-supplied delimeter or default comma
 
 		var pattern = new RegExp( // regular expression to parse the CSV values.
@@ -1408,7 +1476,7 @@
 		// array to hold our individual pattern matching groups:
 		var matches = false; // false if we don't find any matches
 		// Loop until we no longer find a regular expression match
-		while (matches = pattern.exec( CSV_string )) {
+		while (matches = pattern.exec(str)) {
 			var matched_delimiter = matches[1]; // Get the matched delimiter
 			// Check if the delimiter has a length (and is not the start of string)
 			// and if it matches field delimiter. If not, it is a row delimiter.
@@ -1433,8 +1501,11 @@
 		return rows; // Return the parsed data Array
 	}
 
-	// Function to parse a CSV file and return a JSON structure
-	// Guesses the format of each column based on the data in it.
+	/**
+	 * @desc Parse a CSV file and return a JSON structure. Guesses the format of each column based on the data in it.
+	 * @param {string} data - the CSV to parse
+	 * @param {array} parse - set the format types for each column
+	 */
 	function CSV2JSON(data,parse){
 
 		// Split by the end of line characters
@@ -1467,6 +1538,9 @@
 		return newdata;
 	}
 
+	/**
+	 * @desc Add zeros to pad out a number
+	 */
 	function zeroPad(d,n){ if(!n){ n = 2;} d = d+''; while(d.length < n){ d = '0'+d; } return d; }
 
 	// Build the functions that we are making available to looseJsonParse
@@ -1519,20 +1593,23 @@
 		return Function('"use strict";'+fns+' return (' + obj + ')')();
 	}
 
-	// Function to clone a hash otherwise we end up using the same one
-	function clone(hash) {
-		var json = JSON.stringify(hash);
-		var object = JSON.parse(json);
-		return object;
-	}
+	/**
+	 * @desc Make a copy of the object (to avoid over-writing it)
+	 */
+	function clone(a){ return JSON.parse(JSON.stringify(a)); }
 
+	/**
+	 * @desc Create an embed in the style of VEGA
+	 */
 	root.AASTimeSeriesEmbed = function(el,json,opt){
 		var ts = TimeSeries.create(json,opt);
 		ts.initialize(S(el)[0]);
 		return;
 	};
 
-	// Convert a date from an input format to an output format
+	/**
+	 * @desc Convert a date from an input format to an output format
+	 */
 	function convertDate(dt,i,o){
 		if(typeof dt==="number") dt = Num(dt);
 		var dt2 = new Dates(dt,i);
@@ -1545,7 +1622,9 @@
 		return 0;
 	}
 
-	// Define a date convertor
+	/**
+	 * @desc Define a date convertor
+	 */
 	function Dates(v,input){
 		this.epoch = {'jd':2440587.5,'mjd':2400000.5,'tjd':2440000.5};	// The epochs for Julian Date, MJD, and TJD
 		this.d2ms = 86400000;	// Days to milliseconds
@@ -1554,40 +1633,43 @@
 		if(input=="mjd") this.jd = v.plus(this.epoch.mjd);
 		if(input=="tjd") this.jd = v.plus(this.epoch.tjd);
 		if(input=="unix") this.unix = v;
-		if(input=="iso" || input=="locale") this.unix = v.times(1000);
+		if(input=="iso" || input=="locale" || !input) this.unix = v.times(1000);
+		this.toJD = function(){
+			if(this.jd) return this.jd.toValue();
+			if(this.unix) return this.unix.div(this.d2ms).plus(this.epoch.jd).toValue();
+			return 0;
+		};
+		this.toUNIX = function(){
+			if(this.unix) return this.unix.toValue();
+			if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).toValue();
+			return 0;
+		};
+		this.toSeconds = function(){
+			if(this.unix) return this.unix.div(1000).toValue();
+			if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).div(1000).toValue();
+			return 0;
+		};
+		this.toMJD = function(){
+			if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
+			if(this.jd) return this.jd.minus(this.epoch.mjd).toValue();
+			else return 0;
+		};
+		this.toTJD = function(){
+			if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
+			if(this.jd) return this.jd.minus(this.epoch.tjd).toValue();
+			else return 0;
+		};
+		this.toDate = function(){
+			if(this.jd) return new Date(this.toUNIX());
+			if(this.unix) return new Date(this.unix.toValue());
+			return new Date();
+		};
 		return this;
 	}
-	Dates.prototype.toJD = function(){
-		if(this.jd) return this.jd.toValue();
-		if(this.unix) return this.unix.div(this.d2ms).plus(this.epoch.jd).toValue();
-		return 0;
-	};
-	Dates.prototype.toUNIX = function(){
-		if(this.unix) return this.unix.toValue();
-		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).toValue();
-		return 0;
-	};
-	Dates.prototype.toSeconds = function(){
-		if(this.unix) return this.unix.div(1000).toValue();
-		if(this.jd) return this.jd.minus(this.epoch.jd).times(this.d2ms).div(1000).toValue();
-		return 0;
-	};
-	Dates.prototype.toMJD = function(){
-		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
-		if(this.jd) return this.jd.minus(this.epoch.mjd).toValue();
-		else return 0;
-	};
-	Dates.prototype.toTJD = function(){
-		if(this.unix) this.jd = this.unix.div(this.d2ms).plus(this.epoch.jd);
-		if(this.jd) return this.jd.minus(this.epoch.tjd).toValue();
-		else return 0;
-	};
-	Dates.prototype.toDate = function(){
-		if(this.jd) return new Date(this.toUNIX());
-		if(this.unix) return new Date(this.unix.toValue());
-		return new Date();
-	};
 
 	root.TimeSeries = TimeSeries;
 
 })(window || this);
+var a,b;
+
+

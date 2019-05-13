@@ -79,6 +79,8 @@
 			<!-- Javascript -->
 			<script>
 			var graph;
+
+
 			S(document).ready(function(){
 
 				var tests = [
@@ -158,14 +160,14 @@
 						'text': 'Over 10 seconds.',
 						'range':{'min':'1540821198','max':'1540821208.7'},
 						'date': true,
-						'output':{'min':1540821198.000,'max':1540821210.000,'inc':2},
-						'labels':["13:53:18","13:53:20","13:53:22","13:53:24","13:53:26","13:53:28","13:53:30"]
+						'output':{'min':1540821195.000,'max':1540821210.000,'inc':5},
+						'labels':["13:53:15","13:53:20","13:53:25","13:53:30"]
 					},{
 						'text': 'A day and a quarter.',
 						'range':{'min':'1542651740.796','max':'1542751740.811'},
 						'date': true,
-						'output':{'min':1542650400.000,'max':1542758400.000,'inc':21600},
-						'labels':["18:00","00:00","06:00","12:00","18:00","00:00"]
+						'output':{'min':1542628800.000,'max':1542758400.000,'inc':43200},
+						'labels':["12:00","00:00","12:00","00:00"]
 					},{
 						'text': 'A time range of two weeks.',
 						'range':{'min':'1542651740.796','max':'1543651740.811'},
@@ -194,41 +196,41 @@
 						'text': 'A time range of over 3000 years.',
 						'range':{'min':'1542651740.796','max':'96213464540.796'},
 						'date': true,
-						'output':{'min':946684800,'max':111396038400,'inc':15778476000},
-						'labels':["2000","2500","3000","3500","4000","4500","5000","5500"]
+						'output':{'min':946684800,'max':127174492800,'inc':31556952000},
+						'labels':["2000","3000","4000","5000","6000"]
 					},{
 						'text': 'Testing Julian Date across nearly 11 seconds',
 						'range':{'min':'1540821198','max':'1540821208.8'},
 						'date': true,
-						'dateformat':'jd',
+						'xformat':'jd',
 						'output':{'min':1540821195.360,'max':1540821212.640,'inc':4.320},
 						'labels':["2458421.07865","2458421.0787","2458421.07875","2458421.0788","2458421.07885"]
 					},{
 						'text': 'Testing Modified Julian Date across two-thirds of a day.',
 						'range':{'min':'1540799726.830911','max':'1540855448.0109622'},
 						'date': true,
-						'dateformat':'mjd',
+						'xformat':'mjd',
 						'output':{'min':1540788480,'max':1540857600,'inc':17280},
 						'labels':["58420.2","58420.4","58420.6","58420.8","58421"]
 					},{
 						'text': 'Testing Modified Julian Date across 30 seconds.',
 						'range':{'min':'1540821194.0755989','max':'1540821214.8048894'},
 						'date': true,
-						'dateformat':'mjd',
+						'xformat':'mjd',
 						'output':{'min':1540821191.04,'max':1540821216.96 ,'inc':8.64},
 						'labels':["58420.5786","58420.5787","58420.5788","58420.5789"]
 					},{
 						'text': 'Testing Modified Julian Date across a couple of hours.',
 						'range':{'min':'1540818628.7870164','max':'1540825233.4494124'},
 						'date': true,
-						'dateformat':'mjd',
+						'xformat':'mjd',
 						'output':{'min':1540817856,'max':1540826496,'inc':1728},
 						'labels':["58420.54","58420.56","58420.58","58420.6","58420.62","58420.64"]
 					},{
 						'text': 'Testing second-scale range when the format is Truncated Julian Date.',
 						'range':{'min':'1540821199.5099182','max':'1540821206.1184883'},
 						'date': true,
-						'dateformat':'tjd',
+						'xformat':'tjd',
 						'output':{'min':1540821197.952,'max':1540821206.592,'inc':1.728},
 						'labels':["18420.57868","18420.5787","18420.57872","18420.57874","18420.57876","18420.57878"]
 					},{
@@ -249,6 +251,78 @@
 						'date': true,
 						'output':{'min':1540821198.000001,'max':1540821198.000003,'inc':0.0000005},
 						'labels':["18.000001","18.0000015","18.000002","18.0000025","18.000003"]
+					},{
+						'text': 'Testing unity phase.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'unity',
+						'xformat': 'unity',
+						'output':{'min':0.1,'max':0.3,'inc':0.05},
+						'labels':["0.1","0.15","0.2","0.25","0.3"]
+					},{
+						'text': 'Testing unity phase displayed as degrees.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'unity',
+						'xformat': 'degrees',
+						'output':{'min':20,'max':120,'inc':20},
+						'labels':["20°","40°","60°","80°","100°","120°"]
+					},{
+						'text': 'Testing unity phase displayed as radians.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'unity',
+						'xformat': 'radians',
+						'output':{'min':0.2,'max':0.6,'inc':0.1},
+						'labels':["0.2π","0.3π","0.4π","0.5π","0.6π"]
+					},{
+						'text': 'Testing phase in radians displayed as radians.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'radians',
+						'xformat': 'radians',
+						'output':{'min':0.1,'max':0.3,'inc':0.05},
+						'labels':["0.1π","0.15π","0.2π","0.25π","0.3π"]
+					},{
+						'text': 'Testing phase in radians displayed as degrees.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'radians',
+						'xformat': 'degrees',
+						'output':{'min':10,'max':60,'inc':10},
+						'labels':["10°","20°","30°","40°","50°","60°"]
+					},{
+						'text': 'Testing phase in radians displayed as unity phase.',
+						'range':{'min':'0.1','max':'0.3'},
+						'phase': true,
+						'xinput': 'radians',
+						'xformat': 'unity',
+						'output':{'min':0.04,'max':0.16,'inc':0.02},
+						'labels':["0.04","0.06","0.08","0.1","0.12","0.14","0.16"]
+					},{
+						'text': 'Testing phase in degrees displayed as degrees.',
+						'range':{'min':'90','max':'180'},
+						'phase': true,
+						'xinput': 'degrees',
+						'xformat': 'degrees',
+						'output':{'min':80,'max':180,'inc':20},
+						'labels':["80°","100°","120°","140°","160°","180°"]
+					},{
+						'text': 'Testing phase in degrees displayed as unity phase.',
+						'range':{'min':'90','max':'180'},
+						'phase': true,
+						'xinput': 'degrees',
+						'xformat': 'unity',
+						'output':{'min':0.25,'max':0.5,'inc':0.05},
+						'labels':["0.25","0.3","0.35","0.4","0.45","0.5"]
+					},{
+						'text': 'Testing phase in degrees displayed as radians.',
+						'range':{'min':'90','max':'180'},
+						'phase': true,
+						'xinput': 'degrees',
+						'xformat': 'radians',
+						'output':{'min':0.5,'max':1,'inc':0.1},
+						'labels':["0.5π","0.6π","0.7π","0.8π","0.9π","1π"]
 					}
 				];
 				/*
@@ -292,11 +366,16 @@
 					var errs = new Array();
 					var score = {'ok':0,'bad':0,'partial':0}
 
+					var fmt = (tests[t].date || tests[t].phase) ? ts.xformats[(tests[t].xformat || "auto")] : {};
+					graph.x.formats = ts.xformats;
+					graph.x.ticks.props = fmt;
+					graph.x.ticks.units = (tests[t].xformat || "auto");
+					graph.x.units = (tests[t].xinput || "");
 					graph.x.isDate = (tests[t].date||false);
-					var fmt = (graph.x.isDate) ? ts.dateformats[(tests[t].dateformat || "default")] : {};
-					graph.x.labelopts = fmt;
+					graph.x.isPhase = (tests[t].phase||false);
+
 					graph.defineAxis("x",parseFloat(tests[t].range.min),parseFloat(tests[t].range.max));
-					output = {'min':graph.x.gridmin,'max':graph.x.gridmax,'inc':graph.x.inc,'isDate':graph.x.isDate,'ticks':graph.x.ticks};
+					output = {'min':graph.x.ticks.min,'max':graph.x.ticks.max,'inc':graph.x.ticks.inc,'isDate':graph.x.isDate,'isPhase':graph.x.isPhase,'ticks':graph.x.ticks};
 
 
 					compare = {'min':false,'max':false,'inc':false};
@@ -333,7 +412,7 @@
 
 					good += score.ok;
 					ntest = score.ok + score.partial + score.bad;
-					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3>'+(tests[t].text ? '<p>'+tests[t].text+'</p>' : '')+'<p>Data range is <dfn title="'+asDate(tests[t].range.min,output.isDate)+'">'+tests[t].range.min+'</dfn> &rarr; <dfn title="'+asDate(tests[t].range.max,output.isDate)+'">'+tests[t].range.max+'</dfn> which becomes <dfn class="'+getClass('min')+'" title="'+asDate(output.min,output.isDate)+'">'+output.min+'</dfn>'+(compare.min ? '' :' (expecting <dfn title="'+asDate(tests[t].output.min,output.isDate)+'">'+tests[t].output.min+'</span>)')+' &rarr; <dfn class="'+getClass('max')+'" title="'+asDate(output.max,output.isDate)+'">'+output.max+'</dfn>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':'number')+'</code>'+(output.isDate ? ' and the date format is <code>'+fmt.title+'</code>':'')+'.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
+					o = '<h3 id="'+n+'">Example '+n+': '+(score.bad > 0 ? 'ERRORS': (score.partial > 0 ? 'PARTIAL':'SUCCESS'))+'</h3>'+(tests[t].text ? '<p>'+tests[t].text+'</p>' : '')+'<p>Data range is <dfn title="'+asDate(tests[t].range.min,output.isDate)+'">'+tests[t].range.min+'</dfn> &rarr; <dfn title="'+asDate(tests[t].range.max,output.isDate)+'">'+tests[t].range.max+'</dfn> which becomes <dfn class="'+getClass('min')+'" title="'+asDate(output.min,output.isDate)+'">'+output.min+'</dfn>'+(compare.min ? '' :' (expecting <dfn title="'+asDate(tests[t].output.min,output.isDate)+'">'+tests[t].output.min+'</span>)')+' &rarr; <dfn class="'+getClass('max')+'" title="'+asDate(output.max,output.isDate)+'">'+output.max+'</dfn>'+(compare.max ? '' :' (expecting '+tests[t].output.max+')')+' with an increment of <span class="'+getClass('inc')+'">'+output.inc+'</span>'+(compare.inc ? '' :' (expecting '+tests[t].output.inc+')')+'. The axis type is <code>'+(output.isDate ? 'date':(output.isPhase ? 'phase' :'number'))+'</code>'+(output.isDate || output.isPhase ? ' and the date format is <code>'+fmt.title+'</code>':'')+'.</p><table><tr><th>Internal value</th><th>Expected label</th><th>Actual Label</th><th>Success</th></tr>'+table+'</table>';
 					if(errs.length > 0){
 						o += '<h4>Errors</h4><ul class="errors">';
 						for(var e = 0; e < errs.length; e++) o += '<li>'+errs[e]+'</li>';
