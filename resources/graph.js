@@ -2011,8 +2011,8 @@
 		
 		// We want to convert the values back to the input format so that
 		// they appear in the correct place on the graph
-		for(i = 0; i < this[a].ticks.length; i++){
-			if(this[a].units && this[a].formats && this[a].formats[this[a].units] && this[a].formats[this[a].units].convert==="function"){
+		if(this[a].units && this[a].formats && this[a].formats[this[a].units] && typeof this[a].formats[this[a].units].convert==="function"){
+			for(i = 0; i < this[a].ticks.length; i++){
 				this[a].ticks[i].value = Num(this[a].formats[this[a].units].convert.call(this,this[a].ticks[i].value,this[a].ticks.units));
 			}
 		}
