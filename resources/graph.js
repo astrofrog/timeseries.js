@@ -1069,10 +1069,14 @@
 	/**
 	 * @desc Update the data on the graph. This calls getGraphRange(), setChartOffset(), resetDataStyles() and redraw()
 	 */
-	Graph.prototype.updateData = function() {
+	Graph.prototype.updateData = function(attr){
 		// Should process all the "update" options here;
 		this.log.message('updateData',this.marks);
-		this.getGraphRange().setChartOffset().resetDataStyles().redraw({'cancelable':false,'update':true});
+		if(!attr || typeof attr!=="object") attr = {};
+		// Over-ride variables
+		attr.cancelable = false;
+		attr.update = true;
+		this.getGraphRange().setChartOffset().resetDataStyles().redraw(attr);
 	};
 
 	/**
@@ -2423,6 +2427,7 @@
 	 * @param {object} attr - attributes
 	 * @param {boolean} attr.update - do we update things as we go?
 	 * @param {boolean} attr.cancelable - can we cancel this redraw part-way through?
+	 * @param {function} attr.callback - a callback function that gets called once we've finished
 	 */
 	Graph.prototype.redraw = function(attr){
 		this.log.message('redraw');

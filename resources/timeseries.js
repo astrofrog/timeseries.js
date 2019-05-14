@@ -824,7 +824,7 @@
 	 * @desc Choose a view
 	 * @param {number} i - the index of the view to select
 	 */
-	TS.prototype.setView = function(i){
+	TS.prototype.setView = function(i,attr){
 		var g,j,view,a,d,m,o,s,lis,li,axis,found,el,str;
 		j = this.json;
 		if(typeof i!=="number"){
@@ -914,9 +914,6 @@
 		// Update the Options menu
 		this.updateOptionsMenu();
 	
-		// Update the graph data
-		g.updateData();
-
 		// Update the DOM to show which is selected
 		el = g.canvas.container.find('.views');
 		lis = el.find('li');
@@ -927,6 +924,8 @@
 			else li.removeClass('selected').find('input').attr('checked','');
 		}
 		
+		// Update the graph data
+		g.updateData(attr);
 
 		return this;
 	};
