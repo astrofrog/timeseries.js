@@ -1204,6 +1204,7 @@
 		this.offset.y = dy;
 		this.log.time('panBy');
 		if(!attr) attr = {};
+
 		if(attr.quick){
 			this.clear();
 			this.clear(this.paper.temp.ctx);
@@ -1219,8 +1220,7 @@
 			this.canvas.copyToClipboard();
 		}else{
 			// Update the graph
-			this.setChartOffset().resetDataStyles();
-			this.redraw({'update':false});
+			this.redraw({'update':true});
 		}
 		this.log.time('panBy');
 		return this;
