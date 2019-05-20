@@ -126,7 +126,7 @@
 		"_extend": {
 			"scales": [{
 				"name": "xscale",
-				"input": "phase",
+				"input": "unity",
 				"output": "unity"
 			}]
 		},
