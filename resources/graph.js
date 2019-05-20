@@ -1774,7 +1774,8 @@
 			inc = t_inc.toValue()
 			t_min = Num(mn).div(inc).floor().times(inc).toValue();
 			t_max = Num(mx).div(inc).ceil().times(inc).toValue();
-
+			this[a].precisionlabel = Math.floor(Math.log10(Math.abs(inc)));
+			
 		}else{
 
 			// Do we do date-based rounding

@@ -420,13 +420,12 @@
 					
 					for(i = 0; i < mx; i++, total++){
 						v = (i < output.ticks.length) ? output.ticks[i].value : "";
-						v2 = (i < output.ticks.length) ? output.ticks[i].calcval : "";
 						e = (i < tests[t].labels.length) ? tests[t].labels[i] : "?";
 						l = (i < output.ticks.length) ? output.ticks[i].label : "?";
 						s = (e == l);
 						if(s) score.ok++;
 						else score.bad++;
-						table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+' ('+v2+' '+graph.x.precision+')</td><td>'+e+'</td><td>'+l+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
+						table += '<tr class="'+(s ? 'success':'fail')+'"><td>'+v+' ('+graph.x.precision+')</td><td>'+e+'</td><td>'+l+'</td><td>'+(s ? '&#x2714;':'&#x274C;')+'</td></tr>';
 					}
 
 					good += score.ok;
