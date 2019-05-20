@@ -1774,7 +1774,7 @@
 			inc = t_inc.toValue()
 			t_min = Num(mn).div(inc).floor().times(inc).toValue();
 			t_max = Num(mx).div(inc).ceil().times(inc).toValue();
-			this[a].precisionlabel = Math.floor(Math.log10(Math.abs(inc)));
+			this[a].precisionlabel = Math.abs(Math.floor(Math.log10(inc)));
 			
 		}else{
 
