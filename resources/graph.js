@@ -1084,7 +1084,7 @@
 	};
 
 	/**
-	 * @desc Get the graph ranges for both axes. This sets various properties such as datamin, datamax, and datarange for each axis before calling defineAxis() on each
+	 * @desc Get the graph ranges for both axes. This sets various properties such as x.data.min, x.data.max, and x.data.range for each axis before calling defineAxis() on each
 	 */
 	Graph.prototype.getGraphRange = function(){
 		var d,i,j,k,max,axes,axis,v,domain,keepers;
@@ -1637,7 +1637,7 @@
 		// Immediately return if the input seems wrong
 		if(typeof a != "string" || (a != "x" && a != "y")) return this;
 
-		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn;
+		var t_inc,steps,t_div,t_max,t_min,st,sp,n,i,rg,mx,mn,inc;
 
 		// Set the min/max if provided
 		if(typeof max=="number" && typeof min=="number"){
@@ -1771,8 +1771,9 @@
 			this[a].showAsDate = false;
 
 			t_inc = Num(this[a].spacing.div).times(this[a].spacing.fract);
-			t_min = Math.floor(mn/t_inc.toValue())*t_inc.toValue();
-			t_max = Math.ceil(mx/t_inc.toValue())*t_inc.toValue();
+			inc = t_inc.toValue()
+			t_min = Num(mn).div(inc).floor().times(inc).toValue();
+			t_max = Num(mx).div(inc).ceil().times(inc).toValue();
 
 		}else{
 
@@ -1866,7 +1867,6 @@
 			else this[a].ticks[i] = {'value':v,'label':''};
 			this[a].ticks.length++;
 		}
-
 
 		if(this[a].ticks.length == 0){
 			this.log.warning('No ticks');

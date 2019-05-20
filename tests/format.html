@@ -323,6 +323,24 @@
 						'xformat': 'radians',
 						'output':{'min':0.5,'max':1,'inc':0.1},
 						'labels':["0.5π","0.6π","0.7π","0.8π","0.9π","1π"]
+					},{
+						'text': 'Testing unity phase displayed as radians.',
+						'range':{'min':	0.3022248168408861,'max':0.680522191646544},
+						'phase': true,
+						'xinput': 'unity',
+						'xformat': 'radians',
+						'output':{'min':0.6,'max':1.4,'inc':0.2},
+						'labels':["0.6π","0.8π","1π","1.2π","1.4π"]
+
+					},{
+						'text': 'Testing unity phase displayed as radians.',
+						'range':{'min':	0.3383588619429406,'max':0.6594439986703454},
+						'phase': true,
+						'xinput': 'unity',
+						'xformat': 'radians',
+						'output':{'min':0.6,'max':1.4,'inc':0.1},
+						'labels':["0.6π","0.7π","0.8π","0.9π","1π","1.1π","1.2π","1.3π","1.4π"]
+
 					}
 				];
 				/*
@@ -362,6 +380,7 @@
 					return (show ? ''+(new Date(s*1000)).toISOString()+'':'');
 				}
 				for(var t = 0, n = 1; t < tests.length; t++, n++){
+					console.log('Test '+t)
 					var table = '';
 					var errs = new Array();
 					var score = {'ok':0,'bad':0,'partial':0}
