@@ -634,6 +634,10 @@
 				if(event.altKey) g.selecting = true;
 				else g.panning = true;
 				if(g.coordinates) g.coordinates.css({'display':'none'});
+				// Set the panning options now, as we start the pan. This
+				// avoids the options changing during the pan which causes jumps.
+				if(!g.panoptions) g.panoptions = {};
+				g.panoptions.quick = (g.log.metrics.draw.av >= g.quicktime);
 			}
 
 			// Loop over the series that match
@@ -704,7 +708,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],{'quick':(g.log.metrics.draw.av >= g.quicktime)});
+					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],g.panoptions);
 				}
 			}
 			g.updating = false;
