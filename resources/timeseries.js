@@ -1269,19 +1269,23 @@
 		this.log.message('finalize',this.attr.showaswego,this.graph.marks);
 		this.updateMessage('main','');
 
+		// Function to call once the graph is drawn
+		function done(self){
+			this.graph.canvas.container.find('.loader').remove();
+
+			// Build the menus
+			this.updateLayerMenu();
+			this.updateViewMenu();
+			this.updateOptionsMenu();
+
+			// CALLBACK
+			if(typeof this.callback==="function") this.callback.call(this);
+		}
+
 		// If we haven't been updating the data for the graph we need to do that now
-		if(this.attr.showaswego==false) this.graph.updateData();
-		this.graph.canvas.container.find('.loader').remove();
+		if(this.attr.showaswego==false) this.graph.updateData({callback:done,self:this});
+		else done(this);
 
-		// Build the menus
-		this.updateLayerMenu();
-		this.updateViewMenu();
-		this.updateOptionsMenu();
-
-		// CALLBACK
-		if(typeof this.callback==="function") this.callback.call(this);
-
-		this.log.info('Finished processing '+this.el.getAttribute('id'));
 		return this;
 	};
 

@@ -1080,7 +1080,7 @@
 		// Over-ride variables
 		attr.cancelable = false;
 		attr.update = true;
-		this.getGraphRange().setChartOffset().resetDataStyles().redraw(attr);
+		return this.getGraphRange().setChartOffset().resetDataStyles().redraw(attr);
 	};
 
 	/**
@@ -2513,7 +2513,7 @@
 				self.draw(attr.update);
 
 				// Call the callback if we have one
-				if(typeof attr.callback==="function") attr.callback.call(self,{});
+				if(typeof attr.callback==="function") attr.callback.call((attr.self || self),{});
 			}else{
 				// Loop again
 				if(attr.cancelable) self.timeout.redraw = setTimeout(processChunk,0,self,s,attr);
