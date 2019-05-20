@@ -51,7 +51,9 @@
 			S(document).ready(function(){
 
 				ex1 = TimeSeries.create("data/lightcurve2.json");
-				ex1.initialize(document.getElementById('example1'));
+				ex1.initialize(document.getElementById('example1'),function(){
+					this.log.info('Finished processing '+this.el.getAttribute('id'));
+				});
 
 			});
 			</script>

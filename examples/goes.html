@@ -52,7 +52,9 @@
 			S(document).ready(function(){
 
 				goes = TimeSeries.create("data/goes.json",{});
-				goes.initialize(document.getElementById('example1'));
+				goes.initialize(document.getElementById('example1'),function(){
+					this.log.info('Finished processing '+this.el.getAttribute('id'));
+				});
 
 			});
 			</script>
