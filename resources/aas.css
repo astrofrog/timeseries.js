@@ -46,8 +46,6 @@ header h1, header h2 { color: inherit; }
 	margin-bottom: 2em;
 	max-width: 62.5rem;
 }
-.row:before, .row:after { content:" "; display:table }
-.row:after { clear:both }
 .column, .columns {
 	position: relative;
 	padding-left: 0.9375rem;

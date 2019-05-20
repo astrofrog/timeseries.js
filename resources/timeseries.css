@@ -145,6 +145,8 @@
 .timeseries menu .menu-panel { padding: 1em; display: none; min-height: calc(100% - 2em); }
 .timeseries menu .menu-panel.on { display: block; }
 .timeseries menu .row { margin-bottom: -0.5em; clear: both; }
+.timeseries menu .row:before, .row:after { content:" "; display:table }
+.timeseries menu .row:after { content: ""; clear:both }
 .timeseries menu button.icon { line-height: 0px;  }
 .timeseries menu button.icon svg { width: 1em; height: auto; }
 .timeseries menu label { color: white; }
