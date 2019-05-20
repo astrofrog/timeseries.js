@@ -1470,6 +1470,7 @@
 		ctx.strokeStyle = stroke;
 		ctx.lineWidth = (typeof f.strokeWidth==="number" ? f.strokeWidth : 0.8);
 		ctx.lineCap = (f.strokeCap || "square");
+		ctx.lineJoin = "bevel";	// To stop spikes occurring in certain regimes
 		ctx.setLineDash(f.strokeDash ? f.strokeDash : [1,0]);
 		if(f.fontSize) ctx.font = buildFont(f);
 		if(f.baseline) ctx.textBaseline = f.baseline;

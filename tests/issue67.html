@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+</head>
+<body>
+
+	<canvas id="canvas" style="width:600px;height:400px;"></canvas>
+	<p>lineJoin: <button data="bevel">bevel</button> <button data="round">round</button> <button data="mitre">mitre</button></p>
+
+	<script>
+	var canvas = document.getElementById('canvas');
+	var ctx = canvas.getContext('2d');
+	var data = [];
+	var scale = 2;
+
+
+	function redraw(attr){
+		if(!attr) attr = {};
+
+		var wide = canvas.offsetWidth;
+		var tall = canvas.offsetHeight
+		scale = (attr.scale || scale);
+
+		canvas.width = wide*scale;
+		canvas.height = tall*scale;
+		ctx.scale(scale,scale);
+		ctx.clearRect(0,0,wide,tall);
+		ctx.strokeRect(0, 0, wide, tall);
+		n = 2000;
+		xoff = 0;
+
+		ctx.fillStyle = "#000000";
+		ctx.strokeStyle = "#E6007C";
+		ctx.lineWidth = (attr.lineWidth || 5);
+		ctx.lineCap = (attr.lineCap || "round");
+		ctx.lineJoin = (attr.lineJoin || "mitre");
+
+		dx = (attr.xscale || 10)*(wide - 2*xoff)/data.length;
+		dy = (attr.yscale || 0.4)*200;
+
+		ctx.moveTo(xoff,(tall/2) - (Math.log10(data[0][1])-Math.log10(data[0][1]))*dy);
+		start = new Date();
+		for(var i = 0; i < data.length; i++){
+			ctx.lineTo(xoff+dx*i,(tall/2) - (Math.log10(data[i][1])-Math.log10(data[0][1]))*dy);
+		}
+		now = new Date();
+		ctx.stroke();
+		return (now-start);
+	}
+	
+	function test(lineJoin){
+		times = [];
+		if(!lineJoin) lineJoin = "mitre";
+		iter = 20;
+		for(var j = 0; j < iter; j++){
+			times.push(redraw({'scale':2,'xscale':10,'lineJoin':lineJoin}));
+		}
+		times = times.sort(function(a, b) { return a - b; });
+		console.log('Median time for '+lineJoin+': '+times[Math.floor(iter/2)],times);	
+	}
+
+	if(canvas.getContext) {
+		S().ajax("issue67.json",{
+			"dataType": "json",
+			"success": function(d){
+				data = d;
+				t = redraw();
+				console.log('Time: '+t+' ms');
+			},
+			"error": function(e,attr){
+				console.error('Unable to load '+attr.url);
+			}
+		});
+		S('button').on('click',function(e){
+			t = redraw({'lineJoin':e.currentTarget.getAttribute('data')});
+			console.log('Time: '+t+' ms');
+		});
+	}
+	</script>
+</body>
+</html>
