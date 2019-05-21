@@ -1548,7 +1548,6 @@
 			if(!this.coordinates){
 				this.canvas.canvasholder.append('<div class="'+cls+'" style="position:absolute;display:none;"></div>');
 				this.coordinates = this.canvas.container.find('.graph-tooltip');
-				this.coordinates.on('mousemove',function(){ disableScroll(); });
 			}
 			var html = "";
 
