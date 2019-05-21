@@ -90,6 +90,15 @@ def open_in_chrome(path):
     return driver
 
 
+SCROLL_SCRIPT = """
+if(typeof scrolling === 'undefined' || scrolling != true) {
+    scrolling = true;
+    console.log("Scrolling");
+    window.scrollBy({top: document.body.scrollHeight, left: 0, behavior: 'smooth'});
+    scrolling = false;
+}
+"""
+
 def wait_for_finished(driver, timeout=60, number=1):
     logs = []
     start = time.time()
@@ -98,8 +107,15 @@ def wait_for_finished(driver, timeout=60, number=1):
         for entry in driver.get_log('browser'):
             if 'Finished processing' in entry['message']:
                 finished += 1
-            elif 'timeseries.js' not in entry['message']:
+            elif 'timeseries.js' not in entry['message'] and 'Scrolling' not in entry['message']:
                 logs.append(entry)
+            if 'SEVERE' in entry['level']:
+                raise Exception(entry['message'])
         if finished == number:
             return logs
+        elif finished > number:
+            raise ValueError("Too many figures were finalized")
+        driver.execute_script(SCROLL_SCRIPT)
+        time.sleep(0.5)
+
     raise TimeoutError('Timed out while waiting for all plots to load')
