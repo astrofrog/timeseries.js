@@ -7,7 +7,7 @@
 		"type": "fit",
 		"resize": false
 	},
-	"title": "By time of observation",
+	"title": "Signatures by country",
 	"description": "The default view of the data with points ordered by time",
 	"_extend": {
 		"scales": [{
@@ -18,9 +18,36 @@
 	},
 	"_views": [{
 		"name": "default",
-		"title": "Revoke Article 50 petition signatures",
+		"title": "Signatures by country",
 		"description": "Signatures by country",
-		"markers": [{"name":"GB","visible":true},{"name":"AU","visible":true},{"name":"FR","visible":true},{"name":"US","visible":true},{"name":"ES","visible":true}]
+		"scales": [{
+			"name": "xscale",
+			"type": "utc",
+			"range": "width",
+			"padding": 36,
+			"domain": {"data": "bycountry", "field": "Date"}
+		},{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"padding": 36,
+			"zero": false,
+			"domain": {"data": "bycountry", "fields": ["FR","AU","US","ES"]}
+		}],
+		"markers": [{"name":"GB","visible":false},{"name":"AU","visible":true},{"name":"FR","visible":true},{"name":"US","visible":true},{"name":"ES","visible":true}]
+	},{
+		"name": "plusuk",
+		"title": "Signatures by country (including UK)",
+		"description": "Signatures by country (including UK)",
+		"markers": [{"name":"GB","visible":true},{"name":"AU","visible":true},{"name":"FR","visible":true},{"name":"US","visible":true},{"name":"ES","visible":true}],
+		"scales": [{
+			"name": "yscale",
+			"type": "linear",
+			"range": "height",
+			"padding": 36,
+			"zero": false,
+			"domain": {"data": "bycountry", "fields": ["FR","AU","US","ES","GB"]}
+		}]
 	}],
 	"data": [{
 		"name": "bycountry",
@@ -48,7 +75,7 @@
 		"range": "height",
 		"padding": 36,
 		"zero": false,
-		"domain": {"data": "bycountry", "fields": ["FR","AU","US"]}
+		"domain": {"data": "bycountry", "fields": ["FR","AU","US","ES"]}
 	}],
 	"axes": [{
 		"orient": "bottom",
