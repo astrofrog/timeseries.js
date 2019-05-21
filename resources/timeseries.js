@@ -1,7 +1,7 @@
 /*
 	AAS Time Series graphing library
 	Written by Stuart Lowe (Aperio Software)
-	
+
 	REQUIRES:
 		stuquery.js
 		graph.js
@@ -34,7 +34,7 @@
 		this.callback = "";
 		this.scroll = {};
 		this.log = new Logger({'id':'TimeSeries','logging':(location.search.indexOf('logging=true')>0),'logtime':(location.search.indexOf('logtime=true')>0)});
-		
+
 		// Work out the file path to this code to use for further resources
 		var scripts = document.getElementsByTagName('script');
 		var path = scripts[scripts.length-1].src.split('?')[0];
@@ -50,11 +50,11 @@
 		 * @param {function} fn - a callback function for once we finish loading
 		 */
 		this.loadFromDataFile = function(f,attr,fn){
-		
+
 			this.log.message('loadFromDataFile',f,attr,fn);
-			
+
 			attr.file = f;
-			
+
 			if(!this.load.data.files[f]){
 				this.log.time('loadFromDataFile '+f);
 				this.load.data.files[f] = {'loaded':false,'callbacks':[]};
@@ -71,7 +71,7 @@
 					"file": f,
 					"id": this.load.data.files[f].id,
 					"success": function(d,attr){
-						
+
 						// Remove extra newlines at the end
 						d = d.replace(/[\n\r]$/,"");
 						var cb = this.load.data.files[attr.file].callbacks;
@@ -304,7 +304,7 @@
 		if(d.width) this.options.width = d.width;
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
-	
+
 		// Work out axes
 		if(d.axes){
 			for(var a = 0; a < d.axes.length; a++){
@@ -341,8 +341,8 @@
 			return this;
 		}
 		this.el = e;
-		
-		// If the element has loading="lazy" we will wait until 
+
+		// If the element has loading="lazy" we will wait until
 		// it is nearly on-screen before initializing it.
 		if(e.getAttribute('loading')=="lazy"){
 			// Function to report if the element is on the screen or not
@@ -424,7 +424,7 @@
 			if(!this.json._views) this.json._views = [];
 
 
-			// Add some default name fields if they aren't provided			
+			// Add some default name fields if they aren't provided
 			ii = 0;
 			for(i = 0; i < this.json.marks.length ; i++){
 				// Create a name for this mark if one hasn't been given
@@ -521,7 +521,7 @@
 		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
 		str += '</div></div>';
 		el.addClass('timeseries').append(str);
-		
+
 		_obj = this;
 
 		// Build the menu
@@ -534,7 +534,7 @@
 		return this;
 	};
 
-	/** 
+	/**
 	 * @desc Update a message that sits on top of the graph
 	 * @param {string} id - the CSS ID to use for the message
 	 * @param {string} msg - the message to display
@@ -647,7 +647,7 @@
 		this.log.time('loadDatasets');
 		if(!data) return this;
 		this.updateMessage('main','Loading data...');
-		
+
 		if(data.length==0){
 			S(this.el).find('.loader').html('&#9888; No data defined');
 			return this;
@@ -756,7 +756,7 @@
 					for(i = 0; i < keyitems[key].length; i++){
 						if(["symbol","rect","line","rule","text","area"].indexOf(d.type) >= 0) draw = true;
 					}
-			
+
 					// Create a canvas for each key item if we need to
 					if(draw && k.length==1){
 						styles = window.getComputedStyle(k[0]);
@@ -914,7 +914,7 @@
 							if(typeof view.scales[s].type!=="undefined") o[axis].type = view.scales[s].type;
 							if(typeof view.scales[s].padding!=="undefined") o[axis].padding = view.scales[s].padding;
 						}
-						
+
 						if(view.scales[s].range || j._views[0].scales[s].range){
 							o[axis].range = clone(view.scales[s].range || j._views[0].scales[s].range);
 						}
@@ -934,7 +934,7 @@
 			}
 		}
 		this._view = view;
-		
+
 		// Set the options
 		g = this.graph;
 		g.setOptions(o);
@@ -955,12 +955,12 @@
 		}else{
 			this.log.warning('No markers provided for view.'+(view.marks ? ' You may have accidentally used "marks" as the key.':''));
 		}
-		
+
 		this.updateLayerMenu();
 
 		// Update the Options menu
 		this.updateOptionsMenu();
-	
+
 		// Update the DOM to show which is selected
 		el = g.canvas.container.find('.views');
 		lis = el.find('li');
@@ -970,7 +970,7 @@
 			if(i==m) li.addClass('selected').find('input').attr('checked','checked');
 			else li.removeClass('selected').find('input').attr('checked','');
 		}
-		
+
 		// Update the graph data
 		g.updateData(attr);
 
@@ -1003,7 +1003,7 @@
 		}
 		this.json._views[active].active = true;
 		for(i = 0; i < this.json._views.length; i++){
-	
+
 			// Build the ID for this view
 			id = S(this.el).attr('id')+'-view-'+i;
 			// Check if we've already added it
@@ -1177,7 +1177,7 @@
 			}
 			return d;
 		}
-		
+
 		function addMarks(me,m,mark,attr){
 			var id = "";
 			var exists = true;
@@ -1203,7 +1203,7 @@
 				else if(mark.type == "rule") dataset.rule = {show:true};
 				else if(mark.type == "area") dataset.area = {show:true};
 				else if(mark.type == "text") dataset.text = {show:true};
-				
+
 				if(me.datasets[id]){
 					dataset.data = clone(me.datasets[id].json);
 					dataset.parse = me.datasets[id].parse;
@@ -1234,7 +1234,7 @@
 					// Now we add this mark-based dataset
 					me.graph.addMarks(dataset,m,mark,attr);
 					if(me.datasets[id]) me.datasets[id].added = true;
-					
+
 				}else{
 					me.log.message('No dataset built for '+id,mark);
 				}
@@ -1327,6 +1327,9 @@
 
 			// CALLBACK
 			if(typeof this.callback==="function") this.callback.call(this);
+
+      this.log.info('Finished processing '+this.el.getAttribute('id'));
+
 		}
 
 		// If we haven't been updating the data for the graph we need to do that now
@@ -1370,7 +1373,7 @@
 				document.body.appendChild(dl);
 			}
 			dl.click();
-		
+
 		}
 
 		if(type == "vega" || type == "vegaeditor"){
@@ -1473,7 +1476,7 @@
 		}
 		S(this.el).find('.loader').append('<br />'+extra+'');
 
-		return this;	
+		return this;
 	};
 
 	/**
@@ -1721,5 +1724,3 @@
 
 })(window || this);
 var a,b;
-
-
