@@ -345,16 +345,6 @@
 		// If the element has loading="lazy" we will wait until
 		// it is nearly on-screen before initializing it.
 		if(e.getAttribute('loading')=="lazy"){
-			// Function to report if the element is on the screen or not
-			function onscreen(e){
-				var top = 0,left = 0,el = e;
-				do {
-					top += el.offsetTop  || 0;
-					left += el.offsetLeft || 0;
-					el = el.offsetParent;
-				} while(el);
-				return (window.scrollY+window.innerHeight+20 > top && window.scrollY < top+e.offsetHeight);
-			}
 			if(!onscreen(e)){
 				TimeSeries.scroll[this.attr.index] = {'data':{'me':this,'el':e,'callback':callback,'i':this.attr.index},'callback':function(e){
 					if(onscreen(e.data.el)){
@@ -1718,6 +1708,17 @@
 			return new Date();
 		};
 		return this;
+	}
+
+	// Function to report if the element is on the screen or not
+	function onscreen(e){
+		var top = 0,left = 0,el = e;
+		do {
+			top += el.offsetTop  || 0;
+			left += el.offsetLeft || 0;
+			el = el.offsetParent;
+		} while(el);
+		return (window.scrollY+window.innerHeight+20 > top && window.scrollY < top+e.offsetHeight);
 	}
 
 	root.TimeSeries = TimeSeries;

@@ -657,7 +657,6 @@
 		}).on("mousemove",{me:this},function(ev){
 			var event,g,x,y,d,t,i,ii,a,m,ds;
 			event = ev.event.originalEvent;
-			disableScroll();
 			if(!event) return;
 			g = ev.data.me;	// The graph object
 			if(g.updating) return;
@@ -764,6 +763,7 @@
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
 			var oe,g,c,co,f,s;
+			disableScroll();
 			oe = ev.event.originalEvent;
 			g = ev.data.me;
 			if(g.timeout.wheel) clearTimeout(g.timeout.wheel);
@@ -793,6 +793,7 @@
 					this.trigger('wheelstop',{event:ev.event});
 				}
 			});
+			enableScroll();
 		});
 
 		// Extend the options with those provided by the user
@@ -1772,7 +1773,7 @@
 			this[a].showAsDate = false;
 
 			t_inc = Num(this[a].spacing.div).times(this[a].spacing.fract);
-			inc = t_inc.toValue()
+			inc = t_inc.toValue();
 			t_min = Num(mn).div(inc).floor().times(inc).toValue();
 			t_max = Num(mx).div(inc).ceil().times(inc).toValue();
 			this[a].precisionlabel = Math.abs(Math.floor(Math.log10(inc)));
@@ -3370,6 +3371,12 @@
 	}
 
 	/**
+	 * @desc Get the width of the scroll bar
+	 */
+	var scrollbarwidth = 0;
+	function getScrollbarWidth(){ scrollbarwidth = window.outerWidth - S('body')[0].offsetWidth; return scrollbarwidth; }
+
+	/**
 	 * @desc Prevent scrolling on mouse wheel events
 	 */
 	function preventDefault(e) {
@@ -3381,21 +3388,24 @@
 	/**
 	 * @desc Disable the scroll event
 	 */
-	function disableScroll() {
+	function disableScroll(){
 		if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
 		window.onwheel = preventDefault; // modern standard
 		window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
 		window.ontouchmove  = preventDefault; // mobile
+		// Get width of the scroll bar
+		if(getScrollbarWidth() > 0) S('body').css({'overflow':'hidden','margin-right':scrollbarwidth+'px'});
 	}
 
 	/**
 	 * @desc Enable the scroll event
 	 */
-	function enableScroll() {
+	function enableScroll(){
 		if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
-		window.onmousewheel = document.onmousewheel = null; 
-		window.onwheel = null; 
-		window.ontouchmove = null;  
+		window.onmousewheel = document.onmousewheel = null;
+		window.onwheel = null;
+		window.ontouchmove = null;
+		if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
 	}
 
 	/**
