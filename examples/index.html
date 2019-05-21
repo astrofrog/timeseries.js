@@ -45,7 +45,7 @@
 					<p>First we embed a screenshot as an <code>img</code> so that a static version exists if interactivity fails. Next we create a <code>TimeSeries</code> Javascript object with some <code>Vega JSON</code> and then initialise it with the container of the <code>img</code> element. The <code>TimeSeries</code> then replaces the contents of the container with an interactive version.</p>
 					<div class="example">
 						<figure>
-							<div id="example1">
+							<div id="example1" loading="lazy">
 								<img src="data/OB110462-simple-big.png" />
 							</div>
 							<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Orange points show data from the Danish 1.54m telescope. The dashed line shows a model of the event. The timeseries is created from inline JSON.</figcaption>
@@ -184,7 +184,7 @@
 					<p>The same as <a href="#ex1">Example 1</a> but we load the data from external CSV files.</p>
 					<div class="example">
 						<figure>
-							<div id="example2">
+							<div id="example2" loading="lazy">
 								<img src="data/OB110462-simple-big.png" />
 							</div>
 							<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Orange points show data from the Danish 1.54m telescope. The dashed line shows a model of the event. The timeseries is created from inline JSON.</figcaption>
@@ -318,7 +318,7 @@
 					<p>This example behaves in a similar way to the one above except that we load the <code>Vega JSON</code> from a separate file. The <code>fit:true</code> attribute tells <code>TimeSeries</code> to use the existing size of the element in the HTML; over-riding the size specified in the <code>JSON</code> file.</p>
 					<div class="example">
 						<figure>
-							<div id="example3">
+							<div id="example3" loading="lazy">
 								<img src="data/OB110462-simple2.png" style="width:500px;height:250px;" />
 							</div>
 							<figcaption>An example using JSON loaded from a file</figcaption>
@@ -337,7 +337,7 @@
 					<p>This example is identical to the one above except that the container has a size specified in CSS and we inherit that using the <code>fit:true</code> option rather than use the width and height set in the <code>JSON</code>.</p>
 					<div class="example">
 						<figure>
-							<div id="example4" style="width:100%;height:300px">
+							<div id="example4" loading="lazy" style="width:100%;height:300px">
 								<img src="data/OB110462-simple.png" />
 							</div>
 							<figcaption>An example using JSON loaded from a file</figcaption>
@@ -356,7 +356,7 @@
 					<p>This example shows the same timeseries as the previous example but it is non-interactive by default. We add a CSS class to it and a Javascript event so that the end-user can choose to initialize it. This can help reduce the amount of processing done on page load if there are multiple timeseries on the page.</p>
 					<div class="example">
 						<figure>
-							<div id="example5" class="toload">
+							<div id="example5" loading="lazy" class="toload">
 								<img src="data/OB110462-simple.png" style="width:500px;height:250px;" />
 							</div>
 							<figcaption>An example using JSON loaded from a file</figcaption>
@@ -394,7 +394,7 @@
 					<p>A more complicated example with multiple series all in different <code>CSV</code> files.</p>
 					<div class="example">
 						<figure>
-							<div id="example6" class="toload">
+							<div id="example6" loading="lazy" class="toload">
 								<img src="data/OB110462.png" style="width:800px;height:450px;" />
 							</div>
 							<figcaption>This plot represents observations of a gravitational <a href="http://lcogt.net/book-page/gravitational-microlensing">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="http://robonet.lcogt.net/">ROBONET</a> collaboration.</figcaption>
@@ -435,7 +435,7 @@
 					<p>This example uses a different dataset. Once again we delay loading so start with a static image. This time we use the <code>mouseover</code> event to prompt interaction. In this example we style the tooltips using a CSS class (<code>aas-theme</code>) provided in the Javascript set-up.</p>
 					<div class="example">
 						<figure>
-							<div id="example7">
+							<div id="example7" loading="lazy">
 								<img src="data/example7.png" style="width:500px;height:350px;" />
 							</div>
 							<figcaption>An example using JSON loaded from a file</figcaption>

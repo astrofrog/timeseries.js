@@ -16,6 +16,7 @@
 	 */
 	function TimeSeriesMaster(){
 		this.version = "0.0.19";
+		this.length = 0;
 		/**
 		 * @desc Create a new timeseries object
 		 * @param {boolean} opt.logging - do we log messages to the console?
@@ -25,6 +26,8 @@
 			if(!opt) opt = {};
 			if(typeof opt.logging!=="boolean") opt.logging = this.log.logging;
 			if(typeof opt.logtime!=="boolean") opt.logtime = this.log.logtime;
+			opt.index = this.length;
+			this.length++;
 			return new TS(json,opt);
 		};
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
@@ -353,11 +356,11 @@
 				return (window.scrollY+window.innerHeight+20 > top && window.scrollY < top+e.offsetHeight);
 			}
 			if(!onscreen(e)){
-				TimeSeries.scroll[e] = {'data':{'me':this,'el':e,'callback':callback},'callback':function(e){
+				TimeSeries.scroll[this.attr.index] = {'data':{'me':this,'el':e,'callback':callback,'i':this.attr.index},'callback':function(e){
 					if(onscreen(e.data.el)){
 						e.data.me.initializing = false;
 						// Remove the event so we don't trigger it again
-						delete this.scroll[e.data.el];
+						delete this.scroll[e.data.i];
 						// Now we can call the initialize function
 						e.data.me.initialize(e.data.el,e.data.callback);
 					}
