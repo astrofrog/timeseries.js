@@ -15,7 +15,7 @@
 	 * @desc Main object to coordinate data loading
 	 */
 	function TimeSeriesMaster(){
-		this.version = "0.0.18";
+		this.version = "0.0.19";
 		/**
 		 * @desc Create a new timeseries object
 		 * @param {boolean} opt.logging - do we log messages to the console?
@@ -29,6 +29,7 @@
 		};
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
 		this.callback = "";
+		this.scroll = {};
 		this.log = new Logger({'id':'TimeSeries','logging':(location.search.indexOf('logging=true')>0),'logtime':(location.search.indexOf('logtime=true')>0)});
 		
 		// Work out the file path to this code to use for further resources
@@ -100,6 +101,18 @@
 				}
 			}
 		};
+
+		S(document).on('scroll',{me:this},function(e){
+			var self = e.data.me, scroll = self.scroll;
+			if(scroll){
+				for(var id in scroll){
+					if(typeof scroll[id].callback==="function"){
+						e.data = (typeof scroll[id].data==="object") ? scroll[id].data : {};
+						scroll[id].callback.call((e.data['this'] || self), e);
+					}
+				}
+			}
+		});
 
 		return this;
 	}
@@ -308,7 +321,11 @@
 	 */
 	TS.prototype.initialize = function(e,callback){
 
+		// Only starting initializing once
+		if(this.initializing) return this;
+
 		this.log.message('initialize',e);
+		this.initializing = true;
 
 		// Store the callback function
 		if(typeof callback==="function") this.callback = callback;
@@ -321,6 +338,33 @@
 			return this;
 		}
 		this.el = e;
+		
+		// If the element has loading="lazy" we will wait until 
+		// it is nearly on-screen before initializing it.
+		if(e.getAttribute('loading')=="lazy"){
+			// Function to report if the element is on the screen or not
+			function onscreen(e){
+				var top = 0,left = 0,el = e;
+				do {
+					top += el.offsetTop  || 0;
+					left += el.offsetLeft || 0;
+					el = el.offsetParent;
+				} while(el);
+				return (window.scrollY+window.innerHeight+20 > top && window.scrollY < top+e.offsetHeight);
+			}
+			if(!onscreen(e)){
+				TimeSeries.scroll[e] = {'data':{'me':this,'el':e,'callback':callback},'callback':function(e){
+					if(onscreen(e.data.el)){
+						e.data.me.initializing = false;
+						// Remove the event so we don't trigger it again
+						delete this.scroll[e.data.el];
+						// Now we can call the initialize function
+						e.data.me.initialize(e.data.el,e.data.callback);
+					}
+				}};
+				return this;
+			}
+		}
 
 		var f = el.attr('vega-src');
 		if(f) this.file = f;

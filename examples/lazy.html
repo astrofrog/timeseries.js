@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset='utf-8' />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta name="description" content="AAS Time Series library." />
+	<title>timeseries.js library</title>
+	<link rel="stylesheet" href="../resources/aas.css">
+	<link rel="stylesheet" href="../resources/style.css">
+	<link rel="stylesheet" href="../resources/timeseries.css">
+	<!-- Big.js -->
+	<script language="javascript" type="text/javascript" src="../resources/big.min.js"></script>
+	<!-- StuQuery for DOM manipulation -->
+	<script language="javascript" type="text/javascript" src="../resources/stuquery.js"></script>
+	<!-- Graphing library -->
+	<script language="javascript" type="text/javascript" src="../resources/graph.js"></script>
+	<!-- TimeSeries library -->
+	<script language="javascript" type="text/javascript" src="../resources/timeseries.js"></script>
+	<!-- Syntax highlighting -->
+	<link rel="stylesheet" href="../resources/highlight/highlight.css">
+	<script type="text/javascript" src="../resources/highlight/highlight.pack.js"></script>
+</head>
+<body>
+
+	<div class="msg"></div>
+	<!-- HEADER -->
+	<header>
+		<div class="row">
+			<div class="padded">
+				<a id="forkme_banner" href="https://github.com/astrofrog/aas-time-series-js">Fork Me on GitHub</a>
+				<h1 id="project_title">timeseries.js library</h1>
+				<h2>Example with lazy loading</h2>
+				<p>Last updated: <span class="lastupdated">2019</span></p>
+			</div>
+		</div>
+	</header>
+
+	<div class="row">
+		<p>Perhaps your web page contains multiple <code>timeseries</code> objects. Each might load multiple datasets. The cumulative affect can add a lot of processing on initial page load. Many of the timeseries might be offscreen, requiring a user to scroll before they see them. To avoid slow pages, we can delay the initialization step until the timeseries gets close to being on screen.</p>
+		<p>We take inspiration from Chrome's <a href="https://addyosmani.com/blog/lazy-loading/">Lazy Loading</a> for images and iframes and apply it to our elements. This will delay the initialize step.</p>
+		<div style="height: 500px;">Scroll down to test.</div>
+	</div>
+
+	<!-- MAIN CONTENT -->
+	<div class="row">
+		<div class="example">
+			<figure>
+				<div id="example1" loading="lazy">
+					<img src="data/lightcurve.png" />
+				</div>
+				<figcaption>This plot represents observations of a gravitational <a href="https://lco.global/spacebook/gravitational-microlensing/">microlensing</a> event. Each data series shows the variation in brightness of the target star as measured by different telescopes in the <a href="https://en.wikipedia.org/wiki/RoboNet">ROBONET</a> collaboration.</figcaption>
+			</figure>
+			<!-- Javascript -->
+			<script>
+			var ex1;
+			S(document).ready(function(){
+
+				ex1 = TimeSeries.create("data/lightcurve2.json");
+				ex1.initialize(document.getElementById('example1'));
+
+			});
+			</script>
+		</div>
+	</div>
+
+	<!-- FOOTER	-->
+	<div class="row">
+		<footer>
+		&copy; <span class="lastupdatedyear">2018</span> Aperio Software / AAS
+		</footer>
+	</div>
+
+	<script language="javascript" type="text/javascript" src="../resources/formatexamples.js"></script>
+
+</body>
+</html>
