@@ -2359,7 +2359,7 @@
 					}
 
 					// Draw sub grid for log scale
-					if(axis.log && show.grid){
+					if(axis.log && show.ticks){
 						ctx.beginPath();
 						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
 						ctx.lineWidth = (this.options[a].tickWidth || 0.5);
@@ -3091,6 +3091,7 @@
 			l(w*1.5,0);
 		}
 		ctx.fill();
+		if(p.format.strokeWidth > 0) ctx.stroke();
 
 		o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
 		if(attr.update) this.addRectToLookup(o);
