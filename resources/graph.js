@@ -554,7 +554,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.2";
+		this.version = "0.3.3";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -791,9 +791,10 @@
 				'callback': function(){
 					this.timeout.wheel = undefined;
 					this.trigger('wheelstop',{event:ev.event});
+					enableScroll();
 				}
 			});
-			enableScroll();
+			
 		});
 
 		// Extend the options with those provided by the user
@@ -1552,29 +1553,6 @@
 			var html = "";
 
 			if(topmark){
-				// Update tooltip styles
-				/*
-				this.coordinates.attr('css','');
-
-				// Clear any extra rules we added to the tooltip arrow
-				var tta = ".graph-tooltip:after";
-				if(!this.style){
-					// Create a new stylesheet
-					this.style = document.createElement("style");
-					// WebKit hack
-					this.style.appendChild(document.createTextNode(""));
-					// Add the <style> element to the page
-					document.head.appendChild(this.style);
-				}else{
-					this.style.sheet.deleteRule(tta);
-				}
-				if(typeof series.css=="object"){
-					// Set the styles
-					this.coordinates.css(series.css);
-
-					// Add a rule for the tooltip arrow
-					if(series.css['background-color']) this.style.sheet.insertRule(tta+" { border-color: "+series.css['background-color']+"!important; }");
-				}*/
 	
 				// Build the hovertext output
 				val = {
@@ -2162,7 +2140,7 @@
 	 * @desc Draw the axes and grid lines for the graph
 	 */
 	Graph.prototype.drawAxes = function(){
-		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,fshalf,di;
+		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,fshalf,di,include;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -2307,7 +2285,6 @@
 
 				for(var ii = 0; ii < axis.ticks.length; ii++) {
 					i = axis.ticks[ii].value;
-					// Investigate here console.log(d,axis.ticks[ii],this.getPos(d,i))
 					p = this.getPos(d,i);
 					if(!p || !isFinite(p)) continue;
 					// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -2398,6 +2375,12 @@
 									}else if(d=="y"){
 										ctx.moveTo(x1,p);
 										ctx.lineTo(x1-tw,p);
+										di = Num(this.subgrid[j]).times(i);
+										include = false;
+										// Only show even sub grid labels
+										if(axis.logrange < 2 && axis.logrange >= 1 && di.o.c[0]%2==0) include = true;
+										if(axis.logrange < 1) include = true;
+										if(include) ctx.fillText(di,(x1 - 3 - tw),p);
 									}
 								}
 							}
