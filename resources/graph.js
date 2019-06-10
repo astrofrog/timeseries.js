@@ -210,7 +210,9 @@
 		if (style && style.length === 0) style = null;
 		return style;
 	}
+
 	// End of helper functions
+
 
 	/**
 	 * @desc Define the class to deal with <code>canvas</code>.
@@ -1029,7 +1031,7 @@
 			if(typeof this.marks[idx].format.size!=="number") this.marks[idx].format.size = 4;
 			if(!this.marks[idx].format.stroke) this.marks[idx].format.stroke = this.colours[0];
 			if(!this.marks[idx].format.strokeDash) this.marks[idx].format.strokeDash = [1,0];
-			if(typeof this.marks[idx].format.strokeWidth!=="number") this.marks[idx].format.strokeWidth = 1;
+			if(typeof this.marks[idx].format.strokeWidth!=="number") this.marks[idx].format.strokeWidth = 0;
 			if(!this.marks[idx].format.fill) this.marks[idx].format.fill = this.colours[0];
 
 			update = (typeof attr.progress==="function");
@@ -1039,7 +1041,7 @@
 			function processChunk(attr){
 				var t,max,chk;
 				chk = 10000;
-				max = Math.min(attr.marks.data.length,i+chk);
+				max = Math.min(attr.marks.data.length,attr.i+chk);
 				for(i = attr.i; i < max; i++){
 					// If we have sent an update function we'll process it as we go
 					if(update && i > chk && i % Math.round(l/100) == 0) attr.attr.progress.call((attr.attr['this']||this),{'mark':original,'i':i,'total':attr.total});
@@ -1650,11 +1652,11 @@
 
 		// Sort out what to do for log scales
 		if(this[a].log){
-			this[a].ticks.min = this[a].logmin+0;
-			this[a].ticks.max = this[a].logmax+0;
+			this[a].ticks.min = this[a].min;
+			this[a].ticks.max = this[a].max;
 			this.setInc(a,1);
 			this[a].range = this[a].max-this[a].min;
-			this[a].ticks.range = this[a].logrange+0;
+			this[a].ticks.range = this[a].max-this[a].min;
 			this.makeTicks(a);
 			return this;
 		}
@@ -1681,7 +1683,6 @@
 		
 		// Set the label scaling
 		var scale = (a=="x" && this[a].ticks.props.scale) ? this[a].ticks.props.scale : 1;
-
 
 		// Calculate reasonable grid line spacings
 		// Dates are in seconds
@@ -1763,7 +1764,7 @@
 			// Scale the range before we work out the spacings
 
 			t_inc = defaultSpacing(Num(mn).div(scale).toValue(),Num(mx).div(scale).toValue(),(this[a].isDate ? 3 : 5));
-			t_inc = Num(t_inc).times(scale).toValue();
+			t_inc = Num(t_inc).times(scale);
 
 			// Round to nearest t_inc (because of precision issues)
 			t_min = Num(mn).div(t_inc).round(0,mn < 0 ? 3:0).times(t_inc).toValue();
@@ -1771,16 +1772,15 @@
 
 			// Determine the number of decimal places to show
 			// Quicker to do it here than in makeTicks.
-			this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc)));
+			this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_inc.toValue())));
 			if(this[a].precisionlabel==0 && Math.abs(t_min) > 10) this[a].precisionlabel = Math.floor(Math.log10(Math.abs(t_min)));
-
 			// If we are dealing with dates we set the precision that way
 			if(this[a].isDate){
-				var p = Math.log10(t_inc);
-				this[a].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc))) : 0;
-				this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc)));
+				var p = Math.log10(t_inc.toValue());
+				this[a].precisionlabeldp = (p < 0) ? Math.ceil(Math.abs(Math.log10(t_inc.toValue()))) : 0;
+				this[a].precisionlabel = Math.ceil(Math.abs(Math.log10(t_max)-Math.log10(t_inc.toValue())));
 			}
-			t_inc = Num(t_inc);
+			//t_inc = Num(t_inc);
 
 		}
 
@@ -1825,27 +1825,29 @@
 	Graph.prototype.makeTicks = function(a){
 		var v,mn,mx,l,sci,precision,fmt,i,d,vmx,calcval;
 		this.log.time('makeTicks');
+
 		// Get the min/max tick marks
 		mn = this[a].ticks.min;
 		mx = this[a].ticks.max;
-	
-		if(this[a].log){
-			mn = Math.floor(mn);
-			mx = Math.ceil(mx);
-		}
 
+		// If the range is negative we cowardly quit
+		if(mn > mx) return this;
+	
+		// If the min or max are not numbers we quit
 		if(isNaN(mn) || isNaN(mx)) return this;
 
 		mn = Num(mn);
 		mx = Num(mx);
-
-
-		this[a].ticks.length = 0;
-		vmx = mx.plus(this[a].ticks.inc.times(0.2)).toValue();
-		for(v = mn, i = 0; v.toValue() <= vmx; v = v.plus(this[a].ticks.inc), i++){
-			if(this[a].showAsDate) this[a].ticks[i] = {'value':roundDate(v,{'range':this[a].range,'unit':this[a].spacing.name,'n':this[a].spacing.fract,'inc':this[a].ticks.inc}),'label':''};
-			else this[a].ticks[i] = {'value':v,'label':''};
-			this[a].ticks.length++;
+		if(this[a].log){
+			this[a].ticks = logTicks(mn.toValue(),mx.toValue());
+		}else{
+			this[a].ticks.length = 0;
+			vmx = mx.plus(this[a].ticks.inc.times(0.2)).toValue();
+			for(v = mn, i = 0; v.toValue() <= vmx; v = v.plus(this[a].ticks.inc), i++){
+				if(this[a].showAsDate) this[a].ticks[i] = {'value':roundDate(v,{'range':this[a].range,'unit':this[a].spacing.name,'n':this[a].spacing.fract,'inc':this[a].ticks.inc}),'label':''};
+				else this[a].ticks[i] = {'value':v,'label':''};
+				this[a].ticks.length++;
+			}
 		}
 
 		if(this[a].ticks.length == 0){
@@ -1918,24 +1920,21 @@
 		if(this[a].log){
 			// Format labels for log scale
 			for(i = 0; i < this[a].ticks.length; i++){
-				v = Math.pow(10,this[a].ticks[i].value.toValue());
-				sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo);
-				fmt = {};
-				if(sci){
-					precision = (""+v).length;
-					fmt.normal = ""+v;
-					fmt.exp = tidy(v.toExponential(precision));
-				}else{
-					precision = Math.abs(this[a].ticks[i].value);
-					if(this[a].ticks.inc.toValue() > 1) fmt.round = ""+Math.round(v);
-					else fmt.fixed = (Math.abs(v/this[a].range) < 1e-12) ? "0" : v.toFixed(precision);
-				}
+				if(this[a].ticks[i].label){
+					v = this[a].ticks[i].value.toValue();
+					sci = (Math.abs(v) > this.sci_hi || Math.abs(v) < this.sci_lo);
+					fmt = {'existing':this[a].ticks[i].label};
+					if(sci){
+						precision = (""+v).length;
+						fmt.normal = ""+v;
+						fmt.exp = tidy(v.toExponential());
+					}
 
-				// Set the label to whichever is shortest
-				this[a].ticks[i].label = shortestFormat(fmt);
+					// Set the label to whichever is shortest
+					this[a].ticks[i].label = shortestFormat(fmt);
+				}
 			}
 		}else{
-
 			// Format labels for linear scale
 			for(i = 0; i < this[a].ticks.length; i++){
 				v = this[a].ticks[i].value;
@@ -1989,9 +1988,9 @@
 		// Fix precision issues
 		if(this[a].log){
 			// Update all the values for the log scale
-			for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].value = Math.pow(10,this[a].ticks[i].value);
-			this[a].ticks.min = G.log10(this[a].ticks[0].value);
-			this[a].ticks.max = G.log10(this[a].ticks[this[a].ticks.length-1].value);
+			//for(i = 0; i < this[a].ticks.length; i++) this[a].ticks[i].value = Math.pow(10,this[a].ticks[i].value);
+			this[a].ticks.min = this[a].ticks[0].value;
+			this[a].ticks.max = this[a].ticks[this[a].ticks.length-1].value;
 		}else{
 			this[a].ticks.min = this[a].ticks[0].value;
 			this[a].ticks.max = this[a].ticks[this[a].ticks.length-1].value;
@@ -2093,43 +2092,17 @@
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
 		if(!ok) return 0;
 
-		var fs,mn,mx,ctx,i,maxw,maxdp,maxi,maxe,s;
+		var fs,mn,mx,ctx,i,maxw,s;
 
 		// Set font for labels
 		fs = this.getFontHeight('y','label');
 		maxw = 0;
-		maxdp = 0;
-		maxi = 0;
-		maxe = 0;
 		ctx = this.canvas.ctx;
 		ctx.font = fs+'px '+this.chart.fontfamily;
 
-		mn = this.y.ticks.min;
-		mx = this.y.ticks.max;
-
-		if(this.y.log){
-			mn = Math.ceil(this.y.ticks.min);
-			mx = Math.floor(this.y.ticks.max);
-		}
-
 		if(this.y.ticks){
-			// Chop down the labels so that the length doesn't oscillate when we're adding decimal places
-			// Loop over and find the length of the decimal portion and length of the integer portion 
 			for(i = 0; i < this.y.ticks.length; i++){
-				if(this.y.ticks[i].label.indexOf(".") > 0) maxdp = Math.max(maxdp,this.y.ticks[i].label.replace(/^.*\.([0-9]+).*$/,function(m,p1){ return p1; }).length);
-				if(this.y.ticks[i].label != "0") maxi = Math.max(maxi,this.y.ticks[i].label.replace(/^[\-\+]?([0-9]+).*$/,function(m,p1){ return p1; }).length);
-				if(this.y.ticks[i].label.indexOf("e") > 0) maxe = Math.max(maxi,this.y.ticks[i].label.replace(/.*e([\-\+0-9]+)$/,function(m,p1){ return p1; }).length);
-			}
-			if(maxe > 0){
-				// Calculate the length of the exponential labels
-				if(maxdp == 0) maxdp = 1;
-				maxw = ctx.measureText("1."+(maxdp > 0 ? Array(Math.ceil(maxdp/3)*3).join('1')+'1' : '')+"e+"+Math.floor(Math.log10(this.y.range))).width;
-			}else{
-				// Build a dummy label using the lengths we found
-				var label = '';
-				label += Array(Math.ceil((maxi+maxdp)/3)*3).join('1')+'1';
-				if(maxdp > 0) label += '.';
-				maxw = Math.max(maxw,ctx.measureText(label).width);
+				if(this.y.ticks[i].label) maxw = Math.max(maxw,ctx.measureText(this.y.ticks[i].label).width);
 			}
 		}
 		s = Math.round(fs*1.5);
@@ -2140,7 +2113,7 @@
 	 * @desc Draw the axes and grid lines for the graph
 	 */
 	Graph.prototype.drawAxes = function(){
-		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,fshalf,di,include;
+		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,axis,oldx,str,v,ii;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -2201,7 +2174,7 @@
 						if(this.options[s] && this.options[s].show) show[s] = this.options[s].show;
 					}
 				}
-		
+
 				// Set the tick width
 				tw = 0;
 				if(show.ticks) tw = (this.options[a].tickSize||4);
@@ -2249,41 +2222,43 @@
 				ctx.textAlign = orient[o].textAlign || 'end';
 				ctx.textBaseline = orient[o].textBaseline || 'top';
 
+				o = this.options[a].orient || "left";
+				// Set axis direction
+				d = "x";
+				if(o=="left" || o=="right") d = "y";
+
+				c = this.chart;
+				ctx = this.canvas.ctx;
+
+				// Get axis properties
+				axis = this[d];
+				if(!axis) return this;
+
 				// Set font for labels
 				fs = this.getFontHeight(d,'label');
 				ctx.font = fs+'px '+this.chart.fontfamily;
 				ctx.lineWidth = (this.options.grid.width ? this.options.grid.width : 0.5);
 
-				// Get axis properties
-				var axis = this[d];
+				// Set defaults for each axis
+				x1 = r.xmin;
+				x2 = r.xmax;
+				y1 = r.ymax;
+				y2 = r.ymin;
 
-				if(d=="x"){
-					y1 = orient[o].y1;
-					y2 = orient[o].y2;
-				}
-				if(d=="y"){
-					x1 = orient[o].x1;
-					x2 = orient[o].x2;
-				}
 				// Calculate the number of decimal places for the increment - helps with rounding errors
-				if(this[d].precision){
-					prec = this[d].precision;
-				}else{
+				prec = 0;
+				if(axis.precision) prec = axis.precision;
+				if(axis.ticks.inc){
 					prec = ""+axis.ticks.inc.toValue();
 					prec = prec.length-prec.indexOf('.')-1;
 				}
-				fshalf = Math.ceil(fs/2);
-				var oldx = 0;
-				var str,v;
-		
+				oldx = 0;
+
 				mn = axis.ticks.min;
 				mx = axis.ticks.max;
-				if(axis.log){
-					mn = Math.floor(axis.ticks.min);
-					mx = Math.ceil(axis.ticks.max);
-				}
 
-				for(var ii = 0; ii < axis.ticks.length; ii++) {
+				// Loop over the tick marks
+				for(ii = 0; ii < axis.ticks.length; ii++) {
 					i = axis.ticks[ii].value;
 					p = this.getPos(d,i);
 					if(!p || !isFinite(p)) continue;
@@ -2297,7 +2272,7 @@
 						x2 = p;
 					}
 					v = (typeof i==="object") ? i.toValue() : i;
-					j = (axis.log) ? G.log10(v) : parseFloat(v.toFixed(prec));
+					j = (axis.log) ? v : parseFloat(v.toFixed(prec));
 
 					if(p >= r[d+'min'] && p < r[d+'max']){
 						ctx.beginPath();
@@ -2305,7 +2280,7 @@
 						ctx.fillStyle = (this.options[a].labelColor || this.options.labels.color);
 
 						// Draw tick labels
-						if(show.labels){
+						if(show.labels && axis.ticks[ii].label){
 							if(d=="x"){
 								str = axis.ticks[ii].label;
 								if(!str) str = "";
@@ -2315,34 +2290,34 @@
 								if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
 									ctx.textAlign = 'center';
 									ctx.fillStyle = this.options.labels.color;
-									for(k = 0; k < ds.length ; k++){
-										this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
-									}
+									for(k = 0; k < ds.length ; k++) this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
 									oldx = x1 + (j == axis.ticks.min ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 								}
 							}else if(d=="y"){
-								ctx.textAlign = 'end';
-								if(j==this.y.ticks.max) ctx.textBaseline = 'top';
-								str = axis.ticks[ii].label;
-								ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
+								if(p > 0){
+									ctx.textAlign = 'end';
+									if(p-fs < 0) ctx.textBaseline = 'top';
+									str = axis.ticks[ii].label;
+									ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
+								}
 							}
 						}
 
 						ctx.stroke();
-							
-						// Draw grid lines
+					
+						// Draw grid lines if there is a label
 						ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
-						if(show.grid && j >= axis.ticks.min && j <= axis.ticks.max){
+						if(show.grid && axis.ticks[ii].label && i >= axis.min && i <= axis.max){
 							ctx.beginPath();
 							ctx.lineWidth = (this.options[a].gridWidth || 0.5);
 							ctx.moveTo(x1,y1);
 							ctx.lineTo(x2,y2);
 							ctx.stroke();
 						}
-			
+	
 						// Draw tick marks lines
 						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
-						if(show.ticks && i > axis.min && i < axis.max){
+						if(show.ticks && i >= axis.min && i <= axis.max){
 							ctx.beginPath();
 							ctx.lineWidth = (this.options[a].tickWidth || 0.5);
 							ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
@@ -2357,43 +2332,13 @@
 							ctx.closePath();
 						}
 					}
-
-					// Draw sub grid for log scale
-					if(axis.log && show.ticks){
-						ctx.beginPath();
-						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.2)');
-						ctx.lineWidth = (this.options[a].tickWidth || 0.5);
-						for(j = 0; j < this.subgrid.length ; j++){
-							di = i*this.subgrid[j];
-							if(di < axis.max && di > axis.min){
-								p = this.getPos(d,di);
-								p = (p-Math.round(p) > 0) ? Math.floor(p)+0.5 : Math.ceil(p)-0.5;
-								if(p >= r[d+'min'] && p < r[d+'max']){
-									if(d=="x"){
-										ctx.moveTo(p,y1);
-										ctx.lineTo(p,y1+tw);
-									}else if(d=="y"){
-										ctx.moveTo(x1,p);
-										ctx.lineTo(x1-tw,p);
-										di = Num(this.subgrid[j]).times(i);
-										include = false;
-										// Only show even sub grid labels
-										if(axis.logrange < 2 && axis.logrange >= 1 && di.o.c[0]%2==0) include = true;
-										if(axis.logrange < 1) include = true;
-										if(include) ctx.fillText(di,(x1 - 3 - tw),p);
-									}
-								}
-							}
-						}
-						ctx.stroke();
-						ctx.closePath();
-					}
-				}
+				} // Drawn all the tick marks
+				
+				ctx.lineWidth = 0;
 			}
 		}
 		return this;
 	};
-
 
 	/**
 	 * @desc Reset all the styles for the datasets
@@ -3234,9 +3179,11 @@
 	function defaultSpacing(mn,mx,n){
 
 		var dv,log10_dv,base,frac,options,distance,imin,tmin,i;
+		if(typeof mn==="number") mn = Num(mn);
+		if(typeof mx==="number") mx = Num(mx);
 
 		// Start off by finding the exact spacing
-		dv = Math.abs(mx - mn) / n;
+		dv = mx.minus(mn).div(n);
 
 		// In any given order of magnitude interval, we allow the spacing to be
 		// 1, 2, 5, or 10 (since all divide 10 evenly). We start off by finding the
@@ -3244,7 +3191,7 @@
 		// fractional part (note that for negative values, we consider the base to
 		// be the next value 'down' where down is more negative, so -3.6 would be
 		// split into -4 and 0.4).
-		log10_dv = Math.log10(dv);
+		log10_dv = Math.log10(dv.toValue());
 		base = Math.floor(log10_dv);
 		frac = log10_dv - base;
 
@@ -3263,7 +3210,7 @@
 		}
 
 		// Now determine the actual spacing
-		return Math.pow(10,(base))*options[imin];
+		return Num(Math.pow(10,base)).times(options[imin]).toValue();
 	}
 
 	/**
@@ -3389,6 +3336,52 @@
 		window.onwheel = null;
 		window.ontouchmove = null;
 		if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
+	}
+
+	/**
+	 * @desc Create logarithmic tick marks that span the range
+	 * @param {number} min - the minimum value to include
+	 * @param {number} max - the maximum value to include
+	 */
+	function logTicks(min,max){
+		var mn,mx,val,nvis,major,minor,i,j,ticks,vis;
+		ticks = {'length':0,'min':min,'max':max};
+		if(min > max) return ticks;
+		
+		// Get the log range
+		mn = Math.floor(Math.log10(min));
+		mx = Math.ceil(Math.log10(max));
+
+		// How many major tick marks are visible?
+		nvis = 0;
+		major = [];
+		minor = [];
+
+		// First we make the major tick marks
+		for(i = mn; i <= mx ; i++){
+			val = Num(Math.pow(10,i));
+			vis = (val.gt(min) && val.lt(max));
+			major.push({'value':val,'label':val.toString()});
+			if(vis) nvis++;
+		}
+
+		// Now create the minor tick marks
+		if(nvis < 10){
+			for(i = 0; i < major.length; i++){
+				for(j = 2; j <= 9; j++){
+					val = major[i].value.times(j);
+					vis = (val.gt(min) && val.lt(max));
+					if(vis) minor.push({'value':val,'label':(nvis < 2 ? val.toString() : '')});
+				}
+			}
+			major = major.concat(minor);
+		}
+
+		// Build output
+		ticks.length = major.length;
+		for(i = 0; i < major.length; i++) ticks[''+i] = major[i];
+
+		return ticks;
 	}
 
 	/**
