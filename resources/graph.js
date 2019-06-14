@@ -2092,7 +2092,7 @@
 		var ok = (typeof this.options.yaxis.labels==="boolean") ? this.options.yaxis.labels : (this.options.labels && this.options.labels.show ? this.options.labels.show : false);
 		if(!ok) return 0;
 
-		var fs,mn,mx,ctx,i,maxw,s;
+		var fs,ctx,i,maxw,s;
 
 		// Set font for labels
 		fs = this.getFontHeight('y','label');
@@ -2113,7 +2113,7 @@
 	 * @desc Draw the axes and grid lines for the graph
 	 */
 	Graph.prototype.drawAxes = function(){
-		var tw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,axis,oldx,str,v,ii;
+		var tw,tickw,lw,c,ctx,rot,axes,r,i,j,k,a,o,d,s,p,mn,mx,fs,y1,y2,x1,x2,prec,axis,oldx,str,v,ii;
 		c = this.chart;
 		ctx = this.canvas.ctx;
 		rot = Math.PI/2;
@@ -2260,6 +2260,7 @@
 				// Loop over the tick marks
 				for(ii = 0; ii < axis.ticks.length; ii++) {
 					i = axis.ticks[ii].value;
+					tickw = tw*(axis.ticks[ii].length||1);
 					p = this.getPos(d,i);
 					if(!p || !isFinite(p)) continue;
 					// As <canvas> uses sub-pixel positioning we want to shift the placement 0.5 pixels
@@ -2290,7 +2291,7 @@
 								if(x1+maxw/2 <= c.left+c.width && x1 > oldx && x1-maxw/2 > 0){
 									ctx.textAlign = 'center';
 									ctx.fillStyle = this.options.labels.color;
-									for(k = 0; k < ds.length ; k++) this.drawTextLabel(ds[k], x1,(y1 + 3 + tw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
+									for(k = 0; k < ds.length ; k++) this.drawTextLabel(ds[k], x1,(y1 + 3 + tickw + k*fs), {ctx:ctx, axis:d, format: { fontSize:fs, fontWeight:'normal', 'font':fs+'px '+this.chart.fontfamily, 'align':'center','baseline':(orient[o].textBaseline || 'top')}});
 									oldx = x1 + (j == axis.ticks.min ? maxw : maxw) + 4;	// Add on the label width with a tiny bit of padding
 								}
 							}else if(d=="y"){
@@ -2298,7 +2299,7 @@
 									ctx.textAlign = 'end';
 									if(p-fs < 0) ctx.textBaseline = 'top';
 									str = axis.ticks[ii].label;
-									ctx.fillText(str,(x1 - 3 - tw),(y1).toFixed(1));
+									ctx.fillText(str,(x1 - 3 - tickw),(y1).toFixed(1));
 								}
 							}
 						}
@@ -2323,10 +2324,10 @@
 							ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
 							if(d=="x"){
 								ctx.moveTo(x1,y1);
-								ctx.lineTo(x2,y1+tw);
+								ctx.lineTo(x2,y1+tickw);
 							}else if(d=="y"){
 								ctx.moveTo(x1,y1);
-								ctx.lineTo(x1-tw,y2);				
+								ctx.lineTo(x1-tickw,y2);				
 							}
 							ctx.stroke();
 							ctx.closePath();
@@ -3344,42 +3345,63 @@
 	 * @param {number} max - the maximum value to include
 	 */
 	function logTicks(min,max){
-		var mn,mx,val,nvis,major,minor,i,j,ticks,vis;
+		var mn,mx,val,major,minor,i,j,ticks,vis,inc,n,show,o,r;
 		ticks = {'length':0,'min':min,'max':max};
 		if(min > max) return ticks;
 		
 		// Get the log range
+		r = (Math.log10(max)-Math.log10(min));
 		mn = Math.floor(Math.log10(min));
 		mx = Math.ceil(Math.log10(max));
+		o = Math.ceil(r/(3*6))*3;
 
-		// How many major tick marks are visible?
-		nvis = 0;
+		// The major tick marks
 		major = [];
-		minor = [];
 
 		// First we make the major tick marks
 		for(i = mn; i <= mx ; i++){
 			val = Num(Math.pow(10,i));
-			vis = (val.gt(min) && val.lt(max));
-			major.push({'value':val,'label':val.toString()});
-			if(vis) nvis++;
+			major.push(val);
+			if(val.gt(min) && val.lt(max)){
+				// The tick mark is in the range of the graph
+				show = true;
+				// If the range is big, only show every 'o' orders
+				if(r > 8 && Math.log10(val.toValue())%o!=0) show = false;
+				ticks[''+ticks.length] = {'value':val,'label':(show ? val.toString() : ''),'length':1};
+				ticks.length++;
+			}
 		}
 
 		// Now create the minor tick marks
-		if(nvis < 10){
+		if(ticks.length < 10){
+			minor = [];
+			n = ticks.length;
 			for(i = 0; i < major.length; i++){
+				minor.push(major[i]);
 				for(j = 2; j <= 9; j++){
-					val = major[i].value.times(j);
+					val = major[i].times(j);
 					vis = (val.gt(min) && val.lt(max));
-					if(vis) minor.push({'value':val,'label':(nvis < 2 ? val.toString() : '')});
+					minor.push(val);
+					if(vis){
+						ticks[''+ticks.length] = {'value':val,'label':(n <= 2 ? val.toString() : ''),'length':1};
+						ticks.length++;
+					}
 				}
 			}
-			major = major.concat(minor);
+			if(ticks.length < 20){
+				for(i = 0; i < minor.length; i++){
+					inc = Num(Math.pow(10,Math.floor(Math.log10(minor[i].toValue())-1)));
+					for(j = 1; j <= 9; j++){
+						val = minor[i].plus(inc.times(j));
+						vis = (val.gt(min) && val.lt(max));
+						if(vis){
+							ticks[''+ticks.length] = {'value':val,'label':'','length':0.5};
+							ticks.length++;
+						}
+					}
+				}
+			}
 		}
-
-		// Build output
-		ticks.length = major.length;
-		for(i = 0; i < major.length; i++) ticks[''+i] = major[i];
 
 		return ticks;
 	}
