@@ -1027,17 +1027,18 @@
 			for(s = 0; s < this._view._extend.scales.length; s++){
 				if(this._view._extend.scales[s].name=="xscale"){
 
-					if(!this.xformats[this._view._extend.scales[s].input]){
-						this.log.error('Input format "'+this._view._extend.scales[s].input+'" is not valid.');
-						return this;
-					}
-
 					// Define the general type for the input format: phase/relative/absolute
 					i = "absolute";
 					if(this._view._extend.scales[s].input=="unity") i = "phase";
 					else if(this._view._extend.scales[s].input=="radians") i = "phase";
 					else if(this._view._extend.scales[s].input=="degrees") i = "phase";
 					else if(this._view._extend.scales[s].input=="seconds") i = "relative";
+
+					if(!this.xformats[this._view._extend.scales[s].input] && !this.xformats[i]){
+						this.log.error('Input format "'+this._view._extend.scales[s].input+'" is not valid.');
+						return this;
+					}
+
 
 					if(i=="phase"){
 						// We are showing phases
