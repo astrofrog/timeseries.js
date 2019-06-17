@@ -213,8 +213,7 @@
 		"encode": {
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
-				"y": {"scale": "yscale", "field": "value"},
-				"shape": {"value": "circle"}
+				"y": {"scale": "yscale", "field": "value"}
 			},
 			"update": {
 				"fill": {"value": "#FF7F00"},
