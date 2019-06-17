@@ -1027,10 +1027,14 @@
 			for(s = 0; s < this._view._extend.scales.length; s++){
 				if(this._view._extend.scales[s].name=="xscale"){
 
+					if(!this.xformats[this._view._extend.scales[s].input]){
+						this.log.error('Input format "'+this._view._extend.scales[s].input+'" is not valid.');
+						return this;
+					}
+
 					// Define the general type for the input format: phase/relative/absolute
 					i = "absolute";
-					if(this._view._extend.scales[s].input=="phase") i = "phase";
-					else if(this._view._extend.scales[s].input=="unity") i = "phase";
+					if(this._view._extend.scales[s].input=="unity") i = "phase";
 					else if(this._view._extend.scales[s].input=="radians") i = "phase";
 					else if(this._view._extend.scales[s].input=="degrees") i = "phase";
 					else if(this._view._extend.scales[s].input=="seconds") i = "relative";
@@ -1053,7 +1057,7 @@
 							if(k==f) ok = true;
 						}
 					}
-					if(!ok) this.log.error(f+" is not an available format",this.xformats);
+					if(!ok) this.log.error(f+" is not an available format",this.xformats,i);
 					html += '</select></div>';
 					el.find('.menu-panel.submenu-config').append(html);
 					el.find('#'+id+'_axisformat').on('change',{'me':this},function(e){ e.data.me.setAxisFormat("x",this[0].value,false); });
