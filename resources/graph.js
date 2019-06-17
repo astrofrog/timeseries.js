@@ -211,6 +211,27 @@
 		return style;
 	}
 
+	/**
+	 * @desc Update an event with touches
+	 */
+	function updateEvent(e,touches){
+		var el,oe,x,y,i,rect,bRect;
+		el = e.currentTarget;
+		oe = clone(e.originalEvent);
+		x = [];
+		y = [];
+		for(i = 0; i < touches.length; i++){ x.push(touches[i].pageX); y.push(touches[i].pageY); }
+		oe.layerX = G.mean(x)-el.offsetLeft;
+		oe.layerY = G.mean(y)-el.offsetTop;
+		oe.offsetX = el.offsetLeft;
+		oe.offsetY = el.offsetTop;
+		bRect = document.body.getBoundingClientRect();
+		rect = el.getBoundingClientRect();
+		oe.layerX -= (rect.left-bRect.left);
+		oe.layerY -= (rect.top-bRect.top);
+		return oe;
+	}
+
 	// End of helper functions
 
 
@@ -326,25 +347,6 @@
 		this.canvas.on("mouseleave",{me:this}, function(e){ e.data.me.trigger("mouseleave",{event:e}); });
 		this.canvasholder.on("wheel",{me:this}, function(e){ e.data.me.trigger("wheel",{event:e}); });
 		if('ontouchstart' in document.documentElement){
-			//var ongoingTouches = [];
-			//function ongoingTouchIndexById(idToFind){ for (var i = 0; i < ongoingTouches.length; i++){ var id = ongoingTouches[i].identifier; if(id == idToFind){ return i; } } return -1; }
-			//function copyTouch(touch){ return { identifier: touch.identifier, pageX: touch.pageX, pageY: touch.pageY }; }
-			function updateEvent(e,touches){
-				var el = e.currentTarget;
-				var oe = clone(e.originalEvent);
-				var x = [];
-				var y = [];
-				for(var i = 0; i < touches.length; i++){ x.push(touches[i].pageX); y.push(touches[i].pageY); }
-				oe.layerX = G.mean(x)-el.offsetLeft;
-				oe.layerY = G.mean(y)-el.offsetTop;
-				oe.offsetX = el.offsetLeft;
-				oe.offsetY = el.offsetTop;
-				var bRect = document.body.getBoundingClientRect();
-				var rect = el.getBoundingClientRect();
-				oe.layerX -= (rect.left-bRect.left);
-				oe.layerY -= (rect.top-bRect.top);
-				return oe;
-			}
 			var olddist = null;
 			this.canvasholder.on("touchstart",{me:this}, function(e){
 				var ev = e.originalEvent;
@@ -567,10 +569,11 @@
 		this.updating = false;
 		this.events = [];
 		this.lines = [];
+		this.ready = true;
 		this.fontscale = 1;
 		this.quicktime = 75;
 		this.colours = ["#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"];
-		this.offset = {'x':0,'y':0};
+		this.offset = {'x':0,'y':0,'dx':0,'dy':0};
 		this.log = new Logger({'id':'Graph','logging':options.logging,'logtime':options.logtime});
 		if(typeof Big==="undefined") this.log.error('ERROR','Unable to find big.js');
 
@@ -623,7 +626,9 @@
 			var event,g,x,y,s,d,t,i,ii,a,m,ds;
 			event = ev.event.originalEvent;
 			g = ev.data.me;	// The graph object
+			if(!g.ready) g.stop();
 			if(event.which!=1) return;	// Only zoom on left click
+
 			// Check if there is a data point at the position that the user clicked.
 			x = event.layerX;
 			y = event.layerY;
@@ -709,7 +714,7 @@
 						g.canvas.ctx.fill();
 						g.canvas.ctx.closePath();
 					}
-					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1],g.panoptions);
+					if(g.panning) g.panBy(to[0]-from[0], to[1]-from[1], g.panoptions);
 				}
 			}
 			g.updating = false;
@@ -751,16 +756,18 @@
 			if(g.panning){
 				var dx = event.layerX-g.selectfrom[0];
 				var dy = event.layerY-g.selectfrom[1];
+				// Update the overall offset for panning/updating
+				g.offset.dx += dx;
+				g.offset.dy += dy;
 				// Work out the new range
 				r = g.getDataRange(g.chart.left-dx, g.chart.left+g.chart.width-dx, g.chart.top-dy, g.chart.top+g.chart.height-dy);
+				// Zoom to new range
+				g.zoom(r,{});
 				// Reset the offsets
 				g.offset.x = 0;
 				g.offset.y = 0;
-				// Zoom to new range
-				g.zoom(r,{});
 				g.panning = false;
 			}
-			g.canvas.pasteFromClipboard();
 			g.trigger("mouseup",{event:event});
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
@@ -962,6 +969,46 @@
 		return data;
 	}
 
+
+	/**
+	 * @desc Process a chunk of data
+	 * @param {object} attr - the input parameters
+	 * @param {array} attr.marks - 
+	 * @param {number} attr.i - how far we have got through the marks
+	 * @param {object} attr.attr -
+	 */
+	function processMarksChunk(attr){
+		var t,max,chk,i,j,types;
+		types = ['symbol','rect','lines','area','rule','text','format'];
+		chk = 10000;
+		max = Math.min(attr.marks.data.length,attr.i+chk);
+		for(i = attr.i; i < max; i++){
+			// If we have sent an update function we'll process it as we go
+			if(attr.update && i > chk && i % Math.round(attr.total/100) == 0) attr.attr.progress.call((attr.attr['this']||this),{'mark':attr.original,'i':i,'total':attr.total});
+
+			if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i]};
+
+			for(j = 0; j < types.length; j++){
+				t = types[j];
+				if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
+			}
+			// Should process all the "enter" options here
+			if(attr.marks.enter){
+				attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
+			}
+		}
+		attr.i = i;
+		if(i < attr.marks.data.length){
+			attr['this'].timeout.addMark = setTimeout(processMarksChunk,100,attr);
+		}else{
+			if(typeof attr.attr.success==="function"){
+				attr.attr.i = i;
+				attr.attr.total = attr.total;
+				attr.attr.success.call((attr.attr['this']||this),attr.attr);
+			}
+		}
+	}
+
 	/**
 	 * @desc Add datasets to the graph using parseData() for each one
 	 * @param {object} datasets - each dataset has a unique key to refer to it.
@@ -998,7 +1045,7 @@
 	 * @param {object} attr.this - set the context for the callback
 	 */
 	Graph.prototype.addMarks = function(data,idx,original,attr){
-		var i,j,l,types,update;
+		var i,total;
 		this.log.message('addMarks',idx);
 		if(typeof idx!=="number"){
 			if(typeof idx==="undefined"){
@@ -1021,8 +1068,8 @@
 			// Set the default to show the dataset
 			if(typeof this.marks[idx].show!=="boolean") this.marks[idx].show = true;
 			if(typeof this.marks[idx].include!=="boolean") this.marks[idx].include = true;
-			l = this.marks[idx].data.length;
-			this.marks[idx].mark = new Array(l);
+			total = this.marks[idx].data.length;
+			this.marks[idx].mark = new Array(total);
 
 			if(!this.marks[idx].type) this.marks[idx].type = "symbol";
 			if(!this.marks[idx].format) this.marks[idx].format = { };
@@ -1034,42 +1081,9 @@
 			if(typeof this.marks[idx].format.strokeWidth!=="number") this.marks[idx].format.strokeWidth = 0;
 			if(!this.marks[idx].format.fill) this.marks[idx].format.fill = this.colours[0];
 
-			update = (typeof attr.progress==="function");
-			types = ['symbol','rect','lines','area','rule','text','format'];
 			// So that we can present a progress bar for big datasets,
 			// we'll chunk up the processing into blocks of 5000
-			function processChunk(attr){
-				var t,max,chk;
-				chk = 10000;
-				max = Math.min(attr.marks.data.length,attr.i+chk);
-				for(i = attr.i; i < max; i++){
-					// If we have sent an update function we'll process it as we go
-					if(update && i > chk && i % Math.round(l/100) == 0) attr.attr.progress.call((attr.attr['this']||this),{'mark':original,'i':i,'total':attr.total});
-
-					if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i]};
-
-					for(j = 0; j < types.length; j++){
-						t = types[j];
-						if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
-					}
-					// Should process all the "enter" options here
-					if(attr.marks.enter){
-						//console.log('enter',clone(attr.marks.encode.enter))
-						attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
-					}
-				}
-				attr.i = i;
-				if(i < attr.marks.data.length){
-					attr['this'].timeout.addMark = setTimeout(processChunk,100,attr);
-				}else{
-					if(typeof attr.attr.success==="function"){
-						attr.attr.i = i;
-						attr.attr.total = attr.total;
-						attr.attr.success.call((attr.attr['this']||this),attr.attr);
-					}
-				}
-			}
-			this.timeout.addMark = processChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':l});
+			this.timeout.addMark = processMarksChunk({'this':this,'marks':this.marks[idx],'attr':attr,'i':0,'total':total,'original':original,'update':(typeof attr.progress==="function")});
 		}
 		return this;
 	};
@@ -1206,7 +1220,7 @@
 	Graph.prototype.panBy = function(dx,dy,attr){
 
 		// Stop any existing processing
-		if(this.timeout.redraw) clearTimeout(this.timeout.redraw);
+		this.stop();
 
 		this.offset.x = dx;
 		this.offset.y = dy;
@@ -1223,9 +1237,10 @@
 			ctx.beginPath();
 			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);	
 			ctx.clip();
-			ctx.drawImage(this.paper.data.c,this.offset.x,this.offset.y,this.paper.data.width,this.paper.data.height);
+			// Quick draw the image offset by the currently computed offset (since mousedown)
+			// and any existing offset from previous panBy() event that hasn't finished drawing
+			ctx.drawImage(this.paper.data.c,dx+this.offset.dx,dy+this.offset.dy,this.paper.data.width,this.paper.data.height);
 			ctx.restore();
-			this.canvas.copyToClipboard();
 		}else{
 			// Update the graph
 			this.redraw({'update':true});
@@ -1246,7 +1261,7 @@
 	Graph.prototype.zoom = function(pos,attr){
 
 		// Stop any existing processing
-		if(this.timeout.redraw) clearTimeout(this.timeout.redraw);
+		this.stop();
 
 		if(!attr) attr = {};
 		if(attr.quick) this.log.time('zoom');
@@ -1319,6 +1334,7 @@
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,x,y,Math.round(this.canvas.wide/this.paper.data.scale.x),Math.round(this.canvas.tall/this.paper.data.scale.y));
 			ctx.restore();
+			this.finishDraw(true);
 		}
 
 		if(attr.quick) this.log.time('zoom');
@@ -1487,7 +1503,8 @@
 	 * @param {array} ds - an array of "marksetid:markid:weight" mark references
 	 */
 	Graph.prototype.highlight = function(ds){
-		if(this.selecting) return;	// If we are panning we don't want to highlight symbols
+		if(this.selecting) return this;	// If we are panning we don't want to highlight symbols
+		if(!this.ready) return this;	// Don't highlight if we are in the middle of doing something
 		if(this.lookup && ds && ds.length > 0){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
@@ -1580,10 +1597,16 @@
 			}else{
 				this.coordinates.css({'display':'none'});
 			}
+			// How many are highlighted?
+			this.highlighted = n;
 		}else{
 			if(this.annotated){
 				this.annotated = false;
 				this.coordinates.css({'display':'none'});
+			}
+			// If any data series are currently highlighted we clear them
+			if(this.highlighted > 0){
+				this.highlighted = 0;
 				this.canvas.pasteFromClipboard();
 			}
 		}
@@ -1715,7 +1738,6 @@
 							'scale':scale,
 							'div':steps[st].div
 						};
-						//console.log('n',n,this[a].spacing,this[a].range,scale,steps[st].div,steps[st].spacings[sp])
 					}
 				}
 			}
@@ -2358,6 +2380,15 @@
 	};
 
 	/**
+	 * @desc Cancel any currently processing drawing step
+	 */
+	Graph.prototype.stop = function(){
+		this.cancelredraw = true;
+		if(this.timeout.redraw) clearTimeout(this.timeout.redraw);
+		return this;
+	};
+
+	/**
 	 * @desc Replacement function to combine calculateData() and draw() but allow interrupt
 	 * @param {object} attr - attributes
 	 * @param {boolean} attr.update - do we update things as we go?
@@ -2373,6 +2404,8 @@
 		if(typeof attr.cancelable!=="boolean") attr.cancelable = true;
 
 		var sh,chunk,series;
+		this.cancelredraw = false;
+		this.ready = false;
 
 		// The calculation can lock up the process if there are a lot of points.
 		// In order to be able to interrupt/cancel the calculation we need to 
@@ -2389,11 +2422,11 @@
 			var sh,d,i,j,v,a,a1,a2,axes,axis;
 			axes = ['x','y'];
 			j = 0;
-			while(j < chunk && s < series.length){
+			while(j < chunk && s < series.length && !self.cancelredraw){
 				sh = series[s].id;
 
 				// If we haven't yet finished this series
-				for(i = series[s].done; i < self.marks[sh].mark.length && j < chunk ; i++, j++){
+				for(i = series[s].done; i < self.marks[sh].mark.length && j < chunk; i++, j++){
 					d = self.marks[sh].mark[i];
 
 					// Store IDs for the layer and the item
@@ -2442,8 +2475,10 @@
 				// Draw the points
 				self.draw(attr.update);
 
+				self.finishDraw(true);
 				// Call the callback if we have one
 				if(typeof attr.callback==="function") attr.callback.call((attr.self || self),{});
+
 			}else{
 				// Loop again
 				if(attr.cancelable) self.timeout.redraw = setTimeout(processChunk,0,self,s,attr);
@@ -2455,6 +2490,20 @@
 		if(attr.cancelable) this.timeout.redraw = setTimeout(processChunk,0,this,0,attr);
 		else processChunk(this,0,attr);
 	
+		return this;
+	};
+
+	/**
+	 * @desc Complete a drawing step
+	 */
+	Graph.prototype.finishDraw = function(update){
+		// Reset the offsets
+		this.offset.x = 0;
+		this.offset.y = 0;
+		this.offset.dx = 0;
+		this.offset.dy = 0;
+		if(update) this.canvas.copyToClipboard();
+		this.ready = true;
 		return this;
 	};
 
@@ -3140,7 +3189,7 @@
 		this.clear();
 		this.drawAxes();
 		this.drawData(updateLookup);
-		if(updateLookup) this.canvas.copyToClipboard();
+		this.finishDraw(updateLookup);
 		this.log.time('draw');
 		return this;
 	};
@@ -3239,7 +3288,7 @@
 		// just do some simple number-based rounding
 		if(attr.range < 2){
 			if(!attr.inc){
-				console.log('ERROR','No increment provided');
+				console.error('No increment provided');
 				return "";
 			}
 			a = bits[1].div(attr.inc).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.inc);
