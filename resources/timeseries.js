@@ -16,7 +16,7 @@
 	 * @desc Main object to coordinate data loading
 	 */
 	function TimeSeriesMaster(){
-		this.version = "0.0.20";
+		this.version = "0.0.21";
 		this.length = 0;
 		/**
 		 * @desc Create a new timeseries object (TS) for the specific timeseries graph
@@ -788,7 +788,7 @@
 					id = S(this.el).attr('id')+'_'+j;
 					d = this.graph.marks[keyitems[key][0]];
 
-					layers.append('<li><input type="checkbox" checked="checked" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'">?</span>'+key+'</label></li>');
+					layers.append('<li><input type="checkbox" id="'+id+'" data="'+key+'" /><label for="'+id+'"><span class="key" style="background-color:'+d.format.fill+';'+(d.type=="area" && d.format.fillOpacity ? 'opacity:'+d.format.fillOpacity+';':'')+'">?</span>'+key+'</label></li>');
 					l = layers.find('#'+id);
 					p = l.parent();
 					k = p.find('.key');
@@ -801,7 +801,7 @@
 							g.marks[j].show = !g.marks[j].show;
 						}
 						g.redraw({'update':true,'cancelable':false});
-						if(this.parent().find('input')[0].checked) this.parent().removeClass('inactive');
+						if(e.currentTarget.checked) this.parent().removeClass('inactive');
 						else this.parent().addClass('inactive');
 					}).on('focus',{layers:layers},function(e){
 						e.data.layers.find('li').removeClass('on').removeClass('selected');
@@ -898,8 +898,13 @@
 					}
 					parent = layers.find('#'+id).parent();
 					parent.css({'display':(include ? 'block':'none')});
-					if(show) parent.removeClass('inactive');
-					else parent.addClass('inactive');
+					if(show){
+						parent.removeClass('inactive');
+						layers.find('#'+id)[0].checked = true;
+					}else{
+						parent.addClass('inactive');
+						layers.find('#'+id)[0].checked = false;
+					}
 					j++;
 				}
 			}
