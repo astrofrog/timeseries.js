@@ -1023,22 +1023,23 @@
 
 		// If the x-axis has a defined input format we can build a format selector
 		if(this._view._extend && this._view._extend.scales){
-			var f,i,k,s,label,html,ok;
+			var f,i,k,s,label,html,ok,inp;
 			for(s = 0; s < this._view._extend.scales.length; s++){
 				if(this._view._extend.scales[s].name=="xscale"){
 
 					// Define the general type for the input format: phase/relative/absolute
+					inp = this._view._extend.scales[s].input;
 					i = "absolute";
-					if(this._view._extend.scales[s].input=="unity") i = "phase";
-					else if(this._view._extend.scales[s].input=="radians") i = "phase";
-					else if(this._view._extend.scales[s].input=="degrees") i = "phase";
-					else if(this._view._extend.scales[s].input=="seconds") i = "relative";
+					if(inp=="unity") i = "phase";
+					else if(inp=="radians") i = "phase";
+					else if(inp=="degrees") i = "phase";
+					else if(inp=="seconds") i = "relative";
 
-					if(!this.xformats[this._view._extend.scales[s].input] && !this.xformats[i]){
-						this.log.error('Input format "'+this._view._extend.scales[s].input+'" is not valid.');
+					// If the input format and the translation are not valid
+					if(!this.xformats[inp] && !this.xformats[i]){
+						this.log.error('Input format "'+inp+'" is not valid.');
 						return this;
 					}
-
 
 					if(i=="phase"){
 						// We are showing phases
