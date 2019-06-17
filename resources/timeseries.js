@@ -5,6 +5,7 @@
 	REQUIRES:
 		stuquery.js
 		graph.js
+		big.js
 */
 (function(root){
 
@@ -15,10 +16,11 @@
 	 * @desc Main object to coordinate data loading
 	 */
 	function TimeSeriesMaster(){
-		this.version = "0.0.19";
+		this.version = "0.0.20";
 		this.length = 0;
 		/**
-		 * @desc Create a new timeseries object
+		 * @desc Create a new timeseries object (TS) for the specific timeseries graph
+		 * @param {object} json - the VEGA JSON for the graph
 		 * @param {boolean} opt.logging - do we log messages to the console?
 		 * @param {boolean} opt.logtime - do we log execution times to the console?
 		 */
@@ -32,7 +34,9 @@
 		};
 		this.load = { 'resources': {'files':{},'callbacks':[]}, 'data': {'files':{},'callbacks':[]} };
 		this.callback = "";
+		// Object to hold lazy-loading scroll
 		this.scroll = {};
+		// Create a logger to log messages to the console
 		this.log = new Logger({'id':'TimeSeries','logging':(location.search.indexOf('logging=true')>0),'logtime':(location.search.indexOf('logtime=true')>0)});
 
 		// Work out the file path to this code to use for further resources
@@ -41,6 +45,7 @@
 		var idx = path.lastIndexOf("/");
 		basedir = (idx >= 0) ? path.substr(0,idx+1) : "";
 
+		// Initial message to show that the library has loaded
 		if(console) console.log('%ctimeseries.js v'+this.version+'%c','font-weight:bold;font-size:1.25em;','');
 
 		/**
@@ -55,6 +60,7 @@
 
 			attr.file = f;
 
+			// If we haven't loaded the file, we get ready to do that
 			if(!this.load.data.files[f]){
 				this.log.time('loadFromDataFile '+f);
 				this.load.data.files[f] = {'loaded':false,'callbacks':[]};
@@ -62,21 +68,25 @@
 				if(!this.load.data.files[f].name) this.load.data.files[f].id = "file-"+(this.load.counter++);
 				this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
 				this.log.message('loading data',f);
-				var _obj = attr['this'];
-				_obj.updateMessage('main'+this.load.data.files[f].id,'Loading '+attr.dataset.name+'...');
+				attr['this'].updateMessage('main'+this.load.data.files[f].id,'Loading '+attr.dataset.name+'...');
 				// Now grab the data
 				S().ajax(f,{
 					"dataType": "text",
 					"this": this,
+					"master": attr['this'],
 					"file": f,
 					"id": this.load.data.files[f].id,
 					"success": function(d,attr){
 
 						// Remove extra newlines at the end
 						d = d.replace(/[\n\r]$/,"");
+
+						// Update this displayed message
+						attr.master.updateMessage('main'+attr.id,'');
+
 						var cb = this.load.data.files[attr.file].callbacks;
-						this.log.message('CALLBACKS',attr.file,cb);
-						_obj.updateMessage('main'+attr.id,'');
+
+						// Loop over any callbacks that have been attached to this file
 						for(var i = 0; i < cb.length; i++){
 							// Set original context dataset data
 							this.load.data.files[cb[i].attr.file].data = d;
@@ -95,16 +105,16 @@
 					}
 				});
 			}else{
-				if(!this.load.data.files[f].loaded){
-					// Add the callback to the queue
-					this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
-				}else{
-					// Apply the callback if we've already loaded the data file
+				// If we have started processing the file but haven't loaded it yet, we add a callback. 
+				if(!this.load.data.files[f].loaded) this.load.data.files[f].callbacks.push({'fn':fn,'attr':attr});
+				else{
+					// Otherwise apply the callback if we've already loaded the data
 					if(typeof fn==="function") fn.call(attr['this'],this.load.data.files[f].data,attr);
 				}
 			}
 		};
 
+		// Add scroll event for lazy-loading
 		S(document).on('scroll',{me:this},function(e){
 			var self = e.data.me, scroll = self.scroll;
 			if(scroll){
@@ -120,11 +130,16 @@
 		return this;
 	}
 
+	// Create the master for the time series
 	TimeSeries = new TimeSeriesMaster();
 
 	/**
 	 * @desc Object for each individual timeseries
 	 * @param {object} json - the VEGA json to use
+	 * @param {object} opt - attributes to define the time series
+	 * @param {boolean} opt.logging - do we output console messages?
+	 * @param {boolean} opt.logtime - do we record times?
+	 * @param {boolean} opt.index - a unique ID for this timeseries in the master
 	 */
 	function TS(json,opt){
 		if(!opt) opt = {};
@@ -133,12 +148,14 @@
 			this.json = json;
 			this.vega = JSON.parse(JSON.stringify(json));
 		}else if(typeof json==="string") this.file = json;
+		// Create a logger to send messages to the console
 		this.log = new Logger({'logging':(opt.logging || false),'logtime':(opt.logtime || false),'id':'TS'});
 		if(typeof opt.showaswego==="undefined") opt.showaswego = false;
 		this.log.message('TS',json);
+		// Object for progress bars
 		this.progress = {'datasets':{'old':'','used':''},'update':{'todo':0,'done':0}};
 
-		// Set some defaults
+		// Set some default options
 		this.options = {
 			xaxis: { 'title':'Time', log: false, fit:true },
 			yaxis: { 'title': 'y-axis', log: false },
@@ -352,7 +369,7 @@
 		if(d.height) this.options.height = d.height;
 		if(d.padding) this.options.padding = d.padding;
 
-		// Work out axes
+		// Work out the axes
 		if(d.axes){
 			for(var a = 0; a < d.axes.length; a++){
 				var dim = "";
@@ -382,15 +399,16 @@
 
 		if(!e) this.log.error(e,callback);
 
+		// Get the DOM element as a stuQuery object
 		var el = S(e);
 		if(el.length == 0){
 			this.log.error('No DOM element to attach to',e);
 			return this;
 		}
+		// Keep a copy of the original HTMLelement
 		this.el = e;
 
-		// If the element has loading="lazy" we will wait until
-		// it is nearly on-screen before initializing it.
+		// If the element has loading="lazy" we will wait until it is nearly on-screen before initializing it.
 		if(e.getAttribute('loading')=="lazy"){
 			if(!onscreen(e)){
 				TimeSeries.scroll[this.attr.index] = {'data':{'me':this,'el':e,'callback':callback,'i':this.attr.index},'callback':function(e){
@@ -406,6 +424,7 @@
 			}
 		}
 
+		// Get the VEGA source file
 		var f = el.attr('vega-src');
 		if(f) this.file = f;
 		if(!this.file) this.file = "";
@@ -471,6 +490,7 @@
 				}
 				ii++;
 			}
+			// Add default name fields to the extended marks too
 			if(this.json._extend.marks){
 				for(i = 0; i < this.json._extend.marks.length ; i++){
 					// Create a name for this mark if one hasn't been given
@@ -518,10 +538,13 @@
 			this.options.width = this.initializedValues.w;
 			this.options.height = this.initializedValues.h;
 		}
+
 		// Pass in the log options
 		this.options.logging = this.log.logging;
 		this.options.logtime = this.log.logtime;
 		this.options.scrollWheelZoom = true;
+
+		// If we have scales we loop over getting the options for each axis
 		if(this.json.scales){
 			for(a = 0; a < this.json.axes.length; a++){
 				for(i = 0; i < this.json.scales.length; i++){
@@ -553,18 +576,18 @@
 		// Build the graph object
 		this.graph = new Graph(this.el, this.options);
 
+		// Build loading animation
 		el = S(this.el);
 		str = '<div class="loader"><div class="spinner">';
 		for(i = 1; i < 6; i++) str += '<div class="rect'+i+' seasonal"></div>';
 		str += '</div></div>';
 		el.addClass('timeseries').append(str);
 
-		_obj = this;
-
 		// Build the menu
 		this.makeMenu();
 
-		if(this.json) this.loadDatasets(this.json.data);
+		// Load the datasets if we have been given JSON
+		if(this.json && this.json.data) this.loadDatasets(this.json.data);
 
 		this.log.time('postProcess');
 
@@ -591,6 +614,7 @@
 			el = el.find('#'+id);
 			this.message[id] = {'el':el,'message':el.find('.loader-message')};
 		}
+		// Add progress bars showing the current progress for each dataset
 		if(msg || (typeof pc==="number" && pc <= 100)){
 			if(this.message[id].message.length > 0) this.message[id].message[0].innerHTML = msg;
 			if(typeof pc==="number" && pc <= 100){

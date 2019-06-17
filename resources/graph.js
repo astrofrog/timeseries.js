@@ -541,8 +541,6 @@
 		// Normalize coordinate system to use css pixels.
 		if(this.ctx) this.ctx.scale(this.scale, this.scale);
 
-		// Bug fix for IE 8 which sets a width of zero to a div within the <canvas>
-		//if(this.ie && $.browser.version == 8) this.container.find('div').css({'width':w+'px','height':h+'px'});
 		this.canvasholder.css({'width':w+'px','height':h+'px'});
 		this.canvas.css({'width':w+'px','height':h+'px'});
 	};
@@ -558,7 +556,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.3";
+		this.version = "0.3.4";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
