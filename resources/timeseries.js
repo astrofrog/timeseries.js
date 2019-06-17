@@ -148,6 +148,8 @@
 			tooltip: {'theme':'aas-theme'},
 			showaswego: opt.showaswego
 		};
+		
+		// Define x-axis formatting options
 		this.xformats = {
 			'auto': {
 				'title': 'Auto',
@@ -156,53 +158,6 @@
 				'formatLabel': function(j,attr){
 					var v = (attr.input=="seconds" || attr.input=="") ? j : convertDate(j,attr.input,"seconds");
 					return {'str':attr.niceDate(v,attr.spacing)};
-				}
-			},
-			'relative': {
-				'title': 'Relative date',
-				'types': {'relative': true},
-				'scale': 1,
-				'formatLabel': function(val,attr){
-					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
-					typ = typeof val;
-					if(typ=="string" || typ=="number") val = Num(val);
-					if(val==null) return {'str':''};
-					sign = (val.gte(0)) ? 1 : -1;
-
-					// Keep the absolute value
-					v = val.abs();
-					// A working version of the absolute value
-					s = val.abs();
-					if(attr){
-						// Get the maximum tick value (to make formatting consistent)
-						max = Math.abs(attr.ticks[attr.ticks.length-1].value);
-					}else{
-						max = s;
-					}
-					if(typeof max.toValue==="function") max = max.toValue();
-
-					b = ['y','d','h','m','s'];
-					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
-					str = '';
-					bit = {};
-					for(i = 0; i < b.length; i++){
-						k = b[i];
-						ds = sec[k];
-						bit[k] = Number(s.div(ds).round(0,0));
-						s = s.minus(bit[k]*ds);
-					}
-					if(s.gt(0)){
-						bit.f = s.toString();
-						bit.f = bit.f.substr(bit.f.indexOf("."));
-					}
-					str = '';
-					if(bit.y > 0) str = bit.y+'y';
-					if(bit.d > 0) str += (str ? ' ':'')+bit.d+'d';
-					if(bit.h > 0 || bit.m > 0 || v.gt(sec.d)) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
-					if(bit.m > 0 || bit.h > 0 || v.gt(sec.d)) str += ''+zeroPad(bit.m,2);
-					if(bit.s > 0 || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
-					if(bit.f) str += bit.f;
-					return {'str':(sign < 0 ? '-':'')+str};
 				}
 			},
 			'locale': {
@@ -240,6 +195,98 @@
 				'scale': 86400,
 				'types': {'absolute': true},
 				'formatLabel': function(j,attr){ return {'str':convertDate(j,attr.input,attr.output)+''}; }
+			},
+			'relative': {
+				'title': 'Relative date',
+				'types': {'relative': true},
+				'scale': 1,
+				'convert': function(v,input){
+					if(input=="hours") return Num(v).times(3600).toValue();
+					return v;
+				},
+				'formatLabel': function(val,attr){
+					var typ,sign,v,s,sec,str,i,k,ds,b,bit,max;
+					typ = typeof val;
+					if(val==0) return {'str':'0'};
+					if(typ=="string" || typ=="number") val = Num(val);
+					if(val==null) return {'str':''};
+					sign = (val.gte(0)) ? 1 : -1;
+
+					// Keep the absolute value
+					v = val.abs();
+					// A working version of the absolute value
+					s = val.abs();
+					if(attr){
+						// Get the maximum tick value (to make formatting consistent)
+						max = Math.abs(attr.ticks[attr.ticks.length-1].value);
+					}else{
+						max = s;
+					}
+					if(typeof max.toValue==="function") max = max.toValue();
+
+					b = ['y','d','h','m','s'];
+					sec = {'y':86400*365.25,'d':86400,'h':3600,'m':60,'s':1};
+					str = '';
+					bit = {};
+					for(i = 0; i < b.length; i++){
+						k = b[i];
+						ds = sec[k];
+						bit[k] = Number(s.div(ds).round(0,0));
+						s = s.minus(bit[k]*ds);
+					}
+					if(s.gt(0)){
+						bit.f = s.toString();
+						bit.f = bit.f.substr(bit.f.indexOf("."));
+					}
+					str = '';
+					if(bit.y > 0) str = bit.y+'y';
+					if(bit.d > 0) str += (str ? ' ':'')+bit.d+'d';
+					if(max > sec.h) str += (str ? ' ':'')+zeroPad(bit.h,2)+':';
+					if(max > sec.m) str += ''+zeroPad(bit.m,2);
+					if(bit.s > 0 || bit.f) str += (max > sec.m||max > sec.h||v.gt(sec.d) ? ':':'')+(max > sec.s ? zeroPad(bit.s,2):bit.s);
+					if(bit.f) str += bit.f;
+					return {'str':(sign < 0 ? '-':'')+str};
+				}
+			},
+			'seconds': {
+				'title': 'Seconds',
+				'types': {'relative':true },
+				'convert': function(v,input){
+					if(input=="hours") return Num(v).times(3600).toValue();
+					else if(input=="days") return Num(v).times(86400).toValue();
+					else if(input=="years") return Num(v).times(31557600).toValue();
+					return v;
+				}
+			},
+			'hours': {
+				'title': 'Hours',
+				'types': {'relative':true },
+				'convert': function(v,input){
+					if(input=="seconds" || input=="relative") return Num(v).div(3600).toValue();
+					else if(input=="days") return Num(v).times(24).toValue();
+					else if(input=="years") return Num(v).times(8766).toValue();
+					return v;
+				}
+			},
+			'days': {
+				'title': 'Days',
+				'types': {'relative':true },
+				'convert': function(v,input){
+					if(input=="seconds" || input=="relative") return Num(v).div(86400).toValue();
+					else if(input=="hours") return Num(v).div(24).toValue();
+					else if(input=="years") return Num(v).times(365.25).toValue();
+					return v;
+				}
+			},
+			'years': {
+				'title': 'Years',
+				'types': {'relative':true },
+				'convert': function(v,input){
+					if(input=="seconds" || input=="relative") return Num(v).div(31557600).toValue();
+					else if(input=="hours") return Num(v).div(8766).toValue();
+					else if(input=="days") return Num(v).div(365.25).toValue();
+					return v;
+				}
 			},
 			'unity': {
 				'title': 'Phase (unity)',
@@ -1030,10 +1077,8 @@
 					// Define the general type for the input format: phase/relative/absolute
 					inp = this._view._extend.scales[s].input;
 					i = "absolute";
-					if(inp=="unity") i = "phase";
-					else if(inp=="radians") i = "phase";
-					else if(inp=="degrees") i = "phase";
-					else if(inp=="seconds") i = "relative";
+					if(this.xformats[inp].types.phase) i = "phase";
+					if(this.xformats[inp].types.relative) i = "relative";
 
 					// If the input format and the translation are not valid
 					if(!this.xformats[inp] && !this.xformats[i]){
