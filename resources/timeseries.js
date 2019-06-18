@@ -1197,14 +1197,24 @@
 		this.progress.datasets.old = this.progress.datasets.used;
 
 		_obj = this;
+		/** 
+		  * @desc Update the properties of the data point using the event JSON
+		  * @param {object} d - the datum object
+		  * @param {object} event - the event JSON
+		  */
 		function updateProperties(d,event){
 			var to,str,i,p;
+
+			// Where to put the updated property
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
-			if(!d){
-				_obj.log.message('updateProps fail',d,event);
-				return;
-			}
+
+			// If there is no datum, we will give up
+			if(!d) return _obj.log.warning('updateProps fail',d,event);
+			
+			// The property - "datum" - is defined in the outer context that calls this function
 			datum = d.data;
+
+			// Loop over each property of the event
 			for(p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
@@ -1227,14 +1237,24 @@
 							else datum[p].value = event[p].value;
 						}
 					}
+
+					// Do we need to process a signal property?
 					if(event[p].signal){
+
+						// If the value of the signal is set to "datum" we default to a table of the original properties
 						if(event[p].signal=="datum") event[p].signal = JSON.stringify(d.original);
+
+						// Where are we putting the updated value?
 						to = dest[p] || "data";
 						if(typeof d[to][p]==="undefined") d[to][p] = {};
+
+						// Try parsing the string as JSON
 						try { d[to][p].value = looseJsonParse(event[p].signal,datum); }
 						catch(e) { _obj.log.error('Unable to parse signal',d.data,event[p]); }
-						// If we now have an object we build a string
+
+						// Do special things for the tooltip property
 						if(p=="tooltip"){
+							// If we now have an object we build a string
 							if(typeof d.props[p].value==="object"){
 								str = "<table>";
 								for(i in d.props[p].value){
@@ -1249,9 +1269,22 @@
 			return d;
 		}
 
+		/** 
+		  * @desc Add a bunch of marks
+		  * @param {object} me - the TS object
+		  * @param {integer} m - the index of the mark
+		  * @param {object} mark - the mark object
+		  * @param {object} attr - other attributes
+		  * @param {function} attr.progress - called as marks are being added (to let us update a progress bar)
+		  * @param {function} attr.success - called when the marks have been added
+		  */
 		function addMarks(me,m,mark,attr){
 			var id = "";
 			var exists = true;
+
+			if(!attr) attr = {};
+			// Update the 'this' property
+			attr["this"] = me;
 
 			if(mark.from && mark.from.data){
 				if(typeof me.datasets[mark.from.data]==="undefined"){
@@ -1262,7 +1295,7 @@
 				if(me.datasets[id]) me.progress.datasets.used += id;
 			}
 
-			// Only bother building this dataset if it hasn't already been added
+			// Only bother building this dataset if it hasn't already been added.
 			// A mark can have no dataset associated with it if it is "text" or a "rule"
 			if((!id || me.datasets[id] || !exists) && !me.graph.marks[m]){
 				var desc = mark.description || "Markers "+(m+1);
@@ -1315,14 +1348,16 @@
 		for(id in this.datasets){
 			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
 		}
+		
+		// Add the datasets to the Graph object
 		this.graph.addDatasets(this.datasets);
 
 		// Store the number of marks we are going to process
 		this.progress.marks.todo = this.json.marks.length + (this.json._extend.marks ? this.json._extend.marks.length : 0);
 
-		// Define the callback function
+		// Define the callback functions:
+		// Function called once addMarks has finally finished
 		fn = function(e){
-			// Function called once addMarks has finally finished
 			this.progress.marks.done++;
 			this.progress.marks.mark[e.name].done = e.i;
 			this.progress.marks.mark[e.name].todo = e.total;
@@ -1331,17 +1366,25 @@
 			this.log.message('Processed '+e.name,this.progress.marks.mark[e.name]);
 			this.updateMessage(e.name,'');
 
+			// Now we update everything
 			if(this.attr.showaswego) this.graph.updateData();
 			if(this.progress.marks.done == this.progress.marks.todo) this.finalize();
 		};
+		// Function called during the processing of addMarks. It is to let us have a progress bar
 		up = function(e){
+
+			// Update our counters
 			this.progress.marks.mark[e.mark.name].done = e.i;
 			this.progress.marks.mark[e.mark.name].todo = e.total;
+
+			// Get the colour of the mark so that we can use the same colour for the progress bar
 			var colour = '';
 			if(e.mark.encode && e.mark.encode.update){
 				if(e.mark.encode.update.fill) colour = e.mark.encode.update.fill.value;
 				if(!colour && e.mark.encode.update.stroke) colour = e.mark.encode.update.stroke.value;
 			}
+
+			// Add a message displaying the current progress for this layer
 			this.updateMessage(e.mark.name,'Processing '+(e.mark.description||e.mark.name),100*e.i/e.total,colour);
 			return this;
 		};
@@ -1350,14 +1393,14 @@
 			mark = clone(this.json.marks[m]);
 			if(this.progress.marks.mark[mark.name].done <= 0){
 				this.progress.marks.mark[mark.name].done = 0;
-				addMarks(this,m,mark,{'this':this,'success':fn,'progress':up});
+				addMarks(this,m,mark,{'success':fn,'progress':up});
 			}
 		}
 		if(this.json._extend.marks){
 			for(m = 0; m < this.json._extend.marks.length; m++){
 				mark = this.json._extend.marks[m];
 				mark.include = false;
-				addMarks(this,m+this.json.marks.length+m,clone(mark),{'this':this,'success':fn,'progress':up});
+				addMarks(this,m+this.json.marks.length+m,clone(mark),{'success':fn,'progress':up});
 			}
 		}
 		for(m in this.graph.marks){
