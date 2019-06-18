@@ -1198,14 +1198,14 @@
 
 		_obj = this;
 		function updateProperties(d,event){
-			var to,str;
+			var to,str,i,p;
 			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 			if(!d){
 				_obj.log.message('updateProps fail',d,event);
 				return;
 			}
 			datum = d.data;
-			for(var p in event){
+			for(p in event){
 				if(event[p]){
 					if(dest[p] && dest[p]=="props"){
 						if(typeof event[p].value !== "undefined"){
@@ -1228,15 +1228,16 @@
 						}
 					}
 					if(event[p].signal){
+						if(event[p].signal=="datum") event[p].signal = JSON.stringify(d.original);
 						to = dest[p] || "data";
 						if(typeof d[to][p]==="undefined") d[to][p] = {};
 						try { d[to][p].value = looseJsonParse(event[p].signal,datum); }
-						catch(e) { _obj.log.error(d.data,event[p]); }
+						catch(e) { _obj.log.error('Unable to parse signal',d.data,event[p]); }
 						// If we now have an object we build a string
 						if(p=="tooltip"){
 							if(typeof d.props[p].value==="object"){
 								str = "<table>";
-								for(var i in d.props[p].value){
+								for(i in d.props[p].value){
 									if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
 								}
 								d.props[p] = str+"</table>";
@@ -1276,20 +1277,19 @@
 
 				if(me.datasets[id]){
 					dataset.data = clone(me.datasets[id].json);
+					dataset.original = clone(me.datasets[id].json);
 					dataset.parse = me.datasets[id].parse;
 				}else{
 					if(id && !me.datasets[id]) me.log.error('No dataset for '+mark.name);
 					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
+					dataset.original = {};
 					dataset.parse = {};
 				}
 
 				// Add the dataset
 				if(dataset){
 
-					if(mark.encode && mark.encode.hover){
-						dataset.hoverable = true;
-						//if(mark.encode.hover.tooltip && mark.encode.hover.tooltip.css) dataset.css = mark.encode.hover.tooltip.css;
-					}
+					if(mark.encode && mark.encode.hover) dataset.hoverable = true;
 
 					dataset.encode = mark.encode;
 

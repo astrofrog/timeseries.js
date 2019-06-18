@@ -984,16 +984,14 @@
 			// If we have sent an update function we'll process it as we go
 			if(attr.update && i > chk && i % Math.round(attr.total/100) == 0) attr.attr.progress.call((attr.attr['this']||this),{'mark':attr.original,'i':i,'total':attr.total});
 
-			if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i]};
+			if(!attr.marks.mark[i]) attr.marks.mark[i] = {'props':{},'data':attr.marks.data[i],'original':attr.marks.original[i]};
 
 			for(j = 0; j < types.length; j++){
 				t = types[j];
 				if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
 			}
 			// Should process all the "enter" options here
-			if(attr.marks.enter){
-				attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
-			}
+			if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
 		}
 		attr.i = i;
 		if(i < attr.marks.data.length){
@@ -1056,7 +1054,6 @@
 				}
 			}
 		}
-		this.originaldata = original;
 		attr.name = original.name;
 
 		if(this.marks[idx]) this.log.warning('addMarks','refusing to overwrite existing dataset at '+idx,this.marks[idx],data);

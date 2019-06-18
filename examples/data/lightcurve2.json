@@ -165,8 +165,7 @@
 			"enter": {
 				"x": {"scale": "xscale", "field": "x"},
 				"y": {"scale": "yscale", "field": "value"},
-				"strokeWidth": {"value": 2},
-				"tooltip": {"field": "tooltip"}
+				"strokeWidth": {"value": 2}
 			},
 			"update": {
 				"strokeWidth": {"value": 2},
@@ -201,7 +200,8 @@
 				"fill": {"value": "#0DBC37"},
 				"fillOpacity": {"value": 1},
 				"width": {"value":5},
-				"zindex": {"value": 1}
+				"zindex": {"value": 1},
+				"tooltip": {"signal":"datum"}
 			}
 		}
 	},{
