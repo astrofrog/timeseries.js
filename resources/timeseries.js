@@ -3,9 +3,9 @@
 	Written by Stuart Lowe (Aperio Software)
 
 	REQUIRES:
-		stuquery.js
-		graph.js
-		big.js
+		stuquery.js - for DOM manipulation
+		graph.js - for drawing the graph
+		big.js - for dealing with imprecision/rounding issues in Javascript's maths
 */
 (function(root){
 
@@ -13,11 +13,13 @@
 	var basedir = "";
 
 	/**
-	 * @desc Main object to coordinate data loading
+	 * @desc Main object to coordinate data loading. There will be one of these on a page.
 	 */
 	function TimeSeriesMaster(){
-		this.version = "0.0.21";
+
+		this.version = "0.0.22";
 		this.length = 0;
+
 		/**
 		 * @desc Create a new timeseries object (TS) for the specific timeseries graph
 		 * @param {object} json - the VEGA JSON for the graph
@@ -466,7 +468,7 @@
 
 		this.log.message('postProcess',this);
 		this.log.time('postProcess');
-		var a,axis,d,el,i,ii,_obj,str,s;
+		var a,axis,d,el,i,ii,str,s;
 
 		// Post-process the JSON to extend things
 		if(this.json){
@@ -1179,7 +1181,7 @@
 		this.log.message('processDatasets',this.attr.showaswego,this.graph.marks);
 		this.log.time('processDatasets');
 
-		var i,id,mark,m,fn,up,ms,n,_obj;
+		var i,id,mark,m,fn,up,ms,n;
 
 		// Set up the progress object to monitor what we've done for each mark
 		if(!this.progress.marks) this.progress.marks = {'todo':0,'done':0,'mark':{}};
@@ -1196,154 +1198,8 @@
 
 		this.progress.datasets.old = this.progress.datasets.used;
 
-		_obj = this;
-		/** 
-		  * @desc Update the properties of the data point using the event JSON
-		  * @param {object} d - the datum object
-		  * @param {object} event - the event JSON
-		  */
-		function updateProperties(d,event){
-			var to,str,i,p;
 
-			// Where to put the updated property
-			var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 
-			// If there is no datum, we will give up
-			if(!d) return _obj.log.warning('updateProps fail',d,event);
-			
-			// The property - "datum" - is defined in the outer context that calls this function
-			datum = d.data;
-
-			// Loop over each property of the event
-			for(p in event){
-				if(event[p]){
-					if(dest[p] && dest[p]=="props"){
-						if(typeof event[p].value !== "undefined"){
-							if(d.props.symbol) d.props.symbol[p] = event[p].value;
-							if(d.props.format) d.props.format[p] = event[p].value;
-						}
-					}else{
-						if(typeof datum[p]==="undefined") datum[p] = clone(event[p]);
-						if(event[p].field){
-							if(typeof event[p].field==="string"){
-								if(typeof datum[event[p].field]!=="undefined") d.data[p] = datum[event[p].field];
-								else _obj.log.error('The field "'+event[p].field+'" ('+p+'-axis) seems to be missing.',clone(d),event);
-							}else if(typeof event[p].field==="object"){
-								d.data[p] = clone(event[p]);
-							}
-						}
-						if(typeof event[p].value!=="undefined"){
-							if(event[p].format && event[p].format=="date") datum[p].value = (new Date(event[p].value)).getTime()/1000;
-							else datum[p].value = event[p].value;
-						}
-					}
-
-					// Do we need to process a signal property?
-					if(event[p].signal){
-
-						// If the value of the signal is set to "datum" we default to a table of the original properties
-						if(event[p].signal=="datum") event[p].signal = JSON.stringify(d.original);
-
-						// Where are we putting the updated value?
-						to = dest[p] || "data";
-						if(typeof d[to][p]==="undefined") d[to][p] = {};
-
-						// Try parsing the string as JSON
-						try { d[to][p].value = looseJsonParse(event[p].signal,datum); }
-						catch(e) { _obj.log.error('Unable to parse signal',d.data,event[p]); }
-
-						// Do special things for the tooltip property
-						if(p=="tooltip"){
-							// If we now have an object we build a string
-							if(typeof d.props[p].value==="object"){
-								str = "<table>";
-								for(i in d.props[p].value){
-									if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
-								}
-								d.props[p] = str+"</table>";
-							}else d.props[p] = d.props[p].value;
-						}
-					}
-				}
-			}
-			return d;
-		}
-
-		/** 
-		  * @desc Add a bunch of marks
-		  * @param {object} me - the TS object
-		  * @param {integer} m - the index of the mark
-		  * @param {object} mark - the mark object
-		  * @param {object} attr - other attributes
-		  * @param {function} attr.progress - called as marks are being added (to let us update a progress bar)
-		  * @param {function} attr.success - called when the marks have been added
-		  */
-		function addMarks(me,m,mark,attr){
-			var id = "";
-			var exists = true;
-
-			if(!attr) attr = {};
-			// Update the 'this' property
-			attr["this"] = me;
-
-			if(mark.from && mark.from.data){
-				if(typeof me.datasets[mark.from.data]==="undefined"){
-					me.log.error('Data source '+mark.from.data+' doesn\'t seem to exist.');
-					exists = false;
-				}
-				id = mark.from.data;
-				if(me.datasets[id]) me.progress.datasets.used += id;
-			}
-
-			// Only bother building this dataset if it hasn't already been added.
-			// A mark can have no dataset associated with it if it is "text" or a "rule"
-			if((!id || me.datasets[id] || !exists) && !me.graph.marks[m]){
-				var desc = mark.description || "Markers "+(m+1);
-				var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
-
-				if(mark.type == "symbol") dataset.symbol = {show:true};
-				else if(mark.type == "rect") dataset.rect = {show:true};
-				else if(mark.type == "line") dataset.lines = {show:true};
-				else if(mark.type == "rule") dataset.rule = {show:true};
-				else if(mark.type == "area") dataset.area = {show:true};
-				else if(mark.type == "text") dataset.text = {show:true};
-
-				if(me.datasets[id]){
-					dataset.data = clone(me.datasets[id].json);
-					dataset.original = clone(me.datasets[id].json);
-					dataset.parse = me.datasets[id].parse;
-				}else{
-					if(id && !me.datasets[id]) me.log.error('No dataset for '+mark.name);
-					dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
-					dataset.original = {};
-					dataset.parse = {};
-				}
-
-				// Add the dataset
-				if(dataset){
-
-					if(mark.encode && mark.encode.hover) dataset.hoverable = true;
-
-					dataset.encode = mark.encode;
-
-					// Add callbacks
-					if(mark.encode.enter) dataset.enter = function(datum,event){ return updateProperties(datum,event); };
-					if(mark.encode.update) dataset.update = function(datum,event){ return updateProperties(datum,event); };
-					if(mark.encode.hover) dataset.hover = function(datum,event){ return updateProperties(datum,event); };
-
-					// Is this marker layer clipped?
-					dataset.clip = (mark.clip || false);
-
-					// Now we add this mark-based dataset
-					me.graph.addMarks(dataset,m,mark,attr);
-					if(me.datasets[id]) me.datasets[id].added = true;
-
-				}else{
-					me.log.message('No dataset built for '+id,mark);
-				}
-			}
-			return me;
-		}
 
 		for(id in this.datasets){
 			if(this.datasets[id] && !this.datasets[id].data) this.datasets[id].data = this.datasets[id].json;
@@ -1601,6 +1457,152 @@
 		return {};
 	};
 
+
+	/** 
+	  * @desc Add a bunch of marks
+	  * @param {object} me - the TS object
+	  * @param {integer} m - the index of the mark
+	  * @param {object} mark - the mark object
+	  * @param {object} attr - other attributes
+	  * @param {function} attr.progress - called as marks are being added (to let us update a progress bar)
+	  * @param {function} attr.success - called when the marks have been added
+	  */
+	function addMarks(me,m,mark,attr){
+		var id = "";
+		var exists = true;
+
+		if(!attr) attr = {};
+		// Update the 'this' property
+		attr["this"] = me;
+
+		if(mark.from && mark.from.data){
+			if(typeof me.datasets[mark.from.data]==="undefined"){
+				me.log.error('Data source '+mark.from.data+' doesn\'t seem to exist.');
+				exists = false;
+			}
+			id = mark.from.data;
+			if(me.datasets[id]) me.progress.datasets.used += id;
+		}
+
+		// Only bother building this dataset if it hasn't already been added.
+		// A mark can have no dataset associated with it if it is "text" or a "rule"
+		if((!id || me.datasets[id] || !exists) && !me.graph.marks[m]){
+			var desc = mark.description || "Markers "+(m+1);
+			var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
+
+			if(mark.type == "symbol") dataset.symbol = {show:true};
+			else if(mark.type == "rect") dataset.rect = {show:true};
+			else if(mark.type == "line") dataset.lines = {show:true};
+			else if(mark.type == "rule") dataset.rule = {show:true};
+			else if(mark.type == "area") dataset.area = {show:true};
+			else if(mark.type == "text") dataset.text = {show:true};
+
+			if(me.datasets[id]){
+				dataset.data = clone(me.datasets[id].json);
+				dataset.original = clone(me.datasets[id].json);
+				dataset.parse = me.datasets[id].parse;
+			}else{
+				if(id && !me.datasets[id]) me.log.error('No dataset for '+mark.name);
+				dataset.data = [{'props':{'x':0,'y':0,'x2':0,'y2':0}}];
+				dataset.original = {};
+				dataset.parse = {};
+			}
+
+			// Add the dataset
+			if(dataset){
+
+				if(mark.encode && mark.encode.hover) dataset.hoverable = true;
+
+				dataset.encode = mark.encode;
+
+				// Add callbacks
+				if(mark.encode.enter) dataset.enter = function(d,event){ return updateProperties(this,d,event); };
+				if(mark.encode.update) dataset.update = function(d,event){ return updateProperties(this,d,event); };
+				if(mark.encode.hover) dataset.hover = function(d,event){ return updateProperties(this,d,event); };
+
+				// Is this marker layer clipped?
+				dataset.clip = (mark.clip || false);
+
+				// Now we add this mark-based dataset
+				me.graph.addMarks(dataset,m,mark,attr);
+				if(me.datasets[id]) me.datasets[id].added = true;
+
+			}else{
+				me.log.message('No dataset built for '+id,mark);
+			}
+		}
+		return me;
+	}
+
+	/** 
+	  * @desc Update the properties of the data point using the event JSON
+	  * @param {object} self - the TS object
+	  * @param {object} d - the datum object
+	  * @param {object} event - the event JSON
+	  */
+	function updateProperties(self,d,event){
+		var to,str,i,p;
+
+		// Where to put the updated property
+		var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
+
+		// If there is no datum, we will give up
+		if(!d) return self.log.warning('updateProps fail',d,event);
+
+		// Loop over each property of the event
+		for(p in event){
+			if(event[p]){
+				if(dest[p] && dest[p]=="props"){
+					if(typeof event[p].value !== "undefined"){
+						if(d.props.symbol) d.props.symbol[p] = event[p].value;
+						if(d.props.format) d.props.format[p] = event[p].value;
+					}
+				}else{
+					if(typeof d.data[p]==="undefined") d.data[p] = clone(event[p]);
+					if(event[p].field){
+						if(typeof event[p].field==="string"){
+							if(typeof d.data[event[p].field]!=="undefined") d.data[p] = d.data[event[p].field];
+							else self.log.error('The field "'+event[p].field+'" ('+p+'-axis) seems to be missing.',clone(d),event);
+						}else if(typeof event[p].field==="object"){
+							d.data[p] = clone(event[p]);
+						}
+					}
+					if(typeof event[p].value!=="undefined"){
+						if(event[p].format && event[p].format=="date") d.data[p].value = (new Date(event[p].value)).getTime()/1000;
+						else d.data[p].value = event[p].value;
+					}
+				}
+
+				// Do we need to process a signal property?
+				if(event[p].signal){
+
+					// If the value of the signal is set to "datum" we default to a table of the original properties
+					if(event[p].signal=="datum") event[p].signal = JSON.stringify(d.original);
+
+					// Where are we putting the updated value?
+					to = dest[p] || "data";
+					if(typeof d[to][p]==="undefined") d[to][p] = {};
+
+					// Try parsing the string as JSON
+					try { d[to][p].value = looseJsonParse(event[p].signal,d.data); }
+					catch(e) { self.log.error('Unable to parse signal',d.data,d.data,event[p].signal); }
+
+					// Do special things for the tooltip property
+					if(p=="tooltip"){
+						// If we now have an object we build a string
+						if(typeof d.props[p].value==="object"){
+							str = "<table>";
+							for(i in d.props[p].value){
+								if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
+							}
+							d.props[p] = str+"</table>";
+						}else d.props[p] = d.props[p].value;
+					}
+				}
+			}
+		}
+		return d;
+	}
 	/**
 	 * @desc Get an SVG icon
 	 * @param {string} icon - the key for the icon
@@ -1744,19 +1746,17 @@
 
 	// The month is zero-based for compatibility with VEGA
 	// https://vega.github.io/vega/docs/expressions/#datetime
-	fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; }";
-	fns += "function date(d){ return (new Date(d)).getTime()/1000; }";
+	fns += "function datetime(y,m,d,h,mn,sc,ms){ return (new Date(y+'-'+zeroPad(m+1,2)+'-'+(typeof d==='number' ? zeroPad(d,2):'01')+(typeof h==='number' ? 'T'+(zeroPad(h,2)+':'+(typeof mn==='number' ? zeroPad(mn,2)+(typeof sc==='number' ? ':'+zeroPad(sc,2)+(ms ? '.'+zeroPad(ms,3):''):''):'00'))+'Z':''))).valueOf()/1000; };";
+	fns += "function date(d){ return (new Date(d)).getTime()/1000; };";
 
-	function looseJsonParse(obj,datum){
+	function looseJsonParse(obj,d){
 		// If we are using big.js for the value we need to convert any values to a plain-old number here
-		if(typeof datum==="object"){
-			for(var m in datum){
-				if(typeof datum[m]=="object" && datum[m].type=="Num"){
-					datum[m] = (typeof datum[m].toValue==="function") ? datum[m].toValue() : datum[m].v;
-				}
+		if(typeof d==="object"){
+			for(var m in d){
+				if(typeof d[m]=="object" && d[m].type=="Num") d[m] = (typeof d[m].toValue==="function") ? d[m].toValue() : d[m].v;
 			}
 		}
-		return Function('"use strict";'+fns+' return (' + obj + ')')();
+		return Function('"use strict";'+fns+'var datum = '+JSON.stringify(d)+'; return ('+ obj + ')')();
 	}
 
 	/**
@@ -1847,4 +1847,3 @@
 	root.TimeSeries = TimeSeries;
 
 })(window || this);
-var a,b;
