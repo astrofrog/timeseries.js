@@ -17,7 +17,7 @@
 	 */
 	function TimeSeriesMaster(){
 
-		this.version = "0.0.22";
+		this.version = "0.0.23";
 		this.length = 0;
 
 		/**

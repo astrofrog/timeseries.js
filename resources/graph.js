@@ -286,7 +286,7 @@
 		if(is(i.fullwindow,b)) this.fullwindow = i.fullwindow;
 		if(is(i.transparent,b)) this.transparent = i.transparent;
 		if(is(i.scale,n)) this.scale = i.scale;
-	
+
 		this.log = new Logger({'id':'Canvas','logging':this.logging});
 
 		this.log.message('Canvas',container,this.wide,this.tall);
@@ -313,7 +313,7 @@
 		this.wide = this.container.width();
 		if(this.tall > 0) this.container.css({'height':this.tall+'px'});
 		this.tall = this.container.height();
-	
+
 		// Add a <canvas> to it
 		this.container.html('<div class="canvasholder"><canvas class="canvas" style="display:block;font:inherit;"></canvas></div>');
 		this.containerbg = this.container.css('background');
@@ -479,7 +479,7 @@
 	Canvas.prototype.toggleFullScreen = function(){
 		this.log.message('toggleFullScreen',this.fullscreen);
 		this.elem = this.container[0];
-	
+
 		if(this.fullscreen){
 			if(document.exitFullscreen) document.exitFullscreen();
 			else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
@@ -504,7 +504,7 @@
 		if(!w || !h){
 			if(this.fullscreen) this.container.css({'background':'white'});
 			else this.container.css({'background':this.containerbg});
-		
+
 			// We have to zap the width of the canvas to let it take the width of the container
 			this.canvas.css({'width':'','height':'','max-width':'100%'});
 			if(this.fullwindow){
@@ -556,7 +556,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.4";
+		this.version = "0.3.5";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -631,7 +631,7 @@
 			x = event.layerX;
 			y = event.layerY;
 			ds = g.dataAtMousePosition(x,y);
-		
+
 			// No data (but the alt key is pressed) so we'll start the zoom selection
 			if(g.within(x,y) && g.options.zoomable){
 				g.selectfrom = [x,y];
@@ -693,7 +693,7 @@
 					g.selectto = [x,y];
 					var to = clone(g.selectto);
 					var from = clone(g.selectfrom);
-				
+
 					if(g.options.zoommode == "x"){
 						from[1] = g.getPos("y",g.y.min);
 						to[1] = g.getPos("y",g.y.max);
@@ -801,12 +801,12 @@
 					enableScroll();
 				}
 			});
-			
+
 		});
 
 		// Extend the options with those provided by the user
 		this.setOptions(options);
-	
+
 		// Finally, set the data and update the display
 		this.updateData();
 
@@ -932,7 +932,7 @@
 				for(i = 0 ; i < data.data.length; i++){
 				// Loop over each column in the line
 					v = data.data[i][key];
-			
+
 					if(format!="string"){
 						// "number", "boolean" or "date" https://github.com/vega/vega/wiki/Data#-csv
 						if(format=="number"){
@@ -1105,7 +1105,7 @@
 		if(!this.y) this.y = {};
 		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
 		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
-	
+
 		if(this.options.xaxis.type=="time" || this.options.xaxis.type=="utc") this.x.isDate = true;
 
 		if(this.marks.length <= 0) return this;
@@ -1192,7 +1192,7 @@
 						}
 					}
 				}
-				this[axes[axis]] = calc(this[axes[axis]],v);			
+				this[axes[axis]] = calc(this[axes[axis]],v);
 			}
 		}
 
@@ -1230,7 +1230,7 @@
 			// Build the clip path
 			ctx.save();
 			ctx.beginPath();
-			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);	
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 			ctx.clip();
 			// Quick draw the image offset by the currently computed offset (since mousedown)
 			// and any existing offset from previous panBy() event that hasn't finished drawing
@@ -1325,7 +1325,7 @@
 			// Build the clip path
 			ctx.save();
 			ctx.beginPath();
-			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);	
+			ctx.rect(this.chart.left,this.chart.top,this.chart.width,this.chart.height);
 			ctx.clip();
 			ctx.drawImage(this.paper.data.c,x,y,Math.round(this.canvas.wide/this.paper.data.scale.x),Math.round(this.canvas.tall/this.paper.data.scale.y));
 			ctx.restore();
@@ -1567,7 +1567,7 @@
 			var html = "";
 
 			if(topmark){
-	
+
 				// Build the hovertext output
 				val = {
 					title: (series.title) ? series.title : "", 
@@ -1575,7 +1575,7 @@
 					ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 					data: series.data[i]
 				};
-			
+
 				html = removeRoundingErrors(topmark.props.tooltip) || "";
 			}
 			if(html){
@@ -1698,7 +1698,7 @@
 		rg = this[a].range;
 		mx = this[a].max;
 		mn = this[a].min;
-		
+
 		// Set the label scaling
 		var scale = (a=="x" && this[a].ticks.props.scale) ? this[a].ticks.props.scale : 1;
 
@@ -1751,7 +1751,7 @@
 				if(sp > 0) this[a].spacing.div = sp;
 			}
 		}
-		
+
 		// If the output format is a "date" type and the input scale is set to 1 we use base 60/24 as appropriate
 		if(this[a].isDate && scale==1){
 
@@ -1764,7 +1764,7 @@
 			t_max = (roundDate(mx,{'range':this[a].range,'unit':this[a].spacing.name,'inc':t_inc,'n':this[a].spacing.fract,'method':'ceil'}));
 
 		}else if(this[a].isPhase){
-		
+
 			this[a].showAsDate = false;
 
 			t_inc = Num(this[a].spacing.div).times(this[a].spacing.fract);
@@ -1772,12 +1772,12 @@
 			t_min = Num(mn).div(inc).floor().times(inc).toValue();
 			t_max = Num(mx).div(inc).ceil().times(inc).toValue();
 			this[a].precisionlabel = Math.abs(Math.floor(Math.log10(inc)));
-			
+
 		}else{
 
 			// Do we do date-based rounding
 			this[a].showAsDate = false;
-	
+
 			// Scale the range before we work out the spacings
 
 			t_inc = defaultSpacing(Num(mn).div(scale).toValue(),Num(mx).div(scale).toValue(),(this[a].isDate ? 3 : 5));
@@ -1849,7 +1849,7 @@
 
 		// If the range is negative we cowardly quit
 		if(mn > mx) return this;
-	
+
 		// If the min or max are not numbers we quit
 		if(isNaN(mn) || isNaN(mx)) return this;
 
@@ -1873,7 +1873,7 @@
 		}
 		mn = this[a].ticks[0].value;
 		mx = this[a].ticks[this[a].ticks.length-1].value;
-	
+
 		// A function to format the date nicely
 		function niceDate(d,sp){
 			var hr,mn,sc,dy,mo,yr,n,f,fs,str,idx,bits;
@@ -1933,7 +1933,7 @@
 			}
 			return fmt[i];
 		}
-	
+
 		if(this[a].log){
 			// Format labels for log scale
 			for(i = 0; i < this[a].ticks.length; i++){
@@ -2012,7 +2012,7 @@
 			this[a].ticks.min = this[a].ticks[0].value;
 			this[a].ticks.max = this[a].ticks[this[a].ticks.length-1].value;
 		}
-		
+
 		// We want to convert the values back to the input format so that
 		// they appear in the correct place on the graph
 		if(this[a].units && this[a].formats && this[a].formats[this[a].units] && typeof this[a].formats[this[a].units].convert==="function"){
@@ -2060,7 +2060,7 @@
 		c = this.chart;
 		if(!c.left) c.left = 0;
 		// Set the target
-	
+
 		c.padding = (this.canvas.fullscreen) ? 36 : 0;
 		c.fontsize = (typeof fs=="string") ? parseInt(fs) : 12;
 		c.fontfamily = (typeof ff=="string") ? ff : "";
@@ -2173,7 +2173,7 @@
 			ctx.fillRect(c.left,c.top,c.width,c.height);
 		}
 		ctx.closePath();
-	
+
 		for(a in axes){
 			if(axes[a]){
 
@@ -2322,7 +2322,7 @@
 						}
 
 						ctx.stroke();
-					
+
 						// Draw grid lines if there is a label
 						ctx.strokeStyle = (this.options[a].gridColor || 'rgba(0,0,0,0.5)');
 						if(show.grid && axis.ticks[ii].label && i >= axis.min && i <= axis.max){
@@ -2332,7 +2332,7 @@
 							ctx.lineTo(x2,y2);
 							ctx.stroke();
 						}
-	
+
 						// Draw tick marks lines
 						ctx.strokeStyle = (this.options[a].tickColor || 'rgba(0,0,0,0.5)');
 						if(show.ticks && i >= axis.min && i <= axis.max){
@@ -2344,14 +2344,14 @@
 								ctx.lineTo(x2,y1+tickw);
 							}else if(d=="y"){
 								ctx.moveTo(x1,y1);
-								ctx.lineTo(x1-tickw,y2);				
+								ctx.lineTo(x1-tickw,y2);
 							}
 							ctx.stroke();
 							ctx.closePath();
 						}
 					}
 				} // Drawn all the tick marks
-				
+
 				ctx.lineWidth = 0;
 			}
 		}
@@ -2484,7 +2484,7 @@
 		// Start processing
 		if(attr.cancelable) this.timeout.redraw = setTimeout(processChunk,0,this,0,attr);
 		else processChunk(this,0,attr);
-	
+
 		return this;
 	};
 
@@ -2512,7 +2512,7 @@
 
 		if(typeof update!=="boolean") update = true;
 		if(!update) return this;
-	
+
 		var d,sh,i,v,a,a1,a2,axes,axis;
 		axes = ['x','y'];
 
@@ -2608,7 +2608,7 @@
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
-				
+
 					quickdraw = (this.log.metrics['drawData '+sh].av > 70);
 					if(quickdraw){
 						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
@@ -2881,7 +2881,7 @@
 
 		this.paper.temp.ctx.fill();
 		if(this.marks[sh].mark[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
-	
+
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
 		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.4});
@@ -3005,10 +3005,10 @@
 		var ctx,p,x1,y1,s,w,h,o,dw,s2;
 		ctx = attr.ctx;
 		p = datum.props;
-	
+
 		x1 = (typeof attr.x==="number") ? attr.x : p.x;
 		y1 = (typeof attr.y==="number") ? attr.y : p.y;
-	
+
 		ctx.moveTo(x1,y1);
 		ctx.beginPath();
 
@@ -3334,7 +3334,7 @@
 			else if(attr.unit == "hours"){ a = d.h + (d.m+(d.s/60))/60; f = 3600; }
 			else if(attr.unit == "days"){ a = d.dd + (d.h+((d.m+(d.s/60))/60))/24; f = 86400; }
 			else{ a = d.s; f = 1; }
-		
+
 			a = Num(a).plus(bits[1].div(f));
 			a2 = a.div(attr.n).round(0,(attr.method=="floor" ? 0 : 3)).times(attr.n).times(f);
 			a = a.times(f);
@@ -3349,7 +3349,7 @@
 	 * @desc Get the width of the scroll bar
 	 */
 	var scrollbarwidth = 0;
-	function getScrollbarWidth(){ scrollbarwidth = window.outerWidth - S('body')[0].offsetWidth; return scrollbarwidth; }
+	function getScrollbarWidth(){ scrollbarwidth = window.innerWidth - S('body')[0].offsetWidth; return scrollbarwidth; }
 
 	/**
 	 * @desc Prevent scrolling on mouse wheel events
@@ -3392,7 +3392,7 @@
 		var mn,mx,val,major,minor,i,j,ticks,vis,inc,n,show,o,r;
 		ticks = {'length':0,'min':min,'max':max};
 		if(min > max) return ticks;
-		
+
 		// Get the log range
 		r = (Math.log10(max)-Math.log10(min));
 		mn = Math.floor(Math.log10(min));
