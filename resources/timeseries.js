@@ -1488,7 +1488,7 @@
 		// A mark can have no dataset associated with it if it is "text" or a "rule"
 		if((!id || me.datasets[id] || !exists) && !me.graph.marks[m]){
 			var desc = mark.description || "Markers "+(m+1);
-			var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : true), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
+			var dataset = { 'title': id, 'id': id, 'name': (mark.name||""), 'desc': desc, 'type': mark.type, 'interactive': (typeof mark.interactive==="boolean" ? mark.interactive : false), 'css':{'background-color':'#000000'}, 'include': (typeof mark.include==="boolean" ? mark.include : true) };
 
 			if(mark.type == "symbol") dataset.symbol = {show:true};
 			else if(mark.type == "rect") dataset.rect = {show:true};
@@ -1514,6 +1514,7 @@
 				if(mark.encode && mark.encode.hover) dataset.hoverable = true;
 
 				dataset.encode = mark.encode;
+				if(mark.encode.update) dataset.interactive = true;
 
 				// Add callbacks
 				if(mark.encode.enter) dataset.enter = function(d,event){ return updateProperties(this,d,event); };

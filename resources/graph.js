@@ -556,7 +556,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.5";
+		this.version = "0.3.6";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -1453,9 +1453,10 @@
 	Graph.prototype.dataAtMousePosition = function(x,y){
 		x = Math.round(x*this.canvas.scale);
 		y = Math.round(y*this.canvas.scale);
-		if(x >= 0 && y >= 0 && x < this.canvas.c.width && y < this.canvas.c.height && this.lookup[x] && this.lookup[x][y]) return this.lookup[x][y];
-		else this.canvas.canvas.css({'cursor':''});
-		return [];
+		var rtn = [];
+		if(this.lookup) rtn = this.lookup.getValue(x,y);
+		if(rtn.length<1) this.canvas.canvas.css({'cursor':''});
+		return rtn;
 	};
 
 	/**
@@ -2566,21 +2567,11 @@
 	 */
 	Graph.prototype.drawData = function(updateLookup){
 
-		var p,sh,ctx,i,j,m,update,px,quickdraw,colour;
+		var p,sh,ctx,i,m,update,px,quickdraw,colour;
 		// Define an empty pixel-based lookup table
 		if(updateLookup){
-			// If the size of the lookup hasn't changed, we can just set everything to null
-			if(this.lookup && this.lookup.length==this.canvas.c.width && this.lookup[0].length==this.canvas.c.height){
-				for(i = 0; i < this.canvas.c.width; i++) {
-					for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
-				}
-			}else{
-				this.lookup = [];
-				for(i = 0; i < this.canvas.c.width; i++) {
-					this.lookup[i] = [];
-					for(j = 0; j < this.canvas.c.height; j++) this.lookup[i][j] = null;
-				}
-			}
+			if(!this.lookup) this.lookup = new Lookup(this.canvas.c.width,this.canvas.c.height);
+			else this.lookup.reset();
 		}
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
@@ -2589,7 +2580,7 @@
 
 		for(sh in this.marks){
 			if(this.marks[sh].show && this.marks[sh].include){
-				this.log.time('drawData '+sh);
+				this.log.time('drawData '+sh+' '+this.marks[sh].type);
 				this.setCanvasStyles(this.paper.data.ctx,this.marks[sh].mark[0]);
 				this.setCanvasStyles(this.paper.temp.ctx,this.marks[sh].mark[0]);
 
@@ -2609,7 +2600,7 @@
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 
-					quickdraw = (this.log.metrics['drawData '+sh].av > 70);
+					quickdraw = (this.log.metrics['drawData '+sh+' '+this.marks[sh].type].av > 70);
 					if(quickdraw){
 						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
 						colour = getRGB(this.marks[sh].mark[0].props.format.fill,this.marks[sh].mark[0].props.format.fillOpacity);
@@ -2630,13 +2621,12 @@
 								if(quickdraw){
 									if(p.x >= this.chart.left && p.x <= this.chart.left+this.chart.width && p.y >= this.chart.top && p.y <= this.chart.top+this.chart.height) this.paper.data.ctx.putImageData(px, p.x*this.canvas.scale, p.y*this.canvas.scale);
 								}else this.drawShape(m,{'update':update});
-							}
-							if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
-							if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
+							}else if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
+							else if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
 						}
 					}
 				}
-				this.log.time('drawData '+sh);
+				this.log.time('drawData '+sh+' '+this.marks[sh].type);
 				// Apply the clipping if set
 				if(this.marks[sh].clip) this.paper.data.ctx.restore();
 			}
@@ -2709,7 +2699,7 @@
 			ctx.rect(x1,y1,dx,dy);
 			ctx.fill();
 			ctx.closePath();
-			o = {id:datum.id,xa:Math.floor(x1-dx/2),xb:Math.ceil(x1+dx/2),ya:Math.floor(y2),yb:Math.ceil(y1),w:1};
+			o = {'id':datum.id,'xa':Math.floor(x1-dx/2),'xb':Math.ceil(x1+dx/2),'ya':Math.floor(y2),'yb':Math.ceil(y1),'w':1};
 			if(attr.update) this.addRectToLookup(o);
 			return o;
 		}
@@ -2756,11 +2746,11 @@
 			if(!p.y2) p.y2 = p.y;
 			if(p.x1 && p.y1) this.paper.temp.ctx.moveTo(p.x1,p.y1);
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
+			if(attr.update && (p.x1==p.x2 || p.y1==p.y2)) this.lookup.setRect(p.x1,p.y1,p.x2,p.y2,sh,i,0.6);
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.6});
 		return this;
 	};
 
@@ -2821,7 +2811,7 @@
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.6});
+		if(attr.update) this.addTempToLookup({'layer':sh, 'id':0, 'weight':0.6});
 
 		return this;
 	};
@@ -2884,7 +2874,7 @@
 
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'id':this.marks[sh].mark[0].id, 'weight':0.4});
+		if(attr.update) this.addTempToLookup({'layer':sh,'id':0, 'weight':0.4});
 
 		return this;
 	};
@@ -3083,35 +3073,30 @@
 		ctx.fill();
 		if(p.format.strokeWidth > 0) ctx.stroke();
 
-		o = {id:datum.id,xa:Math.floor(x1-w/2),xb:Math.ceil(x1+w/2),ya:Math.floor(y1-h/2),yb:Math.ceil(y1+h/2)};
+		o = {'id':datum.id,'xa':Math.floor(x1-w/2),'xb':Math.ceil(x1+w/2),'ya':Math.floor(y1-h/2),'yb':Math.ceil(y1+h/2)};
 		if(attr.update) this.addRectToLookup(o);
 		return o;
 	};
 
 	/**
 	 * @desc Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
-	 * @param {number} attr.id - the index of this data point
+	 * @param {number} attr.layer - the ID of the layer
+	 * @param {number} attr.id - the index of this data point in the layer
 	 * @param {number} attr.weight - the weighting for this data point at this pixel
 	 */
 	Graph.prototype.addTempToLookup = function(attr){
-		if(!attr.id) return;
-		var a,px,i,p,x,y,l,w,h;
-		a = attr.id+':'+(attr.weight||1);
+		if(typeof attr.id!=="number") return;
+		var px,i,p,x,y,n,w,h;
 		w = this.canvas.c.width;
 		h = this.canvas.c.height;
 		px = this.paper.temp.ctx.getImageData(0,0,w,h);
-		l = px.data.length;
-		for(i = p = x = y = 0; i < l; i+=4, p++, x++){
+		n = px.data.length;
+		for(i = p = x = y = 0; i < n; i+=4, p++, x++){
 			if(x == w){
 				x = 0;
 				y++;
 			}
-			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]){
-				if(x < w && y < h){
-					if(this.lookup[x][y] == null) this.lookup[x][y] = [a];
-					else this.lookup[x][y].push(a);
-				}
-			}
+			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]) this.lookup.setValue(x,y,attr.layer,attr.id,attr.weight);
 		}
 		return this;
 	};
@@ -3119,7 +3104,8 @@
 	/**
 	 * @desc Use a bounding box to define the lookup area
 	 * @param {object} i - the datum to use
-	 * @param {number} i.id - the index of this data point
+	* @param {number} i.layer - the ID of the layer
+	 * @param {number} i.id - the index of this data point in the layer
 	 * @param {number} i.xa - the starting x value
 	 * @param {number} i.xb - the ending x value
 	 * @param {number} i.ya - the starting y value
@@ -3128,9 +3114,8 @@
 	 */
 	Graph.prototype.addRectToLookup = function(i){
 		if(!i.id) return;
-		var x,y,p,a,t,dir,bit;
+		var x,y,p,t,dir,bit;
 		p = 1;
-		a = i.id+':'+(i.weight||1);
 		if(i.xb < i.xa){ t = i.xa; i.xa = i.xb; i.xb = t; }
 		if(i.yb < i.ya){ t = i.ya; i.ya = i.yb; i.yb = t; }
 
@@ -3153,12 +3138,16 @@
 		if(i.ya < 0) i.ya = 0;
 		// Clip to chart
 		i.yb = Math.min(i.yb,(this.chart.top+this.chart.height)*this.canvas.scale);
+		
+		// Update layer info
+		if(!i.layer){
+			var bits = i.id.split(":");
+			i.layer = bits[0];
+			i.id = parseInt(bits[1]);
+		}
 		// Use bounding box to define the lookup area
 		for(x = i.xa; x < i.xb; x++){
-			for(y = i.ya; y < i.yb; y++){
-				if(this.lookup[x][y] == null) this.lookup[x][y] = [a];
-				else this.lookup[x][y].push(a);
-			}
+			for(y = i.ya; y < i.yb; y++) this.lookup.setValue(x,y,i.layer,i.id,i.weight);
 		}
 		return this;
 	};
@@ -3449,6 +3438,65 @@
 
 		return ticks;
 	}
+
+	function Lookup(w,h){
+		this.width = w;
+		this.height = h;
+		this.layers = {};
+		this.log = new Logger({'id':'Lookup','logging':true,'logtime':true});
+		return this;
+	}
+	
+	Lookup.prototype.reset = function(){
+		this.layers = {};
+		return this;
+	};
+
+	// No error checking to keep it quick
+	Lookup.prototype.setValue = function(x,y,l,id,weight){
+		var n,idx;
+		if(!weight) weight = 1;
+		n = this.width*this.height;
+		// Create an empty layer if it doesn't exist
+		if(!this.layers[l]) this.layers[l] = {'id':new Int8Array(n), 'weight':new Float64Array(n)};
+		if(this.layers[l]){
+			idx = x+(y*this.width);
+			this.layers[l].id[idx] = id+1;
+			this.layers[l].weight[idx] = weight;
+		}
+		return this;
+	};
+	
+	Lookup.prototype.setRect = function(x1,y1,x2,y2,l,id,weight){
+		var n,x,y,idx;
+		if(!weight) weight = 1;
+		n = this.width*this.height;
+		// Create an empty layer if it doesn't exist
+		if(!this.layers[l]) this.layers[l] = {'id':new Int8Array(n), 'weight':new Float64Array(n)};
+		if(this.layers[l]){
+			x1 = Math.floor(x1);
+			x2 = Math.ceil(x2);
+			for(x = x1; x <= x2; x++){
+				for(y = y1 ; y <= y2; y++){
+					idx = x+(y*this.width);
+					this.layers[l].id[idx] = id+1;
+					this.layers[l].weight[idx] = weight;
+				}
+			}
+		}
+		return this;
+	};
+
+	Lookup.prototype.getValue = function(x,y){
+		var r,i,l;
+		if(x < 0 || y < 0 || x > this.width || y > this.height) return [];
+		r = [];
+		i = x+(y*this.width);
+		for(l in this.layers){
+			if(this.layers[l] && this.layers[l].id[i] > 0) r.push(l+':'+(this.layers[l].id[i]-1)+':'+(this.layers[l].weight[i]));
+		}
+		return r;
+	};
 
 	/**
 	 * @desc Create a logger for console messages and timing
