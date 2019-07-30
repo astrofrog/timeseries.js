@@ -17,7 +17,7 @@
 	 */
 	function TimeSeriesMaster(){
 
-		this.version = "0.0.23";
+		this.version = "0.0.24";
 		this.length = 0;
 
 		/**
@@ -1541,7 +1541,7 @@
 	  * @param {object} event - the event JSON
 	  */
 	function updateProperties(self,d,event){
-		var to,str,i,p;
+		var to,str,i,p,sig;
 
 		// Where to put the updated property
 		var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
@@ -1575,17 +1575,19 @@
 
 				// Do we need to process a signal property?
 				if(event[p].signal){
+					// Make a clone of the signal and work on that rather than the original
+					sig = clone(event[p].signal);
 
 					// If the value of the signal is set to "datum" we default to a table of the original properties
-					if(event[p].signal=="datum") event[p].signal = JSON.stringify(d.original);
+					if(sig=="datum") sig = JSON.stringify(d.original);
 
 					// Where are we putting the updated value?
 					to = dest[p] || "data";
 					if(typeof d[to][p]==="undefined") d[to][p] = {};
 
 					// Try parsing the string as JSON
-					try { d[to][p].value = looseJsonParse(event[p].signal,d.data); }
-					catch(e) { self.log.error('Unable to parse signal',d.data,d.data,event[p].signal); }
+					try { d[to][p].value = looseJsonParse(sig,d.data); }
+					catch(e) { self.log.error('Unable to parse signal',d.data,d.data,sig); }
 
 					// Do special things for the tooltip property
 					if(p=="tooltip"){
