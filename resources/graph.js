@@ -14,29 +14,14 @@
 	function clip(a){ return a.replace(/(\.[0-9]+?)0+$/,function(m,p1){return p1;}); }
 
 	/**
-	 * @desc Convert a "#xxxxxx" colour into an "rgba(r,g,b,a)" colour
+	 * @desc Convert a "#xxxxxx" or rgb(r,g,b) colour into an rgba(r,g,b,a)
 	 */
-	function hex2rgba(hex,a){
-		var o = getRGB(hex,a);
-		return 'rgba('+o.r+','+o.g+','+o.b+','+o.a+')';
-	}
-
-	/**
-	 * @desc Extract the RGB values
-	 */
-	function getRGB(c,a){
-		var r,g,b;
+	function hex2rgba(c,a){
 		a = (a||1);
-		if(c.indexOf('#')==0){
-			r = parseInt(c.substr(1,2),16);
-			g = parseInt(c.substr(3,2),16);
-			b = parseInt(c.substr(5,2),16);
-		}else if(c.indexOf("rgba")==0){
-			c.replace(/rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9\.]+)\)/,function(m,p1,p2,p3,p4){ r = parseInt(p1); g = parseInt(p2); b = parseInt(p3); a = parseFloat(p4); return m; });
-		}else if(c.indexOf("rgb(")==0){
-			c.replace(/rgb\(([0-9]+),([0-9]+),([0-9]+)\)/,function(m,p1,p2,p3){ r = p1; g = p2; b = p3; return m; });
-		}
-		return {'r':r,'g':g,'b':b,'a':a};
+		if(c.indexOf("rgba")==0) return c;
+		else if(c.indexOf("rgb(")==0) return c.replace(/(.*)\)/,function(m,p1){ return p1+","+a+")"; });
+		else if(c.indexOf('#')==0) return 'rgba('+parseInt(c.substr(1,2),16)+','+parseInt(c.substr(3,2),16)+','+parseInt(c.substr(5,2),16)+','+a+')';
+		return "";
 	}
 
 	var hasbig = false;
@@ -134,9 +119,6 @@
 	root.fullScreenApi = fullScreenApi;
 	// End of Full Screen API
 
-	// Polyfill for isArray()
-	if(!Array.isArray) Array.isArray = function(arg){ return Object.prototype.toString.call(arg) === '[object Array]'; };
-
 	// Extra mathematical/helper functions that will be useful - inspired by http://alexyoung.github.com/ico/
 	var G = {};
 	G.sum = function(a) { var i, sum; for (i = 0, sum = 0; i < a.length; sum += a[i++]){} return sum; };
@@ -145,44 +127,31 @@
 	if(typeof Array.prototype.min === 'undefined') G.min = function(a) { return Math.min.apply({}, a); };
 	else G.min = function(a) { return a.min(); };
 	G.mean = function(a) { return G.sum(a) / a.length; };
-	G.stddev = function(a) { return Math.sqrt(G.variance(a)); };
-	G.log10 = function(v) { return (Math.log10 ? Math.log10(v) : Math.log(v)/2.302585092994046); };
-	G.variance = function(a) { var mean = G.mean(a), variance = 0; for (var i = 0; i < a.length; i++) variance += Math.pow(a[i] - mean, 2); return variance / (a.length - 1); };
-	G.deepExtend = function(destination, source) {
-		for(var property in source){
-			if(typeof source[property] === "object"){
-				// If the object type has changed, we'll over-write the object entirely
-				if(Array.isArray(source[property]) != Array.isArray(destination[property])){
-					destination[property] = clone(source[property]);
-				}else{
-					destination[property] = destination[property] || {};
-					arguments.callee(destination[property], source[property]);
+	G.deepExtend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			var obj = arguments[i];
+			if(!obj) continue;
+
+			for(var key in obj){
+				if(obj.hasOwnProperty(key)){
+					if(typeof obj[key] === 'object') out[key] = G.deepExtend(out[key], obj[key]);
+					else out[key] = obj[key];
 				}
-			}else{
-				destination[property] = source[property];
 			}
 		}
-		return destination;
+		return out;
 	};
-	if(typeof Object.extend === 'undefined') {
-		G.extend = function(destination, source) {
-			for (var property in source) {
-				if (source.hasOwnProperty(property)) destination[property] = source[property];
+	G.extend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			if(!arguments[i]) continue;
+			for(var key in arguments[i]){
+				if (arguments[i].hasOwnProperty(key)) out[key] = arguments[i][key];
 			}
-			return destination;
-		};
-	}else G.extend = Object.extend;
-	if(Object.keys) G.keys = Object.keys;
-	else {
-		G.keys = function(o) {
-			if (o !== Object(o)) throw new TypeError('Object.keys called on non-object');
-			var ret = [], p;
-			for(p in o) {
-				if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
-			}
-			return ret;
-		};
-	}
+		}
+		return out;
+	};
 
 	/**
 	 * @desc Define a shortcut for checking variable types
@@ -267,13 +236,6 @@
 		this.logging = false;
 		this.scale = 1;
 
-		// Add options to detect for older IE
-		this.ie = false;
-		this.excanvas = (typeof G_vmlCanvasManager != 'undefined') ? true : false;
-		/*@cc_on
-		this.ie = true
-		@*/
-
 		// Overwrite defaults with variables passed to the function
 		var n = "number";
 		var t = "string";
@@ -322,8 +284,6 @@
 		this.canvasholder.css({'position':'relative'});
 		this.canvas.css({'position':'absolute'});
 		this.c = this.canvas[0];
-		// For excanvas we need to initialise the newly created <canvas>
-		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
 
 		if(this.c && this.c.getContext){
 			this.ctx = this.c.getContext('2d');
@@ -878,7 +838,7 @@
 
 		// Add user-defined options
 		//this.options = Object.assign(this.options, options);
-		this.options = G.deepExtend(this.options, options);
+		this.options = G.deepExtend({}, this.options, options);
 		// Set defaults for options that haven't already been set
 		if(typeof this.options.grid!=="object") this.options.grid = {};
 		if(typeof this.options.grid.show!=="boolean") this.options.grid.show = false;
@@ -1103,8 +1063,8 @@
 		var d,i,j,k,max,axes,axis,v,domain,keepers;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
-		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
-		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
+		G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
 		if(this.options.xaxis.type=="time" || this.options.xaxis.type=="utc") this.x.isDate = true;
 
@@ -1286,8 +1246,8 @@
 			pos[0] = c.x - sx*(c.x-this.x.min);
 			pos[1] = c.x + sx*(this.x.max-c.x);
 			if(this.y.log){
-				pos[2] = Math.pow(10,G.log10(c.y) - sy*(G.log10(c.y) - G.log10(this.y.min)));
-				pos[3] = Math.pow(10,G.log10(c.y) + sy*(G.log10(this.y.max) - G.log10(c.y)));
+				pos[2] = Math.pow(10,Math.log10(c.y) - sy*(Math.log10(c.y) - Math.log10(this.y.min)));
+				pos[3] = Math.pow(10,Math.log10(c.y) + sy*(Math.log10(this.y.max) - Math.log10(c.y)));
 			}else{
 				pos[2] = c.y - sy*(c.y-this.y.min);
 				pos[3] = c.y + sy*(this.y.max-c.y);
@@ -1350,8 +1310,8 @@
 		// First we need to calculate the log min/max/range
 		if(this[t].log){
 			// Adjust the low and high values for log scale
-			this[t].logmax = G.log10(this[t].max);
-			this[t].logmin = (this[t].min <= 0) ? this[t].logmax-2 : G.log10(this[t].min);
+			this[t].logmax = Math.log10(this[t].max);
+			this[t].logmin = (this[t].min <= 0) ? this[t].logmax-2 : Math.log10(this[t].min);
 			this[t].logrange = this[t].logmax-this[t].logmin;
 		}
 
@@ -1404,7 +1364,7 @@
 			}else v = c.value;
 		}else v = c;
 		k = (this[t].log) ? 'log':'';
-		if(this[t].log) v = G.log10(v);
+		if(this[t].log) v = Math.log10(v);
 		mn = this[t][k+'min'];
 		mx = this[t][k+'max'];
 		rn = this[t][k+'range'];
@@ -1651,8 +1611,8 @@
 		// Sort out what to do for log scales
 		if(this[a].log){
 			// Adjust the low and high values for log scale
-			this[a].logmax = G.log10(this[a].max);
-			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : G.log10(this[a].min);
+			this[a].logmax = Math.log10(this[a].max);
+			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : Math.log10(this[a].min);
 			this[a].logrange = this[a].logmax-this[a].logmin;
 		}
 
@@ -2362,11 +2322,8 @@
 	 * @desc Reset all the styles for the datasets
 	 */
 	Graph.prototype.resetDataStyles = function(){
-		var sh,i;
-		for(sh in this.marks){
-			if(this.marks[sh].update && this.marks[sh].show){
-				this.marks[sh].mark = this.marks[sh].update.call(this,this.marks[sh].mark,this.marks[sh].encode.update);
-			}
+		for(var sh in this.marks){
+			if(this.marks[sh].update && this.marks[sh].show) this.marks[sh].mark = this.marks[sh].update.call(this,this.marks[sh].mark,this.marks[sh].encode.update);
 		}
 		return this;
 	};
@@ -2563,7 +2520,7 @@
 	 */
 	Graph.prototype.drawData = function(updateLookup){
 
-		var p,sh,ctx,i,m,update,px,quickdraw,colour;
+		var p,sh,ctx,i,m,update;
 		// Define an empty pixel-based lookup table
 		if(updateLookup){
 			if(!this.lookup) this.lookup = new Lookup(this.canvas.c.width,this.canvas.c.height);
@@ -2875,7 +2832,7 @@
 		y = (attr.y || datum.props.y);
 		t = (attr.text || datum.data.text || "Label");
 		f = JSON.parse(JSON.stringify(datum.props.format));
-		if(attr.props) f.extend(attr.props);
+		if(attr.props) G.extend(f,attr.props);
 		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':f});
 		o.id = datum.id;
 		o.weight = 1;
@@ -3393,10 +3350,12 @@
 		if(!this.layers) this.layers = {};
 		this.layers[l] = {'keys':new Array(n)};
 		return this;
-	}
+	};
+
 	Lookup.prototype.reset = function(){
-		var n = this.width*this.height;
-		for(var l in this.layers) this.emptyLayer(l);
+		for(var l in this.layers){
+			if(this.layers[l]) this.emptyLayer(l);
+		}
 		return this;
 	};
 
@@ -3404,7 +3363,7 @@
 	Lookup.prototype.setImage = function(px,l,id,weight){
 		this.layers[l] = {'type':'image','px':px,'key':l+':'+id+':'+weight};
 		return this;
-	}
+	};
 
 	Lookup.prototype.setRect = function(x1,y1,x2,y2,l,key){
 		var x,y,idx,xr,yr,max;
