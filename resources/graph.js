@@ -2596,33 +2596,13 @@
 					// Work out if we need to update this lookup for these marks
 					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 
-					quickdraw = (this.log.metrics['drawData '+sh+' '+this.marks[sh].type].av > 70);
-					if(quickdraw){
-						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
-						colour = getRGB(this.marks[sh].mark[0].props.format.fill,this.marks[sh].mark[0].props.format.fillOpacity);
-						for(i = 0; i < 4; i+=4){
-							px.data[i + 0] = colour.r;
-							px.data[i + 1] = colour.g;
-							px.data[i + 2] = colour.b;
-							px.data[i + 3] = colour.a*255;
-						}
-					}
 					// Loop over points drawing them
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
 						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
-							if(this.marks[sh].type=="symbol"){
-								// If this layer is taking too long to update we'll make the symbol simpler
-								if(quickdraw){
-									if(p.x >= this.chart.left && p.x <= this.chart.left+this.chart.width && p.y >= this.chart.top && p.y <= this.chart.top+this.chart.height){
-										// Use a sprite
-										this.paper.data.ctx.putImageData(px, p.x*this.canvas.scale, p.y*this.canvas.scale);
-										// We still want to add this to the lookup
-										if(update) this.addRectToLookup({'id':m.id,'xa':Math.floor(p.x-1),'xb':Math.ceil(p.x+1),'ya':Math.round(p.y-1),'yb':Math.round(p.y+1),'w':1});
-									}
-								}else this.drawShape(m,{'update':update});
-							}else if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
+							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':update});
+							else if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
 							else if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
 						}
 					}
