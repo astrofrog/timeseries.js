@@ -568,6 +568,9 @@
 			if(this.paper[p]) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
 		}
 
+		// Bind events to the canvas holder
+		this.canvas.canvasholder.on("mouseenter",function(ev){ disableScroll(); }).on("mouseleave",function(ev){ enableScroll(); });
+
 		// Bind events to the canvas
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
@@ -686,7 +689,6 @@
 			if(event.offsetY <= 0) event.layerY = 0;
 			g.canvas.trigger('mousemove',{event:event});
 			g.canvas.trigger('mouseup',{event:event});
-			enableScroll();
 		}).on("mouseup",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			var event = ev.event.originalEvent;
@@ -730,7 +732,6 @@
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
 			var oe,g,c,co,f,s;
-			disableScroll();
 			oe = ev.event.originalEvent;
 			g = ev.data.me;
 			if(g.timeout.wheel) clearTimeout(g.timeout.wheel);
@@ -758,7 +759,6 @@
 				'callback': function(){
 					this.timeout.wheel = undefined;
 					this.trigger('wheelstop',{event:ev.event});
-					enableScroll();
 				}
 			});
 
@@ -3247,27 +3247,34 @@
 		e.returnValue = false;  
 	}
 
+	var scrollDisabled = false;
 	/**
 	 * @desc Disable the scroll event
 	 */
 	function disableScroll(){
-		if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
-		window.onwheel = preventDefault; // modern standard
-		window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
-		window.ontouchmove  = preventDefault; // mobile
-		// Get width of the scroll bar
-		if(getScrollbarWidth() > 0) S('body').css({'overflow':'hidden','margin-right':scrollbarwidth+'px'});
+		if(!scrollDisabled){
+			if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
+			window.onwheel = preventDefault; // modern standard
+			window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+			window.ontouchmove  = preventDefault; // mobile
+			// Get width of the scroll bar
+			if(getScrollbarWidth() > 0) S('body').css({'overflow':'hidden','margin-right':scrollbarwidth+'px'});
+			scrollDisabled = true;
+		}
 	}
 
 	/**
 	 * @desc Enable the scroll event
 	 */
 	function enableScroll(){
-		if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
-		window.onmousewheel = document.onmousewheel = null;
-		window.onwheel = null;
-		window.ontouchmove = null;
-		if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
+		if(scrollDisabled){
+			if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
+			window.onmousewheel = document.onmousewheel = null;
+			window.onwheel = null;
+			window.ontouchmove = null;
+			if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
+			scrollDisabled = false;
+		}
 	}
 
 	/**
