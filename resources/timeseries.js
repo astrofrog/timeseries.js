@@ -17,7 +17,7 @@
 	 */
 	function TimeSeriesMaster(){
 
-		this.version = "0.0.25";
+		this.version = "0.0.26";
 		this.length = 0;
 
 		/**
@@ -660,7 +660,7 @@
 			},{
 				'key': 'about',
 				'title': 'About',
-				'html': '<p>Figure produced with the <a href="https://aperiosoftware.github.io/timeseries.js/">AAS timeseries.js</a> package version '+TimeSeries.version+'.</p>'
+				'html': '<p>Figure produced with the <a href="https://aperiosoftware.github.io/timeseries.js/">AAS timeseries.js</a> package version '+TimeSeries.version+'.</p><p>You can zoom into the figure using a scroll wheel. Use the scroll wheel over one axis to zoom along that axis only. Pressing the <em>Alt</em> key and then clicking and dragging with your mouse will zoom to your selected region.</p>'
 			}];
 			str = '';
 			html = '';
@@ -1543,7 +1543,7 @@
 	  * @param {number} mm - an index for a specific mark to process
 	  */
 	function updateProperties(self,marks,event,mm){
-		var to,str,i,p,sig;
+		var to,str,i,p,sig,a,b,m;
 		var signals = {};
 		var data = {};
 
