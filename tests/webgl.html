@@ -255,12 +255,12 @@
 		'type': 'rule',
 		'shader': 'line',
 		'data': [[0,1],[1.0,1]],
-		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'width'}
+		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'fullWidth'}
 	},{
 		'type': 'rule',
 		'shader': 'line',
 		'data': [[1.0,0.0],[1.0,1.0]],
-		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'height'}
+		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'fullHeight'}
 	},{
 		'type': 'rule',
 		'shader': 'line',
@@ -322,7 +322,7 @@
 			if(layers[n].loc.strokeWidth) gl.ctx.uniform1f(layers[n].loc.strokeWidth, (layers[n].style.strokeWidth||strokeWidth));
 			if(layers[n].loc.width) gl.ctx.uniform1f(layers[n].loc.width, gl.canvas.width);
 			if(layers[n].loc.height) gl.ctx.uniform1f(layers[n].loc.height, gl.canvas.height);
-			if(layers[n].loc.type) gl.ctx.uniform1f(layers[n].loc.type, (layers[n].style.type=="width" ? 1.0 : layers[n].style.type=="height" ? 2.0 : 0.0));
+			if(layers[n].loc.type) gl.ctx.uniform1f(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1.0 : layers[n].style.type=="fullHeight" ? 2.0 : 0.0));
 			if(t=="symbol"){
 				gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
 				if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize, layers[n].icon.width);
@@ -511,7 +511,7 @@
 			}else{
 				attr.size = attr.width;
 				var orientation = "h";
-				if(layers[n].style.type=="height") orientation = "v";
+				if(layers[n].style.type=="fullHeight") orientation = "v";
 				if(layers[n].type=="rule" && layers[n].data[0][0]==layers[n].data[1][0]) orientation = "v";
 				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layers[n].type;
 				c.setAttribute('class','icon active label');
