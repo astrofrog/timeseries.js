@@ -5,8 +5,10 @@
 	body { background: #eee; }
 	.holder { position: relative; }
 	canvas { border: 1px solid #444; position: relative; }
-	.icon { display: inline-block; line-height: 0; cursor: pointer; }
-	.icon > * { filter: grayscale(1); opacity: 0.15; }
+	.icon { display: inline-block; line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; }
+	.icon > svg { width: 1.5em; height: 1.5em; background: white; }
+	.icon.label { padding: 0.5em; }
+	.icon > * { filter: grayscale(1); opacity: 0.15; vertical-align: middle; }
 	.icon.active > * { filter: none; opacity: 1; }
 	.icon:hover { background-color: #ddd; }
 	</style>
@@ -135,7 +137,7 @@
 
 	function makeSinCurve(){
 		var original = [];
-		var num = 100;
+		var num = 1000;
 		for(i = 0; i < num; i++){
 			x = -1 + 10 * (i / num);
 			y = Math.cos(2 * 3.1415926 * x)+1.0;
@@ -495,23 +497,33 @@
 				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_T, gl.ctx.CLAMP_TO_EDGE);
 				gl.ctx.texImage2D(gl.ctx.TEXTURE_2D, 0, gl.ctx.RGBA, gl.ctx.RGBA, gl.ctx.UNSIGNED_BYTE, layers[n].icon);
 
-				// Make SVG versions
-				c = document.createElement('div');
-				attr.output = "svg";
-				attr.width = 32;
-				attr.height = 32;
-				document.body.appendChild(c);
+			}
+			// Make SVG versions
+			c = document.createElement('div');
+			c.setAttribute('data',n);
+			attr.output = "svg";
+			attr.width = 32;
+			attr.height = 32;
+
+			if(layers[n].type=="symbol"){
 				c.innerHTML = Icon(layers[n].shape||"circle",attr);
 				c.setAttribute('class','icon active');
-				c.setAttribute('data',n);
-				c.addEventListener('click', function(){
-					i = parseInt(this.getAttribute('data'));
-					if(i < layers.length) layers[i].hide = !layers[i].hide;
-					this.classList.toggle('active');
-					console.log('test',this.getAttribute('data'));
-					drawScene();
-				});
+			}else{
+				attr.size = attr.width;
+				var orientation = "h";
+				if(layers[n].style.type=="height") orientation = "v";
+				if(layers[n].type=="rule" && layers[n].data[0][0]==layers[n].data[1][0]) orientation = "v";
+				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layers[n].type;
+				c.setAttribute('class','icon active label');
 			}
+			c.addEventListener('click', function(){
+				i = parseInt(this.getAttribute('data'));
+				if(i < layers.length) layers[i].hide = !layers[i].hide;
+				this.classList.toggle('active');
+				console.log('test',this.getAttribute('data'));
+				drawScene();
+			});
+			document.body.appendChild(c);
 		}
 		log.time('create icons and sprites');
 
@@ -709,7 +721,7 @@
 			console.log(attr)
 			if(!attr.width) attr.width = 32;
 			if(!attr.height) attr.height = 32;
-			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
+			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"  viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
 			svg += '<path d="'+this.toString()+'" fill="'+attr.fillStyle+'" stroke="'+attr.strokeStyle+'" stroke-width="'+attr.strokeWidth+'">'
 			svg += '</svg>';
 			return svg;
