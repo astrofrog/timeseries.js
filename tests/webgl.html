@@ -135,21 +135,24 @@
 	let range = { 'x': {'min':0,'max':10}, 'y': {'min':0,'max':10} };
 	var numperlayer = 100;
 
-	function makeSinCurve(){
-		var original = [];
-		var num = 1000;
-		for(i = 0; i < num; i++){
-			x = -1 + 10 * (i / num);
-			y = Math.cos(2 * 3.1415926 * x)+1.0;
-			original.push([x,y]);
+	function makeCurve(n){
+		var data = new Array(n);
+		var len = 8;
+		var std = 0.25;
+		var A = 4;
+		var xo = len/2;
+		for(i = 0; i < n; i++){
+			x = len * ((i - n/2) / n);
+			dx = x*len;
+			data[i] = {'x':x+(len/2),'y':A*(dx != 0 ? Math.sin(dx)/(dx) : 1)+1.0};
 		}
-		return original;
+		return data;
 	}
 
 	function makeData(n){
 		var data = new Array(n);
 		for(var i = 0; i < n; i++){
-			data[i] = [Math.random()*(range.x.max-range.x.min) + range.x.min,Math.random()*(range.y.max-range.y.min) + range.y.min];
+			data[i] = {'x':Math.random()*(range.x.max-range.x.min) + range.x.min,'y':Math.random()*(range.y.max-range.y.min) + range.y.min};
 		}
 		return data;
 	}
@@ -247,24 +250,24 @@
 		'shape': 'M0,.5L.6,.8L.5,.1L1,-.3L.3,-.4L0,-1L-.3,-.4L-1,-.3L-.5,.1L-.6,.8L0,.5Z',
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255, 103, 0,0.5)','fillStyle':'rgba(249,188,38,1)'}
 	},{
-		'type': 'line',
-		'shader': 'line',
-		'data': makeSinCurve(),
-		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':3}
-	},{
 		'type': 'rule',
 		'shader': 'line',
-		'data': [[0,1],[1.0,1]],
+		'data': [{'x':0,'y':1},{'x':1.0,'y':1}],
 		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'fullWidth'}
 	},{
 		'type': 'rule',
 		'shader': 'line',
-		'data': [[1.0,0.0],[1.0,1.0]],
+		'data': [{'x':1.0,'y':0.0},{'x':1.0,'y':1.0}],
 		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'fullHeight'}
+	},{
+		'type': 'line',
+		'shader': 'line',
+		'data': makeCurve(1000),
+		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':3}
 	},{
 		'type': 'rule',
 		'shader': 'line',
-		'data': [[2.0,1.0],[2.0,5.0]],
+		'data': [{'x':2.0,'y':1.0},{'x':2.0,'y':5.0}],
 		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
 	}/*,{
 		'type': 'rect',
@@ -512,7 +515,7 @@
 				attr.size = attr.width;
 				var orientation = "h";
 				if(layers[n].style.type=="fullHeight") orientation = "v";
-				if(layers[n].type=="rule" && layers[n].data[0][0]==layers[n].data[1][0]) orientation = "v";
+				if(layers[n].type=="rule" && layers[n].data[0].x==layers[n].data[1].x) orientation = "v";
 				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layers[n].type;
 				c.setAttribute('class','icon active label');
 			}
@@ -590,8 +593,8 @@
 		var vertices = new Float32Array(original.length*2);
 		for(i = 0; i < original.length ; i++){
 			// Build point-based vertices
-			vertices[i*2] = original[i][0];
-			vertices[i*2 + 1] = original[i][1];
+			vertices[i*2] = original[i].x;
+			vertices[i*2 + 1] = original[i].y;
 		}
 		return vertices;
 	}
@@ -602,8 +605,8 @@
 
 		var o = new Array(original.length*2);
 		for(i = 0; i < original.length;i++){
-			o[i*2] = original[i][0];
-			o[i*2 + 1] = original[i][1];
+			o[i*2] = original[i].x;
+			o[i*2 + 1] = original[i].y;
 		}
 
 		function normal_vector(dx, dy) {
@@ -628,7 +631,6 @@
 			vertices.push(-dy / scale * (-1) ** i)
 			vertices.push(dx / scale * (-1) ** i)
 		}
-		console.log(original,o,vertices);
 		return new Float32Array(vertices);
 	}
 
@@ -718,7 +720,6 @@
 		}
 		this.svg = function(attr){
 			if(!attr) attr = {};
-			console.log(attr)
 			if(!attr.width) attr.width = 32;
 			if(!attr.height) attr.height = 32;
 			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"  viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
