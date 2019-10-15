@@ -17,25 +17,33 @@
 </head>
 <body>
 	<script>
+	// Simulate log10(x) with log(x)/2.302585092994046
 	gl = {'id':'canvas'};
 	let shaders = {
 		'symbol': {
 			'vertex': {'src':`
-				attribute vec2 aVertexPosition;  // position of sprite
-				uniform vec2 uScalingFactor;
-				uniform vec2 uTranslationVector;
+				attribute vec2 aVertexPosition;	// position of sprite
+				uniform mat3 uMatrix;
 				uniform float uPointSize;
+				uniform bool uYLog;
+				uniform float uYLogMin;
+				uniform float uYLogMax;
+				vec2 posV;
+				float range;
+				float log10(float v){
+					return log(v)/2.302585092994046;
+				}
 
 				void main() {
-					// Add in the translation.
-					vec2 position = aVertexPosition + uTranslationVector;
-					// convert the position from pixels to 0.0 to 1.0
-					vec2 zeroToOne = (position / uScalingFactor);
-					// convert from 0->1 to 0->2
-					vec2 zeroToTwo = zeroToOne * 2.0;
-					// convert from 0->2 to -1->+1 (clipspace)
-					vec2 clipSpace = zeroToTwo - 1.0;
-					gl_Position = vec4(clipSpace * vec2(1, 1), 0, 1);
+					if(uYLog){
+						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+						//range = uYLogMax - uYLogMin;
+						//if(posV.y > 0.0) posV.y = log10(posV.y)/range;
+						//else posV.y = -2.0;
+					}else{
+						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+					}
+					gl_Position = vec4(posV, 0, 1);
 					gl_Position.z = 0.1;
 					gl_PointSize = uPointSize;
 				}`
@@ -44,7 +52,7 @@
 				#ifdef GL_ES
 				precision highp float;
 				#endif
-				uniform sampler2D uTexture;  // texture we are drawing
+				uniform sampler2D uTexture;	// texture we are drawing
 				void main() {
 					gl_FragColor = texture2D(uTexture, gl_PointCoord);
 				}`
@@ -52,14 +60,16 @@
 		},
 		'line': {
 			'vertex': {'src':`
-				attribute vec2 aVertexPosition;  // position of vertex
-				attribute vec2 aNormalPosition;  // position of normal
-				uniform vec2 uScalingFactor;
-				uniform vec2 uTranslationVector;
+				attribute vec2 aVertexPosition;	// position of vertex
+				attribute vec2 aNormalPosition;	// position of normal
+				uniform mat3 uMatrix;
+				uniform bool uYLog;
+				uniform float uYLogMin;
+				uniform float uYLogMax;
 				uniform float u_linewidth;
 				uniform float u_width;
 				uniform float u_height;
-				uniform float u_type;
+				uniform int u_type;
 				float scale_x;
 				float scale_y;
 				vec2 posV;
@@ -70,11 +80,11 @@
 					scale_x = u_linewidth / u_width;
 					scale_y = u_linewidth / u_height;
 
-					posV = (((aVertexPosition + uTranslationVector) / uScalingFactor) * 2.0 - 1.0) * vec2(1, 1);
-					posN = aNormalPosition * vec2(1, 1);
-					if(u_type==1.0){
+					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+					posN = aNormalPosition;
+					if(u_type==1){
 						posV.x = (aVertexPosition.x==0.0) ? -1.0 : 1.0;
-					}else if(u_type==2.0){
+					}else if(u_type==2){
 						posV.y = (aVertexPosition.y==0.0) ? -1.0 : 1.0;
 					}
 					gl_Position = vec4(posV.x + posN.x * scale_x, posV.y + posN.y * scale_y, 1.0, 1);
@@ -92,20 +102,15 @@
 		},
 		'rect': {
 			'vertex': {'src':`
-				attribute vec2 aVertexPosition;  // position of vertex
-				uniform vec2 uScalingFactor;
-				uniform vec2 uTranslationVector;
+				attribute vec2 aVertexPosition;	// position of vertex
+				uniform mat3 uMatrix;
+				uniform bool uYLog;
+				uniform float uYLogMin;
+				uniform float uYLogMax;
 
 				void main() {
-					// Add in the translation.
-					vec2 position = aVertexPosition + uTranslationVector;
-					// convert the position from pixels to 0.0 to 1.0
-					vec2 zeroToOne = (position / uScalingFactor);
-					// convert from 0->1 to 0->2
-					vec2 zeroToTwo = zeroToOne * 2.0;
-					// convert from 0->2 to -1->+1 (clipspace)
-					vec2 clipSpace = zeroToTwo - 1.0;
-					gl_Position = vec4(clipSpace * vec2(1, 1), 0, 1);
+					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+					gl_Position = vec4(posV, 0, 1);
 					gl_Position.z = 0.04;
 				}`
 			},
@@ -263,12 +268,17 @@
 		'type': 'line',
 		'shader': 'line',
 		'data': makeCurve(1000),
-		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':3}
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':2}
 	},{
 		'type': 'rule',
 		'shader': 'line',
 		'data': [{'x':2.0,'y':1.0},{'x':2.0,'y':5.0}],
 		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':3,'y':5.0},{'x':5,'y':5.0}],
+		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':1}
 	}/*,{
 		'type': 'rect',
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255, 103, 0,0.5)','fillStyle':'rgba(249,188,38,1)'}
@@ -296,6 +306,71 @@
 		return rgb;
 	}
 
+	function multiplyMatrixAndPoint(matrix, point) {
+
+		//Give a simple variable name to each part of the matrix, a column and row number
+		var c0r0 = matrix[0], c1r0 = matrix[1], c2r0 = matrix[2];
+		var c0r1 = matrix[3], c1r1 = matrix[4], c2r1 = matrix[5];
+		var c0r2 = matrix[6], c1r2 = matrix[7], c2r2 = matrix[8];
+
+		//Now set some simple names for the point
+		var x = point[0];
+		var y = point[1];
+		var z = point[2];
+
+		//Multiply the point against each part of the 1st column, then add together
+		var resultX = (x * c0r0) + (y * c0r1) + (z * c0r2);
+
+		//Multiply the point against each part of the 2nd column, then add together
+		var resultY = (x * c1r0) + (y * c1r1) + (z * c1r2);
+
+		//Multiply the point against each part of the 3rd column, then add together
+		var resultZ = (x * c2r0) + (y * c2r1) + (z * c2r2);
+
+		return [resultX, resultY, resultZ];
+	}
+
+	function multiplyMatrices(matrixA, matrixB) {
+
+		// Slice the second matrix up into columns
+		var column0 = [matrixB[0], matrixB[3], matrixB[6]];
+		var column1 = [matrixB[1], matrixB[4], matrixB[7]];
+		var column2 = [matrixB[2], matrixB[5], matrixB[8]];
+
+		// Multiply each column by the matrix
+		var result0 = multiplyMatrixAndPoint(matrixA, column0);
+		var result1 = multiplyMatrixAndPoint(matrixA, column1);
+		var result2 = multiplyMatrixAndPoint(matrixA, column2);
+
+		// Turn the result columns back into a single matrix
+		return [
+			result0[0], result1[0], result2[0],
+			result0[1], result1[1], result2[1],
+			result0[2], result1[2], result2[2]
+		];
+	}
+	function makeIdentity() {
+		return [
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1
+		];
+	}
+	function makeTranslation(tx, ty) {
+		return [
+			1, 0, 0,
+			0, 1, 0,
+			tx, ty, 1
+		];
+	}
+	function makeScale(sx, sy) {
+		return [
+			sx, 0, 0,
+			0, sy, 0,
+			0, 0, 1
+		];
+	}
+
 	function drawScene(){
 
 		log.time('drawScene');
@@ -314,26 +389,38 @@
 		// https://webglfundamentals.org/webgl/lessons/webgl-text-texture.html
 		gl.ctx.blendFunc(gl.ctx.SRC_ALPHA, gl.ctx.ONE_MINUS_SRC_ALPHA);
 
+		var matrix = makeIdentity();
+		var scaleMatrix = makeScale(2/scale[0], 2/scale[1]);
+		var translationMatrix = makeTranslation(currentTranslation[0], currentTranslation[1]);
+		matrix = multiplyMatrices(matrix,translationMatrix);
+		matrix = multiplyMatrices(matrix,scaleMatrix);
+		matrix = multiplyMatrices(matrix,makeTranslation(-1, -1));
+
 		for(var n = 0 ; n < layers.length; n++){
 			gl.ctx.useProgram(layers[n].program);
 			t = layers[n].type;
-
-			gl.ctx.uniform2fv(layers[n].loc.ScalingFactor, scale);
-			gl.ctx.uniform2fv(layers[n].loc.TranslationVector, currentTranslation);
+	
+			if(layers[n].loc.matrix) gl.ctx.uniformMatrix3fv(layers[n].loc.matrix, false, matrix);
 			if(layers[n].loc.fillColor) gl.ctx.uniform4fv(layers[n].loc.fillColor, fillColor);
 			if(layers[n].loc.strokeColor) gl.ctx.uniform4fv(layers[n].loc.strokeColor, getRGBA(layers[n].style.strokeStyle)||strokeColor);
 			if(layers[n].loc.strokeWidth) gl.ctx.uniform1f(layers[n].loc.strokeWidth, (layers[n].style.strokeWidth||strokeWidth));
 			if(layers[n].loc.width) gl.ctx.uniform1f(layers[n].loc.width, gl.canvas.width);
 			if(layers[n].loc.height) gl.ctx.uniform1f(layers[n].loc.height, gl.canvas.height);
-			if(layers[n].loc.type) gl.ctx.uniform1f(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1.0 : layers[n].style.type=="fullHeight" ? 2.0 : 0.0));
+			if(layers[n].loc.type) gl.ctx.uniform1i(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
 			if(t=="symbol"){
 				gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
 				if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize, layers[n].icon.width);
-				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);  // this is the nth texture
+				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
 			}
 
 			// Only called when not initiated
 			if(!layers[n].initiated && layers[n].vertex){
+				// Set if this it is a logarithmic scale
+				gl.ctx.uniform1i(layers[n].loc.yLog, true);
+				gl.ctx.uniform1f(layers[n].loc.yLogMin,-1.0);
+				gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
+
+
 				gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
 				aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");
 				gl.ctx.vertexAttribPointer(aVertexPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, 0);
@@ -372,9 +459,9 @@
 			//logGLCall(functionName, args);
 			//validateNoneOfTheArgsAreUndefined(functionName, args);
 		}
-		function logGLCall(functionName, args) {   
+		function logGLCall(functionName, args) {	 
 			log.message("gl." + functionName + "(" + 
-			WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
+			WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");	 
 		}
 		function validateNoneOfTheArgsAreUndefined(functionName, args) {
 			for (var ii = 0; ii < args.length; ++ii) {
@@ -416,8 +503,10 @@
 
 			log.time('get locations');
 			layers[n].loc = {};
-			layers[n].loc.ScalingFactor = gl.ctx.getUniformLocation(layers[n].program, "uScalingFactor");
-			layers[n].loc.TranslationVector = gl.ctx.getUniformLocation(layers[n].program, "uTranslationVector");
+			layers[n].loc.matrix = gl.ctx.getUniformLocation(layers[n].program, "uMatrix");
+			layers[n].loc.yLog = gl.ctx.getUniformLocation(layers[n].program, "uYLog");
+			layers[n].loc.yLogMin = gl.ctx.getUniformLocation(layers[n].program, "uYLogMin");
+			layers[n].loc.yLogMax = gl.ctx.getUniformLocation(layers[n].program, "uYLogMax");
 			if(t=="symbol"){
 				layers[n].loc.Texture = gl.ctx.getUniformLocation(layers[n].program, "uTexture");
 			}else if(t=="line" || t=="rule"){
@@ -491,7 +580,7 @@
 				attr.size = layers[n].size;
 				layers[n].icon = Icon(layers[n].shape||"circle",attr);
 				layers[n].texture = gl.ctx.createTexture();
-				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);  // this is the nth texture
+				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
 				gl.ctx.bindTexture(gl.ctx.TEXTURE_2D, layers[n].texture);
 				gl.ctx.pixelStorei(gl.ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MAG_FILTER, gl.ctx.NEAREST);
@@ -722,7 +811,7 @@
 			if(!attr) attr = {};
 			if(!attr.width) attr.width = 32;
 			if(!attr.height) attr.height = 32;
-			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"  viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
+			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"	viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
 			svg += '<path d="'+this.toString()+'" fill="'+attr.fillStyle+'" stroke="'+attr.strokeStyle+'" stroke-width="'+attr.strokeWidth+'">'
 			svg += '</svg>';
 			return svg;
