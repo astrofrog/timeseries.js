@@ -29,22 +29,19 @@
 				uniform float uYLogMin;
 				uniform float uYLogMax;
 				vec2 posV;
-				float range;
+				//float range;
 				float log10(float v){
 					return log(v)/2.302585092994046;
 				}
 
 				void main() {
+					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 					if(uYLog){
-						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 						//range = uYLogMax - uYLogMin;
 						//if(posV.y > 0.0) posV.y = log10(posV.y)/range;
 						//else posV.y = -2.0;
-					}else{
-						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 					}
-					gl_Position = vec4(posV, 0, 1);
-					gl_Position.z = 0.1;
+					gl_Position = vec4(posV, 0.1, 1);
 					gl_PointSize = uPointSize;
 				}`
 			},
@@ -67,8 +64,7 @@
 				uniform float uYLogMin;
 				uniform float uYLogMax;
 				uniform float u_linewidth;
-				uniform float u_width;
-				uniform float u_height;
+				uniform vec2 uSize;
 				uniform int u_type;
 				float scale_x;
 				float scale_y;
@@ -77,8 +73,8 @@
 
 				void main() {
 					// Convert line width to final coords space in x and y
-					scale_x = u_linewidth / u_width;
-					scale_y = u_linewidth / u_height;
+					scale_x = u_linewidth / uSize.x;
+					scale_y = u_linewidth / uSize.y;
 
 					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 					posN = aNormalPosition;
@@ -100,6 +96,30 @@
 				}`
 			}
 		},
+		'area': {
+			'vertex': {'src':`
+				attribute vec2 aVertexPosition;	// position of vertex
+				uniform mat3 uMatrix;
+				uniform bool uYLog;
+				uniform float uYLogMin;
+				uniform float uYLogMax;
+				vec2 posV;
+
+				void main() {
+					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+					gl_Position = vec4(posV, 1.0, 1);
+				}`
+			},
+			'fragment':	{'src':`
+				#ifdef GL_ES
+				precision highp float;
+				#endif
+				uniform vec4 uFillColor;
+				void main(void) {
+					gl_FragColor = uFillColor;
+				}`
+			}
+		},
 		'rect': {
 			'vertex': {'src':`
 				attribute vec2 aVertexPosition;	// position of vertex
@@ -107,6 +127,7 @@
 				uniform bool uYLog;
 				uniform float uYLogMin;
 				uniform float uYLogMax;
+				vec2 posV;
 
 				void main() {
 					posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
@@ -162,8 +183,42 @@
 		return data;
 	}
 
-	// https://dev.to/samthor/webgl-point-sprites-a-tutorial-4m6p
 	let layers = [{
+		'type': 'area',
+		'shader': 'area',
+		'data': [{'x':0,'y1':0.5,'y2':1.0},{'x':1,'y1':1.0,'y2':1.5},{'x':2,'y1':0.9,'y2':1.3},{'x':3,'y1':1.2,'y2':1.6},{'x':null,'y1':null,'y2':null},{'x':6.0,'y1':1.3,'y2':1.8},{'x':8.0,'y1':1.2,'y2':1.9},{'x':9.0,'y1':0.7,'y2':1.5}],
+		'style': {'fillStyle':'rgba(55,55,55,0.5)'}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':0,'y':1},{'x':1.0,'y':1}],
+		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'fullWidth'}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':1.0,'y':0.0},{'x':1.0,'y':1.0}],
+		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'fullHeight'}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':2.0,'y':1.0},{'x':2.0,'y':5.0}],
+		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':3,'y':5.0},{'x':5,'y':5.0}],
+		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':1}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':0,'y':0.0},{'x':1,'y':0.0}],
+		'style': {'strokeStyle':'rgb(255,255,0)','strokeWidth':4,'type':'fullWidth'}
+	},{
+		'type': 'rule',
+		'shader': 'line',
+		'data': [{'x':0,'y':0.0},{'x':0,'y':1.0}],
+		'style': {'strokeStyle':'rgb(255,255,20)','strokeWidth':4,'type':'fullHeight'}
+	},{
 		'size': 16,
 		'type': 'symbol',
 		'shader': 'symbol',
@@ -255,37 +310,16 @@
 		'shape': 'M0,.5L.6,.8L.5,.1L1,-.3L.3,-.4L0,-1L-.3,-.4L-1,-.3L-.5,.1L-.6,.8L0,.5Z',
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255, 103, 0,0.5)','fillStyle':'rgba(249,188,38,1)'}
 	},{
-		'type': 'rule',
-		'shader': 'line',
-		'data': [{'x':0,'y':1},{'x':1.0,'y':1}],
-		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'fullWidth'}
-	},{
-		'type': 'rule',
-		'shader': 'line',
-		'data': [{'x':1.0,'y':0.0},{'x':1.0,'y':1.0}],
-		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'fullHeight'}
-	},{
 		'type': 'line',
 		'shader': 'line',
 		'data': makeCurve(1000),
 		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':2}
-	},{
-		'type': 'rule',
-		'shader': 'line',
-		'data': [{'x':2.0,'y':1.0},{'x':2.0,'y':5.0}],
-		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
-	},{
-		'type': 'rule',
-		'shader': 'line',
-		'data': [{'x':3,'y':5.0},{'x':5,'y':5.0}],
-		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':1}
 	}/*,{
 		'type': 'rect',
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255, 103, 0,0.5)','fillStyle':'rgba(249,188,38,1)'}
 	}*/];
 
-	// Aspect ratio and coordinate system details
-	let aspectRatio;
+	// Coordinate system details
 	let currentScale = [10, 10];
 	let currentTranslation = [0,0];
 
@@ -371,16 +405,16 @@
 		];
 	}
 
+
 	function drawScene(){
 
 		log.time('drawScene');
-		aspectRatio = gl.canvas.width/gl.canvas.height;
-		let scale = [currentScale[0]+0,currentScale[1]+0];
+		let scale = [currentScale[0],currentScale[1]];
 		let fillColor = [255/255, 255/255, 0/255, 0.5];
 		let strokeColor = [255/255, 0/255, 0/255, 0.5];
 		let strokeWidth = 5.0;
 		// Define the viewport area in pixels (x,y,w,h)
-		gl.ctx.viewport(150, 100, gl.canvas.width-150-10, gl.canvas.height-100-10);
+		gl.ctx.viewport(150, 100, gl.canvas.clientWidth-150-10, gl.canvas.clientHeight-100-10);
 		gl.ctx.clearColor(0, 0, 0, 0);
 		gl.ctx.clear(gl.ctx.COLOR_BUFFER_BIT | gl.ctx.DEPTH_BUFFER_BIT);
 		gl.ctx.enable(gl.ctx.BLEND);
@@ -397,49 +431,46 @@
 		matrix = multiplyMatrices(matrix,makeTranslation(-1, -1));
 
 		for(var n = 0 ; n < layers.length; n++){
-			gl.ctx.useProgram(layers[n].program);
-			t = layers[n].type;
-	
-			if(layers[n].loc.matrix) gl.ctx.uniformMatrix3fv(layers[n].loc.matrix, false, matrix);
-			if(layers[n].loc.fillColor) gl.ctx.uniform4fv(layers[n].loc.fillColor, fillColor);
-			if(layers[n].loc.strokeColor) gl.ctx.uniform4fv(layers[n].loc.strokeColor, getRGBA(layers[n].style.strokeStyle)||strokeColor);
-			if(layers[n].loc.strokeWidth) gl.ctx.uniform1f(layers[n].loc.strokeWidth, (layers[n].style.strokeWidth||strokeWidth));
-			if(layers[n].loc.width) gl.ctx.uniform1f(layers[n].loc.width, gl.canvas.width);
-			if(layers[n].loc.height) gl.ctx.uniform1f(layers[n].loc.height, gl.canvas.height);
-			if(layers[n].loc.type) gl.ctx.uniform1i(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
-			if(t=="symbol"){
-				gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
-				if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize, layers[n].icon.width);
-				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
-			}
-
-			// Only called when not initiated
-			if(!layers[n].initiated && layers[n].vertex){
-				// Set if this it is a logarithmic scale
-				gl.ctx.uniform1i(layers[n].loc.yLog, true);
-				gl.ctx.uniform1f(layers[n].loc.yLogMin,-1.0);
-				gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
-
-
-				gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
-				aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");
-				gl.ctx.vertexAttribPointer(aVertexPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, 0);
-				gl.ctx.enableVertexAttribArray(aVertexPosition);
-				
-				if(t=="line" || t=="rule"){
-					aNormalPosition = gl.ctx.getAttribLocation(layers[n].program, "aNormalPosition");
-					gl.ctx.vertexAttribPointer(aNormalPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, layers[n].vertex.count * 8);
-					gl.ctx.enableVertexAttribArray(aNormalPosition);
-				}
-				layers[n].inititated;
-			}
-
 			if(!layers[n].hide){
-				if(t=="symbol") gl.ctx.drawArrays(gl.ctx.POINTS, 0, layers[n].vertex.count);
-				else if(t=="rect") gl.ctx.drawArrays(gl.ctx.TRIANGLES, 0, layers[n].vertex.count);
-				else if(t=="line" || t=="rule"){
-					gl.ctx.drawArrays(gl.ctx.TRIANGLE_STRIP, 0, layers[n].vertex.count);
+				gl.ctx.useProgram(layers[n].program);
+				t = layers[n].type;
+
+				if(layers[n].loc.matrix) gl.ctx.uniformMatrix3fv(layers[n].loc.matrix, false, matrix);
+				if(layers[n].loc.fillColor) gl.ctx.uniform4fv(layers[n].loc.fillColor, getRGBA(layers[n].style.fillStyle)||fillColor);
+				if(layers[n].loc.strokeColor) gl.ctx.uniform4fv(layers[n].loc.strokeColor, getRGBA(layers[n].style.strokeStyle)||strokeColor);
+				if(layers[n].loc.strokeWidth) gl.ctx.uniform1f(layers[n].loc.strokeWidth, (layers[n].style.strokeWidth||strokeWidth));
+	//			gl.ctx.uniform1i(layers[n].loc.yLog, true);
+	//			gl.ctx.uniform1f(layers[n].loc.yLogMin,-1.0);
+	//			gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
+				if(t=="symbol"){
+					gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
+					if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize, layers[n].icon.width);
+					gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
 				}
+
+				// Only called when not initiated
+				if(!layers[n].initiated && layers[n].vertex){
+					// Set if this it is a logarithmic scale
+					if(layers[n].loc.size) gl.ctx.uniform2fv(layers[n].loc.size, [gl.canvas.clientWidth,gl.canvas.clientHeight]);
+					if(layers[n].loc.type) gl.ctx.uniform1i(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
+
+
+					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
+					aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");
+					gl.ctx.vertexAttribPointer(aVertexPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, 0);
+					gl.ctx.enableVertexAttribArray(aVertexPosition);
+				
+					if(t=="line" || t=="rule"){
+						aNormalPosition = gl.ctx.getAttribLocation(layers[n].program, "aNormalPosition");
+						gl.ctx.vertexAttribPointer(aNormalPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, layers[n].vertex.count * 8);
+						gl.ctx.enableVertexAttribArray(aNormalPosition);
+					}
+					layers[n].inititated;
+				}
+
+				if(t=="symbol") gl.ctx.drawArrays(gl.ctx.POINTS, 0, layers[n].vertex.count);
+				else if(t=="rect" || t=="area") gl.ctx.drawArrays(gl.ctx.TRIANGLES, 0, layers[n].vertex.count);
+				else if(t=="line" || t=="rule") gl.ctx.drawArrays(gl.ctx.TRIANGLE_STRIP, 0, layers[n].vertex.count);
 			}
 		}
 		log.time('drawScene');
@@ -509,18 +540,19 @@
 			layers[n].loc.yLogMax = gl.ctx.getUniformLocation(layers[n].program, "uYLogMax");
 			if(t=="symbol"){
 				layers[n].loc.Texture = gl.ctx.getUniformLocation(layers[n].program, "uTexture");
+				if(layers[n].size) layers[n].loc.PointSize = gl.ctx.getUniformLocation(layers[n].program, "uPointSize");
 			}else if(t=="line" || t=="rule"){
 				layers[n].loc.strokeColor = gl.ctx.getUniformLocation(layers[n].program, "uStrokeColor");
 				layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "u_linewidth");
-				layers[n].loc.width = gl.ctx.getUniformLocation(layers[n].program, "u_width");
-				layers[n].loc.height = gl.ctx.getUniformLocation(layers[n].program, "u_height");
+				layers[n].loc.size = gl.ctx.getUniformLocation(layers[n].program, "uSize");
 				layers[n].loc.type = gl.ctx.getUniformLocation(layers[n].program, "u_type");
 			}else if(t=="rect"){
 				layers[n].loc.fillColor = gl.ctx.getUniformLocation(layers[n].program, "uFillColor");
 				layers[n].loc.strokeColor = gl.ctx.getUniformLocation(layers[n].program, "uStrokeColor");
 				layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "uStrokeWidth");
+			}else if(t=="area"){
+				layers[n].loc.fillColor = gl.ctx.getUniformLocation(layers[n].program, "uFillColor");
 			}
-			if(layers[n].size) layers[n].loc.PointSize = gl.ctx.getUniformLocation(layers[n].program, "uPointSize");
 			log.time('get locations');
 
 		}
@@ -538,8 +570,11 @@
 			}else if(t=="line" || t=="rule"){
 				layers[n].vertices = makeLines(layers[n].data);
 				layers[n].vertex = { 'components': 2, 'count': 4 * (layers[n].data.length - 1) };
+			}else if(t=="area"){
+				layers[n].vertices = makeAreas(layers[n].data);
+				console.log(layers[n].vertices);
+				layers[n].vertex = { 'components': 2, 'count':layers[n].vertices.length/2 };
 			}else if(t=="rect"){
-
 				layers[n].vertex = { 'components': 12, 'count':numperlayer };
 				layers[n].vertices = new Float32Array(numperlayer*12);
 				for(i = 0, j = 0; i < numperlayer; i++, j+=12){
@@ -600,6 +635,11 @@
 			if(layers[n].type=="symbol"){
 				c.innerHTML = Icon(layers[n].shape||"circle",attr);
 				c.setAttribute('class','icon active');
+			}else if(layers[n].type=="area"){
+				attr.size = attr.width;
+				console.log(attr)
+				c.innerHTML = Icon("square",attr)+' '+layers[n].type;
+				c.setAttribute('class','icon active');
 			}else{
 				attr.size = attr.width;
 				var orientation = "h";
@@ -650,13 +690,11 @@
 				drawScene();
 			}else if(e.keyCode==38){
 				e.preventDefault();
-				currentScale[0] /= 1.25;
-				currentScale[1] /= 1.25;
+				currentTranslation[1] += 0.01;
 				drawScene();
 			}else if(e.keyCode==40){
 				e.preventDefault();
-				currentScale[0] *= 1.25;
-				currentScale[1] *= 1.25;
+				currentTranslation[1] -= 0.01;
 				drawScene();
 			}
 			i = parseInt(e.key);
@@ -686,6 +724,36 @@
 			vertices[i*2 + 1] = original[i].y;
 		}
 		return vertices;
+	}
+
+	function makeAreas(o){
+		var areas = [];
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < o.length ; i++){
+			p = o[i];
+			y1 = (typeof p.y1==="number" ? p.y1 : p.y);
+			y2 = (typeof p.y2==="number" ? p.y2 : y1);
+			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+
+		var vertices = [];
+		
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		var poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				for(j = 0; j < areas[a].length-1; j++){
+					p1 = o[areas[a][j]];
+					p2 = o[areas[a][j+1]];
+					vertices = vertices.concat([p1.x,p1.y2,p1.x,p1.y1,p2.x,p2.y1,p1.x,p1.y2,p2.x,p2.y2,p2.x,p2.y1]);
+				}
+			}
+		}
+		return new Float32Array(vertices);
 	}
 	
 	function makeLines(original){
