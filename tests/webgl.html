@@ -5,12 +5,12 @@
 	body { background: #eee; }
 	.holder { position: relative; display: flex; }
 	canvas { border: 1px solid #444; position: relative; }
-	.icon { line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; }
+	.icon { line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; filter: grayscale(1); opacity: 0.15; }
 	.icon > svg { width: 1.5em; height: 1.5em; margin-right: 0.25em; }
 	.icon.area > svg { background: none; }
 	.icon.label { padding: 0.5em; }
-	.icon > * { filter: grayscale(1); opacity: 0.15; vertical-align: middle; }
-	.icon.active > * { filter: none; opacity: 1; }
+	.icon > * { vertical-align: middle; }
+	.icon.active { filter: none; opacity: 1; }
 	.icon:hover { background-color: #ddd; }
 	ul.key { list-style: none; margin: 0px; padding: 0px; display: block; }
 	ul.key li { display: inline-block; width: 100px; }

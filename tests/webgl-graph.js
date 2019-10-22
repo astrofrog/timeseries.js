@@ -326,11 +326,13 @@
 			for(var i = 0; i < layers.length; i++){
 				if(layers[i].source==n){
 					layers[i].hide = !layers[i].hide;
-					li.classList.toggle('active');
 					toggled++;
 				}
 			}
-			if(toggled > 0) this.draw();
+			if(toggled > 0){
+				li.classList.toggle('active');
+				this.draw();
+			}
 			this.log.time('toggleLayer '+n);
 			return this;
 		}
