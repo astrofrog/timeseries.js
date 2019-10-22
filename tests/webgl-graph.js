@@ -547,37 +547,14 @@
 	}
 	function makeRects(original){
 		// TR: compute normal vector
-		var vertices = [];
+		var v = [];
 
-		var o = new Array(original.length*2);
 		for(i = 0; i < original.length;i++){
-			o[i*2] = original[i].x;
-			o[i*2 + 1] = original[i].y;
+			v.push({'x':original[i].x,'y':original[i].y1});
+			v.push({'x':original[i].x,'y':original[i].y2});
 		}
 
-		function normal_vector(dx, dy){
-			norm = (dx * dx + dy * dy) ** 0.5;
-			return -dy / norm, dx / norm;
-		}
-
-		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
-			// Add vertex
-			ivert = Math.floor((i + 2) / 4);
-			vertices.push(o[2 * ivert]);
-			vertices.push(o[2 * ivert + 1]);
-		}
-
-		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
-			// Find normal vector
-			ibeg = Math.floor(i / 4);
-			iend = ibeg + 1;
-			dx = o[2 * iend] - o[2 * ibeg];
-			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
-			scale = (dx * dx + dy * dy) ** 0.5;
-			vertices.push(-dy / scale * (-1) ** i);
-			vertices.push(dx / scale * (-1) ** i);
-		}
-		return {'data':new Float32Array(vertices),'components':2,'count': 4 * (original.length - 1) };
+		return makeLines(v);
 	}
 	function clone(j){
 		return JSON.parse(JSON.stringify(j));
