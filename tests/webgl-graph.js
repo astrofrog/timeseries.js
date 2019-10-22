@@ -289,12 +289,12 @@
 			attr.width = 32;
 			attr.height = 32;
 			if(layer.type=="symbol"){
-				c.innerHTML = Icon(layer.shape||"circle",attr);
+				c.innerHTML = Icon(layer.shape||"circle",attr)+'symbol';
 				c.setAttribute('class','icon active');
 			}else if(layer.type=="area"){
 				attr.size = attr.width;
 				//delete attr.strokeWidth;
-				c.innerHTML = Icon("square",attr)+' '+layer.type;
+				c.innerHTML = Icon("square",attr)+''+layer.type;
 				c.setAttribute('class','icon active area');
 			}else{
 				attr.size = attr.width;
