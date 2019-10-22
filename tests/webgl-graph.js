@@ -1,5 +1,7 @@
 (function(root){
 
+	// Simulate log10(x) with log(x)/2.302585092994046
+
 	function WebGLGraph(attr){
 		if(!attr) attr = {};
 		if(!attr.id) attr.id = 'canvas';
@@ -18,7 +20,7 @@
 		let layers = [];
 
 		let shaders = {
-			'symbol': {
+			'point': {
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of sprite
 					uniform mat3 uMatrix;
@@ -120,11 +122,6 @@
 			}
 		}
 
-		this.addLayer = function(l){
-			layers.push(l);
-			return this;
-		}
-
 		this.init = function(){
 
 			this.log.time('full');
@@ -163,7 +160,142 @@
 
 			this.log.time('full');
 		}
-		
+
+		this.addLayer = function(l){
+			var n = layers.length;
+			l.source = n;
+
+			var t = l.type;
+
+			// Set the type for drawArrays
+			a = gl.ctx.POINTS;
+			if(t=="symbol") a = gl.ctx.POINTS;
+			else if(t=="area" || t=="rect") a = gl.ctx.TRIANGLES;
+			else if(t=="line" || t=="rule" || t=="rect") a = gl.ctx.TRIANGLE_STRIP;
+			l.drawArrays = a;
+
+			this.log.time("buildShaderProgram for "+n)
+			l.program = gl.ctx.createProgram();
+			t = l.type;
+
+			// Set the shader
+			var st;
+			if(t=="symbol") st = "point";
+			else if(t=="area") st = "area";
+			else if(t=="rule") st = "line";
+			else if(t=="line") st = "line";
+			else if(t=="rect") st = "line";
+			
+			for(s in shaders[st]){
+				if(shaders[st][s].shader) gl.ctx.attachShader(l.program, shaders[st][s].shader);
+			}
+			this.log.time("buildShaderProgram for "+n)
+
+
+			this.log.time("linkProgram for "+n)
+			gl.ctx.linkProgram(l.program);
+			if(!gl.ctx.getProgramParameter(l.program, gl.ctx.LINK_STATUS)) {
+				this.log.error("Error linking shader program:");
+				this.log.message(gl.ctx.getProgramInfoLog(l.program));
+			}
+			this.log.time("linkProgram for "+n)
+
+			this.log.time('get locations');
+			l.loc = {};
+			l.loc.matrix = gl.ctx.getUniformLocation(l.program, "uMatrix");
+			l.loc.yLog = gl.ctx.getUniformLocation(l.program, "uYLog");
+			l.loc.yLogMin = gl.ctx.getUniformLocation(l.program, "uYLogMin");
+			l.loc.yLogMax = gl.ctx.getUniformLocation(l.program, "uYLogMax");
+			if(t=="symbol"){
+				l.loc.Texture = gl.ctx.getUniformLocation(l.program, "uTexture");
+				if(l.size) l.loc.PointSize = gl.ctx.getUniformLocation(l.program, "uPointSize");
+			}else if(t=="line" || t=="rule" || t=="rect"){
+				l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
+				l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "u_linewidth");
+				l.loc.size = gl.ctx.getUniformLocation(l.program, "uSize");
+				l.loc.type = gl.ctx.getUniformLocation(l.program, "u_type");
+//			}else if(t=="rect"){
+//				layers[n].loc.fillColor = gl.ctx.getUniformLocation(layers[n].program, "uFillColor");
+//				layers[n].loc.strokeColor = gl.ctx.getUniformLocation(layers[n].program, "uStrokeColor");
+//				layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "uStrokeWidth");
+			}else if(t=="area"){
+				l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
+			}
+			this.log.time('get locations');
+
+
+			l.buffer = gl.ctx.createBuffer();
+			gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, l.buffer);
+			if(t=="symbol"){
+				l.vertices = makePoints(l.data);
+				l.vertex = { 'components': 2, 'count': l.data.length/2 };
+			}else if(t=="line" || t=="rule"){
+				l.vertices = makeLines(l.data);
+				l.vertex = { 'components': 2, 'count': 4 * (l.data.length - 1) };
+			}else if(t=="rect"){
+				l.vertices = makeRects(l.data);
+				l.vertex = { 'components': 2, 'count': 4 * (l.data.length - 1) };
+			}else if(t=="area"){
+				l.vertices = makeAreas(l.data);
+				l.vertex = { 'components': 2, 'count':l.vertices.length/2 };
+			}
+			gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, l.vertices, gl.ctx.STATIC_DRAW);
+			// Unbind the buffer
+			gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
+
+
+			// Create icon and sprite
+			let attr = l.style;
+			if(l.type=="symbol"){
+				attr.output = "texture";
+				attr.size = l.size;
+				l.icon = Icon(l.shape||"circle",attr);
+				l.texture = gl.ctx.createTexture();
+				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
+				gl.ctx.bindTexture(gl.ctx.TEXTURE_2D, l.texture);
+				gl.ctx.pixelStorei(gl.ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MAG_FILTER, gl.ctx.NEAREST);
+				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MIN_FILTER, gl.ctx.NEAREST);
+				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_S, gl.ctx.CLAMP_TO_EDGE);
+				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_T, gl.ctx.CLAMP_TO_EDGE);
+				gl.ctx.texImage2D(gl.ctx.TEXTURE_2D, 0, gl.ctx.RGBA, gl.ctx.RGBA, gl.ctx.UNSIGNED_BYTE, l.icon);
+
+			}
+			// Make SVG versions
+			c = document.createElement('li');
+			c.setAttribute('data',n);
+			attr.output = "svg";
+			attr.width = 32;
+			attr.height = 32;
+
+			if(l.type=="symbol"){
+				c.innerHTML = Icon(l.shape||"circle",attr);
+				c.setAttribute('class','icon active');
+			}else if(l.type=="area"){
+				attr.size = attr.width;
+				delete attr.strokeWidth;
+				c.innerHTML = Icon("square",attr)+' '+l.type;
+				c.setAttribute('class','icon active area');
+			}else{
+				attr.size = attr.width;
+				var orientation = "h";
+				if(l.style.type=="fullHeight") orientation = "v";
+				if(l.type=="rule" && l.data[0].x==l.data[1].x) orientation = "v";
+				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+l.type;
+				c.setAttribute('class','icon active label');
+			}
+			c.addEventListener('click', function(){
+				i = parseInt(this.getAttribute('data'));
+				if(!isNaN(i)) _obj.toggleLayer(i);
+			});
+			layerList.appendChild(c);
+
+			layers.push(l);
+
+
+			return this;
+		}
+
 		this.toggleLayer = function(n){
 			this.log.time('toggleLayer '+n);
 			if(n < layers.length){
@@ -194,133 +326,6 @@
 		layerList.setAttribute('class','key');
 		document.body.appendChild(layerList);
 
-		this.initLayers = function(){
-			this.log.time('initLayers');
-			var _obj = this;
-			i = 0;
-			
-			
-			for(n = 0; n < layers.length; n++){
-			
-				this.log.time("buildShaderProgram for "+n)
-				layers[n].program = gl.ctx.createProgram();
-				t = layers[n].type;
-				st = layers[n].shader;
-				for(s in shaders[st]){
-					if(shaders[st][s].shader) gl.ctx.attachShader(layers[n].program, shaders[st][s].shader);
-				}
-				this.log.time("buildShaderProgram for "+n)
-
-				// Set the type for drawArrays
-				a = gl.ctx.POINTS;
-				if(t=="symbol") a = gl.ctx.POINTS;
-				else if(t=="area" || t=="rect") a = gl.ctx.TRIANGLES;
-				else if(t=="line" || t=="rule" || t=="rect") a = gl.ctx.TRIANGLE_STRIP;
-				layers[n].drawArrays = a;
-
-
-				this.log.time("linkProgram for "+n)
-				gl.ctx.linkProgram(layers[n].program);
-				if(!gl.ctx.getProgramParameter(layers[n].program, gl.ctx.LINK_STATUS)) {
-					this.log.error("Error linking shader program:");
-					this.log.message(gl.ctx.getProgramInfoLog(layers[n].program));
-				}
-				this.log.time("linkProgram for "+n)
-
-				this.log.time('get locations');
-				layers[n].loc = {};
-				layers[n].loc.matrix = gl.ctx.getUniformLocation(layers[n].program, "uMatrix");
-				layers[n].loc.yLog = gl.ctx.getUniformLocation(layers[n].program, "uYLog");
-				layers[n].loc.yLogMin = gl.ctx.getUniformLocation(layers[n].program, "uYLogMin");
-				layers[n].loc.yLogMax = gl.ctx.getUniformLocation(layers[n].program, "uYLogMax");
-				if(t=="symbol"){
-					layers[n].loc.Texture = gl.ctx.getUniformLocation(layers[n].program, "uTexture");
-					if(layers[n].size) layers[n].loc.PointSize = gl.ctx.getUniformLocation(layers[n].program, "uPointSize");
-				}else if(t=="line" || t=="rule" || t=="rect"){
-					layers[n].loc.color = gl.ctx.getUniformLocation(layers[n].program, "uColor");
-					layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "u_linewidth");
-					layers[n].loc.size = gl.ctx.getUniformLocation(layers[n].program, "uSize");
-					layers[n].loc.type = gl.ctx.getUniformLocation(layers[n].program, "u_type");
-	//			}else if(t=="rect"){
-	//				layers[n].loc.fillColor = gl.ctx.getUniformLocation(layers[n].program, "uFillColor");
-	//				layers[n].loc.strokeColor = gl.ctx.getUniformLocation(layers[n].program, "uStrokeColor");
-	//				layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "uStrokeWidth");
-				}else if(t=="area"){
-					layers[n].loc.color = gl.ctx.getUniformLocation(layers[n].program, "uColor");
-				}
-				this.log.time('get locations');
-
-
-				layers[n].buffer = gl.ctx.createBuffer();
-				gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
-				if(t=="symbol"){
-					layers[n].vertices = makePoints(layers[n].data);
-					layers[n].vertex = { 'components': 2, 'count': layers[n].data.length/2 };
-				}else if(t=="line" || t=="rule"){
-					layers[n].vertices = makeLines(layers[n].data);
-					layers[n].vertex = { 'components': 2, 'count': 4 * (layers[n].data.length - 1) };
-				}else if(t=="rect"){
-					layers[n].vertices = makeRects(layers[n].data);
-					layers[n].vertex = { 'components': 2, 'count': 4 * (layers[n].data.length - 1) };
-				}else if(t=="area"){
-					layers[n].vertices = makeAreas(layers[n].data);
-					layers[n].vertex = { 'components': 2, 'count':layers[n].vertices.length/2 };
-				}
-				gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, layers[n].vertices, gl.ctx.STATIC_DRAW);
-				// Unbind the buffer
-				gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
-
-
-				// Create icon and sprite
-				let attr = layers[n].style;
-				if(layers[n].type=="symbol"){
-					attr.output = "texture";
-					attr.size = layers[n].size;
-					layers[n].icon = Icon(layers[n].shape||"circle",attr);
-					layers[n].texture = gl.ctx.createTexture();
-					gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
-					gl.ctx.bindTexture(gl.ctx.TEXTURE_2D, layers[n].texture);
-					gl.ctx.pixelStorei(gl.ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-					gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MAG_FILTER, gl.ctx.NEAREST);
-					gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MIN_FILTER, gl.ctx.NEAREST);
-					gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_S, gl.ctx.CLAMP_TO_EDGE);
-					gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_T, gl.ctx.CLAMP_TO_EDGE);
-					gl.ctx.texImage2D(gl.ctx.TEXTURE_2D, 0, gl.ctx.RGBA, gl.ctx.RGBA, gl.ctx.UNSIGNED_BYTE, layers[n].icon);
-
-				}
-				// Make SVG versions
-				c = document.createElement('li');
-				c.setAttribute('data',n);
-				attr.output = "svg";
-				attr.width = 32;
-				attr.height = 32;
-
-				if(layers[n].type=="symbol"){
-					c.innerHTML = Icon(layers[n].shape||"circle",attr);
-					c.setAttribute('class','icon active');
-				}else if(layers[n].type=="area"){
-					attr.size = attr.width;
-					delete attr.strokeWidth;
-					c.innerHTML = Icon("square",attr)+' '+layers[n].type;
-					c.setAttribute('class','icon active area');
-				}else{
-					attr.size = attr.width;
-					var orientation = "h";
-					if(layers[n].style.type=="fullHeight") orientation = "v";
-					if(layers[n].type=="rule" && layers[n].data[0].x==layers[n].data[1].x) orientation = "v";
-					c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layers[n].type;
-					c.setAttribute('class','icon active label');
-				}
-				c.addEventListener('click', function(){
-					i = parseInt(this.getAttribute('data'));
-					if(!isNaN(i)) _obj.toggleLayer(i);
-				});
-				layerList.appendChild(c);
-
-			}
-			this.log.time('initLayers');
-
-		}
 
 		this.draw = function(){
 
