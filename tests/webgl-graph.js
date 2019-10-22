@@ -18,9 +18,10 @@
 		var view = new Matrix();
 		var viewPort = (attr.viewPort || {'left':150, 'top':100, 'right':10, 'bottom':10});
 		let layers = [];
+		let layercounter = 0;
 
 		let shaders = {
-			'point': {
+			'sprite': {
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of sprite
 					uniform mat3 uMatrix;
@@ -55,7 +56,7 @@
 					}`
 				}
 			},
-			'line': {
+			'thickline': {
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of vertex
 					attribute vec2 aNormalPosition;	// position of normal
@@ -63,7 +64,7 @@
 					uniform bool uYLog;
 					uniform float uYLogMin;
 					uniform float uYLogMax;
-					uniform float u_linewidth;
+					uniform float uStrokeWidth;
 					uniform vec2 uSize;
 					uniform int u_type;
 					float scale_x;
@@ -73,8 +74,8 @@
 
 					void main() {
 						// Convert line width to final coords space in x and y
-						scale_x = u_linewidth / uSize.x;
-						scale_y = u_linewidth / uSize.y;
+						scale_x = uStrokeWidth / uSize.x;
+						scale_y = uStrokeWidth / uSize.y;
 
 						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 						posN = aNormalPosition;
@@ -88,7 +89,28 @@
 				},
 				'fragment':	{'src':`
 					#ifdef GL_ES
-					precision highp float;
+					precision lowp float;
+					#endif
+					uniform vec4 uColor;
+					void main(void) {
+						gl_FragColor = uColor;
+					}`
+				}
+			},
+			'line': {
+				'vertex': {'src':`
+					attribute vec2 aVertexPosition;	// position of vertex
+					uniform mat3 uMatrix;
+					vec2 posV;
+
+					void main() {
+						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+						gl_Position = vec4(posV, 1.0, 1);
+					}`
+				},
+				'fragment':	{'src':`
+					#ifdef GL_ES
+					precision lowp float;
 					#endif
 					uniform vec4 uColor;
 					void main(void) {
@@ -112,7 +134,7 @@
 				},
 				'fragment':	{'src':`
 					#ifdef GL_ES
-					precision highp float;
+					precision lowp float;
 					#endif
 					uniform vec4 uColor;
 					void main(void) {
@@ -161,149 +183,154 @@
 			this.log.time('full');
 		}
 
-		this.addLayer = function(l){
-			var n = layers.length;
-			l.source = n;
+		this.addLayer = function(layer){
 
-			var t = l.type;
+			this.log.time('addLayer');
+			var s,st,t,a,attr,data,l,p;
 
-			// Set the type for drawArrays
-			a = gl.ctx.POINTS;
-			if(t=="symbol") a = gl.ctx.POINTS;
-			else if(t=="area" || t=="rect") a = gl.ctx.TRIANGLES;
-			else if(t=="line" || t=="rule" || t=="rect") a = gl.ctx.TRIANGLE_STRIP;
-			l.drawArrays = a;
+			layer.source = layercounter;
+			data = layer.data;
+			attr = layer.style;
+			t = layer.type;
 
-			this.log.time("buildShaderProgram for "+n)
-			l.program = gl.ctx.createProgram();
-			t = l.type;
-
-			// Set the shader
-			var st;
-			if(t=="symbol") st = "point";
-			else if(t=="area") st = "area";
-			else if(t=="rule") st = "line";
-			else if(t=="line") st = "line";
-			else if(t=="rect") st = "line";
-			
-			for(s in shaders[st]){
-				if(shaders[st][s].shader) gl.ctx.attachShader(l.program, shaders[st][s].shader);
-			}
-			this.log.time("buildShaderProgram for "+n)
-
-
-			this.log.time("linkProgram for "+n)
-			gl.ctx.linkProgram(l.program);
-			if(!gl.ctx.getProgramParameter(l.program, gl.ctx.LINK_STATUS)) {
-				this.log.error("Error linking shader program:");
-				this.log.message(gl.ctx.getProgramInfoLog(l.program));
-			}
-			this.log.time("linkProgram for "+n)
-
-			this.log.time('get locations');
-			l.loc = {};
-			l.loc.matrix = gl.ctx.getUniformLocation(l.program, "uMatrix");
-			l.loc.yLog = gl.ctx.getUniformLocation(l.program, "uYLog");
-			l.loc.yLogMin = gl.ctx.getUniformLocation(l.program, "uYLogMin");
-			l.loc.yLogMax = gl.ctx.getUniformLocation(l.program, "uYLogMax");
+			// Build the primitives that we need to draw for this layer
+			primitives = [];
 			if(t=="symbol"){
-				l.loc.Texture = gl.ctx.getUniformLocation(l.program, "uTexture");
-				if(l.size) l.loc.PointSize = gl.ctx.getUniformLocation(l.program, "uPointSize");
-			}else if(t=="line" || t=="rule" || t=="rect"){
-				l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
-				l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "u_linewidth");
-				l.loc.size = gl.ctx.getUniformLocation(l.program, "uSize");
-				l.loc.type = gl.ctx.getUniformLocation(l.program, "u_type");
-//			}else if(t=="rect"){
-//				layers[n].loc.fillColor = gl.ctx.getUniformLocation(layers[n].program, "uFillColor");
-//				layers[n].loc.strokeColor = gl.ctx.getUniformLocation(layers[n].program, "uStrokeColor");
-//				layers[n].loc.strokeWidth = gl.ctx.getUniformLocation(layers[n].program, "uStrokeWidth");
-			}else if(t=="area"){
-				l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
-			}
-			this.log.time('get locations');
-
-
-			l.buffer = gl.ctx.createBuffer();
-			gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, l.buffer);
-			if(t=="symbol"){
-				l.vertices = makePoints(l.data);
-				l.vertex = { 'components': 2, 'count': l.data.length/2 };
-			}else if(t=="line" || t=="rule"){
-				l.vertices = makeLines(l.data);
-				l.vertex = { 'components': 2, 'count': 4 * (l.data.length - 1) };
+				primitives.push({'shader':'sprite','array':gl.ctx.POINTS,'fn':makePoints});
 			}else if(t=="rect"){
-				l.vertices = makeRects(l.data);
-				l.vertex = { 'components': 2, 'count': 4 * (l.data.length - 1) };
+				primitives.push({'shader':'thickline','color':'fillStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRects});
+			}else if(t=="line" || t=="rule"){
+				primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeLines});
 			}else if(t=="area"){
-				l.vertices = makeAreas(l.data);
-				l.vertex = { 'components': 2, 'count':l.vertices.length/2 };
+				primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeAreas});
+				if(attr.strokeWidth > 0){
+					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeBoundaries });
+				}
 			}
-			gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, l.vertices, gl.ctx.STATIC_DRAW);
-			// Unbind the buffer
-			gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
 
+			// For each primitive relating to this layer we create a buffer
+			if(primitives.length > 0){
+				for(p = 0; p < primitives.length; p++){
 
-			// Create icon and sprite
-			let attr = l.style;
-			if(l.type=="symbol"){
-				attr.output = "texture";
-				attr.size = l.size;
-				l.icon = Icon(l.shape||"circle",attr);
-				l.texture = gl.ctx.createTexture();
-				gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
-				gl.ctx.bindTexture(gl.ctx.TEXTURE_2D, l.texture);
-				gl.ctx.pixelStorei(gl.ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MAG_FILTER, gl.ctx.NEAREST);
-				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MIN_FILTER, gl.ctx.NEAREST);
-				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_S, gl.ctx.CLAMP_TO_EDGE);
-				gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_T, gl.ctx.CLAMP_TO_EDGE);
-				gl.ctx.texImage2D(gl.ctx.TEXTURE_2D, 0, gl.ctx.RGBA, gl.ctx.RGBA, gl.ctx.UNSIGNED_BYTE, l.icon);
+					// Which shader?
+					st = primitives[p].shader;
 
+					l = {'shader':st,'style':clone(layer.style),'source':layer.source};
+					if(typeof layer.shape==="string") l.shape = layer.shape;
+					if(typeof layer.size==="number") l.size = layer.size;
+					if(typeof primitives[p].color==="string") l.color = primitives[p].color;
+
+					l.drawArrays = primitives[p].array;
+
+					l.program = gl.ctx.createProgram();
+					// Set the shaders
+					for(s in shaders[st]){
+						if(shaders[st][s].shader) gl.ctx.attachShader(l.program, shaders[st][s].shader);
+					}
+					gl.ctx.linkProgram(l.program);
+					if(!gl.ctx.getProgramParameter(l.program, gl.ctx.LINK_STATUS)) {
+						this.log.error("Error linking shader program:");
+						this.log.message(gl.ctx.getProgramInfoLog(l.program));
+					}
+
+					l.loc = {};
+					l.loc.matrix = gl.ctx.getUniformLocation(l.program, "uMatrix");
+					l.loc.yLog = gl.ctx.getUniformLocation(l.program, "uYLog");
+					l.loc.yLogMin = gl.ctx.getUniformLocation(l.program, "uYLogMin");
+					l.loc.yLogMax = gl.ctx.getUniformLocation(l.program, "uYLogMax");
+					if(st=="sprite"){
+						l.loc.Texture = gl.ctx.getUniformLocation(l.program, "uTexture");
+						if(l.size) l.loc.PointSize = gl.ctx.getUniformLocation(l.program, "uPointSize");
+					}else if(st=="thickline"){
+						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
+						l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "uStrokeWidth");
+						l.loc.size = gl.ctx.getUniformLocation(l.program, "uSize");
+						l.loc.type = gl.ctx.getUniformLocation(l.program, "u_type");
+					}else if(st=="line"){
+						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
+						l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "uStrokeWidth");
+					}else if(st=="area"){
+						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
+					}
+
+					l.buffer = gl.ctx.createBuffer();
+					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, l.buffer);
+					l.vertex = primitives[p].fn.call(this,data);
+					if(t=="area") console.log(l.vertex,data)
+
+					gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, l.vertex.data, gl.ctx.STATIC_DRAW);
+					// Unbind the buffer
+					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
+
+					// Create icon and sprite
+					if(l.shader=="sprite"){
+						attr.output = "texture";
+						attr.size = l.size;
+						l.icon = Icon(l.shape||"circle",attr);
+						l.texture = gl.ctx.createTexture();
+						gl.ctx.activeTexture(gl.ctx.TEXTURE0+layers.length);	// set an index for the texture
+						gl.ctx.bindTexture(gl.ctx.TEXTURE_2D, l.texture);
+						gl.ctx.pixelStorei(gl.ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+						gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MAG_FILTER, gl.ctx.NEAREST);
+						gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_MIN_FILTER, gl.ctx.NEAREST);
+						gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_S, gl.ctx.CLAMP_TO_EDGE);
+						gl.ctx.texParameteri(gl.ctx.TEXTURE_2D, gl.ctx.TEXTURE_WRAP_T, gl.ctx.CLAMP_TO_EDGE);
+						gl.ctx.texImage2D(gl.ctx.TEXTURE_2D, 0, gl.ctx.RGBA, gl.ctx.RGBA, gl.ctx.UNSIGNED_BYTE, l.icon);
+					}
+
+					layers.push(l);
+				}
 			}
-			// Make SVG versions
+
+			// Create key toggle (SVG)
 			c = document.createElement('li');
-			c.setAttribute('data',n);
+			c.setAttribute('data',layercounter);
 			attr.output = "svg";
 			attr.width = 32;
 			attr.height = 32;
-
-			if(l.type=="symbol"){
-				c.innerHTML = Icon(l.shape||"circle",attr);
+			if(layer.type=="symbol"){
+				c.innerHTML = Icon(layer.shape||"circle",attr);
 				c.setAttribute('class','icon active');
-			}else if(l.type=="area"){
+			}else if(layer.type=="area"){
 				attr.size = attr.width;
-				delete attr.strokeWidth;
-				c.innerHTML = Icon("square",attr)+' '+l.type;
+				//delete attr.strokeWidth;
+				c.innerHTML = Icon("square",attr)+' '+layer.type;
 				c.setAttribute('class','icon active area');
 			}else{
 				attr.size = attr.width;
 				var orientation = "h";
-				if(l.style.type=="fullHeight") orientation = "v";
-				if(l.type=="rule" && l.data[0].x==l.data[1].x) orientation = "v";
-				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+l.type;
+				if(layer.style.type=="fullHeight") orientation = "v";
+				if(layer.type=="rule" && data[0].x==data[1].x) orientation = "v";
+				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layer.type;
 				c.setAttribute('class','icon active label');
 			}
+			_obj = this;
 			c.addEventListener('click', function(){
 				i = parseInt(this.getAttribute('data'));
 				if(!isNaN(i)) _obj.toggleLayer(i);
 			});
 			layerList.appendChild(c);
 
-			layers.push(l);
+			layercounter++;
 
+
+			this.log.time('addLayer');
 
 			return this;
 		}
 
 		this.toggleLayer = function(n){
 			this.log.time('toggleLayer '+n);
-			if(n < layers.length){
-				li = layerList.getElementsByTagName('li')[n];
-				layers[n].hide = !layers[n].hide;
-				li.classList.toggle('active');
-				this.draw();
+			var li = layerList.getElementsByTagName('li')[n];
+			var toggled = 0;
+			for(var i = 0; i < layers.length; i++){
+				if(layers[i].source==n){
+					layers[i].hide = !layers[i].hide;
+					li.classList.toggle('active');
+					toggled++;
+				}
 			}
+			if(toggled > 0) this.draw();
 			this.log.time('toggleLayer '+n);
 			return this;
 		}
@@ -347,12 +374,13 @@
 			for(var n = 0 ; n < layers.length; n++){
 				if(!layers[n].hide){
 					gl.ctx.useProgram(layers[n].program);
-					t = layers[n].type;
 
 					if(layers[n].loc.matrix) gl.ctx.uniformMatrix3fv(layers[n].loc.matrix, false, view.v);
 					// Set colour
 					if(layers[n].loc.color){
-						c = (t=="line" || t=="rule" || t=="rect") ? (getRGBA(layers[n].style.strokeStyle)||strokeColor) : (getRGBA(layers[n].style.fillStyle)||fillColor);
+						c = "#000000";
+						if(layers[n].color=="strokeStyle") c = (getRGBA(layers[n].style.strokeStyle)||strokeColor);
+						if(layers[n].color=="fillStyle") c = (getRGBA(layers[n].style.fillStyle)||fillColor);
 						gl.ctx.uniform4fv(layers[n].loc.color,c);
 					}
 					// Set stroke width
@@ -360,7 +388,7 @@
 		//			gl.ctx.uniform1i(layers[n].loc.yLog, true);
 		//			gl.ctx.uniform1f(layers[n].loc.yLogMin,-1.0);
 		//			gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
-					if(t=="symbol"){
+					if(layers[n].shader=="sprite"){
 						gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
 						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize,layers[n].icon.width);
 						gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
@@ -379,7 +407,7 @@
 						gl.ctx.vertexAttribPointer(aVertexPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, 0);
 						gl.ctx.enableVertexAttribArray(aVertexPosition);
 				
-						if(t=="line" || t=="rule" || t=="rect"){
+						if(layers[n].shader=="thickline"){
 							aNormalPosition = gl.ctx.getAttribLocation(layers[n].program, "aNormalPosition");
 							gl.ctx.vertexAttribPointer(aNormalPosition, layers[n].vertex.components, gl.ctx.FLOAT, false, 0, layers[n].vertex.count * 8);
 							gl.ctx.enableVertexAttribArray(aNormalPosition);
@@ -412,7 +440,148 @@
 		return this;
 	}
 
+	function makePoints(original){
+		var vertices = new Float32Array(original.length*2);
+		for(i = 0; i < original.length ; i++){
+			// Build point-based vertices
+			vertices[i*2] = original[i].x;
+			vertices[i*2 + 1] = original[i].y;
+		}
+		return {'data':vertices,'components':2, 'count':original.length/2 };
+	}
+	function makeBoundaries(o){
+		var areas = [];
+		var v = [];
+		var i,a,poly,y1,y2;
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < o.length ; i++){
+			p = o[i];
+			y1 = (typeof p.y1==="number" ? p.y1 : p.y);
+			y2 = (typeof p.y2==="number" ? p.y2 : y1);
+			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+		poly = new Array(areas.length);
 
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				for(j = 0; j < areas[a].length; j++){
+					p = o[areas[a][j]];
+					v.push({'x':p.x,'y':p.y2});
+				}
+				for(j = areas[a].length-1; j >= 0; j--){
+					p = o[areas[a][j]];
+					v.push({'x':p.x,'y':p.y1});
+				}
+				p = o[areas[a][0]];
+				v.push({'x':p.x,'y':p.y2});
+			}
+		}
+		return makeLines(v);
+	}
+	function makeAreas(o){
+		var areas = [];
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < o.length ; i++){
+			p = o[i];
+			y1 = (typeof p.y1==="number" ? p.y1 : p.y);
+			y2 = (typeof p.y2==="number" ? p.y2 : y1);
+			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+
+		var vertices = [];
+	
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		var poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				for(j = 0; j < areas[a].length-1; j++){
+					p1 = o[areas[a][j]];
+					p2 = o[areas[a][j+1]];
+					vertices = vertices.concat([p1.x,p1.y2,p1.x,p1.y1,p2.x,p2.y1,p1.x,p1.y2,p2.x,p2.y2,p2.x,p2.y1]);
+				}
+			}
+		}
+		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
+	}
+	function makeLines(original){
+		// TR: compute normal vector
+		var v = [];
+		var l = original.length;
+		var o = new Array(l*2);
+		var i,norm,ivert,ibeg,iend,dx,dy,scale;
+		for(i = 0; i < l;i++){
+			o[i*2] = original[i].x;
+			o[i*2 + 1] = original[i].y;
+		}
+
+		function normal_vector(dx, dy){
+			norm = (dx * dx + dy * dy) ** 0.5;
+			return -dy / norm, dx / norm;
+		}
+
+		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
+			// Add vertex
+			ivert = Math.floor((i + 2) / 4);
+			v.push(o[2 * ivert]);
+			v.push(o[2 * ivert + 1]);
+		}
+
+		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
+			// Find normal vector
+			ibeg = Math.floor(i / 4);
+			iend = ibeg + 1;
+			dx = o[2 * iend] - o[2 * ibeg];
+			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
+			scale = (dx * dx + dy * dy) ** 0.5;
+			v.push(-dy / scale * (-1) ** i);
+			v.push(dx / scale * (-1) ** i);
+		}
+		return {'data':new Float32Array(v),'components':2,'count': 4 * (l - 1) };
+	}
+	function makeRects(original){
+		// TR: compute normal vector
+		var vertices = [];
+
+		var o = new Array(original.length*2);
+		for(i = 0; i < original.length;i++){
+			o[i*2] = original[i].x;
+			o[i*2 + 1] = original[i].y;
+		}
+
+		function normal_vector(dx, dy){
+			norm = (dx * dx + dy * dy) ** 0.5;
+			return -dy / norm, dx / norm;
+		}
+
+		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
+			// Add vertex
+			ivert = Math.floor((i + 2) / 4);
+			vertices.push(o[2 * ivert]);
+			vertices.push(o[2 * ivert + 1]);
+		}
+
+		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
+			// Find normal vector
+			ibeg = Math.floor(i / 4);
+			iend = ibeg + 1;
+			dx = o[2 * iend] - o[2 * ibeg];
+			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
+			scale = (dx * dx + dy * dy) ** 0.5;
+			vertices.push(-dy / scale * (-1) ** i);
+			vertices.push(dx / scale * (-1) ** i);
+		}
+		return {'data':new Float32Array(vertices),'components':2,'count': 4 * (original.length - 1) };
+	}
+	function clone(j){
+		return JSON.parse(JSON.stringify(j));
+	}
 	function getRGBA(c,a){
 		a = (a||1.0);
 		var rgb;
@@ -453,105 +622,6 @@
 			}
 		}
 		return this;
-	}
-
-	function makePoints(original){
-		var vertices = new Float32Array(original.length*2);
-		for(i = 0; i < original.length ; i++){
-			// Build point-based vertices
-			vertices[i*2] = original[i].x;
-			vertices[i*2 + 1] = original[i].y;
-		}
-		return vertices;
-	}
-
-	function makeAreas(o){
-		var areas = [];
-		// We need to loop across the data first splitting into segments
-		for(i = 0, a = 0; i < o.length ; i++){
-			p = o[i];
-			y1 = (typeof p.y1==="number" ? p.y1 : p.y);
-			y2 = (typeof p.y2==="number" ? p.y2 : y1);
-			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
-				if(!areas[a]) areas[a] = [];
-				areas[a].push(i);
-			}else a++;
-		}
-
-		var vertices = [];
-		
-		// To do: make the polygon lookup processing more efficient by
-		// not processing the entire shape in one go
-		var poly = new Array(areas.length);
-		for(a = 0; a < areas.length ; a++){
-			if(areas[a] && areas[a].length){
-				for(j = 0; j < areas[a].length-1; j++){
-					p1 = o[areas[a][j]];
-					p2 = o[areas[a][j+1]];
-					vertices = vertices.concat([p1.x,p1.y2,p1.x,p1.y1,p2.x,p2.y1,p1.x,p1.y2,p2.x,p2.y2,p2.x,p2.y1]);
-				}
-			}
-		}
-		return new Float32Array(vertices);
-	}
-	
-	function makeLines(original){
-		// TR: compute normal vector
-		var vertices = [];
-
-		var o = new Array(original.length*2);
-		for(i = 0; i < original.length;i++){
-			o[i*2] = original[i].x;
-			o[i*2 + 1] = original[i].y;
-		}
-
-		function normal_vector(dx, dy){
-			norm = (dx * dx + dy * dy) ** 0.5;
-			return -dy / norm, dx / norm;
-		}
-
-		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
-			// Add vertex
-			ivert = Math.floor((i + 2) / 4);
-			vertices.push(o[2 * ivert]);
-			vertices.push(o[2 * ivert + 1]);
-		}
-
-		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
-			// Find normal vector
-			ibeg = Math.floor(i / 4);
-			iend = ibeg + 1;
-			dx = o[2 * iend] - o[2 * ibeg];
-			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
-			scale = (dx * dx + dy * dy) ** 0.5;
-			vertices.push(-dy / scale * (-1) ** i);
-			vertices.push(dx / scale * (-1) ** i);
-		}
-		return new Float32Array(vertices);
-	}
-
-	function makeRects(original){
-		// TR: compute normal vector
-		var o = new Array(original.length*2);
-		var x1,x2,y1,y2;
-		for(i = 0; i < original.length;i++){
-			if(typeof original[i].x=="number"){
-				x1 = original[i].x;
-				x2 = original[i].x;
-			}
-			if(typeof original[i].x1=="number") x1 = original[i].x1;
-			if(typeof original[i].x2=="number") x2 = original[i].x2;
-			if(typeof original[i].y=="number"){
-				y1 = original[i].y;
-				y2 = original[i].y;
-			}
-			if(typeof original[i].y1=="number") y1 = original[i].y1;
-			if(typeof original[i].y2=="number") y2 = original[i].y2;
-
-			o[i*2] = {'x':x1,'y':y1 };
-			o[i*2 + 1] = {'x':x2,'y':y2 };
-		}
-		return makeLines(o)
 	}
 
 	function Path(path){
@@ -642,8 +712,9 @@
 			if(!attr) attr = {};
 			if(!attr.width) attr.width = 32;
 			if(!attr.height) attr.height = 32;
-			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"	viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg">';
-			svg += '<path d="'+this.toString()+'" fill="'+attr.fillStyle+'" stroke="'+attr.strokeStyle+'" stroke-width="'+attr.strokeWidth+'">'
+			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"	viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg"';
+			if(attr.overflow) svg += ' style="overflow:visible"';
+			svg += '><path d="'+this.toString()+'" fill="'+attr.fillStyle+'" stroke="'+attr.strokeStyle+'" stroke-width="'+attr.strokeWidth+'" />'
 			svg += '</svg>';
 			return svg;
 		}
@@ -680,6 +751,7 @@
 		if(attr.strokeWidth) paper.ctx.strokeStyle = attr.strokeStyle;
 		paper.ctx.lineWidth = attr.strokeWidth;
 		paper.ctx.lineCap = "square";
+		if(shape=="square" && attr.strokeWidth > 1) attr.overflow = true; 
 		if(shape!="stroke") paper.ctx.beginPath();
 
 		let cx = (w/2);
@@ -711,7 +783,7 @@
 			path.setSize(attr.size);
 			path.draw(paper.ctx);
 			if(shape!="stroke") paper.ctx.fill();
-			if(attr.strokeWidth) paper.ctx.stroke();
+			if(attr.strokeWidth > 0) paper.ctx.stroke();
 		}
 		if(attr.output == "texture") return paper.ctx.getImageData(0, 0, s2, s2);
 		else if(attr.output == "svg") return path.svg(attr);
