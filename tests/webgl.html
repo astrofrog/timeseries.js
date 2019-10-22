@@ -186,13 +186,44 @@
 	
 
 	// Rendering data shared with the scalers.
-	let graph = new WebGLGraph({'logging':true,'logtime':true});
+	let graph;
 
 	// Create graph
 	window.addEventListener("load", function(){
+		graph = new WebGLGraph({'logging':true,'logtime':true,'id':'canvas','viewPort':{'left':100,'top':10,'right':10,'bottom':100}});
+
+		var cs = document.getElementById('canvas');
+		cs.addEventListener('wheel',function(e){
+			e.preventDefault();
+			graph.scale(e.deltaY < 0 ? 1/1.2 : 1.2);
+			graph.draw();
+		})
+
+		window.addEventListener('keydown',function(e){
+			if(e.keyCode==37){
+				e.preventDefault();
+				graph.translate(-0.01,0);
+				graph.draw();
+			}else if(e.keyCode==39){
+				e.preventDefault();
+				graph.translate(0.01,0);
+				graph.draw();
+			}else if(e.keyCode==38){
+				e.preventDefault();
+				graph.translate(0,0.01);
+				graph.draw();
+			}else if(e.keyCode==40){
+				e.preventDefault();
+				graph.translate(0,-0.01);
+				graph.draw();
+			}
+			i = parseInt(e.key);
+			if(typeof i==="number" && !isNaN(i)) graph.toggleLayer(i);
+		});
+
 		// Add the layers
 		for(var i = 0; i < layers.length; i++) graph.addLayer(layers[i]);
-		graph.init();
+		graph.initLayers();
 		graph.draw();
 	}, false);
 

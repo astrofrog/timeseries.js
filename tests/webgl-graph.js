@@ -2,6 +2,7 @@
 
 	function WebGLGraph(attr){
 		if(!attr) attr = {};
+		if(!attr.id) attr.id = 'canvas';
 		this.log = new window.Logger({'id':'WebGLGraph','logging':attr.logging,'logtime':attr.logtime});
 
 		let currentScale = [range.x.max,range.y.max];
@@ -10,10 +11,10 @@
 		let strokeColor = [255/255, 0/255, 0/255, 0.5];
 		let strokeWidth = 5.0;
 		let aVertexPosition;
-		let gl = {'id':'canvas'};
+		let gl = {'id':attr.id};
 		let canvas = {'id':'canvas2'};
 		var view = new Matrix();
-		var viewPort = {'left':150, 'top':100, 'right':10, 'bottom':10};
+		var viewPort = (attr.viewPort || {'left':150, 'top':100, 'right':10, 'bottom':10});
 		let layers = [];
 
 		let shaders = {
@@ -158,8 +159,47 @@
 			}
 			this.log.time("buildShaders");
 
-			this.log.time('buildLayers');
+			this.log.time('init');
+
+			this.log.time('full');
+		}
+		
+		this.toggleLayer = function(n){
+			this.log.time('toggleLayer '+n);
+			if(n < layers.length){
+				li = layerList.getElementsByTagName('li')[n];
+				layers[n].hide = !layers[n].hide;
+				li.classList.toggle('active');
+				this.draw();
+			}
+			this.log.time('toggleLayer '+n);
+			return this;
+		}
+
+		this.scale = function(s){
+			currentScale[0] *= s;
+			currentScale[1] *= s;
+			this.draw();
+			return this;
+		}
+
+		this.translate = function(x,y){
+			currentTranslation[0] += x;
+			currentTranslation[1] += y;
+			this.draw();
+			return this;
+		}
+
+		layerList = document.createElement('ul');
+		layerList.setAttribute('class','key');
+		document.body.appendChild(layerList);
+
+		this.initLayers = function(){
+			this.log.time('initLayers');
+			var _obj = this;
 			i = 0;
+			
+			
 			for(n = 0; n < layers.length; n++){
 			
 				this.log.time("buildShaderProgram for "+n)
@@ -273,65 +313,13 @@
 				}
 				c.addEventListener('click', function(){
 					i = parseInt(this.getAttribute('data'));
-					if(i < layers.length) layers[i].hide = !layers[i].hide;
-					this.classList.toggle('active');
-					_obj.draw();
+					if(!isNaN(i)) _obj.toggleLayer(i);
 				});
-				document.body.appendChild(c);
+				layerList.appendChild(c);
 
 			}
-			this.log.time('buildLayers');
+			this.log.time('initLayers');
 
-			this.log.time('init');
-
-			var cs = document.getElementById('canvas');
-			cs.addEventListener('wheel',function(e){
-				e.preventDefault();
-				if(e.deltaY < 0){
-					currentScale[0] /= 1.2;
-					currentScale[1] /= 1.2;
-				}else{
-					currentScale[0] *= 1.2;
-					currentScale[1] *= 1.2;
-				}
-				_obj.draw();
-			})
-
-			window.addEventListener('keydown',function(e){
-				if(e.keyCode==37){
-					e.preventDefault();
-					currentTranslation[0] -= 0.01;
-					_obj.draw();
-				}else if(e.keyCode==39){
-					e.preventDefault();
-					currentTranslation[0] += 0.01;
-					_obj.draw();
-				}else if(e.keyCode==38){
-					e.preventDefault();
-					currentTranslation[1] += 0.01;
-					_obj.draw();
-				}else if(e.keyCode==40){
-					e.preventDefault();
-					currentTranslation[1] -= 0.01;
-					_obj.draw();
-				}
-				i = parseInt(e.key);
-				if(typeof i==="number"){
-					if(i < layers.length) layers[i].hide = !layers[i].hide;
-					_obj.draw();
-				}else if(e.key == "a"){
-					currentScale = [1/5,1/5];
-					_obj.draw();
-				}else if(e.key == "s"){
-					currentScale = [1,1];
-					_obj.draw();
-				}else if(e.key == "d"){
-					currentScale = [5,5];
-					_obj.draw();
-				}
-			});
-
-			this.log.time('full');
 		}
 
 		this.draw = function(){
@@ -339,7 +327,7 @@
 			this.log.time('draw');
 			let scale = [currentScale[0],currentScale[1]];
 			// Define the viewport area in pixels (x,y,w,h)
-			gl.ctx.viewport(viewPort.left, viewPort.top, gl.canvas.clientWidth-150-viewPort.right, gl.canvas.clientHeight-100-viewPort.bottom);
+			gl.ctx.viewport(viewPort.left, viewPort.bottom, gl.canvas.clientWidth-viewPort.left-viewPort.right, gl.canvas.clientHeight-viewPort.top-viewPort.bottom);
 			gl.ctx.clearColor(0, 0, 0, 0);
 			gl.ctx.clear(gl.ctx.COLOR_BUFFER_BIT | gl.ctx.DEPTH_BUFFER_BIT);
 			gl.ctx.enable(gl.ctx.BLEND);
@@ -413,6 +401,8 @@
 			}
 			return shader;
 		}
+
+		this.init();
 
 		return this;
 	}
