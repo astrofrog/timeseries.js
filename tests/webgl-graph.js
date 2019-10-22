@@ -2,7 +2,7 @@
 
 	function WebGLGraph(attr){
 		if(!attr) attr = {};
-		this.log = new Logger({'id':'WebGLGraph','logging':attr.logging,'logtime':attr.logtime});
+		this.log = new window.Logger({'id':'WebGLGraph','logging':attr.logging,'logtime':attr.logtime});
 
 		let currentScale = [range.x.max,range.y.max];
 		let currentTranslation = [0,0];
