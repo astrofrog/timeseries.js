@@ -351,7 +351,7 @@
 
 		layerList = document.createElement('ul');
 		layerList.setAttribute('class','key');
-		document.body.appendChild(layerList);
+		document.getElementsByClassName(attr.key)[0].appendChild(layerList);
 
 
 		this.draw = function(){

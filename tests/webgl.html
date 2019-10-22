@@ -3,16 +3,18 @@
 	<title>Test of sprites in WebGL</title>
 	<style>
 	body { background: #eee; }
-	.holder { position: relative; }
+	.holder { position: relative; display: flex; }
 	canvas { border: 1px solid #444; position: relative; }
-	.icon { display: inline-block; line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; }
+	.icon { line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; }
 	.icon > svg { width: 1.5em; height: 1.5em; margin-right: 0.25em; }
 	.icon.area > svg { background: none; }
 	.icon.label { padding: 0.5em; }
 	.icon > * { filter: grayscale(1); opacity: 0.15; vertical-align: middle; }
 	.icon.active > * { filter: none; opacity: 1; }
 	.icon:hover { background-color: #ddd; }
-	ul.key { list-style: none; margin: 0px; padding: 0px; }
+	ul.key { list-style: none; margin: 0px; padding: 0px; display: block; }
+	ul.key li { display: inline-block; width: 100px; }
+	.right { max-width: 100%; width: 100%; padding-left: 1em; }
 	</style>
 	<script src="webgl-helper.js"></script>
 	<script src="webgl-debug.js"></script>
@@ -167,7 +169,7 @@
 
 	// Create graph
 	window.addEventListener("load", function(){
-		graph = new WebGLGraph({'logging':true,'logtime':true,'id':'canvas','viewPort':{'left':100,'top':10,'right':10,'bottom':100}});
+		graph = new WebGLGraph({'logging':true,'logtime':true,'id':'canvas','key':'right','viewPort':{'left':100,'top':10,'right':10,'bottom':100}});
 
 		var cs = document.getElementById('canvas');
 		cs.addEventListener('wheel',function(e){
@@ -208,9 +210,14 @@
 	</script>
 	
 	<div class="holder">
-		<canvas id="canvas" width="800" height="460">
-			Oh no! Your browser doesn't support canvas!
-		</canvas>
+		<div class="left">
+			<canvas id="canvas" width="800" height="460">
+				Oh no! Your browser doesn't support canvas!
+			</canvas>
+		</div>
+		<div class="right">
+		
+		</div>
 		
 	</div>
 
