@@ -23,7 +23,34 @@
 <body>
 	<script>
 	var range = { 'x': {'min':0,'max':10}, 'y': {'min':0,'max':10} };
-	var numperlayer = 100;
+	var numperlayer = 1e3;
+
+	function RandomGaussian(){
+		var v1,v2,s;
+		do {
+			v1 = 2.0 * Math.random() - 1.0;
+			v2 = 2.0 * Math.random() - 1.0;
+			s = v1 * v1 + v2 * v2;
+		} while (s >= 1.0 || s == 0);
+
+		s = Math.sqrt((-2.0 * Math.log(s)) / s);
+
+		return v1 * s;
+	}
+
+	function makeNoisyCurve(n){
+		var data = new Array(n);
+		var len = 8;
+		var std = 0.25;
+		var A = 4;
+		var xo = len/2;
+		for(i = 0; i < n; i++){
+			x = len * ((i - n/2) / n);
+			dx = x*len;
+			data[i] = { 'x': x+(len/2), 'y': A*(dx != 0 ? Math.sin(dx)/(dx) : 1) + RandomGaussian()*A*0.05 };
+		}
+		return data;	
+	}
 
 	function makeCurve(n){
 		var data = new Array(n);
@@ -155,8 +182,8 @@
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255,103,0,0.5)','fillStyle':'rgba(249,188,38,1)'}
 	},{
 		'type': 'line',
-		'data': makeCurve(1000),
-		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':2}
+		'data': makeNoisyCurve(1e6),
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':1}
 	},{
 		'type': 'rect',
 		'data': [{'x':2.0,'y1':1.0,'y2':3.0},{'x':3.0,'y1':2.0,'y2':3.6},{'x':4.0,'y1':5.0,'y2':6.6}],
@@ -179,13 +206,16 @@
 	window.addEventListener("load", function(){
 		graph = new WebGLGraph({'logging':true,'logtime':true,'id':'canvas','key':'right','viewPort':{'left':100,'top':10,'right':10,'bottom':100}});
 
+		graph.log.time('startup');
+
 		var cs = document.getElementById('canvas');
 		cs.addEventListener('wheel',function(e){
+			graph.log.time('wheel');
 			e.preventDefault();
 			graph.scale(e.deltaY < 0 ? 1/1.2 : 1.2);
-			graph.draw();
+			graph.log.time('wheel');
 		})
-
+		
 		window.addEventListener('keydown',function(e){
 			if(e.keyCode==37){
 				e.preventDefault();
@@ -212,6 +242,8 @@
 		for(var i = 0; i < layers.length; i++) graph.addLayer(layers[i]);
 
 		graph.draw();
+		graph.log.time('startup');
+
 
 	}, false);
 
