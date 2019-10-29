@@ -204,7 +204,9 @@
 					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectOutlines});
 					nt = "area";
 				}else{
-					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectLines});
+					if(attr.strokeWidth > 0){
+						primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectLines});
+					}
 				}
 			}else if(t=="line" || t=="rule"){
 				primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeLines});
@@ -397,7 +399,7 @@
 		//			gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
 					if(layers[n].shader=="sprite"){
 						gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
-						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize,layers[n].icon.width);
+						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize,layers[n].icon.width/window.devicePixelRatio);
 						gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
 					}
 
