@@ -29,8 +29,9 @@
 					uniform bool uYLog;
 					uniform float uYLogMin;
 					uniform float uYLogMax;
+
 					vec2 posV;
-					//float range;
+
 					float log10(float v){
 						return log(v)/2.302585092994046;
 					}
@@ -60,17 +61,21 @@
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of vertex
 					attribute vec2 aNormalPosition;	// position of normal
+					attribute vec4 aVertexColor;	// colour of the vertex
 					uniform mat3 uMatrix;
 					uniform bool uYLog;
 					uniform float uYLogMin;
 					uniform float uYLogMax;
 					uniform float uStrokeWidth;
 					uniform vec2 uSize;
-					uniform int u_type;
-					float scale_x;
-					float scale_y;
+					uniform int uType;
+					
+					varying vec4 vColor;
+					
 					vec2 posV;
 					vec2 posN;
+					float scale_x;
+					float scale_y;
 
 					void main() {
 						// Convert line width to final coords space in x and y
@@ -79,12 +84,14 @@
 
 						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 						posN = aNormalPosition;
-						if(u_type==1){
+
+						if(uType==1){
 							posV.x = (aVertexPosition.x==0.0) ? -1.0 : 1.0;
-						}else if(u_type==2){
+						}else if(uType==2){
 							posV.y = (aVertexPosition.y==0.0) ? -1.0 : 1.0;
 						}
 						gl_Position = vec4(posV.x + posN.x * scale_x, posV.y + posN.y * scale_y, 1.0, 1);
+						vColor = aVertexColor;
 					}`
 				},
 				'fragment':	{'src':`
@@ -92,12 +99,14 @@
 					precision lowp float;
 					#endif
 					uniform vec4 uColor;
+					varying vec4 vColor;
 					void main(void) {
 						gl_FragColor = uColor;
+						//gl_FragColor = vColor;
 					}`
 				}
 			},
-			'line': {
+			'thinline': {
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of vertex
 					uniform mat3 uMatrix;
@@ -153,10 +162,12 @@
 			gl.canvas = document.getElementById(gl.id);
 
 			this.log.time('getContext webgl');
+			/*
 			function throwOnGLError(err, funcName, args) {
 				throw WebGLDebugUtils.glEnumToString(err) + " was caused by call to: " + funcName;
 			};
 			function logAndValidate(functionName, args) {
+				//_obj.log.message("gl."+functionName);
 				//logGLCall(functionName, args);
 				//validateNoneOfTheArgsAreUndefined(functionName, args);
 			}
@@ -167,8 +178,10 @@
 				for(var ii = 0; ii < args.length; ++ii){
 					if(args[ii]===undefined) _obj.log.error("undefined passed to gl." + functionName + "(" + WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");
 				}
-			} 
+			}
 			gl.ctx = WebGLDebugUtils.makeDebugContext(gl.canvas.getContext("webgl"),throwOnGLError,logAndValidate);
+			*/
+			gl.ctx = gl.canvas.getContext("webgl");
 			this.log.time('getContext webgl');
 			let s,n,i,t,a;
 
@@ -181,6 +194,22 @@
 			this.log.time('init');
 
 			this.log.time('full');
+		}
+
+		function isPowerOf2(value) {
+			return (value & (value - 1)) == 0;
+		}
+
+		function getProgramUniforms(gl, program){
+			var uniforms = {};
+			var uniformCount = gl.ctx.getProgramParameter(program, gl.ctx.ACTIVE_UNIFORMS);
+			var uniformName = "";
+			for(var i = 0; i < uniformCount; i++){
+				var uniformInfo = gl.ctx.getActiveUniform(program, i);
+				uniformName = uniformInfo.name.replace("[0]", "");
+				uniforms[uniformName] = gl.ctx.getUniformLocation(program, uniformName);
+			}
+			return uniforms;
 		}
 
 		this.addLayer = function(layer){
@@ -201,18 +230,30 @@
 			}else if(t=="rect"){
 				if(typeof data[0].x2==="number" && typeof data[0].y2==="number"){
 					primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeRectAreas});
-					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectOutlines});
+					if(attr.strokeWidth > 0){
+						// Convert the rectangle outlines into triangle strips with normals
+						primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectOutlines});
+					}
 					nt = "area";
 				}else{
 					if(attr.strokeWidth > 0){
+						// Convert the rectangles into triangle strips with normals
 						primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectLines});
 					}
 				}
 			}else if(t=="line" || t=="rule"){
-				primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeLines});
+				if(attr.strokeWidth == 1){
+					// Simpler line drawing if the width is 1
+					primitives.push({'shader':'thinline','color':'strokeStyle','array':gl.ctx.LINE_STRIP, 'fn': makeThinLines});
+				}else{
+					// Convert the line into a triangle strip with normals
+					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeThickLines});
+				}
 			}else if(t=="area"){
+				// Create the area as triangles
 				primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeAreas});
 				if(attr.strokeWidth > 0){
+					// Convert the boundaries into triangle strips with normals
 					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeBoundaries });
 				}
 			}
@@ -242,35 +283,23 @@
 						this.log.message(gl.ctx.getProgramInfoLog(l.program));
 					}
 
-					l.loc = {};
-					l.loc.matrix = gl.ctx.getUniformLocation(l.program, "uMatrix");
-					l.loc.yLog = gl.ctx.getUniformLocation(l.program, "uYLog");
-					l.loc.yLogMin = gl.ctx.getUniformLocation(l.program, "uYLogMin");
-					l.loc.yLogMax = gl.ctx.getUniformLocation(l.program, "uYLogMax");
-					if(st=="sprite"){
-						l.loc.Texture = gl.ctx.getUniformLocation(l.program, "uTexture");
-						if(l.size) l.loc.PointSize = gl.ctx.getUniformLocation(l.program, "uPointSize");
-					}else if(st=="thickline"){
-						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
-						l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "uStrokeWidth");
-						l.loc.size = gl.ctx.getUniformLocation(l.program, "uSize");
-						l.loc.type = gl.ctx.getUniformLocation(l.program, "u_type");
-					}else if(st=="line"){
-						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
-						l.loc.strokeWidth = gl.ctx.getUniformLocation(l.program, "uStrokeWidth");
-					}else if(st=="area"){
-						l.loc.color = gl.ctx.getUniformLocation(l.program, "uColor");
-					}
+					// Get the uniform locations
+					l.loc = getProgramUniforms(gl, l.program);
 
+					// Create a buffer and bind it
 					l.buffer = gl.ctx.createBuffer();
 					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, l.buffer);
+
+					// Create the vertices using the appropriate function
 					l.vertex = primitives[p].fn.call(this,data);
 
+					// Set the buffer data
 					gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, l.vertex.data, gl.ctx.STATIC_DRAW);
+
 					// Unbind the buffer
 					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
 
-					// Create icon and sprite
+					// Create sprite
 					if(l.shader=="sprite"){
 						attr.output = "texture";
 						attr.size = l.size;
@@ -297,11 +326,11 @@
 			attr.width = 32;
 			attr.height = 32;
 			if(nt=="symbol"){
-				c.innerHTML = Icon(layer.shape||"circle",attr)+'symbol';
+				c.innerHTML = Icon(layer.shape||"circle",attr)+layer.type;
 				c.setAttribute('class','icon active');
 			}else if(nt=="area"){
 				attr.size = attr.width;
-				c.innerHTML = Icon("square",attr)+''+layer.type;
+				c.innerHTML = Icon("square",attr)+layer.type;
 				c.setAttribute('class','icon active area');
 			}else{
 				attr.size = attr.width;
@@ -321,9 +350,7 @@
 
 			layercounter++;
 
-
 			this.log.time('addLayer');
-
 			return this;
 		}
 
@@ -340,6 +367,8 @@
 			if(toggled > 0){
 				li.classList.toggle('active');
 				this.draw();
+			}else{
+				this.log.warning('No layer '+n);
 			}
 			this.log.time('toggleLayer '+n);
 			return this;
@@ -348,15 +377,13 @@
 		this.scale = function(s){
 			currentScale[0] *= s;
 			currentScale[1] *= s;
-			this.draw();
-			return this;
+			return this.draw();
 		}
 
 		this.translate = function(x,y){
 			currentTranslation[0] += x;
 			currentTranslation[1] += y;
-			this.draw();
-			return this;
+			return this.draw();
 		}
 
 		layerList = document.createElement('ul');
@@ -365,7 +392,6 @@
 
 		this.draw = function(){
 
-			this.log.time('draw');
 			let scale = [currentScale[0],currentScale[1]];
 			// Define the viewport area in pixels (x,y,w,h)
 			gl.ctx.viewport(viewPort.left, viewPort.bottom, gl.canvas.clientWidth-viewPort.left-viewPort.right, gl.canvas.clientHeight-viewPort.top-viewPort.bottom);
@@ -384,32 +410,38 @@
 				if(!layers[n].hide){
 					gl.ctx.useProgram(layers[n].program);
 
-					if(layers[n].loc.matrix) gl.ctx.uniformMatrix3fv(layers[n].loc.matrix, false, view.v);
+					// Set the view for this program
+					if(layers[n].loc.uMatrix) gl.ctx.uniformMatrix3fv(layers[n].loc.uMatrix, false, view.v);
+
 					// Set colour
-					if(layers[n].loc.color){
+					if(layers[n].loc.uColor){
 						c = "#000000";
 						if(layers[n].color=="strokeStyle") c = (getRGBA(layers[n].style.strokeStyle)||strokeColor);
 						if(layers[n].color=="fillStyle") c = (getRGBA(layers[n].style.fillStyle)||fillColor);
-						gl.ctx.uniform4fv(layers[n].loc.color,c);
+						gl.ctx.uniform4fv(layers[n].loc.uColor,c);
 					}
+
 					// Set stroke width
-					if(layers[n].loc.strokeWidth) gl.ctx.uniform1f(layers[n].loc.strokeWidth, (layers[n].style.strokeWidth||strokeWidth));
-		//			gl.ctx.uniform1i(layers[n].loc.yLog, true);
-		//			gl.ctx.uniform1f(layers[n].loc.yLogMin,-1.0);
-		//			gl.ctx.uniform1f(layers[n].loc.yLogMax,1.2);
+					if(layers[n].loc.uStrokeWidth) gl.ctx.uniform1f(layers[n].loc.uStrokeWidth, (layers[n].style.strokeWidth||strokeWidth));
+
+		//			gl.ctx.uniform1i(layers[n].loc.uYLog, true);
+		//			gl.ctx.uniform1f(layers[n].loc.uYLogMin,-1.0);
+		//			gl.ctx.uniform1f(layers[n].loc.uYLogMax,1.2);
+
 					if(layers[n].shader=="sprite"){
-						gl.ctx.uniform1i(layers[n].loc.Texture, n,layers[n].style.strokeStyle);
-						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.PointSize,layers[n].icon.width/window.devicePixelRatio);
+						gl.ctx.uniform1i(layers[n].loc.uTexture, n);
+						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.uPointSize,layers[n].icon.width/window.devicePixelRatio);
 						gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
 					}
 
 					// Only called when not initiated
 					if(!layers[n].initiated && layers[n].vertex){
-						// Set if this is a logarithmic scale
-						if(layers[n].loc.size) gl.ctx.uniform2fv(layers[n].loc.size, [gl.canvas.clientWidth,gl.canvas.clientHeight]);
-						// For rule types set if it covers the full width/height
-						if(layers[n].loc.type) gl.ctx.uniform1i(layers[n].loc.type, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
 
+						// Set the size of the canvas
+						if(layers[n].loc.uSize) gl.ctx.uniform2fv(layers[n].loc.uSize, [gl.canvas.clientWidth,gl.canvas.clientHeight]);
+
+						// For rule types set if it covers the full width/height of the view
+						if(layers[n].loc.uType) gl.ctx.uniform1i(layers[n].loc.uType, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
 
 						gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
 						aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");
@@ -428,7 +460,7 @@
 				}
 			}
 		
-			this.log.time('draw');
+			return this;
 		}
 
 		function compileShader(gl, typ, attr){
@@ -488,7 +520,7 @@
 				v.push({'x':p.x,'y':p.y2});
 			}
 		}
-		return makeLines(v);
+		return makeThickLines(v);
 	}
 	function makeAreas(o){
 		var areas = [];
@@ -519,7 +551,7 @@
 		}
 		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
 	}
-	function makeLines(original){
+	function makeThickLines(original){
 		// TR: compute normal vector
 		var v = [];
 		var l = original.length;
@@ -550,6 +582,16 @@
 		}
 		return {'data':new Float32Array(v),'components':2,'count': 4 * (l - 1) };
 	}
+	function makeThinLines(o){
+		// TR: compute normal vector
+		var l = o.length;
+		var v = new Array(l*2);
+		for(var i = 0, j = 0; i < l ; i++){
+			v[j++] = o[i].x;
+			v[j++] = o[i].y;
+		}
+		return {'data':new Float32Array(v), 'components':2, 'count': l };
+	}
 	function makeRectAreas(o){
 		var vertices = [];
 		var a,p;
@@ -574,7 +616,7 @@
 				v.push({'x':o[i].x2,'y':o[i].y});
 			}
 		}
-		return makeLines(v);
+		return makeThickLines(v);
 	}
 	function makeRectOutlines(o){
 		var v = [];
@@ -585,7 +627,7 @@
 			v.push({'x':o[i].x2,'y':o[i].y1});
 			v.push({'x':o[i].x1,'y':o[i].y1});
 		}
-		return makeLines(v);
+		return makeThickLines(v);
 	}
 	function clone(j){
 		return JSON.parse(JSON.stringify(j));
@@ -749,9 +791,8 @@
 		if(!attr) attr = {};
 		attr.strokeWidth = (attr.strokeWidth || 0);
 		let paper = { 'c': document.createElement('canvas') };
-		let s2 = (attr.size+attr.strokeWidth*2);
-		let w = attr.width || s2;
-		let h = attr.height || s2;
+		let w = attr.width || attr.size;
+		let h = attr.height || attr.size;
 		// Set properties of the temporary canvas
 		paper = setWH(paper,w,h,window.devicePixelRatio);
 		paper.ctx.clearRect(0,0,w,h);
@@ -764,7 +805,7 @@
 
 		let cx = (w/2);
 		let cy = (h/2);
-		let dw = attr.size/2;
+		let dw = (attr.size-attr.strokeWidth)/2;
 		let path;
 
 		// https://vega.github.io/vega/docs/marks/symbol/
@@ -793,7 +834,7 @@
 			if(shape!="stroke") paper.ctx.fill();
 			if(attr.strokeWidth > 0) paper.ctx.stroke();
 		}
-		if(attr.output == "texture") return paper.ctx.getImageData(0, 0, s2, s2);
+		if(attr.output == "texture") return paper.ctx.getImageData(0, 0, attr.size, attr.size);
 		else if(attr.output == "svg") return path.svg(attr);
 		else return paper.c;
 	}
