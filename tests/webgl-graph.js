@@ -9,9 +9,9 @@
 
 		let currentScale = [range.x.max,range.y.max];
 		let currentTranslation = [0,0];
-		let fillColor = [255/255, 255/255, 0/255, 0.5];
-		let strokeColor = [255/255, 0/255, 0/255, 0.5];
-		let strokeWidth = 5.0;
+		let fillColor = [255/255, 255/255, 0/255, 1];
+		let strokeColor = [255/255, 0/255, 0/255, 1];
+		let strokeWidth = 1.0;
 		let aVertexPosition;
 		let gl = {'id':attr.id};
 		let canvas = {'id':'canvas2'};
@@ -57,11 +57,46 @@
 					}`
 				}
 			},
+			'point': {
+				'vertex': {'src':`
+					attribute vec2 aVertexPosition;	// position of point
+					uniform mat3 uMatrix;
+					uniform float uPointSize;
+					uniform bool uYLog;
+					uniform float uYLogMin;
+					uniform float uYLogMax;
+
+					vec2 posV;
+
+					float log10(float v){
+						return log(v)/2.302585092994046;
+					}
+
+					void main() {
+						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
+						if(uYLog){
+							//range = uYLogMax - uYLogMin;
+							//if(posV.y > 0.0) posV.y = log10(posV.y)/range;
+							//else posV.y = -2.0;
+						}
+						gl_Position = vec4(posV, 0.1, 1);
+						gl_PointSize = uPointSize;
+					}`
+				},
+				'fragment':	{'src':`
+					#ifdef GL_ES
+					precision lowp float;
+					#endif
+					uniform vec4 uColor;
+					void main() {
+						gl_FragColor = uColor;
+					}`
+				}
+			},
 			'thickline': {
 				'vertex': {'src':`
 					attribute vec2 aVertexPosition;	// position of vertex
 					attribute vec2 aNormalPosition;	// position of normal
-					attribute vec4 aVertexColor;	// colour of the vertex
 					uniform mat3 uMatrix;
 					uniform bool uYLog;
 					uniform float uYLogMin;
@@ -69,8 +104,6 @@
 					uniform float uStrokeWidth;
 					uniform vec2 uSize;
 					uniform int uType;
-					
-					varying vec4 vColor;
 					
 					vec2 posV;
 					vec2 posN;
@@ -91,7 +124,6 @@
 							posV.y = (aVertexPosition.y==0.0) ? -1.0 : 1.0;
 						}
 						gl_Position = vec4(posV.x + posN.x * scale_x, posV.y + posN.y * scale_y, 1.0, 1);
-						vColor = aVertexColor;
 					}`
 				},
 				'fragment':	{'src':`
@@ -99,10 +131,8 @@
 					precision lowp float;
 					#endif
 					uniform vec4 uColor;
-					varying vec4 vColor;
 					void main(void) {
 						gl_FragColor = uColor;
-						//gl_FragColor = vColor;
 					}`
 				}
 			},
@@ -226,8 +256,13 @@
 			// Build the primitives that we need to draw for this layer
 			primitives = [];
 			if(t=="symbol"){
-				primitives.push({'shader':'sprite','array':gl.ctx.POINTS,'fn':makePoints});
+				if(layer.size < 1.5){
+					primitives.push({'shader':'point','color':'fillStyle','array':gl.ctx.POINTS,'fn':makePoints});
+				}else{
+					primitives.push({'shader':'sprite','array':gl.ctx.POINTS,'fn':makePoints});
+				}
 			}else if(t=="rect"){
+				// If we have fully defined rectangles (x1, x2, y1, y2)
 				if(typeof data[0].x2==="number" && typeof data[0].y2==="number"){
 					primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeRectAreas});
 					if(attr.strokeWidth > 0){
@@ -300,9 +335,11 @@
 					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, null);
 
 					// Create sprite
+					if(l.shader=="sprite" || l.shader=="point"){
+						attr.size = l.size;
+					}
 					if(l.shader=="sprite"){
 						attr.output = "texture";
-						attr.size = l.size;
 						l.icon = Icon(l.shape||"circle",attr);
 						l.texture = gl.ctx.createTexture();
 						gl.ctx.activeTexture(gl.ctx.TEXTURE0+layers.length);	// set an index for the texture
@@ -432,6 +469,9 @@
 						gl.ctx.uniform1i(layers[n].loc.uTexture, n);
 						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.uPointSize,layers[n].icon.width/window.devicePixelRatio);
 						gl.ctx.activeTexture(gl.ctx.TEXTURE0+n);	// this is the nth texture
+					}
+					if(layers[n].shader=="point"){
+						if(layers[n].size) gl.ctx.uniform1f(layers[n].loc.uPointSize,layers[n].size);
 					}
 
 					// Only called when not initiated
@@ -603,7 +643,6 @@
 			vertices = vertices.concat([p.x1,p.y1,p.x1,p.y2,p.x2,p.y1,p.x1,p.y2,p.x2,p.y2,p.x2,p.y1]);
 		}
 		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
-
 	}
 	function makeRectLines(o){
 		var v = [];
@@ -764,7 +803,7 @@
 			if(!attr.height) attr.height = 32;
 			var svg = '<svg width="'+attr.width+'" height="'+attr.height+'"	viewBox="0 0 '+attr.width+' '+attr.height+'" xmlns="http://www.w3.org/2000/svg"';
 			if(attr.overflow) svg += ' style="overflow:visible"';
-			svg += '><path d="'+this.toString()+'" fill="'+attr.fillStyle+'" stroke="'+attr.strokeStyle+'" stroke-width="'+attr.strokeWidth+'" />'
+			svg += '><path d="'+this.toString()+'"'+(attr.fillStyle ? ' fill="'+attr.fillStyle+'"':'')+(attr.strokeStyle ? ' stroke="'+attr.strokeStyle+'"':'')+(attr.strokeWidth ? ' stroke-width="'+attr.strokeWidth+'"':'')+' />'
 			svg += '</svg>';
 			return svg;
 		}
