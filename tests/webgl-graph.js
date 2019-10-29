@@ -186,19 +186,26 @@
 		this.addLayer = function(layer){
 
 			this.log.time('addLayer');
-			var s,st,t,a,attr,data,l,p;
+			var s,st,t,a,attr,data,l,p,nt;
 
 			layer.source = layercounter;
 			data = layer.data;
 			attr = layer.style;
 			t = layer.type;
+			nt = t;
 
 			// Build the primitives that we need to draw for this layer
 			primitives = [];
 			if(t=="symbol"){
 				primitives.push({'shader':'sprite','array':gl.ctx.POINTS,'fn':makePoints});
 			}else if(t=="rect"){
-				primitives.push({'shader':'thickline','color':'fillStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRects});
+				if(typeof data[0].x2==="number" && typeof data[0].y2==="number"){
+					primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeRectAreas});
+					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectOutlines});
+					nt = "area";
+				}else{
+					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectLines});
+				}
 			}else if(t=="line" || t=="rule"){
 				primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeLines});
 			}else if(t=="area"){
@@ -256,7 +263,6 @@
 					l.buffer = gl.ctx.createBuffer();
 					gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, l.buffer);
 					l.vertex = primitives[p].fn.call(this,data);
-					if(t=="area") console.log(l.vertex,data)
 
 					gl.ctx.bufferData(gl.ctx.ARRAY_BUFFER, l.vertex.data, gl.ctx.STATIC_DRAW);
 					// Unbind the buffer
@@ -288,12 +294,11 @@
 			attr.output = "svg";
 			attr.width = 32;
 			attr.height = 32;
-			if(layer.type=="symbol"){
+			if(nt=="symbol"){
 				c.innerHTML = Icon(layer.shape||"circle",attr)+'symbol';
 				c.setAttribute('class','icon active');
-			}else if(layer.type=="area"){
+			}else if(nt=="area"){
 				attr.size = attr.width;
-				//delete attr.strokeWidth;
 				c.innerHTML = Icon("square",attr)+''+layer.type;
 				c.setAttribute('class','icon active area');
 			}else{
@@ -301,6 +306,7 @@
 				var orientation = "h";
 				if(layer.style.type=="fullHeight") orientation = "v";
 				if(layer.type=="rule" && data[0].x==data[1].x) orientation = "v";
+				if(typeof data[0].x2==="undefined") orientation = "v";
 				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layer.type;
 				c.setAttribute('class','icon active label');
 			}
@@ -354,7 +360,6 @@
 		layerList = document.createElement('ul');
 		layerList.setAttribute('class','key');
 		document.getElementsByClassName(attr.key)[0].appendChild(layerList);
-
 
 		this.draw = function(){
 
@@ -517,15 +522,10 @@
 		var v = [];
 		var l = original.length;
 		var o = new Array(l*2);
-		var i,norm,ivert,ibeg,iend,dx,dy,scale;
+		var i,norm,ivert,ibeg,iend,dx,dy,scale,sign;
 		for(i = 0; i < l;i++){
 			o[i*2] = original[i].x;
 			o[i*2 + 1] = original[i].y;
-		}
-
-		function normal_vector(dx, dy){
-			norm = (dx * dx + dy * dy) ** 0.5;
-			return -dy / norm, dx / norm;
 		}
 
 		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
@@ -536,26 +536,53 @@
 		}
 
 		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
+			sign = (i%2==0 ? 1 : -1);
 			// Find normal vector
 			ibeg = Math.floor(i / 4);
 			iend = ibeg + 1;
 			dx = o[2 * iend] - o[2 * ibeg];
 			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
 			scale = (dx * dx + dy * dy) ** 0.5;
-			v.push(-dy / scale * (-1) ** i);
-			v.push(dx / scale * (-1) ** i);
+			v.push(-dy / scale * sign);
+			v.push(dx / scale * sign);
 		}
 		return {'data':new Float32Array(v),'components':2,'count': 4 * (l - 1) };
 	}
-	function makeRects(original){
-		// TR: compute normal vector
-		var v = [];
-
-		for(i = 0; i < original.length;i++){
-			v.push({'x':original[i].x,'y':original[i].y1});
-			v.push({'x':original[i].x,'y':original[i].y2});
+	function makeRectAreas(o){
+		var vertices = [];
+		var a,p;
+	
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		for(a = 0; a < o.length ; a++){
+			p = o[a];
+			vertices = vertices.concat([p.x1,p.y1,p.x1,p.y2,p.x2,p.y1,p.x1,p.y2,p.x2,p.y2,p.x2,p.y1]);
 		}
+		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
 
+	}
+	function makeRectLines(o){
+		var v = [];
+		for(i = 0; i < o.length;i++){
+			if(typeof o[i].x==="number"){
+				v.push({'x':o[i].x,'y':o[i].y1});
+				v.push({'x':o[i].x,'y':o[i].y2});
+			}else if(typeof o[i].y==="number"){
+				v.push({'x':o[i].x1,'y':o[i].y});
+				v.push({'x':o[i].x2,'y':o[i].y});
+			}
+		}
+		return makeLines(v);
+	}
+	function makeRectOutlines(o){
+		var v = [];
+		for(i = 0; i < o.length;i++){
+			v.push({'x':o[i].x1,'y':o[i].y1});
+			v.push({'x':o[i].x1,'y':o[i].y2});
+			v.push({'x':o[i].x2,'y':o[i].y2});
+			v.push({'x':o[i].x2,'y':o[i].y1});
+			v.push({'x':o[i].x1,'y':o[i].y1});
+		}
 		return makeLines(v);
 	}
 	function clone(j){
@@ -563,10 +590,10 @@
 	}
 	function getRGBA(c,a){
 		a = (a||1.0);
-		var rgb;
-		if(c.indexOf("rgb")==0) c.replace(/rgba?\(([0-9]+),([0-9]+),([0-9]+),?([0-9\.]+)?/,function(m,p1,p2,p3,p4){ rgb = [parseInt(p1)/255,parseInt(p2)/255,parseInt(p3)/255,(parseFloat(p4)||a)]; return ""; });
-		else if(c.indexOf('#')==0) rgb =[parseInt(c.substr(1,2),16)/255,parseInt(c.substr(3,2),16)/255,parseInt(c.substr(5,2),16)/255,a];
-		return rgb;
+		var rgba;
+		if(c.indexOf("rgb")==0) c.replace(/rgba?\(([0-9]+), *([0-9]+), *([0-9]+),? *([0-9\.]+)?/,function(m,p1,p2,p3,p4){ rgba = [parseInt(p1)/255,parseInt(p2)/255,parseInt(p3)/255,(p4 ? parseFloat(p4) : a)]; return ""; });
+		else if(c.indexOf('#')==0) rgba =[parseInt(c.substr(1,2),16)/255,parseInt(c.substr(3,2),16)/255,parseInt(c.substr(5,2),16)/255,a];
+		return rgba;
 	}
 
 	function Matrix(m){
