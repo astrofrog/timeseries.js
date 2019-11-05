@@ -255,42 +255,48 @@
 
 			// Build the primitives that we need to draw for this layer
 			primitives = [];
+
 			if(t=="symbol"){
-				if(layer.size < 1.5){
-					primitives.push({'shader':'point','color':'fillStyle','array':gl.ctx.POINTS,'fn':makePoints});
-				}else{
-					primitives.push({'shader':'sprite','array':gl.ctx.POINTS,'fn':makePoints});
-				}
+
+				if(layer.size < 1.5) primitives.push({'shader':'point','color':'fillStyle','fn':makePoints});
+				else primitives.push({'shader':'sprite','fn':makePoints});
+
 			}else if(t=="rect"){
+
 				// If we have fully defined rectangles (x1, x2, y1, y2)
 				if(typeof data[0].x2==="number" && typeof data[0].y2==="number"){
-					primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeRectAreas});
+					primitives.push({'shader':'area','color':'fillStyle','fn':makeRectAreas});
 					if(attr.strokeWidth > 0){
 						// Convert the rectangle outlines into triangle strips with normals
-						primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectOutlines});
+						primitives.push({'shader':'thickline','color':'strokeStyle','fn':makeRectOutlines});
 					}
 					nt = "area";
 				}else{
 					if(attr.strokeWidth > 0){
 						// Convert the rectangles into triangle strips with normals
-						primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeRectLines});
+						primitives.push({'shader':'thickline','color':'strokeStyle','fn':makeRectLines});
 					}
 				}
+
 			}else if(t=="line" || t=="rule"){
+
 				if(attr.strokeWidth == 1){
 					// Simpler line drawing if the width is 1
-					primitives.push({'shader':'thinline','color':'strokeStyle','array':gl.ctx.LINE_STRIP, 'fn': makeThinLines});
+					primitives.push({'shader':'thinline','color':'strokeStyle','fn':makeThinLines});
 				}else{
 					// Convert the line into a triangle strip with normals
-					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn': makeThickLines});
+					primitives.push({'shader':'thickline','color':'strokeStyle','fn':makeThickLines});
 				}
+
 			}else if(t=="area"){
+
 				// Create the area as triangles
-				primitives.push({'shader':'area','color':'fillStyle','array':gl.ctx.TRIANGLES, 'fn':makeAreas});
+				primitives.push({'shader':'area','color':'fillStyle','fn':makeAreas});
 				if(attr.strokeWidth > 0){
 					// Convert the boundaries into triangle strips with normals
-					primitives.push({'shader':'thickline','color':'strokeStyle','array':gl.ctx.TRIANGLE_STRIP, 'fn':makeBoundaries });
+					primitives.push({'shader':'thickline','color':'strokeStyle', 'fn':makeBoundaries });
 				}
+
 			}
 
 			// For each primitive relating to this layer we create a buffer
@@ -304,8 +310,6 @@
 					if(typeof layer.shape==="string") l.shape = layer.shape;
 					if(typeof layer.size==="number") l.size = layer.size;
 					if(typeof primitives[p].color==="string") l.color = primitives[p].color;
-
-					l.drawArrays = primitives[p].array;
 
 					l.program = gl.ctx.createProgram();
 					// Set the shaders
@@ -496,7 +500,7 @@
 						layers[n].inititated;
 					}
 
-					gl.ctx.drawArrays(layers[n].drawArrays, 0, layers[n].vertex.count);
+					gl.ctx.drawArrays(gl.ctx[layers[n].vertex.type], 0, layers[n].vertex.count);
 				}
 			}
 		
@@ -528,7 +532,7 @@
 			vertices[i*2] = original[i].x;
 			vertices[i*2 + 1] = original[i].y;
 		}
-		return {'data':vertices,'components':2, 'count':original.length/2 };
+		return {'data':vertices,'components':2, 'count':original.length/2, 'type': 'POINTS' };
 	}
 	function makeBoundaries(o){
 		var areas = [];
@@ -548,17 +552,22 @@
 
 		for(a = 0; a < areas.length ; a++){
 			if(areas[a] && areas[a].length){
+				// Loop over the top
 				for(j = 0; j < areas[a].length; j++){
 					p = o[areas[a][j]];
 					v.push({'x':p.x,'y':p.y2});
 				}
+				// Loop over the bottom
 				for(j = areas[a].length-1; j >= 0; j--){
 					p = o[areas[a][j]];
 					v.push({'x':p.x,'y':p.y1});
 				}
 				p = o[areas[a][0]];
+				// Connect back to the top
 				v.push({'x':p.x,'y':p.y2});
 			}
+			// Break the lines
+			if(a < areas.length - 1) v.push({'x':null,'y':null});
 		}
 		return makeThickLines(v);
 	}
@@ -589,7 +598,7 @@
 				}
 			}
 		}
-		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
+		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2, 'type':'TRIANGLES' };
 	}
 	function makeThickLines(original){
 		// TR: compute normal vector
@@ -603,10 +612,18 @@
 		}
 
 		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
-			// Add vertex
 			ivert = Math.floor((i + 2) / 4);
-			v.push(o[2 * ivert]);
-			v.push(o[2 * ivert + 1]);
+
+			// Are we dealing with a gap or not?
+			if(typeof o[2*ivert]==="number"){
+				// Add vertex
+				v.push(o[2 * ivert]);
+				v.push(o[2 * ivert + 1]);
+			}else{
+				// For the gap we will add another copy of the previous vertex
+				v.push(o[2*ivert - 2]);
+				v.push(o[2*ivert - 1]);
+			}
 		}
 
 		for(i = 0; i < (o.length / 2 - 1) * 4; i++){
@@ -614,23 +631,57 @@
 			// Find normal vector
 			ibeg = Math.floor(i / 4);
 			iend = ibeg + 1;
-			dx = o[2 * iend] - o[2 * ibeg];
-			dy = o[2 * iend + 1] - o[2 * ibeg + 1];
-			scale = (dx * dx + dy * dy) ** 0.5;
-			v.push(-dy / scale * sign);
-			v.push(dx / scale * sign);
+			// Are we dealing with the gap or not?
+			if(typeof o[2 * ibeg]==="number" && typeof o[2*ibeg]==="number"){
+				// Add normal
+				dx = o[2 * iend] - o[2 * ibeg];
+				dy = o[2 * iend + 1] - o[2 * ibeg + 1];
+				scale = (dx * dx + dy * dy) ** 0.5;
+				v.push(-dy / scale * sign);
+				v.push(dx / scale * sign);
+			}else{
+				// This is the gap
+				v.push(0.);
+				v.push(0.);
+			}
 		}
-		return {'data':new Float32Array(v),'components':2,'count': 4 * (l - 1) };
+		return {'data':new Float32Array(v),'components':2,'count': 4 * (l - 1), 'type': 'TRIANGLE_STRIP' };
 	}
 	function makeThinLines(o){
-		// TR: compute normal vector
 		var l = o.length;
-		var v = new Array(l*2);
-		for(var i = 0, j = 0; i < l ; i++){
-			v[j++] = o[i].x;
-			v[j++] = o[i].y;
+		var gaps = 0;
+		var lines = 0;
+		var t = 'LINE_STRIP';
+		var v;
+		if(o.length >= 2){
+			var j = 0;
+			for(var i = 0; i < o.length ; i++){
+				if(typeof o[i].x!=="number") gaps++;
+			}
+
+			if(gaps==0){
+				v = new Array(l*2);
+				for(var i = 0, j = 0; i < o.length-1 ; i++){
+					v[j++] = o[i].x;
+					v[j++] = o[i].y;
+				}
+			}else{
+
+				t = 'LINES';
+				v = new Array((l-1-gaps*2)*4);
+
+				for(var i = 0, j = 0; i < o.length-1 ; i++){
+					// If this segment exists
+					if(typeof o[i].x==="number" && typeof o[i+1].x==="number"){
+						v[j++] = o[i].x;
+						v[j++] = o[i].y;
+						v[j++] = o[i+1].x;
+						v[j++] = o[i+1].y;
+					}
+				}
+			}
 		}
-		return {'data':new Float32Array(v), 'components':2, 'count': l };
+		return {'data':new Float32Array(v), 'components':2, 'count': v.length/2, 'type':t };
 	}
 	function makeRectAreas(o){
 		var vertices = [];
@@ -642,7 +693,7 @@
 			p = o[a];
 			vertices = vertices.concat([p.x1,p.y1,p.x1,p.y2,p.x2,p.y1,p.x1,p.y2,p.x2,p.y2,p.x2,p.y1]);
 		}
-		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2 };
+		return { 'data': new Float32Array(vertices), 'components': 2, 'count': vertices.length/2, 'type':'TRIANGLES' };
 	}
 	function makeRectLines(o){
 		var v = [];
@@ -650,9 +701,11 @@
 			if(typeof o[i].x==="number"){
 				v.push({'x':o[i].x,'y':o[i].y1});
 				v.push({'x':o[i].x,'y':o[i].y2});
+				v.push({'x':null,'y':null});
 			}else if(typeof o[i].y==="number"){
 				v.push({'x':o[i].x1,'y':o[i].y});
 				v.push({'x':o[i].x2,'y':o[i].y});
+				v.push({'x':null,'y':null});
 			}
 		}
 		return makeThickLines(v);
@@ -665,6 +718,7 @@
 			v.push({'x':o[i].x2,'y':o[i].y2});
 			v.push({'x':o[i].x2,'y':o[i].y1});
 			v.push({'x':o[i].x1,'y':o[i].y1});
+			if(i < o.length-1) v.push({'x':null,'y':null});
 		}
 		return makeThickLines(v);
 	}
