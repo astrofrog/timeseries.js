@@ -1,0 +1,212 @@
+<html>
+<head>
+
+	<script src="../resources/stuquery.min.js"></script>
+	
+	<script>
+	
+	var canvas,ctx;
+	
+	S().ready(function(){
+
+		var n = 1e6;
+		var rects = new Array(n);
+		var stime = 1572969167343;
+		var start = new Date();
+		for(var i = 0; i < n; i++){
+			x = stime + i*15/n;
+			y = Math.sin(x);
+			rects[i] = {'x1': x,'x2':x+0.5,'y1':y,'y2':y+0.15};
+		}
+		var now = new Date();
+		S('#console').append('<span style="font-weight: bold;">Startup:</span> <em>'+(now-start)+'</em>ms<br />');
+		S('#console').append('<span style="font-weight: bold;">Processing:</span> <em>'+n+'</em> rectangles<br />');
+
+
+		canvas = document.getElementById('display');
+		ctx = canvas.getContext('2d');
+
+		ctx.fillStyle = 'green';
+
+		function log(nm,dt,m,s){
+			var con = S('#console');
+			con.append('<span style="font-weight: bold;">Finder:</span> '+dt+'ms for '+s+'<br />');
+			con[0].scrollTop = con[0].scrollHeight;
+		}
+
+
+		function Finder(){
+		
+			var idx,min,i,start,now,m;
+			function rectanglesIntersect(a,b){
+				var aLeftOfB = a.x2 < b.x1;
+				var aRightOfB = a.x1 > b.x2;
+				var aAboveB = a.y1 > b.y2;
+				var aBelowB = a.y2 < b.y1;
+				return !(aLeftOfB || aRightOfB || aAboveB || aBelowB);
+			}
+			function matches(r,p){
+				min = 1e100;
+				m = [];
+				idx = -1;
+				var l = r.length;
+				for(i = 0; i < l; i++){
+					if(p.x >= r[i].x1 && p.x <= r[i].x2 && p.y >= r[i].y1 && p.y <= r[i].y2) m.push(i);
+				}
+				return m;		
+			}
+			function nearestX(r,p,tolerance){
+				min = 1e100;
+				idx = -1;
+				for(i = 0; i < r.length; i++){
+					dx = Math.abs(((r[i].x1+r[i].x2)/2) - p.x);
+					if(dx < min){
+						idx = i;
+						min = dx;
+					}
+				}
+				if(min < tolerance) return [idx];
+				else return [];
+			}
+			function within(r,p,tolerance){
+				var j,xmin,xmax,ymin,ymax;
+				var match = [];
+				m = [];
+				if(typeof tolerance.x!=="number") return m;
+
+				var bbox = {'x1':p.x-tolerance.x,'x2':p.x+tolerance.x,'y1':p.y-tolerance.y,'y2':p.y+tolerance.y};
+
+				for(i = 0; i < r.length; i++){
+					if(rectanglesIntersect(r[i],bbox)) m.push(i);
+				}
+				return m;
+			}
+
+			this.getMatches = function(r,p){
+				start = new Date();
+				m = matches(r,p);
+				now = new Date();
+				log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
+				return m;
+			}
+
+			this.getNearestX = function(r,p,tolerance){
+				start = new Date();
+				m = nearestX(r,p,tolerance.x);
+				now = new Date();
+				log('Finder',(now-start),m,'getNearestX ('+m.length+' match'+(m.length==1?'':'es')+')');
+				return m;
+			}
+
+			this.getWithin = function(r,point,tolerance){
+				start = new Date();
+				m = within(r,point,tolerance);
+				now = new Date();
+				log('Finder',(now-start),m,'getWithin ('+m.length+' match'+(m.length==1?'':'es')+')');
+				return m;
+			}
+
+			return this;
+		}
+	
+		finder = new Finder();
+
+		pad = 20;
+		xmin = 1e100;
+		xmax = -1e100;
+		ymin = 1e100;
+		ymax = -1e100;
+		method = "matches";
+		for(var i = 0; i < rects.length; i++){
+			xmin = Math.min(rects[i].x1,xmin);
+			xmax = Math.max(rects[i].x2,xmax);
+			ymin = Math.min(rects[i].y1,ymin);
+			ymax = Math.max(rects[i].y2,ymax);
+		}
+		
+		
+		
+		S('#display').on('mousemove',function(e){
+			w = S('#display')[0].clientWidth;
+			h = S('#display')[0].clientHeight;
+			x = e.originalEvent.clientX - e.currentTarget.offsetLeft;
+			y = h - (e.originalEvent.clientY - e.currentTarget.offsetTop);
+			x = xmin + (xmax-xmin)*(x-pad)/(w-pad*2);
+			y = ymin + (ymax-ymin)*(y+pad)/(h-pad*2);
+			pt = {'x':x,'y':y};
+			//console.log(pt);
+			getRects();
+			
+		});
+
+
+		function drawRects(match){
+
+			start = new Date();
+			canvas.width = S('#display')[0].clientWidth;
+			canvas.height = S('#display')[0].clientHeight;
+			w = canvas.width;
+			h = canvas.height;
+			ctx.clearRect(0,0,w,h);
+			ctx.fillStyle = 'rgba(0,200,0,0.5)';
+			xconv = (w-pad*2)/(xmax-xmin);
+			yconv = (h-pad*2)/(ymax-ymin);
+			iplus = Math.max(Math.round(rects.length/100),1);
+			for(var i = 0; i < rects.length; i+=iplus){
+			
+				highlight = false;
+				for(var j = 0; j < match.length; j++){
+					if(match[j]==i) highlight = true;
+				}
+				if(highlight){
+					ctx.fillStyle = 'rgba(255,200,0,0.8)'
+				}else{
+					ctx.fillStyle = 'rgba(0,200,0,0.5)'
+				}
+				x = (rects[i].x1-xmin)*xconv;
+				y = (rects[i].y1-ymin)*yconv;
+				dw = Math.max(1,(rects[i].x2-rects[i].x1)*xconv);
+				dh = Math.max((rects[i].y2-rects[i].y1)*yconv);
+				ctx.fillRect(x+pad,h-y-pad,dw,dh);
+			}
+			now = new Date();
+			//log('',(now-start),[],'drawRects (only showing 1 in every '+iplus+')');
+		}
+		
+		pt = { x: 1572969167352.5, y: 1 };
+
+		S('#nearestx').on('click',function(){ method = "nearestx"; getRects(); });
+		S('#matches').on('click',function(){ method = "matches"; getRects(); });
+		S('#within').on('click',function(){ method = "within"; getRects(); });
+		
+		function getRects(){
+			if(method == "nearestx") near = finder.getNearestX(rects,pt,{'x':1});
+			else if(method == "matches") near = finder.getMatches(rects,pt);
+			else if(method == "within") near = finder.getWithin(rects,pt,{'x':2,'y':0.25});
+			drawRects(near);
+		}
+		
+	});
+
+	</script>
+	<style>
+	* { box-sizing: border-box; }
+	body { padding: 0px; margin: 0px; font-size: 16px; font-family: Helvetica, Arial, sans-serif; }
+	#console { position: absolute; bottom: 0px; left: 0px; width: 100%; border-top: 1px solid black; padding: 0.5em; background: #fbfbfb; max-height: 150px; overflow-y: auto; }
+	#controls { top: 0px; left: 0px; width: 100%; padding: 0.5em; background: #fbfbfb; border-bottom: 1px solid black; }
+	#display { margin: 0.5em; width: 800px; height: 500px; }
+	button { line-height: 1.5em; font-size: 1em; }
+	</style>
+</head>
+<body>
+
+	<div id="controls">
+		<button id="nearestx">Nearest X</button>
+		<button id="matches">Matches</button>
+		<button id="within">Within</button>
+	</div>	
+	<div id="console"></div>
+	<canvas id="display"></canvas>
+
+</body>
+</html>
