@@ -103,27 +103,40 @@
 					uniform float uYLogMax;
 					uniform float uStrokeWidth;
 					uniform vec2 uSize;
-					uniform int uType;
-					
+					uniform float uAxis;
+
 					vec2 posV;
 					vec2 posN;
 					float scale_x;
 					float scale_y;
+					float new_x;
+					float new_y;
 
 					void main() {
 						// Convert line width to final coords space in x and y
 						scale_x = uStrokeWidth / uSize.x;
 						scale_y = uStrokeWidth / uSize.y;
 
+						// Stretch out the line if it should expand to an axis
+						// X-axis
+						if(uAxis == 1.0){
+							if(aVertexPosition.x == 0.0){
+								posV.x = -1.0;
+							}else{
+								posV.x = 1.0;
+							}
+						}
+						// Y-axis
+						if(uAxis == 2.0){
+							if(aVertexPosition.y == 0.0){
+								posV.y = -1.0;
+							}else{
+								posV.y = 1.0;
+							}
+						}
 						posV = (uMatrix * vec3(aVertexPosition, 1)).xy;
 						posN = aNormalPosition;
-
-						if(uType==1){
-							posV.x = (aVertexPosition.x==0.0) ? -1.0 : 1.0;
-						}else if(uType==2){
-							posV.y = (aVertexPosition.y==0.0) ? -1.0 : 1.0;
-						}
-						gl_Position = vec4(posV.x + posN.x * scale_x, posV.y + posN.y * scale_y, 1.0, 1);
+						gl_Position = vec4(posV.x + posN.x * scale_x, posV.y + posN.y * scale_y, 1.0, 1.0);
 					}`
 				},
 				'fragment':	{'src':`
@@ -485,7 +498,7 @@
 						if(layers[n].loc.uSize) gl.ctx.uniform2fv(layers[n].loc.uSize, [gl.canvas.clientWidth,gl.canvas.clientHeight]);
 
 						// For rule types set if it covers the full width/height of the view
-						if(layers[n].loc.uType) gl.ctx.uniform1i(layers[n].loc.uType, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
+						if(layers[n].loc.uAxis) gl.ctx.uniform1f(layers[n].loc.uTAxis, (layers[n].style.type=="fullWidth" ? 1 : layers[n].style.type=="fullHeight" ? 2 : 0));
 
 						gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
 						aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");

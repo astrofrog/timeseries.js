@@ -23,7 +23,7 @@
 <body>
 	<script>
 	var range = { 'x': {'min':0,'max':10}, 'y': {'min':0,'max':10} };
-	var numperlayer = 1e5;
+	var numperlayer = 1e3;
 
 	function RandomGaussian(){
 		var v1,v2,s;
@@ -74,7 +74,7 @@
 		return data;
 	}
 
-	let layers = [{
+	let layers = [/*{
 		'type': 'rule',
 		'data': [{'x':0,'y':1},{'x':1.0,'y':1}],
 		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'type':'fullWidth'}
@@ -183,11 +183,15 @@
 	},{
 		'type': 'line',
 		'data': makeNoisyCurve(1e6),
-		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':1}
-	},{
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':2}
+	},*/{
 		'type': 'line',
 		'data': [{'x':3.0,'y':5.0},{'x':3.5,'y':5.0},{'x':null,'y':null},{'x':3.6,'y':5.0},{'x':4.1,'y':5.2},{'x':null,'y':null},{'x':4.2,'y':5.2},{'x':4.7,'y':5.3}],
 		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':1}
+	},{
+		'type': 'line',
+		'data': [{'x':0.0,'y':4.0},{'x':1,'y':5.0},{'x':2,'y':4.5},{'x':null,'y':null},{'x':3,'y':6.0},{'x':4,'y':7}],
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':10}
 	},{
 		'type': 'rect',
 		'data': [{'x':2.0,'y1':1.0,'y2':3.0},{'x':3.0,'y1':2.0,'y2':3.6},{'x':4.0,'y1':5.0,'y2':6.6}],
