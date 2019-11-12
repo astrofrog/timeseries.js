@@ -23,7 +23,7 @@
 <body>
 	<script>
 	var range = { 'x': {'min':0,'max':10}, 'y': {'min':0,'max':10} };
-	var numperlayer = 1e3;
+	var numperlayer = 1e4;
 
 	function RandomGaussian(){
 		var v1,v2,s;
@@ -106,7 +106,7 @@
 		'type': 'rule',
 		'data': [{'x':1.0,'y':0.0},{'x':1.0,'y':1.0}],
 		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'type':'fullHeight'}
-	},/*{
+	},{
 		'type': 'rule',
 		'data': [{'x':1.5,'y':2.0},{'x':2,'y':5.0}],
 		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
@@ -198,7 +198,7 @@
 		'data': makeData(numperlayer),
 		'shape': 'M0,.5L.6,.8L.5,.1L1,-.3L.3,-.4L0,-1L-.3,-.4L-1,-.3L-.5,.1L-.6,.8L0,.5Z',
 		'style': {'strokeWidth':0,'strokeStyle':'rgba(255,103,0,0.5)','fillStyle':'rgba(249,188,38,1)'}
-	},*/{
+	},{
 		'type': 'symbol',
 		'size': 1,
 		'data': makeData(numperlayer),
@@ -206,7 +206,7 @@
 		'style': {'fillStyle':'rgba(249,0,0,1)'}
 	},{
 		'type': 'line',
-		'data': makeNoisyCurve(1e6),
+		'data': makeNoisyCurve(1e4),
 		'style': {'strokeStyle':'rgb(20,210,200)','strokeWidth':2}
 	},{
 		'type': 'rect',
