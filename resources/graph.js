@@ -610,20 +610,25 @@
 
 			// Loop over the series that match
 			m = [];
+			var p;
 			for(s = 0; s < ds.length; s++){
 				d = ds[s].split(":");
-				if(d && d.length == 3){
+				if(d && d.length == 2){
 					// This is a data point so we'll trigger the clickpoint event
 					t = (d[0]);
-					i = parseInt(d[1]);
 					ii = g.getPixPos(x,y);
-					m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
+					p = {'series':t,'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]};
+					if(d[1]!="*"){
+						p.n = parseInt(d[1]);
+						p.point = g.marks[t].data[p.n];
+					}
+					m.push(p);
 				}
 			}
 			a = g.trigger("clickpoint",{event:event,matches:m});
 			return true;
 		}).on("mousemove",{me:this},function(ev){
-			var event,g,x,y,d,t,i,ii,a,m,ds;
+			var event,g,x,y,d,t,i,ii,a,m,ds,p;
 			event = ev.event.originalEvent;
 			if(!event) return;
 			g = ev.data.me;	// The graph object
@@ -638,11 +643,15 @@
 				m = [];
 				for(var s = 0; s < ds.length; s++){
 					d = ds[s].split(":");
-					if(d && d.length == 3){
+					if(d && d.length == 2){
 						t = d[0];
-						i = parseInt(d[1]);
 						ii = g.getPixPos(x,y);
-						m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
+						p = {'series':t,'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]};
+						if(d[1]!="*"){
+							p.n = parseInt(d[1]);
+							p.point = g.marks[t].data[p.n];
+						}
+						m.push(p);
 					}
 				}
 				a = g.trigger("hoverpoint",{event:event,matches:m});
@@ -1398,10 +1407,12 @@
 	 */
 	Graph.prototype.pixel2data = function(x,y){
 		// x-axis
-		x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
+		if(typeof x==="number") x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
 		// y-axis
-		if(this.y.log) y = Math.pow(10,this.y.logmin + (1-(y-this.chart.top)/this.chart.height)*this.y.logrange);
-		else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
+		if(typeof y==="number"){
+			if(this.y.log) y = Math.pow(10,this.y.logmin + (1-(y-this.chart.top)/this.chart.height)*this.y.logrange);
+			else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
+		}
 		return {x:x,y:y};
 	};
 
@@ -1414,7 +1425,8 @@
 		x = Math.round(x*this.canvas.scale);
 		y = Math.round(y*this.canvas.scale);
 		var rtn = [];
-		if(this.lookup) rtn = this.lookup.getValue(x,y);
+		if(this.picker) rtn = this.picker.getMatches(this.marks,{'screen':{'x':x,'y':y},'data':this.pixel2data(x,y)},2);
+//DEPRECATED		if(this.lookup) rtn = this.lookup.getValue(x,y);
 		if(rtn.length<1) this.canvas.canvas.css({'cursor':''});
 		return rtn;
 	};
@@ -1473,8 +1485,9 @@
 			for(s = 0; s < n; s++){
 				d = ds[s].split(":");
 				t = d[0];
-				i = parseInt(d[1]);
-				w = parseFloat(d[2]);
+				if(d[1]=="*") i = 0;
+				else i = parseInt(d[1]);
+				w = 0.8;	// weight
 				clipping = false;
 				typ = this.marks[t].type;
 				if(this.marks[t].encode.hover && this.marks[t].interactive){
@@ -1512,6 +1525,7 @@
 
 					// Set the clipping
 					if(clipping) ctx.restore();
+
 					if(w >= top && mark.props.tooltip){
 						top = w;
 						topmark = mark;
@@ -2526,6 +2540,7 @@
 			if(!this.lookup) this.lookup = new Lookup(this.canvas.c.width,this.canvas.c.height);
 			else this.lookup.reset();
 		}
+		if(!this.picker) this.picker = new Picker(this);
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
@@ -2638,7 +2653,7 @@
 			ctx.fill();
 			ctx.closePath();
 			o = {'id':datum.id,'xa':Math.floor(x1),'xb':Math.ceil(x2),'ya':Math.round(y2),'yb':Math.round(y1),'w':1};
-			if(attr.update) this.addRectToLookup(o);
+//DEPRECATED			if(attr.update) this.addRectToLookup(o);
 			return o;
 		}
 		return "";
@@ -2685,7 +2700,7 @@
 			if(!p.y2) p.y2 = p.y;
 			if(p.x1 && p.y1) this.paper.temp.ctx.moveTo(p.x1,p.y1);
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
-			if(attr.update && (p.x1==p.x2 || p.y1==p.y2)) this.lookup.setRect(Math.floor(p.x1),p.y1,Math.ceil(p.x2),p.y2,sh,i+':0.6');
+//DEPRECATED			if(attr.update && (p.x1==p.x2 || p.y1==p.y2)) this.lookup.setRect(Math.floor(p.x1),p.y1,Math.ceil(p.x2),p.y2,sh,i+':0.6');
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
@@ -2747,7 +2762,7 @@
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-		if(attr.update) this.addTempToLookup({'layer':sh, 'id':0, 'weight':0.6});
+//DEPRECATED		if(attr.update) this.addTempToLookup({'layer':sh, 'id':0, 'weight':0.6});
 
 		return this;
 	};
@@ -2810,7 +2825,7 @@
 
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
 
-		if(attr.update) this.addTempToLookup({'layer':sh,'id':0, 'weight':0.4});
+//DEPRECATED		if(attr.update) this.addTempToLookup({'layer':sh,'id':0, 'weight':0.4});
 
 		return this;
 	};
@@ -2836,7 +2851,7 @@
 		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':f});
 		o.id = datum.id;
 		o.weight = 1;
-		if(attr.update) this.addRectToLookup(o);
+//DEPRECATED		if(attr.update) this.addRectToLookup(o);
 		return o;
 	};
 
@@ -3009,45 +3024,8 @@
 		ctx.fill();
 		if(p.format.strokeWidth > 0) ctx.stroke();
 		o = {'id':datum.id,'xa':Math.floor(x1-w/2),'xb':Math.ceil(x1+w/2),'ya':Math.floor(y1-h/2),'yb':Math.ceil(y1+h/2)};
-		if(attr.update) this.addRectToLookup(o);
+//DEPRECATED		if(attr.update) this.addRectToLookup(o);
 		return o;
-	};
-
-	/**
-	 * @desc Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
-	 * @param {number} attr.layer - the ID of the layer
-	 * @param {number} attr.id - the index of this data point in the layer
-	 * @param {number} attr.weight - the weighting for this data point at this pixel
-	 */
-	Graph.prototype.addTempToLookup = function(attr){
-		if(typeof attr.id!=="number") return;
-		var px,w,h;
-		w = this.canvas.c.width;
-		h = this.canvas.c.height;
-		px = this.paper.temp.ctx.getImageData(0,0,w,h);
-		this.lookup.setImage(new Uint8ClampedArray(px.data),attr.layer,attr.id,attr.weight);
-		return this;
-	};
-
-	/**
-	 * @desc Use a bounding box to define the lookup area
-	 * @param {object} i - the datum to use
-	 * @param {number} i.id - the index of this data point in the layer
-	 * @param {number} i.xa - the starting x value
-	 * @param {number} i.xb - the ending x value
-	 * @param {number} i.ya - the starting y value
-	 * @param {number} i.yb - the ending y value
-	 * @param {number} i.weight - the weighting for this data point at this pixel
-	 */
-	Graph.prototype.addRectToLookup = function(i){
-		if(!i.id) return;
-		// Update layer info
-		var bits = i.id.split(":");
-		i.layer = bits[0];
-		i.id = bits[1];
-		// Use bounding box to define the lookup area
-		this.lookup.setRect(i.xa,i.ya,i.xb,i.yb,parseInt(i.layer),i.id+':'+(i.weight||'1'));
-		return this;
 	};
 
 	/**
@@ -3064,7 +3042,6 @@
 
 	/**
 	 * @desc Draw everything - the axes, the data, and overlays
-	 * @param {boolean} updateLookup - do we need to update the pixel lookup?
 	 */
 	Graph.prototype.draw = function(updateLookup){
 		this.log.time('draw');
@@ -3344,6 +3321,250 @@
 		return ticks;
 	}
 
+	/**
+	 * @desc Process layers and look for any matches with the mouse position
+	 * @param {object} g - a graph object
+	 */
+	function Picker(g){
+	
+		this.log = new Logger({'id':'Picker','logging':true,'logtime':true});
+		var g = g;
+		
+		function inside(point, vs){
+			// ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+			var i,xi,xj,yi,yj,x,y,inside,intersect;
+			x = point[0];
+			y = point[1];
+			inside = false;
+			for(i = 0, j = vs.length - 1; i < vs.length; j = i++){
+				xi = vs[i][0];
+				yi = vs[i][1];
+				xj = vs[j][0];
+				yj = vs[j][1];
+				intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+				if(intersect) inside = !inside;
+			}
+			return inside;
+		};
+
+		function distanceFromLine(p,a,b){
+			return Math.sqrt(SqDistancePtSegment(p,a,b));
+		}
+
+		function SqDistancePtSegment(p,a,b){
+			function Dot(p1,p2){ return (p1.x*p2.x + p1.y*p2.y); }
+
+			var n = { 'x': b.x - a.x, 'y': b.y - a.y };
+			var pa = { 'x': a.x - p.x, 'y': a.y - p.y };
+
+			var c = Dot(n,pa);
+
+			// Closest point is a
+			if(c > 0.0 || (n.x==0 && n.y==0)) return Dot(pa,pa);
+
+			var bp = { 'x':p.x - b.x, 'y':p.y - b.y };
+
+			// Closest point is b
+			if(Dot(n,bp) > 0.0) return Dot(bp,bp);
+
+			// Closest point is between a and b
+			var f = (c / Dot(n,n));
+			var e = {'x':pa.x - n.x * f, 'y': pa.y - n.y*f };
+
+			return Dot(e,e);
+		}
+		
+		function getV(values,key){
+			if(typeof values[key]==="number") return values[key];
+			else if(typeof values[key]==="object" && typeof values[key].value==="number") return values[key].value;
+			else return null;
+		}
+		/**
+		 * @desc Get the matches
+		 * @param {object} ls - an object holding the layers
+		 * @param {'screen':{'x':number,'y':number},'data':{'x':number,'y':number}} p - the cursor coordinates in data-space and screen-space
+		 * @param {number} padding - an optional tolerance in pixels
+		 */
+		this.getMatches = function(ls,p,padding){
+			var rs,a,b,d,i,l,m,x,x2,y,y2,w,h,t,dpx,ok,individual,now,start,tolerance,polygons;
+
+			this.log.time('getMatches');
+
+			m = [];
+			if(!padding) padding = 0;
+			if(!ls) ls = [];
+
+			for(l in ls){
+			
+				if(!ls[l].encode.hover) continue;
+
+				tolerance = padding + (ls[l].format ? ls[l].format.strokeWidth||0 : 0)/2;
+				t = ls[l].type;
+				rs = ls[l].data;
+
+				individual = false;
+				if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
+				if(t=="rule") t = "rectline";
+				if(t=="rectline" || t=="symbol") individual = true;
+
+				if(individual){
+
+					// Loop over each individual element and see if they match
+					for(i = 0; i < rs.length; i++){
+
+						ok = false;
+
+						// Find the tolerance (half line thickness + padding)
+						dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+						if(t=="rectline"){
+
+							// Check x-value
+							x = getV(rs[i],'x');
+							x2 = getV(rs[i],'x2');
+							y = getV(rs[i],'y');
+							y2 = getV(rs[i],'y2');
+
+							if(typeof y2==="number"){
+								x = g.getPos('x',x);
+
+								if(p.screen.x >= x-dpx && p.screen.x <= x+dpx){
+									a = g.getPos('y',y2);
+									if(typeof a==="number"){
+										b = g.getPos('y',y);
+										if(p.screen.y >= a-dpx && p.screen.y <= b+dpx) ok = true;
+									}else ok = true;
+								}
+							}
+							if(typeof x2==="number"){
+								y = g.getPos('y',y);
+								if(p.screen.y >= y-dpx && p.screen.y <= y+dpx){
+									a = g.getPos('x',x2);
+									if(typeof a==="number"){
+										b = g.getPos('x',x);
+										if(p.screen.x >= a-dpx && p.screen.x <= b+dpx) ok = false;
+									}else ok = true;
+								}
+							}
+
+						}else if(t=="symbol"){
+
+							x = g.getPos('x',getV(rs[i],'x'));
+							y = g.getPos('y',getV(rs[i],'y'));
+							w = dpx + ls[l].format.size/2;
+							h = dpx + ls[l].format.size/2;
+							if(p.screen.x >= x-w && p.screen.x <= x+w && p.screen.y >= y-h && p.screen.y <= y+h) ok = true;
+
+						}
+
+						if(ok) m.push(l+':'+i);
+					}
+
+				}else{
+
+					// We want to match the entire object made of x,y pairs
+					if(t=="line"){
+
+						// Get the first point in pixel space
+						a = { 'x':g.getPos('x',getV(rs[0],'x')),'y':g.getPos('y',getV(rs[0],'y')) };
+						for(i = 1; i < rs.length; i++){
+							// Find the tolerance (half line thickness + padding)
+							dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+							b = { 'x':g.getPos('x',getV(rs[i],'x')),'y':g.getPos('y',getV(rs[i],'y')) };
+							d = distanceFromLine(p.screen,a,b);
+							// We've either matched or we move on to the next segment
+							if(d <= dpx){
+								m.push(l+':*');
+								break;
+							}else a = b;
+						}
+
+					}else if(t=="area"){
+
+						// Find each polygon in screen space
+						polygons = getPolygons(rs);
+
+						// Check each polygon
+						for(i = 0; i < polygons.length; i++){
+
+							// Convert coordinates to screen space (add padding to y-axis)
+							for(j = 0; j < polygons[i].length; j++){
+								b = g.pixel2data(polygons[i][j][0],polygons[i][j][1]);
+								polygons[i][j] = [b.x,b.y+(j < polygons[i].length/2 ? dpx : -dpx)];
+							}
+							
+							// Add x-axis padding:
+							// Step 1: Move first and last vertex to the left
+							polygons[i][0][0] -= dpx;
+							polygons[i][polygons[i].length-1][0] -= dpx;
+							// Step 2: Move middle vertices to the right
+							polygons[i][Math.floor(polygons[i].length/2)][0] += dpx;
+							polygons[i][Math.ceil(polygons[i].length/2)][0] += dpx;
+							
+							if(inside([p.screen.x,p.screen.y],polygons[i])){
+								m.push(l+':*');
+								break;
+							}
+						}
+					}
+				}
+			}
+			this.log.time('getMatches');
+			//this.log.message('getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
+			return m;
+		}
+		return this;
+	}
+
+	function getPolygons(rs){
+
+		// Find each polygon in screen space
+		var oldp,areas,polygons,poly,vertices,pt;
+		oldp = {};
+		areas = [];
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < rs.length ; i++){
+			y1 = (rs[i].y1 || rs[i].y);
+			y2 = rs[i].y2;
+			if(!isNaN(rs[i].x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				poly[a] = new Array(areas[a].length*2);
+				// Move along top of area (y2 coordinates)
+				k = 0;
+				for(j = 0; j < areas[a].length; j++,k++){
+					pt = rs[areas[a][j]];
+					poly[a][k] = [pt.x,pt.y2];
+				}
+				// Move along bottom of area backwards
+				for(j = areas[a].length-1; j >= 0; j--,k++){
+					pt = rs[areas[a][j]];
+					pt.y1 = (pt.y1 || pt.y);
+					poly[a][k] = [pt.x,pt.y1];
+				}
+			}
+		}
+
+		polygons = [];
+		// Check each polygon
+		for(a = 0; a < poly.length; a++){
+			vertices = [];
+			if(poly[a]){
+				for(j = 0; j < poly[a].length; j++) vertices.push([poly[a][j][0],poly[a][j][1]]);
+			}
+			if(vertices.length > 1) polygons.push(vertices);
+		}
+		return polygons;
+	}
+
 	function Lookup(w,h){
 		this.width = w;
 		this.height = h;
@@ -3420,63 +3641,64 @@
 		this.warning = function(){ this.log('WARNING',arguments); };
 		this.info = function(){ this.log('INFO',arguments); };
 		this.message = function(){ this.log('MESSAGE',arguments); };
+		/**
+		 * @desc A wrapper for log messages. The first argument is the type of message e.g. "ERROR", "WARNING", "INFO", or "MESSAGE". Other arguments are any objects/values you want to include.
+		 */
+		this.log = function(){
+			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
+				var args,args2,bold;
+				args = Array.prototype.slice.call(arguments[1], 0);
+				args2 = (args.length > 1 ? args.splice(1):"");
+				// Remove array if only 1 element
+				if(args2.length == 1) args2 = args2[0];
+				bold = 'font-weight:bold;';
+				if(console && typeof console.log==="function"){
+					if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else console.log('%c'+this.id+'%c: '+args[0],bold,'',args2);
+				}
+			}
+			return this;
+		};
+		
+		/**
+		 * @desc Start/stop a timer. This will build metrics for the key containing the start time ("start"), weighted average ("av"), and recent durations ("times")
+		 * @param {string} key - the key for this timer
+		 */
+		this.time = function(key){
+			if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
+			if(!this.metrics[key].start) this.metrics[key].start = new Date();
+			else{
+				var t,w,v,tot,l,i,ts;
+				t = ((new Date())-this.metrics[key].start);
+				ts = this.metrics[key].times;
+				// Define the weights for each time in the array
+				w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
+				// Add this time to the start of the array
+				ts.unshift(t);
+				// Remove old times from the end
+				if(ts.length > w.length-1) ts = ts.slice(0,w.length);
+				// Work out the weighted average
+				l = ts.length;
+				this.metrics[key].av = 0;
+				if(l > 0){
+					for(i = 0, v = 0, tot = 0 ; i < l ; i++){
+						v += ts[i]*w[i];
+						tot += w[i];
+					}
+					this.metrics[key].av = v/tot;
+				}
+				this.metrics[key].times = ts.splice(0);
+				if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
+				delete this.metrics[key].start;
+			}
+			return this;
+		};
+		
 		return this;
 	}
 
-	/**
-	 * @desc A wrapper for log messages. The first argument is the type of message e.g. "ERROR", "WARNING", "INFO", or "MESSAGE". Other arguments are any objects/values you want to include.
-	 */
-	Logger.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-			var args,args2,bold;
-			args = Array.prototype.slice.call(arguments[1], 0);
-			args2 = (args.length > 1 ? args.splice(1):"");
-			// Remove array if only 1 element
-			if(args2.length == 1) args2 = args2[0];
-			bold = 'font-weight:bold;';
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else console.log('%c'+this.id+'%c: '+args[0],bold,'',args2);
-			}
-		}
-		return this;
-	};
-
-	/**
-	 * @desc Start/stop a timer. This will build metrics for the key containing the start time ("start"), weighted average ("av"), and recent durations ("times")
-	 * @param {string} key - the key for this timer
-	 */
-	Logger.prototype.time = function(key){
-		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
-		if(!this.metrics[key].start) this.metrics[key].start = new Date();
-		else{
-			var t,w,v,tot,l,i,ts;
-			t = ((new Date())-this.metrics[key].start);
-			ts = this.metrics[key].times;
-			// Define the weights for each time in the array
-			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
-			// Add this time to the start of the array
-			ts.unshift(t);
-			// Remove old times from the end
-			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
-			// Work out the weighted average
-			l = ts.length;
-			this.metrics[key].av = 0;
-			if(l > 0){
-				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
-					v += ts[i]*w[i];
-					tot += w[i];
-				}
-				this.metrics[key].av = v/tot;
-			}
-			this.metrics[key].times = ts.splice(0);
-			if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
-			delete this.metrics[key].start;
-		}
-		return this;
-	};
 
 	root.Graph = Graph;
 	root.Logger = Logger;
