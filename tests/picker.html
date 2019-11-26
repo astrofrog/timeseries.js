@@ -307,22 +307,22 @@
 						if(t=="rectline"){
 
 							if(typeof rs[i].x==="number"){
-								x = (rs[i].x-xmin)*xconv + pad;
+								x = toXpx(rs[i].x);
 								if(p.screen.x >= x-dpx && p.screen.x <= x+dpx){
 									if(typeof rs[i].y1==="number"){
-										a = (rs[i].y1-ymin)*yconv + pad;
-										b = (rs[i].y2-ymin)*yconv + pad;
+										a = toYpx(rs[i].y1);
+										b = toYpx(rs[i].y2);
 										if(p.screen.y >= a-dpx && p.screen.y <= b+dpx) ok = true;
 									}else ok = true;
 								}
 							}
 
 							if(typeof rs[i].y==="number"){
-								y = (rs[i].y-ymin)*yconv + pad;
+								y = toYpx(rs[i].y);
 								if(p.screen.y >= y-dpx && p.screen.y <= y+dpx){
 									if(typeof rs[i].x1==="number"){
-										a = (rs[i].x1-xmin)*xconv + pad;
-										b = (rs[i].x2-xmin)*xconv + pad;
+										a = toXpx(rs[i].x1);
+										b = toXpx(rs[i].x2);
 										if(p.screen.x >= a-dpx && p.screen.x <= b+dpx) ok = false;
 									}else ok = true;
 								}
@@ -332,11 +332,13 @@
 
 							x = toXpx(rs[i].x);
 							y = toYpx(rs[i].y);
-							if(p.screen.x >= x-dpx-rs[i].size/2 && p.screen.x <= x+dpx+rs[i].size/2 && p.screen.y >= y-dpx-rs[i].size/2 && p.screen.y <= y+dpx+rs[i].size/2) ok = true;
+							w = dpx + rs[i].size/2;
+							h = dpx + rs[i].size/2;
+							if(p.screen.x >= x-w && p.screen.x <= x+w && p.screen.y >= y-h && p.screen.y <= y+h) ok = true;
 
 						}
 
-						if(ok) m.push({'layer':l,'id':i});
+						if(ok) m.push(l+':'+i);
 					}
 
 				}else{
@@ -355,7 +357,7 @@
 							d = distanceFromLine(p.screen,a,b);
 							// We've either matched or we move on to the next segment
 							if(d <= dpx){
-								m.push({'layer':l,'id':'*'});
+								m.push(l+':*');
 								break;
 							}else a = b;
 						}
@@ -380,7 +382,7 @@
 							polygons[a][Math.ceil(polygons[a].length/2)][0] += dpx;
 							
 							if(inside([p.screen.x,p.screen.y],polygons[a])){
-								m.push({'layer':l,'id':'*'});
+								m.push(l+':*');
 								break;
 							}
 						}
@@ -573,7 +575,7 @@
 			
 					highlight = false;
 					for(j = 0; j < match.length; j++){
-						if(match[j].layer==l && match[j].id=="*") highlight = true;
+						if(match[j]==l+':*') highlight = true;
 					}
 
 					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
@@ -608,7 +610,7 @@
 					
 					highlight = false;
 					for(j = 0; j < match.length; j++){
-						if(match[j].layer==l && (match[j].id==0||match[j].id=="*")) highlight = true;
+						if(match[j]==l+':*' || match[j]==l+':0') highlight = true;
 					}
 
 					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
@@ -642,7 +644,7 @@
 
 						highlight = false;
 						for(j = 0; j < match.length; j++){
-							if(match[j].layer==l && (match[j].id==i||match[j].id=="*")) highlight = true;
+							if(match[j]==l+':*' || match[j]==l+':'+i) highlight = true;
 						}
 					
 						colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
