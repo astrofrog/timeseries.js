@@ -251,22 +251,22 @@
 	function convertToScreen(v){ return { 'x': toXpx(v.x), 'y': toYpx(v.y) }; }
 	function Finder(){
 	
-		var idx,min,i,start,now,m;
 		var log = new Logger();
 		
-		function inside(point, vs) {
-			// ray-casting algorithm based on
-			// http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-
-			var x = point[0], y = point[1];
-			var inside = false;
-			for(var i = 0, j = vs.length - 1; i < vs.length; j = i++){
-				var xi = vs[i][0], yi = vs[i][1];
-				var xj = vs[j][0], yj = vs[j][1];
-				var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+		function inside(point, vs){
+			// ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+			var i,xi,xj,yi,yj,x,y,inside,intersect;
+			x = point[0];
+			y = point[1];
+			inside = false;
+			for(i = 0, j = vs.length - 1; i < vs.length; j = i++){
+				xi = vs[i][0];
+				yi = vs[i][1];
+				xj = vs[j][0];
+				yj = vs[j][1];
+				intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
 				if(intersect) inside = !inside;
 			}
-
 			return inside;
 		};
 
@@ -275,17 +275,15 @@
 		//   p - the cursor position as { 'screen': {'x':<px>,'y':<px>}, 'data':{'x':<val>,'y':<val>} }
 		//   padding - an optional tolerance (pixels)
 		this.getMatches = function(ls,p,padding){
-			var rs,a,b,d,i,l,m,x,w,y,h,t,dpx,idx,ok,individual,now,start,isrect,tolerance;
+			var rs,a,b,d,i,l,m,x,w,y,h,t,dpx,ok,individual,now,start,tolerance,polygons;
 
 			start = new Date();
 			m = [];
-			idx = -1;
 			if(!padding) padding = 0;
 
 			for(l = 0; l < ls.length; l++){
 
 				tolerance = padding + (ls[l].props && ls[l].props.format ? ls[l].props.format.strokeWidth||0 : 0)/2;
-				isrect = false;
 				t = ls[l].type;
 				rs = ls[l].mark;
 				individual = false;
@@ -296,7 +294,7 @@
 
 				if(individual){
 
-					// Loop over each individual element and see if it matches
+					// Loop over each individual element and see if they match
 					for(i = 0; i < rs.length; i++){
 
 						ok = false;
@@ -365,19 +363,21 @@
 					}else if(t=="area"){
 
 						// Find each polygon in screen space
-						var polygons = getPolygons(rs);
+						polygons = getPolygons(rs);
 
 						// Check each polygon
 						for(a = 0; a < polygons.length; a++){
 
-							// Convert coordinates to screen space
+							// Convert coordinates to screen space (add padding to y-axis)
 							for(j = 0; j < polygons[a].length; j++){
 								polygons[a][j] = [toXpx(polygons[a][j][0]),toYpx(polygons[a][j][1])+(j < polygons[a].length/2 ? dpx : -dpx)];
 							}
-							// Move first and last vertex to the left
+							
+							// Add x-axis padding:
+							// Step 1: Move first and last vertex to the left
 							polygons[a][0][0] -= dpx;
 							polygons[a][polygons[a].length-1][0] -= dpx;
-							// Move middle vertices to the right
+							// Step 2: Move middle vertices to the right
 							polygons[a][Math.floor(polygons[a].length/2)][0] += dpx;
 							polygons[a][Math.ceil(polygons[a].length/2)][0] += dpx;
 							
@@ -450,7 +450,7 @@
 
 	S().ready(function(){
 
-		var n = 1e5;
+		var n = S('#n')[0].value;
 		var layers = [];
 		var start = new Date();
 
@@ -723,7 +723,11 @@
 		var tol = parseInt(S('#tolerance')[0].value);
 		
 		S('#tolerance').on('change',function(e){ tol = parseInt(e.currentTarget.value); getRects(); });
-		S('.n').on('click',function(e){ n = parseInt(e.currentTarget.getAttribute('data')); createLayers(); drawRects([]) })
+		S('#n').on('change',function(e){
+			n = parseInt(e.currentTarget.value);
+			createLayers();
+			drawRects([]);
+		})
 		
 		function getRects(p){
 			var near = [];
@@ -752,9 +756,13 @@
 	<div id="controls">
 		<label for="tolerance">Tolerance (px):</label><input type="number" value="0" id="tolerance" />
 		<br />Line segments/rects:
-		<button class="n" data="10000">1e4</button>
-		<button class="n" data="100000">1e5</button>
-		<button class="n" data="1000000">1e6</button>
+		<select id="n">
+			<option value="1000" selected="selected">1e3</option>
+			<option value="10000">1e4</option>
+			<option value="100000">1e5</option>
+			<option value="1000000">1e6</option>
+			<option value="10000000">1e7</option>
+		</select>
 	</div>	
 	<div id="console"></div>
 	<div style="padding:50px;">
