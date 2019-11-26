@@ -292,7 +292,7 @@
 				if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
 				if(t=="rule") t = "rectline";
 
-				if(t == "rectline") individual = true;
+				if(t=="rectline" || t=="symbol") individual = true;
 
 				if(individual){
 
@@ -304,11 +304,7 @@
 						// Find the tolerance (half line thickness + padding)
 						dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
 
-						if(t=="rect"){
-
-							if(p.data.x >= rs[i].x1 && p.data.x <= rs[i].x2 && p.data.y >= rs[i].y1 && p.data.y <= rs[i].y2) ok = true;
-
-						}else if(t=="rectline"){
+						if(t=="rectline"){
 
 							if(typeof rs[i].x==="number"){
 								x = (rs[i].x-xmin)*xconv + pad;
@@ -333,7 +329,11 @@
 							}
 
 						}else if(t=="symbol"){
-					
+
+							x = toXpx(rs[i].x);
+							y = toYpx(rs[i].y);
+							if(p.screen.x >= x-dpx-rs[i].size/2 && p.screen.x <= x+dpx+rs[i].size/2 && p.screen.y >= y-dpx-rs[i].size/2 && p.screen.y <= y+dpx+rs[i].size/2) ok = true;
+
 						}
 
 						if(ok) m.push({'layer':l,'id':i});
@@ -391,7 +391,6 @@
 			}
 			now = new Date();
 			log.log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
-			console.log('Matches',m);
 			return m;
 		}
 
@@ -491,7 +490,8 @@
 			}
 			layers.push({'mark':rects,'type':'rect','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
 			layers.push({'mark':lines,'type':'line','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,250,1)'}}});
-			layers.push({'mark':[{'x':stime+2}],'type':'rule','props':{'format':{'strokeWidth':4,'color':'rgba(200,200,0,0.5)'}}});
+			layers.push({'mark':[{'x':stime+2}],'type':'rule','props':{'format':{'strokeWidth':4,'color':'rgba(0,0,200,0.9)'}}});
+			layers.push({'mark':[{'x':stime+len*0.5,'y':0.2,'size':10},{'x':stime+len*0.6,'y':0.3,'size':10},{'x':stime+len*0.7,'y':0.25,'size':10},{'x':stime+len*0.8,'y':0.21,'size':10}],'type':'symbol','props':{'format':{'strokeWidth':2,'color':'rgba(250,0,0,0.5)'}}});
 			layers.push({'mark':[{'x':stime,'y1':0.9,'y2':1.1},{'x':stime+len*0.1,'y1':0.95,'y2':1.15},{'x':stime+len*0.2,'y1':0.86,'y2':1.12},{'x':null,'y':null},{'x':stime+len*0.3,'y1':1-dip-0.1,'y2':1-dip+0.15},{'x':stime+len*0.7,'y1':1-dip-0.15,'y2':1-dip+0.12}],'type':'area','props':{'format':{'color':'rgba(200,200,200,0.5)','strokeWidth':1.5}}});
 			var now = new Date();
 			S('#console').append('<span style="font-weight: bold;">Startup:</span> <em>'+(now-start)+'</em>ms<br />');
@@ -604,11 +604,39 @@
 					paper.ctx.fill();
 					if(paper.ctx.lineWidth > 0) paper.ctx.stroke();
 
+				}else if(layers[l].type=="rule"){
+					
+					highlight = false;
+					for(j = 0; j < match.length; j++){
+						if(match[j].layer==l && (match[j].id==0||match[j].id=="*")) highlight = true;
+					}
+
+					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+					paper.ctx.strokeStyle = colour;
+					paper.ctx.beginPath();
+
+					if(typeof layers[l].mark[0].x==="number"){
+						xa = toXpx(layers[l].mark[0].x);
+						xb = xa;
+						ya = 0;
+						yb = height;
+					}else if(typeof layers[l].mark[0].y==="number"){
+						ya = h - toYpx(layers[l].mark[0].y);
+						yb = ya;
+						xa = 0;
+						xb = width;
+					}
+					paper.ctx.moveTo(xa,ya);
+					paper.ctx.lineTo(xb,yb);
+					if(paper.ctx.lineWidth > 0) paper.ctx.stroke();
+
 				}else{
 
 					iplus = (layers[l].mark.length > 100) ? Math.max(Math.round(layers[l].mark.length/100),1) : 1;
 
-					paper.ctx.lineWidth = (layers[l].props.format.strokeWidth||0);
+					lw = (layers[l].props.format.strokeWidth||0);
+					paper.ctx.lineWidth = lw;
 					paper.ctx.beginPath();
 					for(i = 0; i < layers[l].mark.length; i+=iplus){
 
@@ -662,8 +690,27 @@
 							if(i==0) paper.ctx.moveTo(x,y);
 							else paper.ctx.lineTo(x,y);
 
+						}else if(layers[l].type=="symbol"){
+
+							paper.ctx.strokeStyle = colour;
+							paper.ctx.fillStyle = colour;
+							paper.ctx.beginPath();
+
+							x = toXpx(layers[l].mark[i].x);
+							y = height - toYpx(layers[l].mark[i].y);
+							s = layers[l].mark[i].size/2;
+
+							paper.ctx.moveTo(x,y+s);
+							paper.ctx.lineTo(x+s,y);
+							paper.ctx.lineTo(x,y-s);
+							paper.ctx.lineTo(x-s,y);
+							paper.ctx.lineTo(x,y+s);
+
+							paper.ctx.fill();
+							if(lw > 0) paper.ctx.stroke();
 						}
 					}
+
 					paper.ctx.stroke();
 				}
 			}
