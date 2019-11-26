@@ -4,8 +4,7 @@
 	<script src="stuquery.min.js"></script>
 	
 	<script>
-	
-	
+
 	var paper;
 	var G = {};
 	G.deepExtend = function(out){
@@ -80,8 +79,7 @@
 		w = attr.width||c.clientWidth;
 		h = attr.height||c.clientHeight;
 		s = attr.devicePixelRatio||window.devicePixelRatio;
-
-
+		
 		/**
 		 * @desc Attach a handler to an event for the Canvas object
 		 * @usage canvas.on(eventType[,eventData],handler(eventObject));
@@ -165,12 +163,11 @@
 			return e;
 		}
 
-
 		// Add event callbacks
 		var _obj = this;
 		var olddist = null;
 		var lastevent = null;
-		S(c).on("mousedown",function(e){ e.stuart = true; trigger(_obj,"mousedown",e); })
+		S(c).on("mousedown",function(e){ trigger(_obj,"mousedown",e); })
 			.on("mousemove",function(e){ e = getMousePosition(e); trigger(_obj,"mousemove",e); })
 			.on("mouseup",function(e){ trigger(_obj,"mouseup",e); })
 			.on("mouseover",function(e){ trigger(_obj,"mouseover",e); })
@@ -232,8 +229,223 @@
 
 		return this;
 	}
-
+	function Logger(){
+		var content = [];
+		var con = S('#console');
+		this.log = function(nm,dt,m,s){
+			content.push({'nm':nm,'dt':dt,'m':m,'s':s});
+			if(content.length > 8) content = content.splice(content.length-8);
+			html = "";
+			for(var c = 0; c < content.length; c++){
+				if(c > 0) html += '<br />';
+				html += '<span style="font-weight: bold;">Finder:</span> '+dt+'ms for '+s;
+			}
+			con.html(html);
+			con[0].scrollTop = con[0].scrollHeight;
+			
+		}
+		return this;
+	}
+	function toXpx(v){ return (v-xmin)*xconv + pad; }
+	function toYpx(v){ return (v-ymin)*yconv + pad; }
+	function convertToScreen(v){ return { 'x': toXpx(v.x), 'y': toYpx(v.y) }; }
+	function Finder(){
 	
+		var idx,min,i,start,now,m;
+		var log = new Logger();
+		
+		function inside(point, vs) {
+			// ray-casting algorithm based on
+			// http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+
+			var x = point[0], y = point[1];
+			var inside = false;
+			for(var i = 0, j = vs.length - 1; i < vs.length; j = i++){
+				var xi = vs[i][0], yi = vs[i][1];
+				var xj = vs[j][0], yj = vs[j][1];
+				var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+				if(intersect) inside = !inside;
+			}
+
+			return inside;
+		};
+
+		// Inputs:
+		//   ls - the array of points
+		//   p - the cursor position as { 'screen': {'x':<px>,'y':<px>}, 'data':{'x':<val>,'y':<val>} }
+		//   padding - an optional tolerance (pixels)
+		this.getMatches = function(ls,p,padding){
+			var rs,a,b,d,i,l,m,x,w,y,h,t,dpx,idx,ok,individual,now,start,isrect,tolerance;
+
+			start = new Date();
+			m = [];
+			idx = -1;
+			if(!padding) padding = 0;
+
+			for(l = 0; l < ls.length; l++){
+
+				tolerance = padding + (ls[l].props && ls[l].props.format ? ls[l].props.format.strokeWidth||0 : 0)/2;
+				isrect = false;
+				t = ls[l].type;
+				rs = ls[l].mark;
+				individual = false;
+				if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
+				if(t=="rule") t = "rectline";
+
+				if(t == "rectline") individual = true;
+
+				if(individual){
+
+					// Loop over each individual element and see if it matches
+					for(i = 0; i < rs.length; i++){
+
+						ok = false;
+
+						// Find the tolerance (half line thickness + padding)
+						dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+						if(t=="rect"){
+
+							if(p.data.x >= rs[i].x1 && p.data.x <= rs[i].x2 && p.data.y >= rs[i].y1 && p.data.y <= rs[i].y2) ok = true;
+
+						}else if(t=="rectline"){
+
+							if(typeof rs[i].x==="number"){
+								x = (rs[i].x-xmin)*xconv + pad;
+								if(p.screen.x >= x-dpx && p.screen.x <= x+dpx){
+									if(typeof rs[i].y1==="number"){
+										a = (rs[i].y1-ymin)*yconv + pad;
+										b = (rs[i].y2-ymin)*yconv + pad;
+										if(p.screen.y >= a-dpx && p.screen.y <= b+dpx) ok = true;
+									}else ok = true;
+								}
+							}
+
+							if(typeof rs[i].y==="number"){
+								y = (rs[i].y-ymin)*yconv + pad;
+								if(p.screen.y >= y-dpx && p.screen.y <= y+dpx){
+									if(typeof rs[i].x1==="number"){
+										a = (rs[i].x1-xmin)*xconv + pad;
+										b = (rs[i].x2-xmin)*xconv + pad;
+										if(p.screen.x >= a-dpx && p.screen.x <= b+dpx) ok = false;
+									}else ok = true;
+								}
+							}
+
+						}else if(t=="symbol"){
+					
+						}
+
+						if(ok) m.push({'layer':l,'id':i});
+					}
+
+				}else{
+
+					// We want to match the entire object made of x,y pairs
+					if(t=="line"){
+
+						// Get the first point in pixel space
+						a = convertToScreen(rs[0]);
+
+						for(i = 1; i < rs.length; i++){
+							// Find the tolerance (half line thickness + padding)
+							dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+							b = convertToScreen(rs[i]);
+							d = distanceFromLine(p.screen,a,b);
+							// We've either matched or we move on to the next segment
+							if(d <= dpx){
+								m.push({'layer':l,'id':'*'});
+								break;
+							}else a = b;
+						}
+
+					}else if(t=="area"){
+
+						// Find each polygon in screen space
+						var polygons = getPolygons(rs);
+
+						// Check each polygon
+						for(a = 0; a < polygons.length; a++){
+
+							// Convert coordinates to screen space
+							for(j = 0; j < polygons[a].length; j++){
+								polygons[a][j] = [toXpx(polygons[a][j][0]),toYpx(polygons[a][j][1])+(j < polygons[a].length/2 ? dpx : -dpx)];
+							}
+							// Move first and last vertex to the left
+							polygons[a][0][0] -= dpx;
+							polygons[a][polygons[a].length-1][0] -= dpx;
+							// Move middle vertices to the right
+							polygons[a][Math.floor(polygons[a].length/2)][0] += dpx;
+							polygons[a][Math.ceil(polygons[a].length/2)][0] += dpx;
+							
+							if(inside([p.screen.x,p.screen.y],polygons[a])){
+								m.push({'layer':l,'id':'*'});
+								break;
+							}
+						}
+
+					}
+
+				}
+			}
+			now = new Date();
+			log.log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
+			return m;
+		}
+
+		return this;
+	}
+
+	function getPolygons(rs){
+
+		// Find each polygon in screen space
+		var oldp,areas,polygons,poly,vertices,pt;
+		oldp = {};
+		areas = [];
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < rs.length ; i++){
+			y1 = (rs[i].y1 || rs[i].y);
+			y2 = rs[i].y2;
+			if(!isNaN(rs[i].x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				poly[a] = new Array(areas[a].length*2);
+				// Move along top of area (y2 coordinates)
+				k = 0;
+				for(j = 0; j < areas[a].length; j++,k++){
+					pt = rs[areas[a][j]];
+					poly[a][k] = [pt.x,pt.y2];
+				}
+				// Move along bottom of area backwards
+				for(j = areas[a].length-1; j >= 0; j--,k++){
+					pt = rs[areas[a][j]];
+					pt.y1 = (pt.y1 || pt.y);
+					poly[a][k] = [pt.x,pt.y1];
+				}
+			}
+		}
+
+		polygons = [];
+		// Check each polygon
+		for(a = 0; a < poly.length; a++){
+			vertices = [];
+			if(poly[a]){
+				for(j = 0; j < poly[a].length; j++) vertices.push([poly[a][j][0],poly[a][j][1]]);
+			}
+			if(vertices.length > 1) polygons.push(vertices);
+		}
+		return polygons;
+	}
+
 	S().ready(function(){
 
 		var n = 1e5;
@@ -244,16 +456,10 @@
 		
 		createLayers();
 
-		paper = new Paper({'el':document.getElementById('display')});
+		paper = new Paper({'el':document.getElementById('display'),'devicePixelRatio':1});
 
 		paper.ctx.fillStyle = 'green';
-		paper.ctx.lineWidth = 5;
-
-		function log(nm,dt,m,s){
-			var con = S('#console');
-			con.append('<span style="font-weight: bold;">Finder:</span> '+dt+'ms for '+s+'<br />');
-			con[0].scrollTop = con[0].scrollHeight;
-		}
+		paper.ctx.lineWidth = 4;
 
 		function createLayers(){
 			var start = new Date();
@@ -264,155 +470,23 @@
 				x = stime + i*15/n;
 				y = Math.sin(x);
 				dy = 0.15*Math.max(0.5,Math.random());
-				rects[i] = {'x': x,'y1':y-dy,'y2':y+dy,'type':'rect','strokeWidth':4};
-				lines[i] = {'x': x,'y':y,'type':'line','strokeWidth':4};
+				rects[i] = {'x': x,'y1':y-dy,'y2':y+dy};
+				lines[i] = {'x': x,'y':y};
 			}
-			layers.push({'rects':rects});
-			layers.push({'rects':lines});
-			layers.push({'rects':[{'x':stime+2,'type':'rule','strokeWidth':4}]});
+			layers.push({'mark':rects,'type':'rect','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
+			layers.push({'mark':lines,'type':'line','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
+			layers.push({'mark':[{'x':stime+2}],'type':'rule','props':{'format':{'strokeWidth':4,'color':'rgba(200,200,0,0.5)'}}});
+			layers.push({'mark':[{'x':stime+2.5,'y1':0.5,'y2':0.7},{'x':stime+4,'y1':0.4,'y2':0.75},{'x':stime+6,'y1':0.5,'y2':0.7},{'x':stime+8,'y1':0.55,'y2':0.75},{'x':null,'y':null},{'x':stime+8,'y1':0.25,'y2':0.4},{'x':stime+10,'y1':0.3,'y2':0.42}],'type':'area','props':{'format':{'color':'rgba(200,200,200,0.5)'}}});
 			var now = new Date();
 			S('#console').append('<span style="font-weight: bold;">Startup:</span> <em>'+(now-start)+'</em>ms<br />');
 			S('#console').append('<span style="font-weight: bold;">Processing:</span> <em>'+n+'</em> rectangles<br />');
 
-
 		}
 
-
-		function Finder(){
-		
-			var idx,min,i,start,now,m;
-			function rectanglesIntersect(a,b){
-				var aLeftOfB = a.x2 < b.x1;
-				var aRightOfB = a.x1 > b.x2;
-				var aAboveB = a.y1 > b.y2;
-				var aBelowB = a.y2 < b.y1;
-				return !(aLeftOfB || aRightOfB || aAboveB || aBelowB);
-			}
-			function convertToScreen(v){
-				return { 'x': (v.x-xmin)*xconv + pad, 'y': (v.y-ymin)*yconv + pad };
-			}
-			function matches(ls,p,padding){
-				m = [];
-				idx = -1;
-				var rs,l,x,w,y,h,dv,a,b,ok;
-				for(l = 0; l < ls.length; l++){
-					isrect = false;
-					rs = ls[l].rects;
-					t = rs[0].type;
-					if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
-					if(t=="rule") t = "rectline";
-
-					if(t=="line"){
-						ok = false;
-						var min = 1e100;
-						var a = convertToScreen(rs[0]);
-						dv = ((rs[0].strokeWidth/2)||2)+padding;
-						for(i = 1; i < rs.length; i++){
-							b = convertToScreen(rs[i]);
-							d = distanceFromLine(p.screen,a,b);
-							min = Math.min(d,min);
-							a = b;
-						}
-						if(min < dv) m.push({'layer':l,'id':'*'});
-					}else{
-						for(i = 0; i < rs.length; i++){
-							ok = false;
-							dv = ((rs[i].strokeWidth/2)||2)+padding;
-							if(t=="rect"){
-								if(p.data.x >= rs[i].x1 && p.data.x <= rs[i].x2 && p.data.y >= rs[i].y1 && p.data.y <= rs[i].y2) ok = true;
-							}else if(t=="rectline"){
-								if(typeof rs[i].x==="number"){
-									x = (rs[i].x-xmin)*xconv + pad;
-									if(p.screen.x >= x-dv && p.screen.x <= x+dv){
-										if(typeof rs[i].y1==="number"){
-											a = (rs[i].y1-ymin)*yconv + pad;
-											b = (rs[i].y2-ymin)*yconv + pad;
-											if(p.screen.y >= a-dv && p.screen.y <= b+dv) ok = true;
-										}else ok = true;
-									}
-								}
-								if(typeof rs[i].y==="number"){
-									y = (rs[i].y-ymin)*yconv + pad;
-									if(p.screen.y >= y-dv && p.screen.y <= y+dv){
-										if(typeof rs[i].x1==="number"){
-											a = (rs[i].x1-xmin)*xconv + pad;
-											b = (rs[i].x2-xmin)*xconv + pad;
-											if(p.screen.x >= a-padding && p.screen.x <= b+padding) ok = false;
-										}else ok = true;
-									}
-								}
-							}else if(t=="symbol"){
-							
-							}
-
-							if(ok) m.push({'layer':l,'id':i});
-
-						}
-					}
-				}
-				return m;		
-			}
-			function nearestX(r,p,tolerance){
-				min = 1e100;
-				idx = -1;
-				for(i = 0; i < r.length; i++){
-					dx = Math.abs(((r[i].x1+r[i].x2)/2) - p.data.x);
-					if(dx < min){
-						idx = i;
-						min = dx;
-					}
-				}
-				if(min < tolerance) return [{'layer':0,'id':idx}];
-				else return [];
-			}
-			function within(r,p,tolerance){
-				var j;
-				var match = [];
-				m = [];
-				if(typeof tolerance.x!=="number") return m;
-
-				var bbox = {'x1':p.data.x-tolerance.x,'x2':p.data.x+tolerance.x,'y1':p.data.y-tolerance.y,'y2':p.data.y+tolerance.y};
-console.log(bbox,tolerance.x)
-				for(i = 0; i < r.length; i++){
-					if(rectanglesIntersect(r[i],bbox)) m.push({'layer':0,'id':i});
-				}
-				return m;
-			}
-
-			this.getMatches = function(r,p,padding){
-				start = new Date();
-				m = matches(r,p,padding||0);
-				now = new Date();
-				log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
-				return m;
-			}
-
-			this.getNearestX = function(r,p,tolerance){
-				start = new Date();
-				m = nearestX(r,p,tolerance.x);
-				now = new Date();
-				log('Finder',(now-start),m,'getNearestX ('+m.length+' match'+(m.length==1?'':'es')+')');
-				return m;
-			}
-
-			this.getWithin = function(r,p,tolerance){
-				start = new Date();
-				m = within(r,p,tolerance);
-				now = new Date();
-				log('Finder',(now-start),m,'getWithin ('+m.length+' match'+(m.length==1?'':'es')+')');
-				return m;
-			}
-
-			return this;
-		}
-	
 		finder = new Finder();
-
-
 
 		width = S('#display')[0].clientWidth;
 		height = S('#display')[0].clientHeight;
-
 
 		pad = 20;
 		xmin = 1e100;
@@ -421,26 +495,26 @@ console.log(bbox,tolerance.x)
 		ymax = -1e100;
 		method = "matches";
 		for(var l = 0; l < layers.length; l++){
-			for(var i = 0; i < layers[l].rects.length; i++){
-				if(typeof layers[l].rects[i].x1==="number"){
-					xmin = Math.min(layers[l].rects[i].x1,xmin);
+			for(var i = 0; i < layers[l].mark.length; i++){
+				if(typeof layers[l].mark[i].x1==="number"){
+					xmin = Math.min(layers[l].mark[i].x1,xmin);
 				}
-				if(typeof layers[l].rects[i].x2==="number"){
-					xmax = Math.max(layers[l].rects[i].x2,xmax);
+				if(typeof layers[l].mark[i].x2==="number"){
+					xmax = Math.max(layers[l].mark[i].x2,xmax);
 				}
-				if(typeof layers[l].rects[i].y1==="number"){
-					ymin = Math.min(layers[l].rects[i].y1,ymin);
+				if(typeof layers[l].mark[i].y1==="number"){
+					ymin = Math.min(layers[l].mark[i].y1,ymin);
 				}
-				if(typeof layers[l].rects[i].y2==="number"){
-					ymax = Math.max(layers[l].rects[i].y2,ymax);
+				if(typeof layers[l].mark[i].y2==="number"){
+					ymax = Math.max(layers[l].mark[i].y2,ymax);
 				}
-				if(typeof layers[l].rects[i].x==="number"){
-					xmin = Math.min(layers[l].rects[i].x,xmin);
-					xmax = Math.max(layers[l].rects[i].x,xmax);
+				if(typeof layers[l].mark[i].x==="number"){
+					xmin = Math.min(layers[l].mark[i].x,xmin);
+					xmax = Math.max(layers[l].mark[i].x,xmax);
 				}
-				if(typeof layers[l].rects[i].y==="number"){
-					ymin = Math.min(layers[l].rects[i].y,ymin);
-					ymax = Math.max(layers[l].rects[i].y,ymax);
+				if(typeof layers[l].mark[i].y==="number"){
+					ymin = Math.min(layers[l].mark[i].y,ymin);
+					ymax = Math.max(layers[l].mark[i].y,ymax);
 				}
 			}
 		}
@@ -457,7 +531,6 @@ console.log(bbox,tolerance.x)
 		
 		paper.on('mousemove',function(e){
 			pt = getCursorCoords(e.x,e.y);
-			//console.log('screen',pt.screen,'data',pt.data);
 			getRects(pt);
 		}).on('touchmove',function(e){
 			var touches = e.originalEvent.changedTouches;
@@ -478,85 +551,121 @@ console.log(bbox,tolerance.x)
 
 			drawn = 0;
 			paper.ctx.clearRect(0,0,width,height);
-
+			
 			for(l = 0; l < layers.length; l++){
 
-				iplus = (layers[l].rects.length > 100) ? Math.max(Math.round(layers[l].rects.length/100),1) : 1;
-
-				for(i = 0; i < layers[l].rects.length; i+=iplus){
-
+				if(layers[l].type=="area"){
+			
 					highlight = false;
 					for(j = 0; j < match.length; j++){
-						if(match[j].layer==l && (match[j].id==i||match[j].id=="*")) highlight = true;
+						if(match[j].layer==l && match[j].id=="*") highlight = true;
 					}
+
+					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+					var ctx,oldp,p,areas,a,i,j,k,p,y1,y2;
+					paper.ctx.fillStyle = colour;
+					paper.ctx.strokeStyle = colour;
+					paper.ctx.lineWidth = 0;
+					paper.ctx.beginPath();
 					
-					colour = (highlight ? 'rgba(255,200,0,0.8)' : 'rgba(0,200,0,0.5)');
+					var polygons = getPolygons(layers[l].mark);
+					dh = layers[l].props.format.strokeWidth||0;
 
-					if(layers[l].rects[i].type=="rect"){
-						paper.ctx.fillStyle = colour;
-						if(typeof layers[l].rects[i].x1!=="number"){
-							if(typeof layers[l].rects[i].x==="number"){
-								dw = layers[l].rects[i].strokeWidth||2;
-								x = (layers[l].rects[i].x-xmin)*xconv - dw/2 + pad;
-							}else{
-								x = pad;
-								dw = w-pad*2;
-							}
-						}else{
-							x = (layers[l].rects[i].x1-xmin)*xconv + pad;
-							dw = Math.round(Math.abs(layers[l].rects[i].x2-layers[l].rects[i].x1)*xconv);
+					// Draw each polygon
+					for(a = 0; a < polygons.length; a++){
+						for(j = 0; j < polygons[a].length; j++){
+							x = toXpx(polygons[a][j][0]);
+							y = toYpx(polygons[a][j][1]);
+							y = height - y - dh;
+							if(j==0) paper.ctx.moveTo(x,y);
+							else paper.ctx.lineTo(x,y);
 						}
-
-						if(typeof layers[l].rects[i].y1!=="number"){
-							if(typeof layers[l].rects[i].y==="number"){
-								dh = layers[l].rects[i].strokeWidth||2;
-								y = (layers[l].rects[i].y-ymin)*yconv + dh/2;
-							}else{
-								y = pad;
-								dh = h-pad*2;
-							}
-						}else{
-							y = pad + (layers[l].rects[i].y1-ymin)*yconv;
-							dh = Math.round((layers[l].rects[i].y2-layers[l].rects[i].y1)*yconv);
-						}
+						x = toXpx(polygons[a][0][0]);
+						y = toYpx(polygons[a][0][1]);
 						y = height - y - dh;
-						if(dh > 0 && dw > 0){
-							paper.ctx.fillRect(x,y,dw,dh);
+						paper.ctx.lineTo(x,y);
+					}
+					paper.ctx.fill();
+					paper.ctx.stroke();
+
+					//if(layers[l].mark[0].props.format.strokeWidth > 0) paper.ctx.stroke();
+
+				}else{
+
+					iplus = (layers[l].mark.length > 100) ? Math.max(Math.round(layers[l].mark.length/100),1) : 1;
+
+					paper.ctx.beginPath();
+					for(i = 0; i < layers[l].mark.length; i+=iplus){
+
+						highlight = false;
+						for(j = 0; j < match.length; j++){
+							if(match[j].layer==l && (match[j].id==i||match[j].id=="*")) highlight = true;
+						}
+					
+						colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+						if(layers[l].type=="rect"){
+							paper.ctx.fillStyle = colour;
+							if(typeof layers[l].mark[i].x1!=="number"){
+								if(typeof layers[l].mark[i].x==="number"){
+									dw = layers[l].props.format.strokeWidth||2;
+									x = (layers[l].mark[i].x-xmin)*xconv - dw/2 + pad;
+								}else{
+									x = pad;
+									dw = w-pad*2;
+								}
+							}else{
+								x = (layers[l].mark[i].x1-xmin)*xconv + pad;
+								dw = Math.round(Math.abs(layers[l].mark[i].x2-layers[l].mark[i].x1)*xconv);
+							}
+
+							if(typeof layers[l].mark[i].y1!=="number"){
+								if(typeof layers[l].mark[i].y==="number"){
+									dh = layers[l].props.format.strokeWidth||2;
+									y = (layers[l].mark[i].y-ymin)*yconv + dh/2;
+								}else{
+									y = pad;
+									dh = h-pad*2;
+								}
+							}else{
+								y = pad + (layers[l].mark[i].y1-ymin)*yconv;
+								dh = Math.round((layers[l].mark[i].y2-layers[l].mark[i].y1)*yconv);
+							}
+							y = height - y - dh;
+							if(dh > 0 && dw > 0){
+								paper.ctx.fillRect(x,y,dw,dh);
+								drawn++;
+							}
+						}else if(layers[l].type=="line"){
+							paper.ctx.strokeStyle = colour;
+							if(typeof layers[l].mark[i].x==="number") x = (layers[l].mark[i].x-xmin)*xconv + pad;
+							if(typeof layers[l].mark[i].y==="number") y = h - ((layers[l].mark[i].y-ymin)*yconv + pad);
+
+							if(i==0) paper.ctx.moveTo(x,y);
+							else paper.ctx.lineTo(x,y);
+
 							drawn++;
 						}
-					}else if(layers[l].rects[i].type=="line"){
-						paper.ctx.strokeStyle = colour;
-						if(typeof layers[l].rects[i].x==="number") x = (layers[l].rects[i].x-xmin)*xconv + pad;
-						if(typeof layers[l].rects[i].y==="number") y = h - ((layers[l].rects[i].y-ymin)*yconv + pad);
-
-						if(i==0) paper.ctx.moveTo(x,y);
-						else paper.ctx.lineTo(x,y);
-
-						drawn++;
 					}
+					paper.ctx.stroke();
 				}
 			}
-			paper.ctx.stroke();
 			now = new Date();
 		}
 		
 		pt = { x: 1572969167352.5, y: 1 };
-
-		S('#nearestx').on('click',function(){ method = "nearestx"; getRects(); });
-		S('#matches').on('click',function(){ method = "matches"; getRects(); });
-		S('#matchesfuzzy').on('click',function(){ method = "matchesfuzzy"; getRects(); });
-		S('#within').on('click',function(){ method = "within"; getRects(); });
+		var tol = parseInt(S('#tolerance')[0].value);
+		
+		S('#tolerance').on('change',function(e){ tol = parseInt(e.currentTarget.value); getRects(); });
 		S('.n').on('click',function(e){ n = parseInt(e.currentTarget.getAttribute('data')); createLayers(); drawRects([]) })
 		
 		function getRects(p){
 			var near = [];
 			if(p){
-				if(method == "nearestx") near = finder.getNearestX(rects,p,{'x':1});
-				else if(method == "matches") near = finder.getMatches(layers,p);
-				else if(method == "matchesfuzzy") near = finder.getMatches(layers,p,5);
-				else if(method == "within") near = finder.getWithin(rects,p,{'x':2,'y':0.25});
+				near = finder.getMatches(layers,p,tol);
+				drawRects(near);
 			}
-			drawRects(near);
 		}
 		drawRects([]);
 		
@@ -566,19 +675,17 @@ console.log(bbox,tolerance.x)
 	<style>
 	* { box-sizing: border-box; }
 	body { padding: 0px; margin: 0px; font-size: 16px; font-family: Helvetica, Arial, sans-serif; }
-	#console { position: absolute; bottom: 0px; left: 0px; width: 100%; border-top: 1px solid black; padding: 0.5em; background: #fbfbfb; max-height: 150px; overflow-y: auto; }
+	#console { position: fixed; bottom: 0px; left: 0px; width: 100%; border-top: 1px solid black; padding: 0.5em; background: #fbfbfb; max-height: 150px; overflow-y: auto; }
 	#controls { top: 0px; left: 0px; width: 100%; padding: 0.5em; background: #fbfbfb; border-bottom: 1px solid black; }
 	#display { margin: 0.5em; width: 800px; height: 500px; border: 15px solid red; }
 	button { line-height: 1.5em; font-size: 1em; }
+	input { font-size: 1em; line-height: 1.2em; }
 	</style>
 </head>
 <body>
 
 	<div id="controls">
-		<button id="nearestx">Nearest X</button>
-		<button id="matches">Matches</button>
-		<button id="matchesfuzzy">Matches (within 5px)</button>
-		<button id="within">Within</button>
+		<label for="tolerance">Tolerance (px):</label><input type="number" value="0" id="tolerance" />
 		<br />Line segments/rects:
 		<button class="n" data="10000">1e4</button>
 		<button class="n" data="100000">1e5</button>
