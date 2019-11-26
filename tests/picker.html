@@ -391,6 +391,7 @@
 			}
 			now = new Date();
 			log.log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
+			console.log('Matches',m);
 			return m;
 		}
 
@@ -466,17 +467,32 @@
 			layers = [];
 			var rects = new Array(n);
 			var lines = new Array(n);
+			var radius_p = 0.1;
+			var radius_s = 0.5;
+			var len = 20;
+			var dip = 50*(radius_p*radius_p)/(radius_s*radius_s);
 			for(var i = 0; i < n; i++){
-				x = stime + i*15/n;
-				y = Math.sin(x);
-				dy = 0.15*Math.max(0.5,Math.random());
-				rects[i] = {'x': x,'y1':y-dy,'y2':y+dy};
+				dx = i/n;
+				x = stime + len*dx;
+				if(dx < 0.5-radius_s/2-radius_p/2) y = 1.0;
+				else if(dx > 0.5+radius_s/2+radius_p/2) y = 1.0;
+				else if(dx >= 0.5-radius_s/2-radius_p/2 && dx <= 0.5-radius_s/2+radius_p/2){
+					d = (0.5-radius_s/2-radius_p/2-dx)/(radius_p*2);
+					y = 1.0+Math.sin(d*Math.PI)*dip;
+				}else if(dx >= 0.5+radius_s/2-radius_p/2 && dx <= 0.5+radius_s/2+radius_p/2){
+					d = (0.5+radius_s/2-radius_p/2-dx)/(radius_p*2);
+					y = 1.0-Math.cos(d*Math.PI)*dip;
+				}else y = 1.0 - dip;
+
+				dy = 0.3*Math.random()-0.15;
+				dh = 0.2*Math.max(0.5,Math.random());
+				rects[i] = {'x': x,'y1':y+dy-dh,'y2':y+dy+dh};
 				lines[i] = {'x': x,'y':y};
 			}
 			layers.push({'mark':rects,'type':'rect','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
-			layers.push({'mark':lines,'type':'line','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
+			layers.push({'mark':lines,'type':'line','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,250,1)'}}});
 			layers.push({'mark':[{'x':stime+2}],'type':'rule','props':{'format':{'strokeWidth':4,'color':'rgba(200,200,0,0.5)'}}});
-			layers.push({'mark':[{'x':stime+2.5,'y1':0.5,'y2':0.7},{'x':stime+4,'y1':0.4,'y2':0.75},{'x':stime+6,'y1':0.5,'y2':0.7},{'x':stime+8,'y1':0.55,'y2':0.75},{'x':null,'y':null},{'x':stime+8,'y1':0.25,'y2':0.4},{'x':stime+10,'y1':0.3,'y2':0.42}],'type':'area','props':{'format':{'color':'rgba(200,200,200,0.5)'}}});
+			layers.push({'mark':[{'x':stime,'y1':0.9,'y2':1.1},{'x':stime+len*0.1,'y1':0.95,'y2':1.15},{'x':stime+len*0.2,'y1':0.86,'y2':1.12},{'x':null,'y':null},{'x':stime+len*0.3,'y1':1-dip-0.1,'y2':1-dip+0.15},{'x':stime+len*0.7,'y1':1-dip-0.15,'y2':1-dip+0.12}],'type':'area','props':{'format':{'color':'rgba(200,200,200,0.5)','strokeWidth':1.5}}});
 			var now = new Date();
 			S('#console').append('<span style="font-weight: bold;">Startup:</span> <em>'+(now-start)+'</em>ms<br />');
 			S('#console').append('<span style="font-weight: bold;">Processing:</span> <em>'+n+'</em> rectangles<br />');
@@ -547,9 +563,8 @@
 			var start = new Date();
 			var height = paper.height();
 			var width = paper.width();
-			var l,i,j,iplus,highlight,colour,x,y,dw,dh,drawn;
+			var l,i,j,iplus,highlight,colour,x,y,dw,dh;
 
-			drawn = 0;
 			paper.ctx.clearRect(0,0,width,height);
 			
 			for(l = 0; l < layers.length; l++){
@@ -566,7 +581,7 @@
 					var ctx,oldp,p,areas,a,i,j,k,p,y1,y2;
 					paper.ctx.fillStyle = colour;
 					paper.ctx.strokeStyle = colour;
-					paper.ctx.lineWidth = 0;
+					paper.ctx.lineWidth = (layers[l].props.format && layers[l].props.format.strokeWidth ? layers[l].props.format.strokeWidth : 0);
 					paper.ctx.beginPath();
 					
 					var polygons = getPolygons(layers[l].mark);
@@ -587,14 +602,13 @@
 						paper.ctx.lineTo(x,y);
 					}
 					paper.ctx.fill();
-					paper.ctx.stroke();
-
-					//if(layers[l].mark[0].props.format.strokeWidth > 0) paper.ctx.stroke();
+					if(paper.ctx.lineWidth > 0) paper.ctx.stroke();
 
 				}else{
 
 					iplus = (layers[l].mark.length > 100) ? Math.max(Math.round(layers[l].mark.length/100),1) : 1;
 
+					paper.ctx.lineWidth = (layers[l].props.format.strokeWidth||0);
 					paper.ctx.beginPath();
 					for(i = 0; i < layers[l].mark.length; i+=iplus){
 
@@ -607,6 +621,7 @@
 
 						if(layers[l].type=="rect"){
 							paper.ctx.fillStyle = colour;
+							paper.ctx.strokeStyle = colour;
 							if(typeof layers[l].mark[i].x1!=="number"){
 								if(typeof layers[l].mark[i].x==="number"){
 									dw = layers[l].props.format.strokeWidth||2;
@@ -635,17 +650,18 @@
 							y = height - y - dh;
 							if(dh > 0 && dw > 0){
 								paper.ctx.fillRect(x,y,dw,dh);
-								drawn++;
 							}
+
 						}else if(layers[l].type=="line"){
+
 							paper.ctx.strokeStyle = colour;
+
 							if(typeof layers[l].mark[i].x==="number") x = (layers[l].mark[i].x-xmin)*xconv + pad;
 							if(typeof layers[l].mark[i].y==="number") y = h - ((layers[l].mark[i].y-ymin)*yconv + pad);
 
 							if(i==0) paper.ctx.moveTo(x,y);
 							else paper.ctx.lineTo(x,y);
 
-							drawn++;
 						}
 					}
 					paper.ctx.stroke();
