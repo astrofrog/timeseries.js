@@ -3304,24 +3304,25 @@
 		}
 
 		function SqDistancePtSegment(p,a,b){
+			var c,e,f,n,pa,bp;
 			function Dot(p1,p2){ return (p1.x*p2.x + p1.y*p2.y); }
 
-			var n = { 'x': b.x - a.x, 'y': b.y - a.y };
-			var pa = { 'x': a.x - p.x, 'y': a.y - p.y };
+			n = { 'x': b.x - a.x, 'y': b.y - a.y };
+			pa = { 'x': a.x - p.x, 'y': a.y - p.y };
 
-			var c = Dot(n,pa);
+			c = Dot(n,pa);
 
 			// Closest point is a
 			if(c > 0.0 || (n.x==0 && n.y==0)) return Dot(pa,pa);
 
-			var bp = { 'x':p.x - b.x, 'y':p.y - b.y };
+			bp = { 'x':p.x - b.x, 'y':p.y - b.y };
 
 			// Closest point is b
 			if(Dot(n,bp) > 0.0) return Dot(bp,bp);
 
 			// Closest point is between a and b
-			var f = (c / Dot(n,n));
-			var e = {'x':pa.x - n.x * f, 'y': pa.y - n.y*f };
+			f = (c / Dot(n,n));
+			e = {'x':pa.x - n.x * f, 'y': pa.y - n.y*f };
 
 			return Dot(e,e);
 		}
