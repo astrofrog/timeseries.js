@@ -378,7 +378,7 @@
 			}else{
 				attr.size = attr.width;
 				var orientation = "h";
-				if(layer.style.type=="fullHeight") orientation = "v";
+				if(layer.style.group=="height") orientation = "v";
 				if(layer.type=="rule" && data[0].x==data[1].x) orientation = "v";
 				if(typeof data[0].x2==="undefined") orientation = "v";
 				c.innerHTML = Icon((orientation=="h" ? "m-0.5,0 l 1,0" : "m0,-0.5 l 0,1"),attr)+' '+layer.type;
@@ -487,8 +487,8 @@
 						if(layers[n].loc.uSize) gl.ctx.uniform2fv(layers[n].loc.uSize, [gl.canvas.clientWidth,gl.canvas.clientHeight]);
 
 						// For rule types set if it covers the full width/height of the view
-						if(layers[n].loc.uXaxis) gl.ctx.uniform1f(layers[n].loc.uXaxis, (layers[n].style.type=="fullWidth" ? true : false));
-						if(layers[n].loc.uYaxis) gl.ctx.uniform1f(layers[n].loc.uYaxis, (layers[n].style.type=="fullHeight" ? true : false));
+						if(layers[n].loc.uXaxis) gl.ctx.uniform1f(layers[n].loc.uXaxis, (layers[n].style.group=="width" ? true : false));
+						if(layers[n].loc.uYaxis) gl.ctx.uniform1f(layers[n].loc.uYaxis, (layers[n].style.group=="height" ? true : false));
 
 						gl.ctx.bindBuffer(gl.ctx.ARRAY_BUFFER, layers[n].buffer);
 						aVertexPosition = gl.ctx.getAttribLocation(layers[n].program, "aVertexPosition");
