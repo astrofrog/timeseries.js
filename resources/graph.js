@@ -1426,7 +1426,6 @@
 		y = Math.round(y*this.canvas.scale);
 		var rtn = [];
 		if(this.picker) rtn = this.picker.getMatches(this.marks,{'screen':{'x':x,'y':y},'data':this.pixel2data(x,y)},2);
-//DEPRECATED		if(this.lookup) rtn = this.lookup.getValue(x,y);
 		if(rtn.length<1) this.canvas.canvas.css({'cursor':''});
 		return rtn;
 	};
@@ -3484,12 +3483,15 @@
 						// Find each polygon in screen space
 						polygons = getPolygons(rs);
 
+						// Find the tolerance
+						dpx = (rs[0].strokeWidth ? (rs[0].strokeWidth/2)+padding : tolerance);
+
 						// Check each polygon
 						for(i = 0; i < polygons.length; i++){
 
 							// Convert coordinates to screen space (add padding to y-axis)
 							for(j = 0; j < polygons[i].length; j++){
-								b = g.pixel2data(polygons[i][j][0],polygons[i][j][1]);
+								b = { 'x':g.getPos('x',polygons[i][j][0]),'y':g.getPos('y',polygons[i][j][1]) };
 								polygons[i][j] = [b.x,b.y+(j < polygons[i].length/2 ? dpx : -dpx)];
 							}
 							
@@ -3510,7 +3512,6 @@
 				}
 			}
 			this.log.time('getMatches');
-			//this.log.message('getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
 			return m;
 		}
 		return this;
@@ -3519,9 +3520,10 @@
 	function getPolygons(rs){
 
 		// Find each polygon in screen space
-		var oldp,areas,polygons,poly,vertices,pt;
+		var oldp,areas,poly,pt;
 		oldp = {};
 		areas = [];
+
 		// We need to loop across the data first splitting into segments
 		for(i = 0, a = 0; i < rs.length ; i++){
 			y1 = (rs[i].y1 || rs[i].y);
@@ -3553,16 +3555,7 @@
 			}
 		}
 
-		polygons = [];
-		// Check each polygon
-		for(a = 0; a < poly.length; a++){
-			vertices = [];
-			if(poly[a]){
-				for(j = 0; j < poly[a].length; j++) vertices.push([poly[a][j][0],poly[a][j][1]]);
-			}
-			if(vertices.length > 1) polygons.push(vertices);
-		}
-		return polygons;
+		return poly;
 	}
 
 	function Lookup(w,h){
