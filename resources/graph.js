@@ -584,7 +584,7 @@
 			g.setOptions().defineAxis("x").setChartOffset().resetDataStyles().redraw({'update':true,'callback':function(){ this.trigger("resize",{event:ev.event}); }});
 			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
-			var event,g,x,y,s,d,t,i,ii,a,m,ds;
+			var event,g,x,y,s,d,t,ii,a,m,ds;
 			event = ev.event.originalEvent;
 			g = ev.data.me;	// The graph object
 			if(!g.ready) g.stop();
@@ -628,7 +628,7 @@
 			a = g.trigger("clickpoint",{event:event,matches:m});
 			return true;
 		}).on("mousemove",{me:this},function(ev){
-			var event,g,x,y,d,t,i,ii,a,m,ds,p;
+			var event,g,x,y,d,t,ii,a,m,ds,p;
 			event = ev.event.originalEvent;
 			if(!event) return;
 			g = ev.data.me;	// The graph object
@@ -1472,7 +1472,7 @@
 	Graph.prototype.highlight = function(ds){
 		if(this.selecting) return this;	// If we are panning we don't want to highlight symbols
 		if(!this.ready) return this;	// Don't highlight if we are in the middle of doing something
-		if(this.lookup && ds && ds.length > 0){
+		if(this.picker && ds && ds.length > 0){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
 			var d,t,i,w,clipping,typ,mark,ctx,n,s,val,top,topmark,series;
@@ -2529,16 +2529,11 @@
 
 	/**
 	 * @desc Draw the data onto the graph
-	 * @param {boolean} updateLookup - do we update the pixel-based lookup? It can take a while so if a quick update is needed set this to false.
 	 */
-	Graph.prototype.drawData = function(updateLookup){
+	Graph.prototype.drawData = function(){
 
 		var p,sh,ctx,i,m,update;
-		// Define an empty pixel-based lookup table
-		if(updateLookup){
-			if(!this.lookup) this.lookup = new Lookup(this.canvas.c.width,this.canvas.c.height);
-			else this.lookup.reset();
-		}
+		// Define a pixel->data lookup function
 		if(!this.picker) this.picker = new Picker(this);
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
@@ -2564,8 +2559,8 @@
 				if(this.marks[sh].type=="rule") this.drawRule(sh,{'update':true});
 				if(this.marks[sh].type=="area") this.drawArea(sh,{'update':true});
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
-					// Work out if we need to update this lookup for these marks
-					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
+					// Work out if we need to update these marks
+					update = (typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 
 					// Loop over points drawing them
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
@@ -2608,7 +2603,6 @@
 	 * @param {number} attr.y1 - the y-axis value y1 value
 	 * @param {number} attr.x2 - the x-axis value x2 value
 	 * @param {number} attr.y2 - the y-axis value y2 value
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawRect = function(datum,attr){
 		var x1,y1,x2,y2,dx,dy,o,ctx,n,l,r,t,b,ok;
@@ -2652,7 +2646,6 @@
 			ctx.fill();
 			ctx.closePath();
 			o = {'id':datum.id,'xa':Math.floor(x1),'xb':Math.ceil(x2),'ya':Math.round(y2),'yb':Math.round(y1),'w':1};
-//DEPRECATED			if(attr.update) this.addRectToLookup(o);
 			return o;
 		}
 		return "";
@@ -2662,7 +2655,6 @@
 	 * @desc Draw a rule
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
@@ -2699,7 +2691,6 @@
 			if(!p.y2) p.y2 = p.y;
 			if(p.x1 && p.y1) this.paper.temp.ctx.moveTo(p.x1,p.y1);
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
-//DEPRECATED			if(attr.update && (p.x1==p.x2 || p.y1==p.y2)) this.lookup.setRect(Math.floor(p.x1),p.y1,Math.ceil(p.x2),p.y2,sh,i+':0.6');
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
@@ -2745,7 +2736,6 @@
 	 * @desc Draw a line
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawLine = function(sh,attr){
 		var ctx,i,xok,oldxok,n;
@@ -2761,8 +2751,6 @@
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-//DEPRECATED		if(attr.update) this.addTempToLookup({'layer':sh, 'id':0, 'weight':0.6});
-
 		return this;
 	};
 
@@ -2770,51 +2758,23 @@
 	 * @desc Draw an area on the chart
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawArea = function(sh,attr){
-		var ctx,oldp,areas,a,i,j,k,p,y1,y2;
+		var ctx,a,j,poly,coord;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		oldp = {};
-		areas = [];
-		// We need to loop across the data first splitting into segments
-		for(i = 0, a = 0; i < this.marks[sh].mark.length ; i++){
-			p = this.marks[sh].mark[i].props;
-			y1 = (p.y1 || p.y);
-			y2 = p.y2;
-			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
-				if(!areas[a]) areas[a] = [];
-				areas[a].push(i);
-			}else a++;
-		}
-		// To do: make the polygon lookup processing more efficient by
-		// not processing the entire shape in one go
-		var poly = new Array(areas.length);
-		for(a = 0; a < areas.length ; a++){
-			if(areas[a] && areas[a].length){
-				poly[a] = new Array(areas[a].length*2);
-				// Move along top of area (y2 coordinates)
-				k = 0;
-				for(j = 0; j < areas[a].length; j++,k++){
-					p = this.marks[sh].mark[areas[a][j]].props;
-					poly[a][k] = [p.x,p.y2];
-				}
-				// Move along bottom of area backwards
-				for(j = areas[a].length-1; j >= 0; j--,k++){
-					p = this.marks[sh].mark[areas[a][j]].props;
-					p.y1 = (p.y1 || p.y);
-					poly[a][k] = [p.x,p.y1];
-				}
-			}
-		}
+		
+		// Find each polygon in screen space
+		poly = getPolygons(this.marks[sh].data);
+
 		// Draw each polygon
 		for(a = 0; a < poly.length; a++){
 			if(poly[a]){
 				for(j = 0; j < poly[a].length; j++){
-					if(j==0) this.paper.temp.ctx.moveTo(poly[a][j][0],poly[a][j][1]);
-					else this.paper.temp.ctx.lineTo(poly[a][j][0],poly[a][j][1]);
+					coord = { 'x':this.getPos('x',poly[a][j][0]),'y':this.getPos('y',poly[a][j][1]) };
+					if(j==0) this.paper.temp.ctx.moveTo(coord.x,coord.y);
+					else this.paper.temp.ctx.lineTo(coord.x,coord.y);
 				}
 			}
 		}
@@ -2823,8 +2783,6 @@
 		if(this.marks[sh].mark[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-
-//DEPRECATED		if(attr.update) this.addTempToLookup({'layer':sh,'id':0, 'weight':0.4});
 
 		return this;
 	};
@@ -2837,7 +2795,6 @@
 	 * @param {number} attr.x - over-ride the x-axis value
 	 * @param {number} attr.y - over-ride the y-axis value
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawText = function(datum,attr){
 		var ctx,t,f,o,x,y;
@@ -2850,7 +2807,6 @@
 		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':f});
 		o.id = datum.id;
 		o.weight = 1;
-//DEPRECATED		if(attr.update) this.addRectToLookup(o);
 		return o;
 	};
 
@@ -2938,7 +2894,6 @@
 	 * @param {number} attr.x - over-ride the x-axis value
 	 * @param {number} attr.y - over-ride the y-axis value
 	 * @param {context} attr.ctx - the context of the canvas (default is this.paper.data.ctx)
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
@@ -3023,7 +2978,6 @@
 		ctx.fill();
 		if(p.format.strokeWidth > 0) ctx.stroke();
 		o = {'id':datum.id,'xa':Math.floor(x1-w/2),'xb':Math.ceil(x1+w/2),'ya':Math.floor(y1-h/2),'yb':Math.ceil(y1+h/2)};
-//DEPRECATED		if(attr.update) this.addRectToLookup(o);
 		return o;
 	};
 
@@ -3042,12 +2996,12 @@
 	/**
 	 * @desc Draw everything - the axes, the data, and overlays
 	 */
-	Graph.prototype.draw = function(updateLookup){
+	Graph.prototype.draw = function(){
 		this.log.time('draw');
 		this.clear();
 		this.drawAxes();
-		this.drawData(updateLookup);
-		this.finishDraw(updateLookup);
+		this.drawData();
+		this.finishDraw();
 		this.log.time('draw');
 		return this;
 	};
@@ -3327,11 +3281,10 @@
 	function Picker(g){
 	
 		this.log = new Logger({'id':'Picker','logging':true,'logtime':true});
-		var g = g;
 		
 		function inside(point, vs){
 			// ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-			var i,xi,xj,yi,yj,x,y,inside,intersect;
+			var i,j,xi,xj,yi,yj,x,y,inside,intersect;
 			x = point[0];
 			y = point[1];
 			inside = false;
@@ -3344,7 +3297,7 @@
 				if(intersect) inside = !inside;
 			}
 			return inside;
-		};
+		}
 
 		function distanceFromLine(p,a,b){
 			return Math.sqrt(SqDistancePtSegment(p,a,b));
@@ -3385,7 +3338,7 @@
 		 * @param {number} padding - an optional tolerance in pixels
 		 */
 		this.getMatches = function(ls,p,padding){
-			var rs,a,b,d,i,l,m,x,x2,y,y2,w,h,t,dpx,ok,individual,now,start,tolerance,polygons;
+			var rs,a,b,d,i,j,l,m,x,x2,y,y2,w,h,t,dpx,ok,individual,tolerance,polygons;
 
 			this.log.time('getMatches');
 
@@ -3513,14 +3466,14 @@
 			}
 			this.log.time('getMatches');
 			return m;
-		}
+		};
 		return this;
 	}
 
 	function getPolygons(rs){
 
 		// Find each polygon in screen space
-		var oldp,areas,poly,pt;
+		var oldp,areas,poly,pt,a,i,j,k,y1,y2;
 		oldp = {};
 		areas = [];
 
@@ -3557,66 +3510,6 @@
 
 		return poly;
 	}
-
-	function Lookup(w,h){
-		this.width = w;
-		this.height = h;
-		this.layers = {};
-		this.log = new Logger({'id':'Lookup','logging':true,'logtime':true});
-		return this;
-	}
-	
-	Lookup.prototype.emptyLayer = function(l){
-		var n = this.width*this.height;
-		if(!this.layers) this.layers = {};
-		this.layers[l] = {'keys':new Array(n)};
-		return this;
-	};
-
-	Lookup.prototype.reset = function(){
-		for(var l in this.layers){
-			if(this.layers[l]) this.emptyLayer(l);
-		}
-		return this;
-	};
-
-	// Just save the image rather than process it
-	Lookup.prototype.setImage = function(px,l,id,weight){
-		this.layers[l] = {'type':'image','px':px,'key':l+':'+id+':'+weight};
-		return this;
-	};
-
-	Lookup.prototype.setRect = function(x1,y1,x2,y2,l,key){
-		var x,y,idx,xr,yr,max;
-		// Create an empty layer if it doesn't exist
-		if(!this.layers[l]) this.emptyLayer(l);
-		xr = (x1<=x2 ? [x1,x2] : [x2,x1]);
-		yr = (y1<=y2 ? [y1,y2] : [y2,y1]);
-		max = this.layers[l].keys.length;
-		for(y = yr[0]; y <= yr[1]; y++){
-			idx = (y*this.width)+xr[0];
-			for(x = xr[0]; x <= xr[1]; x++,idx++) this.layers[l].keys[idx] = key;
-		}
-		return this;
-	};
-
-	Lookup.prototype.getValue = function(x,y){
-		var r,i,j,l;
-		if(x < 0 || y < 0 || x > this.width || y > this.height) return [];
-		r = [];
-		i = x+(y*this.width);
-		for(l in this.layers){
-			if(this.layers[l]){
-				if(this.layers[l].type=="image"){
-					j = i*4;
-					if(this.layers[l].px[j] || this.layers[l].px[j+1] || this.layers[l].px[j+2] || this.layers[l].px[j+3]) r.push(this.layers[l].key);
-				}else{
-					if(this.layers[l].keys[i]) r.push(l+':'+(this.layers[l].keys[i]));
-				}
-			}
-		}
-		return r;
-	};
 
 	/**
 	 * @desc Create a logger for console messages and timing
@@ -3691,7 +3584,6 @@
 		
 		return this;
 	}
-
 
 	root.Graph = Graph;
 	root.Logger = Logger;
