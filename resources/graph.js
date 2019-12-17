@@ -890,7 +890,6 @@
 	 */
 	function parseData(data,opts){
 		var i,key,v,format,s;
-		var lookup = {};
 		// Is the xaxis highprecision? We'll cheat here by assuming that only the 
 		// xaxis can have this flag and it only applies to format=date
 		if(typeof opts.xaxis.highprecision!=="boolean") opts.xaxis.highprecision = false;
@@ -928,7 +927,6 @@
 							else v = null;
 						}
 					}
-					lookup[data.data[i][key]] = v;
 					data.data[i][key] = v;
 				}
 			}
@@ -3349,7 +3347,7 @@
 
 			for(l in ls){
 			
-				if(!ls[l].encode.hover) continue;
+				if(!ls[l].encode.hover || !ls[l].show) continue;
 
 				tolerance = padding + (ls[l].format ? ls[l].format.strokeWidth||0 : 0)/2;
 				t = ls[l].type;
