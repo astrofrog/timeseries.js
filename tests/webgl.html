@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<head>
+	<title>Test of sprites in WebGL</title>
+	<style>
+	body { background: #eee; }
+	.holder { position: relative; display: flex; }
+	canvas { border: 1px solid #444; position: relative; }
+	.icon { line-height: 0; cursor: pointer; line-height: 1.5em; padding: 0.5em; filter: grayscale(1); opacity: 0.15; }
+	.icon > svg { width: 1.5em; height: 1.5em; margin-right: 0.25em; }
+	.icon.area > svg { background: none; }
+	.icon.label { padding: 0.5em; }
+	.icon > * { vertical-align: middle; }
+	.icon.active { filter: none; opacity: 1; }
+	.icon:hover { background-color: #ddd; }
+	ul.key { list-style: none; margin: 0px; padding: 0px; display: block; }
+	ul.key li { display: inline-block; width: 100px; }
+	.right { max-width: 100%; width: 100%; padding-left: 1em; }
+	</style>
+	<script src="webgl-helper.js"></script>
+	<script src="webgl-debug.js"></script>
+	<script src="webgl-graph.js"></script>
+</head>
+<body>
+	<script>
+	var range = { 'x': {'min':0,'max':10}, 'y': {'min':0,'max':10} };
+	var numperlayer = 1e4;
+
+	function RandomGaussian(){
+		var v1,v2,s;
+		do {
+			v1 = 2.0 * Math.random() - 1.0;
+			v2 = 2.0 * Math.random() - 1.0;
+			s = v1 * v1 + v2 * v2;
+		} while (s >= 1.0 || s == 0);
+
+		s = Math.sqrt((-2.0 * Math.log(s)) / s);
+
+		return v1 * s;
+	}
+
+	function makeNoisyCurve(n){
+		var data = new Array(n);
+		var len = 8;
+		var std = 0.25;
+		var A = 4;
+		var xo = len/2;
+		for(i = 0; i < n; i++){
+			x = len * ((i - n/2) / n);
+			dx = x*len;
+			data[i] = { 'x': x+(len/2), 'y': A*(dx != 0 ? Math.sin(dx)/(dx) : 1) + RandomGaussian()*A*0.05 };
+		}
+		return data;	
+	}
+
+	function makeNoisyErrors(n){
+		var data = new Array(n);
+		var len = 8;
+		var std = 0.25;
+		var A = 5;
+		var xo = len/2;
+		var y;
+		var depth = 2;
+		var xc = 0;
+		var w = 3;
+		var w2 = w/2;
+		var dw = 0.5;
+		for(i = 0; i < n; i++){
+			x = len * ((i - n/2) / n);
+			y = A + RandomGaussian()*0.4;
+			if(x > xc-w2-dw && x < xc-w2) y -= depth*(x-(xc-w2-dw))/dw;
+			else if(x >= xc-w2 && x <= xc+w2) y -= depth;
+			else if(x > xc+w2 && x <= xc+w2+dw) y -= depth*((xc+w2+dw)-x)/dw;
+			dy = 0.2*Math.max(0.5,Math.random());
+			data[i] = { 'x': x+(len/2), 'y1': y - dy, 'y2': y + dy };
+		}
+		return data;	
+	}
+
+	function makeCurve(n){
+		var data = new Array(n);
+		var len = 8;
+		var std = 0.25;
+		var A = 4;
+		var xo = len/2;
+		for(i = 0; i < n; i++){
+			x = len * ((i - n/2) / n);
+			dx = x*len;
+			data[i] = {'x':x+(len/2),'y':A*(dx != 0 ? Math.sin(dx)/(dx) : 1)+1.0};
+		}
+		return data;
+	}
+
+	function makeData(n){
+		var data = new Array(n);
+		for(var i = 0; i < n; i++){
+			data[i] = {'x':Math.random()*(range.x.max-range.x.min) + range.x.min,'y':Math.random()*(range.y.max-range.y.min) + range.y.min};
+		}
+		return data;
+	}
+
+	let layers = [{
+		'type': 'rule',
+		'data': [{'x':0,'y':1},{'x':1.0,'y':1}],
+		'style': {'strokeStyle':'rgb(0,255,0)','strokeWidth':10,'group':'width'}
+	},{
+		'type': 'rule',
+		'data': [{'x':1.0,'y':0.0},{'x':1.0,'y':1.0}],
+		'style': {'strokeStyle':'rgb(0,0,255)','strokeWidth':5,'group':'height'}
+	},{
+		'type': 'rule',
+		'data': [{'x':1.5,'y':2.0},{'x':2,'y':5.0}],
+		'style': {'strokeStyle':'rgb(255,0,0)','strokeWidth':4}
+	},{
+		'type': 'rule',
+		'data': [{'x':3,'y':5.0},{'x':5,'y':5.0}],
+		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':1}
+	},{
+		'type': 'rule',
+		'data': [{'x':0,'y':0.0},{'x':1,'y':0.0}],
+		'style': {'strokeStyle':'rgb(255,255,0)','strokeWidth':4,'group':'width'}
+	},{
+		'type': 'rule',
+		'data': [{'x':0,'y':0.0},{'x':0,'y':1.0}],
+		'style': {'strokeStyle':'rgb(255,255,20)','strokeWidth':4,'group':'height'}
+	},{
+		'type': 'area',
+		'data': [{'x':0,'y1':0.5,'y2':1.0},{'x':1,'y1':1.0,'y2':1.5},{'x':2,'y1':0.9,'y2':1.3},{'x':3,'y1':1.2,'y2':1.6},{'x':null,'y1':null,'y2':null},{'x':6.0,'y1':1.3,'y2':1.8},{'x':8.0,'y1':1.2,'y2':1.9},{'x':9.0,'y1':0.7,'y2':1.5}],
+		'style': {'strokeStyle':'rgb(0,0,0)','strokeWidth':4,'fillStyle':'rgba(55,55,55,0.5)'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'cross',
+		'data': makeData(numperlayer),
+		'style': {'strokeWidth':2,'strokeStyle':'#f68d69','fillStyle':'#f04031'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'arrow',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'#4f4c9a'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'square',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'#662d8f'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'triangle-up',
+		'data': makeData(numperlayer),
+		'style': {'strokeWidth':1,'strokeStyle':'rgb(0,0,0)','fillStyle':'#02a24b'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'triangle-left',
+		'data': makeData(numperlayer),
+		'style': {'strokeWidth':1,'strokeStyle':'rgb(0,0,0)','fillStyle':'#57b7aa'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'triangle-right',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'#00a2d3'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'triangle-down',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'rgba(23, 140, 255, 0.6)'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'circle',
+		'data': makeData(numperlayer),
+		'style': {'strokeWidth':1,'strokeStyle':'rgba(0,0,0,1)','fillStyle':'rgba(214, 3, 3, 1)'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'stroke',
+		'data': makeData(numperlayer),
+		'style': {'strokeWidth':3,'strokeStyle':'rgb(239, 58, 171)'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'diamond',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'rgba(249, 188, 38, 1)'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'shape': 'wedge',
+		'data': makeData(numperlayer),
+		'style': {'fillStyle':'#b72268'}
+	},{
+		'type': 'symbol',
+		'size': 16,
+		'data': makeData(numperlayer),
+		'shape': 'M0,.5L.6,.8L.5,.1L1,-.3L.3,-.4L0,-1L-.3,-.4L-1,-.3L-.5,.1L-.6,.8L0,.5Z',
+		'style': {'strokeWidth':0,'strokeStyle':'rgba(255,103,0,0.5)','fillStyle':'rgba(249,188,38,1)'}
+	},{
+		'type': 'symbol',
+		'size': 1,
+		'data': makeData(numperlayer),
+		'shape': 'square',
+		'style': {'fillStyle':'rgba(249,0,0,1)'}
+	},{
+		'type': 'line',
+		'data': makeNoisyCurve(1e4),
+		'style': {'strokeStyle':'rgb(20,210,200)','strokeWidth':2}
+	},{
+		'type': 'rect',
+		'data': makeNoisyErrors(1e3),
+		'style': {'strokeWidth':'2','strokeStyle':'rgb(255,103,0)','fillStyle':'rgba(249,188,38,1)'}
+	},{
+		'type': 'line',
+		'data': [{'x':0.0,'y':4.0},{'x':1,'y':5.0},{'x':2,'y':4.5},{'x':null,'y':null},{'x':3,'y':6.0},{'x':4,'y':7}],
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':10}
+	},{
+		'type': 'line',
+		'data': [{'x':3.0,'y':5.0},{'x':3.5,'y':5.0},{'x':null,'y':null},{'x':3.6,'y':5.0},{'x':4.1,'y':5.2},{'x':null,'y':null},{'x':4.2,'y':5.2},{'x':4.7,'y':5.3}],
+		'style': {'strokeStyle':'rgb(255,0,255)','strokeWidth':1}
+	},{
+		'type': 'rect',
+		'data': [{'x1':7.0,'x2':7.5,'y':8.0},{'x1':8.0,'x2':8.5,'y':3.6}],
+		'style': {'strokeWidth':'3','strokeStyle':'rgb(0,200,100)','fillStyle':'rgba(249,188,38,1)'}
+	},{
+		'type': 'rect',
+		'data': [{'x1':5.0,'x2':6.0,'y1':1.0,'y2':3.0},{'x1':7.0,'x2':8.0,'y1':4.0,'y2':5.0}],
+		'style': {'strokeWidth':'5','strokeStyle':'rgba(255,103,255,0.8)','fillStyle':'rgba(0,0,255,1)'}
+	}];
+	
+
+	// Rendering data shared with the scalers.
+	let graph;
+
+	// Create graph
+	window.addEventListener("load", function(){
+		graph = new WebGLGraph({'logging':true,'logtime':true,'id':'canvas','key':'right','viewPort':{'left':100,'top':10,'right':10,'bottom':100}});
+
+		graph.log.time('startup');
+
+		var cs = document.getElementById('canvas');
+		cs.addEventListener('wheel',function(e){
+			graph.log.time('wheel');
+			e.preventDefault();
+			graph.scale(e.deltaY < 0 ? 1/1.2 : 1.2);
+			graph.log.time('wheel');
+		})
+		
+		window.addEventListener('keydown',function(e){
+			if(e.keyCode==37){
+				e.preventDefault();
+				graph.translate(-0.01,0);
+				graph.draw();
+			}else if(e.keyCode==39){
+				e.preventDefault();
+				graph.translate(0.01,0);
+				graph.draw();
+			}else if(e.keyCode==38){
+				e.preventDefault();
+				graph.translate(0,0.01);
+				graph.draw();
+			}else if(e.keyCode==40){
+				e.preventDefault();
+				graph.translate(0,-0.01);
+				graph.draw();
+			}
+			i = parseInt(e.key);
+			if(typeof i==="number" && !isNaN(i)) graph.toggleLayer(i);
+		});
+
+		// Add the layers
+		for(var i = 0; i < layers.length; i++) graph.addLayer(layers[i]);
+
+		graph.draw();
+		graph.log.time('startup');
+
+
+	}, false);
+
+	</script>
+	
+	<div class="holder">
+		<div class="left">
+			<canvas id="canvas" width="800" height="460">
+				Oh no! Your browser doesn't support canvas!
+			</canvas>
+		</div>
+		<div class="right">
+		
+		</div>
+		
+	</div>
+
+</body>
+</html>

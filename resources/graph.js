@@ -14,29 +14,14 @@
 	function clip(a){ return a.replace(/(\.[0-9]+?)0+$/,function(m,p1){return p1;}); }
 
 	/**
-	 * @desc Convert a "#xxxxxx" colour into an "rgba(r,g,b,a)" colour
+	 * @desc Convert a "#xxxxxx" or rgb(r,g,b) colour into an rgba(r,g,b,a)
 	 */
-	function hex2rgba(hex,a){
-		var o = getRGB(hex,a);
-		return 'rgba('+o.r+','+o.g+','+o.b+','+o.a+')';
-	}
-
-	/**
-	 * @desc Extract the RGB values
-	 */
-	function getRGB(c,a){
-		var r,g,b;
+	function hex2rgba(c,a){
 		a = (a||1);
-		if(c.indexOf('#')==0){
-			r = parseInt(c.substr(1,2),16);
-			g = parseInt(c.substr(3,2),16);
-			b = parseInt(c.substr(5,2),16);
-		}else if(c.indexOf("rgba")==0){
-			c.replace(/rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9\.]+)\)/,function(m,p1,p2,p3,p4){ r = parseInt(p1); g = parseInt(p2); b = parseInt(p3); a = parseFloat(p4); return m; });
-		}else if(c.indexOf("rgb(")==0){
-			c.replace(/rgb\(([0-9]+),([0-9]+),([0-9]+)\)/,function(m,p1,p2,p3){ r = p1; g = p2; b = p3; return m; });
-		}
-		return {'r':r,'g':g,'b':b,'a':a};
+		if(c.indexOf("rgba")==0) return c;
+		else if(c.indexOf("rgb(")==0) return c.replace(/(.*)\)/,function(m,p1){ return p1+","+a+")"; });
+		else if(c.indexOf('#')==0) return 'rgba('+parseInt(c.substr(1,2),16)+','+parseInt(c.substr(3,2),16)+','+parseInt(c.substr(5,2),16)+','+a+')';
+		return "";
 	}
 
 	var hasbig = false;
@@ -134,9 +119,6 @@
 	root.fullScreenApi = fullScreenApi;
 	// End of Full Screen API
 
-	// Polyfill for isArray()
-	if(!Array.isArray) Array.isArray = function(arg){ return Object.prototype.toString.call(arg) === '[object Array]'; };
-
 	// Extra mathematical/helper functions that will be useful - inspired by http://alexyoung.github.com/ico/
 	var G = {};
 	G.sum = function(a) { var i, sum; for (i = 0, sum = 0; i < a.length; sum += a[i++]){} return sum; };
@@ -145,44 +127,31 @@
 	if(typeof Array.prototype.min === 'undefined') G.min = function(a) { return Math.min.apply({}, a); };
 	else G.min = function(a) { return a.min(); };
 	G.mean = function(a) { return G.sum(a) / a.length; };
-	G.stddev = function(a) { return Math.sqrt(G.variance(a)); };
-	G.log10 = function(v) { return (Math.log10 ? Math.log10(v) : Math.log(v)/2.302585092994046); };
-	G.variance = function(a) { var mean = G.mean(a), variance = 0; for (var i = 0; i < a.length; i++) variance += Math.pow(a[i] - mean, 2); return variance / (a.length - 1); };
-	G.deepExtend = function(destination, source) {
-		for(var property in source){
-			if(typeof source[property] === "object"){
-				// If the object type has changed, we'll over-write the object entirely
-				if(Array.isArray(source[property]) != Array.isArray(destination[property])){
-					destination[property] = clone(source[property]);
-				}else{
-					destination[property] = destination[property] || {};
-					arguments.callee(destination[property], source[property]);
+	G.deepExtend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			var obj = arguments[i];
+			if(!obj) continue;
+
+			for(var key in obj){
+				if(obj.hasOwnProperty(key)){
+					if(typeof obj[key] === 'object') out[key] = G.deepExtend(out[key], obj[key]);
+					else out[key] = obj[key];
 				}
-			}else{
-				destination[property] = source[property];
 			}
 		}
-		return destination;
+		return out;
 	};
-	if(typeof Object.extend === 'undefined') {
-		G.extend = function(destination, source) {
-			for (var property in source) {
-				if (source.hasOwnProperty(property)) destination[property] = source[property];
+	G.extend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			if(!arguments[i]) continue;
+			for(var key in arguments[i]){
+				if (arguments[i].hasOwnProperty(key)) out[key] = arguments[i][key];
 			}
-			return destination;
-		};
-	}else G.extend = Object.extend;
-	if(Object.keys) G.keys = Object.keys;
-	else {
-		G.keys = function(o) {
-			if (o !== Object(o)) throw new TypeError('Object.keys called on non-object');
-			var ret = [], p;
-			for(p in o) {
-				if(Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
-			}
-			return ret;
-		};
-	}
+		}
+		return out;
+	};
 
 	/**
 	 * @desc Define a shortcut for checking variable types
@@ -267,13 +236,6 @@
 		this.logging = false;
 		this.scale = 1;
 
-		// Add options to detect for older IE
-		this.ie = false;
-		this.excanvas = (typeof G_vmlCanvasManager != 'undefined') ? true : false;
-		/*@cc_on
-		this.ie = true
-		@*/
-
 		// Overwrite defaults with variables passed to the function
 		var n = "number";
 		var t = "string";
@@ -322,8 +284,6 @@
 		this.canvasholder.css({'position':'relative'});
 		this.canvas.css({'position':'absolute'});
 		this.c = this.canvas[0];
-		// For excanvas we need to initialise the newly created <canvas>
-		if(this.excanvas) this.c = G_vmlCanvasManager.initElement(this.c);
 
 		if(this.c && this.c.getContext){
 			this.ctx = this.c.getContext('2d');
@@ -556,7 +516,7 @@
 		if(!options) options = {};
 
 		// Define some variables
-		this.version = "0.3.6";
+		this.version = "0.3.7";
 		if(typeof element!="object") return;
 		this.marks = {};
 		this.chart = {};
@@ -608,6 +568,9 @@
 			if(this.paper[p]) this.paper[p] = setWH(this.paper[p],this.canvas.wide,this.canvas.tall,s);
 		}
 
+		// Bind events to the canvas holder
+		this.canvas.canvasholder.on("mouseenter",function(ev){ disableScroll(); }).on("mouseleave",function(ev){ enableScroll(); });
+
 		// Bind events to the canvas
 		this.canvas.on("resize",{me:this},function(ev){
 			// Attach an event to deal with resizing the <canvas>
@@ -621,15 +584,15 @@
 			g.setOptions().defineAxis("x").setChartOffset().resetDataStyles().redraw({'update':true,'callback':function(){ this.trigger("resize",{event:ev.event}); }});
 			this.log.message("Total until end of resize:" + (new Date() - d) + "ms");
 		}).on("mousedown",{me:this},function(ev){
-			var event,g,x,y,s,d,t,i,ii,a,m,ds;
+			var event,g,x,y,s,d,t,ii,a,m,ds;
 			event = ev.event.originalEvent;
 			g = ev.data.me;	// The graph object
 			if(!g.ready) g.stop();
 			if(event.which!=1) return;	// Only zoom on left click
 
 			// Check if there is a data point at the position that the user clicked.
-			x = event.layerX;
-			y = event.layerY;
+			x = event.layerX-2;
+			y = event.layerY-2;
 			ds = g.dataAtMousePosition(x,y);
 
 			// No data (but the alt key is pressed) so we'll start the zoom selection
@@ -647,39 +610,48 @@
 
 			// Loop over the series that match
 			m = [];
+			var p;
 			for(s = 0; s < ds.length; s++){
 				d = ds[s].split(":");
-				if(d && d.length == 3){
+				if(d && d.length == 2){
 					// This is a data point so we'll trigger the clickpoint event
 					t = (d[0]);
-					i = parseInt(d[1]);
 					ii = g.getPixPos(x,y);
-					m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
+					p = {'series':t,'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]};
+					if(d[1]!="*"){
+						p.n = parseInt(d[1]);
+						p.point = g.marks[t].data[p.n];
+					}
+					m.push(p);
 				}
 			}
 			a = g.trigger("clickpoint",{event:event,matches:m});
 			return true;
 		}).on("mousemove",{me:this},function(ev){
-			var event,g,x,y,d,t,i,ii,a,m,ds;
+			var event,g,x,y,d,t,ii,a,m,ds,p;
 			event = ev.event.originalEvent;
 			if(!event) return;
 			g = ev.data.me;	// The graph object
 			if(g.updating) return;
 			g.updating = true;
-			x = event.layerX;
-			y = event.layerY;
+			x = event.layerX-2;	// There seems to be an offset which isn't obvious
+			y = event.layerY-2;
 			// Attach hover event
 			if(!g.selecting && !g.panning && !g.timeout.wheel){
-				ds = g.dataAtMousePosition(event.offsetX,event.offsetY);
+				ds = g.dataAtMousePosition(x,y);
 				g.highlight(ds);
 				m = [];
 				for(var s = 0; s < ds.length; s++){
 					d = ds[s].split(":");
-					if(d && d.length == 3){
+					if(d && d.length == 2){
 						t = d[0];
-						i = parseInt(d[1]);
 						ii = g.getPixPos(x,y);
-						m.push({'series':t,'n':i,'point':g.marks[t].data[i],'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]});
+						p = {'series':t,'title':g.marks[t].title,'color':g.marks[t].color,'xpix':ii[0],'ypix':ii[1]};
+						if(d[1]!="*"){
+							p.n = parseInt(d[1]);
+							p.point = g.marks[t].data[p.n];
+						}
+						m.push(p);
 					}
 				}
 				a = g.trigger("hoverpoint",{event:event,matches:m});
@@ -726,7 +698,6 @@
 			if(event.offsetY <= 0) event.layerY = 0;
 			g.canvas.trigger('mousemove',{event:event});
 			g.canvas.trigger('mouseup',{event:event});
-			enableScroll();
 		}).on("mouseup",{me:this},function(ev){
 			var g = ev.data.me;	 // The graph object
 			var event = ev.event.originalEvent;
@@ -770,7 +741,6 @@
 			return true;
 		}).on("wheel",{me:this,options:options},function(ev){
 			var oe,g,c,co,f,s;
-			disableScroll();
 			oe = ev.event.originalEvent;
 			g = ev.data.me;
 			if(g.timeout.wheel) clearTimeout(g.timeout.wheel);
@@ -798,7 +768,6 @@
 				'callback': function(){
 					this.timeout.wheel = undefined;
 					this.trigger('wheelstop',{event:ev.event});
-					enableScroll();
 				}
 			});
 
@@ -878,7 +847,7 @@
 
 		// Add user-defined options
 		//this.options = Object.assign(this.options, options);
-		this.options = G.deepExtend(this.options, options);
+		this.options = G.deepExtend({}, this.options, options);
 		// Set defaults for options that haven't already been set
 		if(typeof this.options.grid!=="object") this.options.grid = {};
 		if(typeof this.options.grid.show!=="boolean") this.options.grid.show = false;
@@ -990,9 +959,9 @@
 				t = types[j];
 				if(typeof attr.marks.mark[i].props[t]!=="object" && attr.marks[t]) attr.marks.mark[i].props[t] = clone(attr.marks[t]);
 			}
-			// Should process all the "enter" options here
-			if(attr.marks.enter) attr.marks.mark[i] = attr.marks.enter.call(attr['this'],attr.marks.mark[i],attr.marks.encode.enter);
 		}
+		// Should process all the "enter" options here
+		if(attr.marks.enter) attr.marks.mark = attr.marks.enter.call(attr['this'],attr.marks.mark,attr.marks.encode.enter);
 		attr.i = i;
 		if(i < attr.marks.data.length){
 			attr['this'].timeout.addMark = setTimeout(processMarksChunk,100,attr);
@@ -1103,8 +1072,8 @@
 		var d,i,j,k,max,axes,axis,v,domain,keepers;
 		if(!this.x) this.x = {};
 		if(!this.y) this.y = {};
-		this.x = G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
-		this.y = G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
+		G.extend(this.x,{ min: 1e100, max: -1e100, log: (this.options.xaxis.type=="log"), label:{text:this.options.xaxis.label}, fit:this.options.xaxis.fit });
+		G.extend(this.y,{ min: 1e100, max: -1e100, log: (this.options.yaxis.type=="log"), label:{text:this.options.yaxis.label}, fit:this.options.yaxis.fit });
 
 		if(this.options.xaxis.type=="time" || this.options.xaxis.type=="utc") this.x.isDate = true;
 
@@ -1286,8 +1255,8 @@
 			pos[0] = c.x - sx*(c.x-this.x.min);
 			pos[1] = c.x + sx*(this.x.max-c.x);
 			if(this.y.log){
-				pos[2] = Math.pow(10,G.log10(c.y) - sy*(G.log10(c.y) - G.log10(this.y.min)));
-				pos[3] = Math.pow(10,G.log10(c.y) + sy*(G.log10(this.y.max) - G.log10(c.y)));
+				pos[2] = Math.pow(10,Math.log10(c.y) - sy*(Math.log10(c.y) - Math.log10(this.y.min)));
+				pos[3] = Math.pow(10,Math.log10(c.y) + sy*(Math.log10(this.y.max) - Math.log10(c.y)));
 			}else{
 				pos[2] = c.y - sy*(c.y-this.y.min);
 				pos[3] = c.y + sy*(this.y.max-c.y);
@@ -1350,8 +1319,8 @@
 		// First we need to calculate the log min/max/range
 		if(this[t].log){
 			// Adjust the low and high values for log scale
-			this[t].logmax = G.log10(this[t].max);
-			this[t].logmin = (this[t].min <= 0) ? this[t].logmax-2 : G.log10(this[t].min);
+			this[t].logmax = Math.log10(this[t].max);
+			this[t].logmin = (this[t].min <= 0) ? this[t].logmax-2 : Math.log10(this[t].min);
 			this[t].logrange = this[t].logmax-this[t].logmin;
 		}
 
@@ -1404,7 +1373,7 @@
 			}else v = c.value;
 		}else v = c;
 		k = (this[t].log) ? 'log':'';
-		if(this[t].log) v = G.log10(v);
+		if(this[t].log) v = Math.log10(v);
 		mn = this[t][k+'min'];
 		mx = this[t][k+'max'];
 		rn = this[t][k+'range'];
@@ -1438,10 +1407,12 @@
 	 */
 	Graph.prototype.pixel2data = function(x,y){
 		// x-axis
-		x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
+		if(typeof x==="number") x = this.x.min + ((x-this.chart.left)/this.chart.width)*this.x.range;
 		// y-axis
-		if(this.y.log) y = Math.pow(10,this.y.logmin + (1-(y-this.chart.top)/this.chart.height)*this.y.logrange);
-		else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
+		if(typeof y==="number"){
+			if(this.y.log) y = Math.pow(10,this.y.logmin + (1-(y-this.chart.top)/this.chart.height)*this.y.logrange);
+			else y = this.y.min + (1-(y-this.chart.top)/this.chart.height)*this.y.range;
+		}
 		return {x:x,y:y};
 	};
 
@@ -1454,7 +1425,7 @@
 		x = Math.round(x*this.canvas.scale);
 		y = Math.round(y*this.canvas.scale);
 		var rtn = [];
-		if(this.lookup) rtn = this.lookup.getValue(x,y);
+		if(this.picker) rtn = this.picker.getMatches(this.marks,{'screen':{'x':x,'y':y},'data':this.pixel2data(x,y)},2);
 		if(rtn.length<1) this.canvas.canvas.css({'cursor':''});
 		return rtn;
 	};
@@ -1501,7 +1472,7 @@
 	Graph.prototype.highlight = function(ds){
 		if(this.selecting) return this;	// If we are panning we don't want to highlight symbols
 		if(!this.ready) return this;	// Don't highlight if we are in the middle of doing something
-		if(this.lookup && ds && ds.length > 0){
+		if(this.picker && ds && ds.length > 0){
 			// We want to put the saved version of the canvas back
 			this.canvas.pasteFromClipboard();
 			var d,t,i,w,clipping,typ,mark,ctx,n,s,val,top,topmark,series;
@@ -1513,8 +1484,9 @@
 			for(s = 0; s < n; s++){
 				d = ds[s].split(":");
 				t = d[0];
-				i = d[1];
-				w = d[2];
+				if(d[1]=="*") i = 0;
+				else i = parseInt(d[1]);
+				w = 0.8;	// weight
 				clipping = false;
 				typ = this.marks[t].type;
 				if(this.marks[t].encode.hover && this.marks[t].interactive){
@@ -1530,7 +1502,7 @@
 					}
 					if(typ=="line" || typ=="symbol" || typ=="rect" || typ=="area" || typ=="rule" || typ=="text"){
 						// Update the mark if necessary
-						mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark[i]),this.marks[t].encode.hover) : clone(this.marks[t].mark[i]));
+						mark = (typeof this.marks[t].hover==="function" ? this.marks[t].hover.call(this,clone(this.marks[t].mark),this.marks[t].encode.hover,i) : clone(this.marks[t].mark[i]));
 						// Set the canvas colours
 						this.setCanvasStyles(ctx,mark);
 						this.setCanvasStyles(this.paper.temp.ctx,mark);
@@ -1552,8 +1524,9 @@
 
 					// Set the clipping
 					if(clipping) ctx.restore();
-					if(parseFloat(w) >= top && mark.props.tooltip){
-						top = parseFloat(w);
+
+					if(w >= top && mark.props.tooltip){
+						top = w;
 						topmark = mark;
 						series = this.marks[t];
 					}
@@ -1568,7 +1541,6 @@
 			var html = "";
 
 			if(topmark){
-
 				// Build the hovertext output
 				val = {
 					title: (series.title) ? series.title : "", 
@@ -1576,7 +1548,7 @@
 					ylabel: (this.y.label.text ? this.y.label.text : 'y'),
 					data: series.data[i]
 				};
-
+				
 				html = removeRoundingErrors(topmark.props.tooltip) || "";
 			}
 			if(html){
@@ -1652,8 +1624,8 @@
 		// Sort out what to do for log scales
 		if(this[a].log){
 			// Adjust the low and high values for log scale
-			this[a].logmax = G.log10(this[a].max);
-			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : G.log10(this[a].min);
+			this[a].logmax = Math.log10(this[a].max);
+			this[a].logmin = (this[a].min <= 0) ? this[a].logmax-2 : Math.log10(this[a].min);
 			this[a].logrange = this[a].logmax-this[a].logmin;
 		}
 
@@ -2363,14 +2335,8 @@
 	 * @desc Reset all the styles for the datasets
 	 */
 	Graph.prototype.resetDataStyles = function(){
-		var sh,i;
-		for(sh in this.marks){
-			if(this.marks[sh].update && this.marks[sh].show){
-				for(i = 0; i < this.marks[sh].mark.length ; i++){
-					// Process all the series updates here
-					this.marks[sh].mark[i] = this.marks[sh].update.call(this,this.marks[sh].mark[i],this.marks[sh].encode.update);
-				}
-			}
+		for(var sh in this.marks){
+			if(this.marks[sh].update && this.marks[sh].show) this.marks[sh].mark = this.marks[sh].update.call(this,this.marks[sh].mark,this.marks[sh].encode.update);
 		}
 		return this;
 	};
@@ -2563,16 +2529,12 @@
 
 	/**
 	 * @desc Draw the data onto the graph
-	 * @param {boolean} updateLookup - do we update the pixel-based lookup? It can take a while so if a quick update is needed set this to false.
 	 */
-	Graph.prototype.drawData = function(updateLookup){
+	Graph.prototype.drawData = function(){
 
-		var p,sh,ctx,i,m,update,px,quickdraw,colour;
-		// Define an empty pixel-based lookup table
-		if(updateLookup){
-			if(!this.lookup) this.lookup = new Lookup(this.canvas.c.width,this.canvas.c.height);
-			else this.lookup.reset();
-		}
+		var p,sh,ctx,i,m,update;
+		// Define a pixel->data lookup function
+		if(!this.picker) this.picker = new Picker(this);
 		// Clear the data canvas
 		this.clear(this.paper.data.ctx);
 		this.paper.data.scale = {'x':1,'y':1};
@@ -2597,31 +2559,16 @@
 				if(this.marks[sh].type=="rule") this.drawRule(sh,{'update':true});
 				if(this.marks[sh].type=="area") this.drawArea(sh,{'update':true});
 				if(this.marks[sh].type=="symbol" || this.marks[sh].type=="rect" || this.marks[sh].type=="text"){
-					// Work out if we need to update this lookup for these marks
-					update = (updateLookup && typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
+					// Work out if we need to update these marks
+					update = (typeof this.marks[sh].hover==="function" && this.marks[sh].interactive);
 
-					quickdraw = (this.log.metrics['drawData '+sh+' '+this.marks[sh].type].av > 70);
-					if(quickdraw){
-						px = this.paper.data.ctx.getImageData(0, 0, 1, 1);
-						colour = getRGB(this.marks[sh].mark[0].props.format.fill,this.marks[sh].mark[0].props.format.fillOpacity);
-						for(i = 0; i < 4; i+=4){
-							px.data[i + 0] = colour.r;
-							px.data[i + 1] = colour.g;
-							px.data[i + 2] = colour.b;
-							px.data[i + 3] = colour.a*255;
-						}
-					}
 					// Loop over points drawing them
 					for(i = 0; i < this.marks[sh].mark.length ; i++){
 						m = this.marks[sh].mark[i];
 						p = m.props;
 						if(p.x && p.y){
-							if(this.marks[sh].type=="symbol"){
-								// If this layer is taking too long to update we'll make the symbol simpler
-								if(quickdraw){
-									if(p.x >= this.chart.left && p.x <= this.chart.left+this.chart.width && p.y >= this.chart.top && p.y <= this.chart.top+this.chart.height) this.paper.data.ctx.putImageData(px, p.x*this.canvas.scale, p.y*this.canvas.scale);
-								}else this.drawShape(m,{'update':update});
-							}else if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
+							if(this.marks[sh].type=="symbol") this.drawShape(m,{'update':update});
+							else if(this.marks[sh].type=="rect") this.drawRect(m,{'update':update});
 							else if(this.marks[sh].type=="text") this.drawText(m,{'update':update});
 						}
 					}
@@ -2656,7 +2603,6 @@
 	 * @param {number} attr.y1 - the y-axis value y1 value
 	 * @param {number} attr.x2 - the x-axis value x2 value
 	 * @param {number} attr.y2 - the y-axis value y2 value
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawRect = function(datum,attr){
 		var x1,y1,x2,y2,dx,dy,o,ctx,n,l,r,t,b,ok;
@@ -2699,8 +2645,7 @@
 			ctx.rect(x1,y1,dx,dy);
 			ctx.fill();
 			ctx.closePath();
-			o = {'id':datum.id,'xa':Math.floor(x1-dx/2),'xb':Math.ceil(x1+dx/2),'ya':Math.floor(y2),'yb':Math.ceil(y1),'w':1};
-			if(attr.update) this.addRectToLookup(o);
+			o = {'id':datum.id,'xa':Math.floor(x1),'xb':Math.ceil(x2),'ya':Math.round(y2),'yb':Math.round(y1),'w':1};
 			return o;
 		}
 		return "";
@@ -2710,26 +2655,26 @@
 	 * @desc Draw a rule
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawRule = function(sh,attr){
 		if(!attr) attr = {};
-		var ctx,i,p;
+		var ctx,i,p,m;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
 		for(i = 0; i < this.marks[sh].mark.length ; i++){
-			p = this.marks[sh].mark[i].props;
-			if(this.marks[sh].mark[i].data.x){
-				if(!this.marks[sh].mark[i].data.x.scale){
-					if(this.marks[sh].mark[i].data.x.value == 0) p.x1 = this.chart.left;
-					if(this.marks[sh].mark[i].data.x2.field && this.marks[sh].mark[i].data.x2.field.group=="width") p.x2 = this.chart.width+this.chart.left;
+			m = this.marks[sh].mark[i];
+			p = m.props;
+			if(m.data.x){
+				if(!m.data.x.scale){
+					if(m.data.x.value == 0) p.x1 = this.chart.left;
+					if(m.data.x2.field && m.data.x2.field.group=="width") p.x2 = this.chart.width+this.chart.left;
 				}
 			}
-			if(this.marks[sh].mark[i].data.y){
-				if(!this.marks[sh].mark[i].data.y.scale){
-					if(this.marks[sh].mark[i].data.y.value == 0) p.y1 = this.chart.top;
-					if(this.marks[sh].mark[i].data.y2.field && this.marks[sh].mark[i].data.y2.field.group=="height") p.y2 = this.chart.height+this.chart.top;
+			if(m.data.y){
+				if(!m.data.y.scale){
+					if(m.data.y.value == 0) p.y1 = this.chart.top;
+					if(m.data.y2.field && m.data.y2.field.group=="height") p.y2 = this.chart.height+this.chart.top;
 				}
 			}
 			if(isNaN(p.x)){
@@ -2746,11 +2691,9 @@
 			if(!p.y2) p.y2 = p.y;
 			if(p.x1 && p.y1) this.paper.temp.ctx.moveTo(p.x1,p.y1);
 			if(p.x2 && p.y2) this.paper.temp.ctx.lineTo(p.x2,p.y2);
-			if(attr.update && (p.x1==p.x2 || p.y1==p.y2)) this.lookup.setRect(p.x1,p.y1,p.x2,p.y2,sh,i,0.6);
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-
 		return this;
 	};
 
@@ -2793,26 +2736,21 @@
 	 * @desc Draw a line
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawLine = function(sh,attr){
-		var ctx,ps,oldp,i,p;
+		var ctx,i,xok,oldxok,n;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		ps = this.marks[sh].mark;
-		oldp = ps[0].props;
-		this.paper.temp.ctx.moveTo(oldp.x,oldp.y);
-		for(i = 1; i < ps.length ; i++){
-			p = ps[i].props;
-			if(!isNaN(oldp.x) && !isNaN(p.x)) this.paper.temp.ctx.lineTo(p.x,p.y);
-			oldp = p;
+		this.paper.temp.ctx.moveTo(this.marks[sh].mark[0].x,this.marks[sh].mark[0].y);
+		n = this.marks[sh].mark.length;
+		for(i = 1; i < n ; i++){
+			xok = !isNaN(this.marks[sh].mark[i].props.x);
+			if(oldxok && xok) this.paper.temp.ctx.lineTo(this.marks[sh].mark[i].props.x,this.marks[sh].mark[i].props.y);
+			oldxok = xok;
 		}
 		this.paper.temp.ctx.stroke();
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-
-		if(attr.update) this.addTempToLookup({'layer':sh, 'id':0, 'weight':0.6});
-
 		return this;
 	};
 
@@ -2820,51 +2758,23 @@
 	 * @desc Draw an area on the chart
 	 * @param {number} sh - the index of the mark set
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawArea = function(sh,attr){
-		var ctx,oldp,areas,a,i,j,k,p,y1,y2;
+		var ctx,a,j,poly,coord;
 		ctx = (attr.ctx || this.paper.data.ctx);
 		this.clear(this.paper.temp.ctx);
 		this.paper.temp.ctx.beginPath();
-		oldp = {};
-		areas = [];
-		// We need to loop across the data first splitting into segments
-		for(i = 0, a = 0; i < this.marks[sh].mark.length ; i++){
-			p = this.marks[sh].mark[i].props;
-			y1 = (p.y1 || p.y);
-			y2 = p.y2;
-			if(!isNaN(p.x) && !isNaN(y1) && !isNaN(y2)){
-				if(!areas[a]) areas[a] = [];
-				areas[a].push(i);
-			}else a++;
-		}
-		// To do: make the polygon lookup processing more efficient by
-		// not processing the entire shape in one go
-		var poly = new Array(areas.length);
-		for(a = 0; a < areas.length ; a++){
-			if(areas[a] && areas[a].length){
-				poly[a] = new Array(areas[a].length*2);
-				// Move along top of area (y2 coordinates)
-				k = 0;
-				for(j = 0; j < areas[a].length; j++,k++){
-					p = this.marks[sh].mark[areas[a][j]].props;
-					poly[a][k] = [p.x,p.y2];
-				}
-				// Move along bottom of area backwards
-				for(j = areas[a].length-1; j >= 0; j--,k++){
-					p = this.marks[sh].mark[areas[a][j]].props;
-					p.y1 = (p.y1 || p.y);
-					poly[a][k] = [p.x,p.y1];
-				}
-			}
-		}
+		
+		// Find each polygon in screen space
+		poly = getPolygons(this.marks[sh].data);
+
 		// Draw each polygon
 		for(a = 0; a < poly.length; a++){
 			if(poly[a]){
 				for(j = 0; j < poly[a].length; j++){
-					if(j==0) this.paper.temp.ctx.moveTo(poly[a][j][0],poly[a][j][1]);
-					else this.paper.temp.ctx.lineTo(poly[a][j][0],poly[a][j][1]);
+					coord = { 'x':this.getPos('x',poly[a][j][0]),'y':this.getPos('y',poly[a][j][1]) };
+					if(j==0) this.paper.temp.ctx.moveTo(coord.x,coord.y);
+					else this.paper.temp.ctx.lineTo(coord.x,coord.y);
 				}
 			}
 		}
@@ -2873,8 +2783,6 @@
 		if(this.marks[sh].mark[0].props.format.strokeWidth > 0) this.paper.temp.ctx.stroke();
 
 		ctx.drawImage(this.paper.temp.c,0,0,this.paper.temp.width,this.paper.temp.height);
-
-		if(attr.update) this.addTempToLookup({'layer':sh,'id':0, 'weight':0.4});
 
 		return this;
 	};
@@ -2887,7 +2795,6 @@
 	 * @param {number} attr.x - over-ride the x-axis value
 	 * @param {number} attr.y - over-ride the y-axis value
 	 * @param {context} attr.ctx - the context of the canvas
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawText = function(datum,attr){
 		var ctx,t,f,o,x,y;
@@ -2896,11 +2803,10 @@
 		y = (attr.y || datum.props.y);
 		t = (attr.text || datum.data.text || "Label");
 		f = JSON.parse(JSON.stringify(datum.props.format));
-		if(attr.props) f.extend(attr.props);
+		if(attr.props) G.extend(f,attr.props);
 		o = this.drawTextLabel(t,x,y,{'ctx':ctx,'format':f});
 		o.id = datum.id;
 		o.weight = 1;
-		if(attr.update) this.addRectToLookup(o);
 		return o;
 	};
 
@@ -2988,7 +2894,6 @@
 	 * @param {number} attr.x - over-ride the x-axis value
 	 * @param {number} attr.y - over-ride the y-axis value
 	 * @param {context} attr.ctx - the context of the canvas (default is this.paper.data.ctx)
-	 * @param {boolean} attr.update - do we need to update the pixel-lookup?
 	 */
 	Graph.prototype.drawShape = function(datum,attr){
 		if(!attr.ctx) attr.ctx = this.paper.data.ctx;
@@ -3072,84 +2977,8 @@
 		}
 		ctx.fill();
 		if(p.format.strokeWidth > 0) ctx.stroke();
-
 		o = {'id':datum.id,'xa':Math.floor(x1-w/2),'xb':Math.ceil(x1+w/2),'ya':Math.floor(y1-h/2),'yb':Math.ceil(y1+h/2)};
-		if(attr.update) this.addRectToLookup(o);
 		return o;
-	};
-
-	/**
-	 * @desc Use the temporary canvas to build the lookup (make sure you've cleared it before writing to it)
-	 * @param {number} attr.layer - the ID of the layer
-	 * @param {number} attr.id - the index of this data point in the layer
-	 * @param {number} attr.weight - the weighting for this data point at this pixel
-	 */
-	Graph.prototype.addTempToLookup = function(attr){
-		if(typeof attr.id!=="number") return;
-		var px,i,p,x,y,n,w,h;
-		w = this.canvas.c.width;
-		h = this.canvas.c.height;
-		px = this.paper.temp.ctx.getImageData(0,0,w,h);
-		n = px.data.length;
-		for(i = p = x = y = 0; i < n; i+=4, p++, x++){
-			if(x == w){
-				x = 0;
-				y++;
-			}
-			if(px.data[i] || px.data[i+1] || px.data[i+2] || px.data[i+3]) this.lookup.setValue(x,y,attr.layer,attr.id,attr.weight);
-		}
-		return this;
-	};
-
-	/**
-	 * @desc Use a bounding box to define the lookup area
-	 * @param {object} i - the datum to use
-	* @param {number} i.layer - the ID of the layer
-	 * @param {number} i.id - the index of this data point in the layer
-	 * @param {number} i.xa - the starting x value
-	 * @param {number} i.xb - the ending x value
-	 * @param {number} i.ya - the starting y value
-	 * @param {number} i.yb - the ending y value
-	 * @param {number} i.weight - the weighting for this data point at this pixel
-	 */
-	Graph.prototype.addRectToLookup = function(i){
-		if(!i.id) return;
-		var x,y,p,t,dir,bit;
-		p = 1;
-		if(i.xb < i.xa){ t = i.xa; i.xa = i.xb; i.xb = t; }
-		if(i.yb < i.ya){ t = i.ya; i.ya = i.yb; i.yb = t; }
-
-		for(dir in {'x':'','y':''}){
-			if(dir){
-				for(bit in {'a':'','b':''}){
-					if(bit){
-						i[dir+''+bit] *= this.canvas.scale;
-						i[dir+''+bit] = (bit == "a") ? Math.floor(i[dir+''+bit]) : Math.ceil(i[dir+''+bit]);
-					}
-				}
-			}
-		}
-
-		i.xb += p*2;
-		i.xb = Math.min(i.xb,this.canvas.c.width-1);
-		i.ya -= p;
-		i.yb += p;
-		if(i.xa < 0) i.xa = 0;
-		if(i.ya < 0) i.ya = 0;
-		// Clip to chart
-		i.yb = Math.min(i.yb,(this.chart.top+this.chart.height)*this.canvas.scale);
-		
-		// Update layer info
-		if(!i.layer){
-			var bits = i.id.split(":");
-			i.layer = bits[0];
-			i.id = parseInt(bits[1]);
-		}
-		// Use bounding box to define the lookup area
-		for(x = i.xa; x < i.xb; x++){
-			for(y = i.ya; y < i.yb; y++) this.lookup.setValue(x,y,i.layer,i.id,i.weight);
-		}
-		return this;
 	};
 
 	/**
@@ -3166,14 +2995,13 @@
 
 	/**
 	 * @desc Draw everything - the axes, the data, and overlays
-	 * @param {boolean} updateLookup - do we need to update the pixel lookup?
 	 */
-	Graph.prototype.draw = function(updateLookup){
+	Graph.prototype.draw = function(){
 		this.log.time('draw');
 		this.clear();
 		this.drawAxes();
-		this.drawData(updateLookup);
-		this.finishDraw(updateLookup);
+		this.drawData();
+		this.finishDraw();
 		this.log.time('draw');
 		return this;
 	};
@@ -3349,27 +3177,34 @@
 		e.returnValue = false;  
 	}
 
+	var scrollDisabled = false;
 	/**
 	 * @desc Disable the scroll event
 	 */
 	function disableScroll(){
-		if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
-		window.onwheel = preventDefault; // modern standard
-		window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
-		window.ontouchmove  = preventDefault; // mobile
-		// Get width of the scroll bar
-		if(getScrollbarWidth() > 0) S('body').css({'overflow':'hidden','margin-right':scrollbarwidth+'px'});
+		if(!scrollDisabled){
+			if(window.addEventListener) window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
+			window.onwheel = preventDefault; // modern standard
+			window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+			window.ontouchmove  = preventDefault; // mobile
+			// Get width of the scroll bar
+			if(getScrollbarWidth() > 0) S('body').css({'overflow':'hidden','margin-right':scrollbarwidth+'px'});
+			scrollDisabled = true;
+		}
 	}
 
 	/**
 	 * @desc Enable the scroll event
 	 */
 	function enableScroll(){
-		if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
-		window.onmousewheel = document.onmousewheel = null;
-		window.onwheel = null;
-		window.ontouchmove = null;
-		if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
+		if(scrollDisabled){
+			if(window.removeEventListener) window.removeEventListener('DOMMouseScroll', preventDefault, false);
+			window.onmousewheel = document.onmousewheel = null;
+			window.onwheel = null;
+			window.ontouchmove = null;
+			if(scrollbarwidth > 0) S('body').css({'overflow':'','margin-right':''});
+			scrollDisabled = false;
+		}
 	}
 
 	/**
@@ -3439,64 +3274,244 @@
 		return ticks;
 	}
 
-	function Lookup(w,h){
-		this.width = w;
-		this.height = h;
-		this.layers = {};
-		this.log = new Logger({'id':'Lookup','logging':true,'logtime':true});
+	/**
+	 * @desc Process layers and look for any matches with the mouse position
+	 * @param {object} g - a graph object
+	 */
+	function Picker(g){
+	
+		this.log = new Logger({'id':'Picker','logging':g.logging,'logtime':g.logtime});
+		
+		function inside(point, vs){
+			// ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+			var i,j,xi,xj,yi,yj,x,y,inside,intersect;
+			x = point[0];
+			y = point[1];
+			inside = false;
+			for(i = 0, j = vs.length - 1; i < vs.length; j = i++){
+				xi = vs[i][0];
+				yi = vs[i][1];
+				xj = vs[j][0];
+				yj = vs[j][1];
+				intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+				if(intersect) inside = !inside;
+			}
+			return inside;
+		}
+
+		function distanceFromLine(p,a,b){
+			return Math.sqrt(SqDistancePtSegment(p,a,b));
+		}
+
+		function SqDistancePtSegment(p,a,b){
+			var c,e,f,n,pa,bp;
+			function Dot(p1,p2){ return (p1.x*p2.x + p1.y*p2.y); }
+
+			n = { 'x': b.x - a.x, 'y': b.y - a.y };
+			pa = { 'x': a.x - p.x, 'y': a.y - p.y };
+
+			c = Dot(n,pa);
+
+			// Closest point is a
+			if(c > 0.0 || (n.x==0 && n.y==0)) return Dot(pa,pa);
+
+			bp = { 'x':p.x - b.x, 'y':p.y - b.y };
+
+			// Closest point is b
+			if(Dot(n,bp) > 0.0) return Dot(bp,bp);
+
+			// Closest point is between a and b
+			f = (c / Dot(n,n));
+			e = {'x':pa.x - n.x * f, 'y': pa.y - n.y*f };
+
+			return Dot(e,e);
+		}
+		
+		function getV(values,key){
+			if(typeof values[key]==="number") return values[key];
+			else if(typeof values[key]==="object" && typeof values[key].value==="number") return values[key].value;
+			else return null;
+		}
+		/**
+		 * @desc Get the matches
+		 * @param {object} ls - an object holding the layers
+		 * @param {'screen':{'x':number,'y':number},'data':{'x':number,'y':number}} p - the cursor coordinates in data-space and screen-space
+		 * @param {number} padding - an optional tolerance in pixels
+		 */
+		this.getMatches = function(ls,p,padding){
+			var rs,a,b,d,i,j,l,m,x,x2,y,y2,w,h,t,dpx,ok,individual,tolerance,polygons;
+
+			this.log.time('getMatches');
+
+			m = [];
+			if(!padding) padding = 0;
+			if(!ls) ls = [];
+
+			for(l in ls){
+			
+				if(!ls[l].encode.hover) continue;
+				if(!ls[l].show) continue;
+
+				tolerance = padding + (ls[l].format ? ls[l].format.strokeWidth||0 : 0)/2;
+				t = ls[l].type;
+				rs = ls[l].data;
+
+				individual = false;
+				if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
+				if(t=="rule") t = "rectline";
+				if(t=="rectline" || t=="symbol") individual = true;
+
+				if(individual){
+
+					// Loop over each individual element and see if they match
+					for(i = 0; i < rs.length; i++){
+
+						ok = false;
+
+						// Find the tolerance (half line thickness + padding)
+						dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+						if(t=="rectline"){
+
+							// Check x-value
+							x = getV(rs[i],'x');
+							x2 = getV(rs[i],'x2');
+							y = getV(rs[i],'y');
+							y2 = getV(rs[i],'y2');
+
+							if(typeof y2==="number"){
+								x = g.getPos('x',x);
+
+								if(p.screen.x >= x-dpx && p.screen.x <= x+dpx){
+									a = g.getPos('y',y2);
+									if(typeof a==="number"){
+										b = g.getPos('y',y);
+										if(p.screen.y >= a-dpx && p.screen.y <= b+dpx) ok = true;
+									}else ok = true;
+								}
+							}
+							if(typeof x2==="number"){
+								y = g.getPos('y',y);
+								if(p.screen.y >= y-dpx && p.screen.y <= y+dpx){
+									a = g.getPos('x',x2);
+									if(typeof a==="number"){
+										b = g.getPos('x',x);
+										if(p.screen.x >= a-dpx && p.screen.x <= b+dpx) ok = false;
+									}else ok = true;
+								}
+							}
+
+						}else if(t=="symbol"){
+
+							x = g.getPos('x',getV(rs[i],'x'));
+							y = g.getPos('y',getV(rs[i],'y'));
+							w = dpx + ls[l].format.size/2;
+							h = dpx + ls[l].format.size/2;
+							if(p.screen.x >= x-w && p.screen.x <= x+w && p.screen.y >= y-h && p.screen.y <= y+h) ok = true;
+
+						}
+
+						if(ok) m.push(l+':'+i);
+					}
+
+				}else{
+
+					// We want to match the entire object made of x,y pairs
+					if(t=="line"){
+
+						// Get the first point in pixel space
+						a = { 'x':g.getPos('x',getV(rs[0],'x')),'y':g.getPos('y',getV(rs[0],'y')) };
+						for(i = 1; i < rs.length; i++){
+							// Find the tolerance (half line thickness + padding)
+							dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+							b = { 'x':g.getPos('x',getV(rs[i],'x')),'y':g.getPos('y',getV(rs[i],'y')) };
+							d = distanceFromLine(p.screen,a,b);
+							// We've either matched or we move on to the next segment
+							if(d <= dpx){
+								m.push(l+':*');
+								break;
+							}else a = b;
+						}
+
+					}else if(t=="area"){
+
+						// Find each polygon in screen space
+						polygons = getPolygons(rs);
+
+						// Find the tolerance
+						dpx = (rs[0].strokeWidth ? (rs[0].strokeWidth/2)+padding : tolerance);
+
+						// Check each polygon
+						for(i = 0; i < polygons.length; i++){
+
+							// Convert coordinates to screen space (add padding to y-axis)
+							for(j = 0; j < polygons[i].length; j++){
+								b = { 'x':g.getPos('x',polygons[i][j][0]),'y':g.getPos('y',polygons[i][j][1]) };
+								polygons[i][j] = [b.x,b.y+(j < polygons[i].length/2 ? dpx : -dpx)];
+							}
+							
+							// Add x-axis padding:
+							// Step 1: Move first and last vertex to the left
+							polygons[i][0][0] -= dpx;
+							polygons[i][polygons[i].length-1][0] -= dpx;
+							// Step 2: Move middle vertices to the right
+							polygons[i][Math.floor(polygons[i].length/2)][0] += dpx;
+							polygons[i][Math.ceil(polygons[i].length/2)][0] += dpx;
+							
+							if(inside([p.screen.x,p.screen.y],polygons[i])){
+								m.push(l+':*');
+								break;
+							}
+						}
+					}
+				}
+			}
+			this.log.time('getMatches');
+			return m;
+		};
 		return this;
 	}
-	
-	Lookup.prototype.reset = function(){
-		this.layers = {};
-		return this;
-	};
 
-	// No error checking to keep it quick
-	Lookup.prototype.setValue = function(x,y,l,id,weight){
-		var n,idx;
-		if(!weight) weight = 1;
-		n = this.width*this.height;
-		// Create an empty layer if it doesn't exist
-		if(!this.layers[l]) this.layers[l] = {'id':new Int8Array(n), 'weight':new Float64Array(n)};
-		if(this.layers[l]){
-			idx = x+(y*this.width);
-			this.layers[l].id[idx] = id+1;
-			this.layers[l].weight[idx] = weight;
+	function getPolygons(rs){
+
+		// Find each polygon in screen space
+		var oldp,areas,poly,pt,a,i,j,k,y1,y2;
+		oldp = {};
+		areas = [];
+
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < rs.length ; i++){
+			y1 = (rs[i].y1 || rs[i].y);
+			y2 = rs[i].y2;
+			if(!isNaN(rs[i].x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
 		}
-		return this;
-	};
-	
-	Lookup.prototype.setRect = function(x1,y1,x2,y2,l,id,weight){
-		var n,x,y,idx;
-		if(!weight) weight = 1;
-		n = this.width*this.height;
-		// Create an empty layer if it doesn't exist
-		if(!this.layers[l]) this.layers[l] = {'id':new Int8Array(n), 'weight':new Float64Array(n)};
-		if(this.layers[l]){
-			x1 = Math.floor(x1);
-			x2 = Math.ceil(x2);
-			for(x = x1; x <= x2; x++){
-				for(y = y1 ; y <= y2; y++){
-					idx = x+(y*this.width);
-					this.layers[l].id[idx] = id+1;
-					this.layers[l].weight[idx] = weight;
+
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				poly[a] = new Array(areas[a].length*2);
+				// Move along top of area (y2 coordinates)
+				k = 0;
+				for(j = 0; j < areas[a].length; j++,k++){
+					pt = rs[areas[a][j]];
+					poly[a][k] = [pt.x,pt.y2];
+				}
+				// Move along bottom of area backwards
+				for(j = areas[a].length-1; j >= 0; j--,k++){
+					pt = rs[areas[a][j]];
+					pt.y1 = (pt.y1 || pt.y);
+					poly[a][k] = [pt.x,pt.y1];
 				}
 			}
 		}
-		return this;
-	};
 
-	Lookup.prototype.getValue = function(x,y){
-		var r,i,l;
-		if(x < 0 || y < 0 || x > this.width || y > this.height) return [];
-		r = [];
-		i = x+(y*this.width);
-		for(l in this.layers){
-			if(this.layers[l] && this.layers[l].id[i] > 0) r.push(l+':'+(this.layers[l].id[i]-1)+':'+(this.layers[l].weight[i]));
-		}
-		return r;
-	};
+		return poly;
+	}
 
 	/**
 	 * @desc Create a logger for console messages and timing
@@ -3514,63 +3529,63 @@
 		this.warning = function(){ this.log('WARNING',arguments); };
 		this.info = function(){ this.log('INFO',arguments); };
 		this.message = function(){ this.log('MESSAGE',arguments); };
+		/**
+		 * @desc A wrapper for log messages. The first argument is the type of message e.g. "ERROR", "WARNING", "INFO", or "MESSAGE". Other arguments are any objects/values you want to include.
+		 */
+		this.log = function(){
+			if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
+				var args,args2,bold;
+				args = Array.prototype.slice.call(arguments[1], 0);
+				args2 = (args.length > 1 ? args.splice(1):"");
+				// Remove array if only 1 element
+				if(args2.length == 1) args2 = args2[0];
+				bold = 'font-weight:bold;';
+				if(console && typeof console.log==="function"){
+					if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args2);
+					else console.log('%c'+this.id+'%c: '+args[0],bold,'',args2);
+				}
+			}
+			return this;
+		};
+		
+		/**
+		 * @desc Start/stop a timer. This will build metrics for the key containing the start time ("start"), weighted average ("av"), and recent durations ("times")
+		 * @param {string} key - the key for this timer
+		 */
+		this.time = function(key){
+			if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
+			if(!this.metrics[key].start) this.metrics[key].start = new Date();
+			else{
+				var t,w,v,tot,l,i,ts;
+				t = ((new Date())-this.metrics[key].start);
+				ts = this.metrics[key].times;
+				// Define the weights for each time in the array
+				w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
+				// Add this time to the start of the array
+				ts.unshift(t);
+				// Remove old times from the end
+				if(ts.length > w.length-1) ts = ts.slice(0,w.length);
+				// Work out the weighted average
+				l = ts.length;
+				this.metrics[key].av = 0;
+				if(l > 0){
+					for(i = 0, v = 0, tot = 0 ; i < l ; i++){
+						v += ts[i]*w[i];
+						tot += w[i];
+					}
+					this.metrics[key].av = v/tot;
+				}
+				this.metrics[key].times = ts.splice(0);
+				if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
+				delete this.metrics[key].start;
+			}
+			return this;
+		};
+		
 		return this;
 	}
-
-	/**
-	 * @desc A wrapper for log messages. The first argument is the type of message e.g. "ERROR", "WARNING", "INFO", or "MESSAGE". Other arguments are any objects/values you want to include.
-	 */
-	Logger.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
-			var args,args2,bold;
-			args = Array.prototype.slice.call(arguments[1], 0);
-			args2 = (args.length > 1 ? args.splice(1):"");
-			// Remove array if only 1 element
-			if(args2.length == 1) args2 = args2[0];
-			bold = 'font-weight:bold;';
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args2);
-				else console.log('%c'+this.id+'%c: '+args[0],bold,'',args2);
-			}
-		}
-		return this;
-	};
-
-	/**
-	 * @desc Start/stop a timer. This will build metrics for the key containing the start time ("start"), weighted average ("av"), and recent durations ("times")
-	 * @param {string} key - the key for this timer
-	 */
-	Logger.prototype.time = function(key){
-		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
-		if(!this.metrics[key].start) this.metrics[key].start = new Date();
-		else{
-			var t,w,v,tot,l,i,ts;
-			t = ((new Date())-this.metrics[key].start);
-			ts = this.metrics[key].times;
-			// Define the weights for each time in the array
-			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
-			// Add this time to the start of the array
-			ts.unshift(t);
-			// Remove old times from the end
-			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
-			// Work out the weighted average
-			l = ts.length;
-			this.metrics[key].av = 0;
-			if(l > 0){
-				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
-					v += ts[i]*w[i];
-					tot += w[i];
-				}
-				this.metrics[key].av = v/tot;
-			}
-			this.metrics[key].times = ts.splice(0);
-			if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
-			delete this.metrics[key].start;
-		}
-		return this;
-	};
 
 	root.Graph = Graph;
 	root.Logger = Logger;

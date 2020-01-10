@@ -17,7 +17,7 @@
 	 */
 	function TimeSeriesMaster(){
 
-		this.version = "0.0.24";
+		this.version = "0.0.26";
 		this.length = 0;
 
 		/**
@@ -660,7 +660,7 @@
 			},{
 				'key': 'about',
 				'title': 'About',
-				'html': '<p>Figure produced with the <a href="https://aperiosoftware.github.io/timeseries.js/">AAS timeseries.js</a> package version '+TimeSeries.version+'.</p>'
+				'html': '<p>Figure produced with the <a href="https://aperiosoftware.github.io/timeseries.js/">AAS timeseries.js</a> package version '+TimeSeries.version+'.</p><p>You can zoom into the figure using a scroll wheel. Use the scroll wheel over one axis to zoom along that axis only. Pressing the <em>Alt</em> key and then clicking and dragging with your mouse will zoom to your selected region.</p>'
 			}];
 			str = '';
 			html = '';
@@ -1514,12 +1514,12 @@
 				if(mark.encode && mark.encode.hover) dataset.hoverable = true;
 
 				dataset.encode = mark.encode;
-				if(mark.encode.update) dataset.interactive = true;
+				if(mark.encode.update || mark.encode.hover) dataset.interactive = true;
 
 				// Add callbacks
-				if(mark.encode.enter) dataset.enter = function(d,event){ return updateProperties(this,d,event); };
-				if(mark.encode.update) dataset.update = function(d,event){ return updateProperties(this,d,event); };
-				if(mark.encode.hover) dataset.hover = function(d,event){ return updateProperties(this,d,event); };
+				if(mark.encode.enter) dataset.enter = function(marks,event,i){ return updateProperties(this,marks,event,i); };
+				if(mark.encode.update) dataset.update = function(marks,event,i){ return updateProperties(this,marks,event,i); };
+				if(mark.encode.hover) dataset.hover = function(marks,event,i){ return updateProperties(this,marks,event,i); };
 
 				// Is this marker layer clipped?
 				dataset.clip = (mark.clip || false);
@@ -1536,75 +1536,105 @@
 	}
 
 	/** 
-	  * @desc Update the properties of the data point using the event JSON
+	  * @desc Update the properties of marks using the event JSON
 	  * @param {object} self - the TS object
-	  * @param {object} d - the datum object
+	  * @param {array}  marks - the array of marks
 	  * @param {object} event - the event JSON
+	  * @param {number} mm - an index for a specific mark to process
 	  */
-	function updateProperties(self,d,event){
-		var to,str,i,p,sig;
+	function updateProperties(self,marks,event,mm){
+		var to,str,i,p,sig,a,b,m;
+		var signals = {};
+		var data = {};
 
 		// Where to put the updated property
 		var dest = {'size':'props','shape':'props','fill':'props','fillOpacity':'props','stroke':'props','strokeOpacity':'props','strokeWidth':'props','strokeCap':'props','strokeDash':'props','width':'props','height':'props','tooltip':'props','font':'props','fontSize':'props','fontWeight':'props','fontStyle':'props','baseline':'props','align':'props','dx':'props','angle':'props','limit':'props'};
 
 		// If there is no datum, we will give up
-		if(!d) return self.log.warning('updateProps fail',d,event);
+		if(!marks) return self.log.warning('updateProps fail',marks,event);
 
-		// Loop over each property of the event
+		if(typeof mm==="number"){
+			a = mm;
+			b = mm+1;
+		}else{
+			a = 0;
+			b = marks.length-1;
+		}
+
+		// Loop over each property of the event and keep a copy of the signals
 		for(p in event){
 			if(event[p]){
-				if(dest[p] && dest[p]=="props"){
-					if(typeof event[p].value !== "undefined"){
-						if(d.props.symbol) d.props.symbol[p] = event[p].value;
-						if(d.props.format) d.props.format[p] = event[p].value;
-					}
-				}else{
-					if(typeof d.data[p]==="undefined") d.data[p] = clone(event[p]);
-					if(event[p].field){
-						if(typeof event[p].field==="string"){
-							if(typeof d.data[event[p].field]!=="undefined") d.data[p] = d.data[event[p].field];
-							else self.log.error('The field "'+event[p].field+'" ('+p+'-axis) seems to be missing.',clone(d),event);
-						}else if(typeof event[p].field==="object"){
-							d.data[p] = clone(event[p]);
-						}
-					}
-					if(typeof event[p].value!=="undefined"){
-						if(event[p].format && event[p].format=="date") d.data[p].value = (new Date(event[p].value)).getTime()/1000;
-						else d.data[p].value = event[p].value;
-					}
-				}
-
+				// Keep a string copy of the data
+				data[p] = JSON.stringify(event[p]);
 				// Do we need to process a signal property?
 				if(event[p].signal){
-					// Make a clone of the signal and work on that rather than the original
-					sig = clone(event[p].signal);
+					// Keep a copy of the signal
+					if(!signals[p]) signals[p] = JSON.stringify(event[p].signal);
+				}
+			}
+		}
 
-					// If the value of the signal is set to "datum" we default to a table of the original properties
-					if(sig=="datum") sig = JSON.stringify(d.original);
-
-					// Where are we putting the updated value?
-					to = dest[p] || "data";
-					if(typeof d[to][p]==="undefined") d[to][p] = {};
-
-					// Try parsing the string as JSON
-					try { d[to][p].value = looseJsonParse(sig,d.data); }
-					catch(e) { self.log.error('Unable to parse signal',d.data,d.data,sig); }
-
-					// Do special things for the tooltip property
-					if(p=="tooltip"){
-						// If we now have an object we build a string
-						if(typeof d.props[p].value==="object"){
-							str = "<table>";
-							for(i in d.props[p].value){
-								if(typeof d.props[p].value[i] !== "undefined") str += "<tr><td>"+i+":</td><td>"+d.props[p].value[i]+"</td></tr>";
+		// Loop over the marks
+		for(m = a; m <= b; m++){
+			// Loop over each property of the event
+			for(p in event){
+				if(event[p] && marks[m]){
+					if(dest[p] && dest[p]=="props"){
+						if(typeof event[p].value !== "undefined"){
+							if(marks[m].props.symbol) marks[m].props.symbol[p] = event[p].value;
+							if(marks[m].props.format) marks[m].props.format[p] = event[p].value;
+						}
+					}else{
+						if(typeof marks[m].data[p]==="undefined") marks[m].data[p] = (data[p] ? JSON.parse(data[p]): clone(event[p]));
+						if(event[p].field){
+							if(typeof event[p].field==="string"){
+								if(typeof marks[m].data[event[p].field]!=="undefined") marks[m].data[p] = marks[m].data[event[p].field];
+								else self.log.error('The field "'+event[p].field+'" ('+p+'-axis) seems to be missing.',clone(marks[m]),event);
+							}else if(typeof event[p].field==="object"){
+								marks[m].data[p] = (data[p] ? JSON.parse(data[p]): clone(event[p]));
 							}
-							d.props[p] = str+"</table>";
-						}else d.props[p] = d.props[p].value;
+						}
+						if(typeof event[p].value!=="undefined"){
+							if(event[p].format && event[p].format=="date") marks[m].data[p].value = (new Date(event[p].value)).getTime()/1000;
+							else marks[m].data[p].value = event[p].value;
+						}
+					}
+
+					// Do we need to process a signal property?
+					if(event[p].signal){
+
+						// Work on the copy rather than the original
+						sig = JSON.parse(signals[p]);
+
+						// If the value of the signal is set to "datum" we default to a table of the original properties
+						if(sig=="datum") sig = JSON.stringify(marks[m].original);
+
+						// Where are we putting the updated value?
+						to = dest[p] || "data";
+						if(typeof marks[m][to][p]==="undefined") marks[m][to][p] = {};
+
+						// Try parsing the string as JSON
+						try { marks[m][to][p].value = looseJsonParse(sig,marks[m].data); }
+						catch(e) { self.log.error('Unable to parse signal',marks[m].data,sig); }
+
+						if(p=="tooltip"){
+							// If we now have an object we build a string
+							if(typeof marks[m].props[p].value==="object"){
+								str = "<table>";
+								for(i in marks[m].props[p].value){
+									if(typeof marks[m].props[p].value[i] !== "undefined" && marks[m].props[p].value[i]!="") str += "<tr><td>"+i+":</td><td>"+marks[m].props[p].value[i]+"</td></tr>";
+								}
+								marks[m].props[p] = str+"</table>";
+							}else marks[m].props[p] = marks[m].props[p].value;
+						}
+
 					}
 				}
 			}
 		}
-		return d;
+
+		if(typeof mm==="number") return marks[mm];
+		else return marks;
 	}
 	/**
 	 * @desc Get an SVG icon

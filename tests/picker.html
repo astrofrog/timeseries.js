@@ -1,0 +1,775 @@
+<html>
+<head>
+
+	<script src="stuquery.min.js"></script>
+	
+	<script>
+
+	var paper;
+	var G = {};
+	G.deepExtend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			var obj = arguments[i];
+			if(!obj) continue;
+
+			for(var key in obj){
+				if(obj.hasOwnProperty(key)){
+					if(typeof obj[key] === 'object') out[key] = G.deepExtend(out[key], obj[key]);
+					else out[key] = obj[key];
+				}
+			}
+		}
+		return out;
+	};
+	G.extend = function(out){
+		out = out || {};
+		for(var i = 1; i < arguments.length; i++){
+			if(!arguments[i]) continue;
+			for(var key in arguments[i]){
+				if (arguments[i].hasOwnProperty(key)) out[key] = arguments[i][key];
+			}
+		}
+		return out;
+	};
+	/**
+	 * @desc Make a copy of the object (to avoid over-writing it)
+	 */
+	function clone(a){ return JSON.parse(JSON.stringify(a)); }
+	/**
+	 * @desc Define a shortcut for checking variable types
+	 */
+	function is(a,b){ return (typeof a == b) ? true : false; }
+
+	function distanceFromLine(p,a,b){
+		return Math.sqrt(SqDistancePtSegment(p,a,b));
+	}
+	
+	function SqDistancePtSegment(p,a,b){
+		function Dot(p1,p2){ return (p1.x*p2.x + p1.y*p2.y); }
+
+		var n = { 'x': b.x - a.x, 'y': b.y - a.y };
+		var pa = { 'x': a.x - p.x, 'y': a.y - p.y };
+
+		var c = Dot(n,pa);
+
+		// Closest point is a
+		if(c > 0.0 || (n.x==0 && n.y==0)) return Dot(pa,pa);
+
+		var bp = { 'x':p.x - b.x, 'y':p.y - b.y };
+
+		// Closest point is b
+		if(Dot(n,bp) > 0.0) return Dot(bp,bp);
+
+		// Closest point is between a and b
+		var f = (c / Dot(n,n));
+		var e = {'x':pa.x - n.x * f, 'y': pa.y - n.y*f };
+
+		return Dot(e,e);
+	}
+
+	function Paper(attr){
+		if(!attr) attr = {};
+		var c, events = {};
+		// Get an existing element if it exists
+		if(attr.el && attr.el.tagName=="CANVAS") c = attr.el;
+		if(attr.id && document.getElementById(attr.id).tagName=="CANVAS") c = document.getElementById(attr.id);
+		if(!c) c = document.createElement('canvas');
+
+		w = attr.width||c.clientWidth;
+		h = attr.height||c.clientHeight;
+		s = attr.devicePixelRatio||window.devicePixelRatio;
+		
+		/**
+		 * @desc Attach a handler to an event for the Canvas object
+		 * @usage canvas.on(eventType[,eventData],handler(eventObject));
+		 * @usage canvas.on("resize",function(e){ console.log(e); });
+		 * @usage canvas.on("resize",{me:this},function(e){ console.log(e.data.me); });
+		 * @param {string} ev - the event type
+		 * @param {object} e - any properties to add to the output as e.data
+		 * @param {function} fn - a callback function
+		 */
+		this.on = function(ev,e,fn){
+			if(typeof ev!="string") return this;
+			if(is(fn,"undefined")){
+				fn = e;
+				e = {};
+			}else{
+				e = {data:e};
+			}
+			if(typeof e!="object" || typeof fn!="function") return this;
+			if(events[ev]) events[ev].push({e:e,fn:fn});
+			else events[ev] = [{e:e,fn:fn}];
+			return this;
+		};
+		this.width = function(wide){
+			if(typeof wide==="number"){
+				w = wide;
+				c.width = (s==1 ? w : Math.round(w*s));
+			}
+			return w;
+		}
+		this.height = function(tall){
+			if(typeof tall==="number"){
+				h = tall;
+				c.height = (s==1 ? h : Math.round(h*s));
+			}
+			return h;
+		}
+		this.resize = function(wide,tall){
+			if(wide == w && tall == h) return this;
+			this.width(wide);
+			this.height(tall);
+			trigger(this,"resize",{width:w,height:h});
+			return this;
+		}
+
+
+		this.ctx = c.getContext(attr.getContext||'2d');
+		this.ctx.scale(s,s);
+		this.width(w);
+		this.height(h);
+
+		/**
+		 * @desc Trigger a defined event with arguments. This is for internal-use.
+		 */
+		function trigger(me,ev,args){
+			if(!me) return;
+			if(typeof ev != "string") return;
+			if(typeof args != "object") args = {};
+			var o = [];
+			if(typeof events[ev]=="object"){
+				for(var i = 0 ; i < events[ev].length ; i++){
+					var e = args||{};
+					e = G.deepExtend(e,events[ev][i].e);
+					if(typeof events[ev][i].fn == "function") o.push(events[ev][i].fn.call(me,e));
+				}
+			}
+			if(o.length > 0) return o;
+		};
+
+		function getMousePosition(e) {
+			e = e || window.event;
+			if(!e) return {};
+
+			var target = e.originalEvent.target || e.originalEvent.srcElement,
+			style = target.currentStyle || window.getComputedStyle(target, null),
+			borderX = parseInt(style['borderLeftWidth'], 10),
+			borderY = parseInt(style['borderTopWidth'], 10),
+			rect = target.getBoundingClientRect();
+			e.x = e.originalEvent.clientX - borderX - rect.left,
+			e.y = e.originalEvent.clientY - borderY - rect.top;
+
+			return e;
+		}
+
+		// Add event callbacks
+		var _obj = this;
+		var olddist = null;
+		var lastevent = null;
+		S(c).on("mousedown",function(e){ trigger(_obj,"mousedown",e); })
+			.on("mousemove",function(e){ e = getMousePosition(e); trigger(_obj,"mousemove",e); })
+			.on("mouseup",function(e){ trigger(_obj,"mouseup",e); })
+			.on("mouseover",function(e){ trigger(_obj,"mouseover",e); })
+			.on("mouseleave",function(e){ trigger(_obj,"mouseleave",e); })
+			.on("wheel",function(e){ e = getMousePosition(e); trigger(_obj,"wheel",e); })
+			.on("touchstart",function(e){
+				var ev = e.originalEvent;
+				ev.preventDefault();
+				olddist = null;
+				var touches = ev.touches;
+				if(touches && touches.length==1){
+					// One touch maps to pan (mousedown)
+					e.originalEvent = updateEvent(e,touches);
+					e.originalEvent.which = 1;
+					trigger(_obj,"mousedown",e);
+					trigger(_obj,"mouseover",e);
+				}
+			}).on("touchmove",function(e){
+				e.originalEvent.preventDefault();
+				var touches = e.originalEvent.touches;
+
+				var m = (touches ? touches.length:0);
+
+				// Keep a copy of the event for the touchend event
+				lastevent = e.originalEvent;
+				if(typeof _obj.updating!=="boolean") _obj.updating = false;
+				if(!_obj.updating && m > 0){
+					if(m == 1){
+						e.x = touches[0].pageX - e.originalEvent.target.offsetLeft;
+						e.y = touches[0].pageY - e.originalEvent.target.offsetTop;
+						// One touch maps to pan (mousemove)
+						e.originalEvent.which = 1;
+						trigger(_obj,"mousemove",e);
+					}else if(m == 2){
+						var dist = Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
+						e.x = (touches[0].pageX + touches[1].pageX)/2 - e.originalEvent.target.offsetLeft;
+						e.y = (touches[0].pageY + touches[1].pageY)/2 - e.originalEvent.target.offsetTop;
+						// Multi-touch maps to zoom (wheel)
+						e.originalEvent.deltaY = (olddist ? (dist > olddist ? -1 : 1):-1);
+						if(Math.abs(dist-olddist) > 4){
+							e.speed = 0.95;
+							e.update = false;
+							trigger(_obj,"wheel",e);
+							olddist = dist;
+						}
+					}
+				}
+			}).on("touchend",{me:this}, function(e){
+				var ev = e.originalEvent;
+				ev.preventDefault();
+				var touches = ev.touches;
+				if(touches){
+					// One touch maps to pan (mousedown)
+					if(touches.length > 0) e.originalEvent = updateEvent(e,touches);
+					e.originalEvent.which = 1;
+				}else e = lastevent;
+				trigger(_obj,"mouseup",e);
+			});
+
+		return this;
+	}
+	function Logger(){
+		var content = [];
+		var con = S('#console');
+		this.log = function(nm,dt,m,s){
+			content.push({'nm':nm,'dt':dt,'m':m,'s':s});
+			if(content.length > 8) content = content.splice(content.length-8);
+			html = "";
+			for(var c = 0; c < content.length; c++){
+				if(c > 0) html += '<br />';
+				html += '<span style="font-weight: bold;">Finder:</span> '+dt+'ms for '+s;
+			}
+			con.html(html);
+			con[0].scrollTop = con[0].scrollHeight;
+			
+		}
+		return this;
+	}
+	function toXpx(v){ return (v-xmin)*xconv + pad; }
+	function toYpx(v){ return (v-ymin)*yconv + pad; }
+	function convertToScreen(v){ return { 'x': toXpx(v.x), 'y': toYpx(v.y) }; }
+	function Finder(){
+	
+		var log = new Logger();
+		
+		function inside(point, vs){
+			// ray-casting algorithm based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+			var i,xi,xj,yi,yj,x,y,inside,intersect;
+			x = point[0];
+			y = point[1];
+			inside = false;
+			for(i = 0, j = vs.length - 1; i < vs.length; j = i++){
+				xi = vs[i][0];
+				yi = vs[i][1];
+				xj = vs[j][0];
+				yj = vs[j][1];
+				intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+				if(intersect) inside = !inside;
+			}
+			return inside;
+		};
+
+		// Inputs:
+		//   ls - the array of points
+		//   p - the cursor position as { 'screen': {'x':<px>,'y':<px>}, 'data':{'x':<val>,'y':<val>} }
+		//   padding - an optional tolerance (pixels)
+		this.getMatches = function(ls,p,padding){
+			var rs,a,b,d,i,l,m,x,w,y,h,t,dpx,ok,individual,now,start,tolerance,polygons;
+
+			start = new Date();
+			m = [];
+			if(!padding) padding = 0;
+
+			for(l = 0; l < ls.length; l++){
+
+				tolerance = padding + (ls[l].props && ls[l].props.format ? ls[l].props.format.strokeWidth||0 : 0)/2;
+				t = ls[l].type;
+				rs = ls[l].mark;
+				individual = false;
+				if(t=="rect" && (typeof rs[0].x==="number" || typeof rs[0].y==="number")) t = "rectline";
+				if(t=="rule") t = "rectline";
+
+				if(t=="rectline" || t=="symbol") individual = true;
+
+				if(individual){
+
+					// Loop over each individual element and see if they match
+					for(i = 0; i < rs.length; i++){
+
+						ok = false;
+
+						// Find the tolerance (half line thickness + padding)
+						dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+						if(t=="rectline"){
+
+							if(typeof rs[i].x==="number"){
+								x = toXpx(rs[i].x);
+								if(p.screen.x >= x-dpx && p.screen.x <= x+dpx){
+									if(typeof rs[i].y1==="number"){
+										a = toYpx(rs[i].y1);
+										b = toYpx(rs[i].y2);
+										if(p.screen.y >= a-dpx && p.screen.y <= b+dpx) ok = true;
+									}else ok = true;
+								}
+							}
+
+							if(typeof rs[i].y==="number"){
+								y = toYpx(rs[i].y);
+								if(p.screen.y >= y-dpx && p.screen.y <= y+dpx){
+									if(typeof rs[i].x1==="number"){
+										a = toXpx(rs[i].x1);
+										b = toXpx(rs[i].x2);
+										if(p.screen.x >= a-dpx && p.screen.x <= b+dpx) ok = false;
+									}else ok = true;
+								}
+							}
+
+						}else if(t=="symbol"){
+
+							x = toXpx(rs[i].x);
+							y = toYpx(rs[i].y);
+							w = dpx + rs[i].size/2;
+							h = dpx + rs[i].size/2;
+							if(p.screen.x >= x-w && p.screen.x <= x+w && p.screen.y >= y-h && p.screen.y <= y+h) ok = true;
+
+						}
+
+						if(ok) m.push(l+':'+i);
+					}
+
+				}else{
+
+					// We want to match the entire object made of x,y pairs
+					if(t=="line"){
+
+						// Get the first point in pixel space
+						a = convertToScreen(rs[0]);
+
+						for(i = 1; i < rs.length; i++){
+							// Find the tolerance (half line thickness + padding)
+							dpx = (rs[i].strokeWidth ? (rs[i].strokeWidth/2)+padding : tolerance);
+
+							b = convertToScreen(rs[i]);
+							d = distanceFromLine(p.screen,a,b);
+							// We've either matched or we move on to the next segment
+							if(d <= dpx){
+								m.push(l+':*');
+								break;
+							}else a = b;
+						}
+
+					}else if(t=="area"){
+
+						// Find each polygon in screen space
+						polygons = getPolygons(rs);
+
+						// Check each polygon
+						for(a = 0; a < polygons.length; a++){
+
+							// Convert coordinates to screen space (add padding to y-axis)
+							for(j = 0; j < polygons[a].length; j++){
+								polygons[a][j] = [toXpx(polygons[a][j][0]),toYpx(polygons[a][j][1])+(j < polygons[a].length/2 ? dpx : -dpx)];
+							}
+							
+							// Add x-axis padding:
+							// Step 1: Move first and last vertex to the left
+							polygons[a][0][0] -= dpx;
+							polygons[a][polygons[a].length-1][0] -= dpx;
+							// Step 2: Move middle vertices to the right
+							polygons[a][Math.floor(polygons[a].length/2)][0] += dpx;
+							polygons[a][Math.ceil(polygons[a].length/2)][0] += dpx;
+							
+							if(inside([p.screen.x,p.screen.y],polygons[a])){
+								m.push(l+':*');
+								break;
+							}
+						}
+
+					}
+
+				}
+			}
+			now = new Date();
+			log.log('Finder',(now-start),m,'getMatches ('+m.length+' match'+(m.length==1?'':'es')+')');
+			return m;
+		}
+
+		return this;
+	}
+
+	function getPolygons(rs){
+
+		// Find each polygon in screen space
+		var oldp,areas,polygons,poly,vertices,pt;
+		oldp = {};
+		areas = [];
+		// We need to loop across the data first splitting into segments
+		for(i = 0, a = 0; i < rs.length ; i++){
+			y1 = (rs[i].y1 || rs[i].y);
+			y2 = rs[i].y2;
+			if(!isNaN(rs[i].x) && !isNaN(y1) && !isNaN(y2)){
+				if(!areas[a]) areas[a] = [];
+				areas[a].push(i);
+			}else a++;
+		}
+
+		// To do: make the polygon lookup processing more efficient by
+		// not processing the entire shape in one go
+		poly = new Array(areas.length);
+		for(a = 0; a < areas.length ; a++){
+			if(areas[a] && areas[a].length){
+				poly[a] = new Array(areas[a].length*2);
+				// Move along top of area (y2 coordinates)
+				k = 0;
+				for(j = 0; j < areas[a].length; j++,k++){
+					pt = rs[areas[a][j]];
+					poly[a][k] = [pt.x,pt.y2];
+				}
+				// Move along bottom of area backwards
+				for(j = areas[a].length-1; j >= 0; j--,k++){
+					pt = rs[areas[a][j]];
+					pt.y1 = (pt.y1 || pt.y);
+					poly[a][k] = [pt.x,pt.y1];
+				}
+			}
+		}
+
+		polygons = [];
+		// Check each polygon
+		for(a = 0; a < poly.length; a++){
+			vertices = [];
+			if(poly[a]){
+				for(j = 0; j < poly[a].length; j++) vertices.push([poly[a][j][0],poly[a][j][1]]);
+			}
+			if(vertices.length > 1) polygons.push(vertices);
+		}
+		return polygons;
+	}
+
+	S().ready(function(){
+
+		var n = S('#n')[0].value;
+		var layers = [];
+		var start = new Date();
+
+		var stime = 1572969167343;
+		
+		createLayers();
+
+		paper = new Paper({'el':document.getElementById('display'),'devicePixelRatio':1});
+
+		paper.ctx.fillStyle = 'green';
+		paper.ctx.lineWidth = 4;
+
+		function createLayers(){
+			var start = new Date();
+			layers = [];
+			var rects = new Array(n);
+			var lines = new Array(n);
+			var radius_p = 0.1;
+			var radius_s = 0.5;
+			var len = 20;
+			var dip = 50*(radius_p*radius_p)/(radius_s*radius_s);
+			for(var i = 0; i < n; i++){
+				dx = i/n;
+				x = stime + len*dx;
+				if(dx < 0.5-radius_s/2-radius_p/2) y = 1.0;
+				else if(dx > 0.5+radius_s/2+radius_p/2) y = 1.0;
+				else if(dx >= 0.5-radius_s/2-radius_p/2 && dx <= 0.5-radius_s/2+radius_p/2){
+					d = (0.5-radius_s/2-radius_p/2-dx)/(radius_p*2);
+					y = 1.0+Math.sin(d*Math.PI)*dip;
+				}else if(dx >= 0.5+radius_s/2-radius_p/2 && dx <= 0.5+radius_s/2+radius_p/2){
+					d = (0.5+radius_s/2-radius_p/2-dx)/(radius_p*2);
+					y = 1.0-Math.cos(d*Math.PI)*dip;
+				}else y = 1.0 - dip;
+
+				dy = 0.3*Math.random()-0.15;
+				dh = 0.2*Math.max(0.5,Math.random());
+				rects[i] = {'x': x,'y1':y+dy-dh,'y2':y+dy+dh};
+				lines[i] = {'x': x,'y':y};
+			}
+			layers.push({'mark':rects,'type':'rect','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,0,0.5)'}}});
+			layers.push({'mark':lines,'type':'line','props':{'format':{'strokeWidth':4,'color':'rgba(0,200,250,1)'}}});
+			layers.push({'mark':[{'x':stime+2}],'type':'rule','props':{'format':{'strokeWidth':4,'color':'rgba(0,0,200,0.9)'}}});
+			layers.push({'mark':[{'x':stime+len*0.5,'y':0.2,'size':10},{'x':stime+len*0.6,'y':0.3,'size':10},{'x':stime+len*0.7,'y':0.25,'size':10},{'x':stime+len*0.8,'y':0.21,'size':10}],'type':'symbol','props':{'format':{'strokeWidth':2,'color':'rgba(250,0,0,0.5)'}}});
+			layers.push({'mark':[{'x':stime,'y1':0.9,'y2':1.1},{'x':stime+len*0.1,'y1':0.95,'y2':1.15},{'x':stime+len*0.2,'y1':0.86,'y2':1.12},{'x':null,'y':null},{'x':stime+len*0.3,'y1':1-dip-0.1,'y2':1-dip+0.15},{'x':stime+len*0.7,'y1':1-dip-0.15,'y2':1-dip+0.12}],'type':'area','props':{'format':{'color':'rgba(200,200,200,0.5)','strokeWidth':1.5}}});
+			var now = new Date();
+			S('#console').append('<span style="font-weight: bold;">Startup:</span> <em>'+(now-start)+'</em>ms<br />');
+			S('#console').append('<span style="font-weight: bold;">Processing:</span> <em>'+n+'</em> rectangles<br />');
+
+		}
+
+		finder = new Finder();
+
+		width = S('#display')[0].clientWidth;
+		height = S('#display')[0].clientHeight;
+
+		pad = 20;
+		xmin = 1e100;
+		xmax = -1e100;
+		ymin = 1e100;
+		ymax = -1e100;
+		method = "matches";
+		for(var l = 0; l < layers.length; l++){
+			for(var i = 0; i < layers[l].mark.length; i++){
+				if(typeof layers[l].mark[i].x1==="number"){
+					xmin = Math.min(layers[l].mark[i].x1,xmin);
+				}
+				if(typeof layers[l].mark[i].x2==="number"){
+					xmax = Math.max(layers[l].mark[i].x2,xmax);
+				}
+				if(typeof layers[l].mark[i].y1==="number"){
+					ymin = Math.min(layers[l].mark[i].y1,ymin);
+				}
+				if(typeof layers[l].mark[i].y2==="number"){
+					ymax = Math.max(layers[l].mark[i].y2,ymax);
+				}
+				if(typeof layers[l].mark[i].x==="number"){
+					xmin = Math.min(layers[l].mark[i].x,xmin);
+					xmax = Math.max(layers[l].mark[i].x,xmax);
+				}
+				if(typeof layers[l].mark[i].y==="number"){
+					ymin = Math.min(layers[l].mark[i].y,ymin);
+					ymax = Math.max(layers[l].mark[i].y,ymax);
+				}
+			}
+		}
+		xconv = (width-pad*2)/(xmax-xmin);
+		yconv = (height-pad*2)/(ymax-ymin);
+
+		function getCursorCoords(x,y){
+			var o = {'screen':{'x':x,'y':height-y}};
+			x = xmin + (o.screen.x-pad)/xconv;
+			y = ymin + (o.screen.y-pad)/yconv;
+			o.data = {'x':x,'y':y};
+			return o;
+		}
+		
+		paper.on('mousemove',function(e){
+			pt = getCursorCoords(e.x,e.y);
+			getRects(pt);
+		}).on('touchmove',function(e){
+			var touches = e.originalEvent.changedTouches;
+			for(var i = 0; i < touches.length; i++) {
+				log("Touchstart",0,[],""+i+"..."+touches[i].pageX+','+touches[i].pageY);
+			}
+			pt = getCursorCoords(touches[0].pageX,touches[0].pageY);
+			getRects(pt);
+		});
+
+
+		function drawRects(match){
+
+			var start = new Date();
+			var height = paper.height();
+			var width = paper.width();
+			var l,i,j,iplus,highlight,colour,x,y,dw,dh;
+
+			paper.ctx.clearRect(0,0,width,height);
+			
+			for(l = 0; l < layers.length; l++){
+
+				if(layers[l].type=="area"){
+			
+					highlight = false;
+					for(j = 0; j < match.length; j++){
+						if(match[j]==l+':*') highlight = true;
+					}
+
+					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+					var ctx,oldp,p,areas,a,i,j,k,p,y1,y2;
+					paper.ctx.fillStyle = colour;
+					paper.ctx.strokeStyle = colour;
+					paper.ctx.lineWidth = (layers[l].props.format && layers[l].props.format.strokeWidth ? layers[l].props.format.strokeWidth : 0);
+					paper.ctx.beginPath();
+					
+					var polygons = getPolygons(layers[l].mark);
+					dh = layers[l].props.format.strokeWidth||0;
+
+					// Draw each polygon
+					for(a = 0; a < polygons.length; a++){
+						for(j = 0; j < polygons[a].length; j++){
+							x = toXpx(polygons[a][j][0]);
+							y = toYpx(polygons[a][j][1]);
+							y = height - y - dh;
+							if(j==0) paper.ctx.moveTo(x,y);
+							else paper.ctx.lineTo(x,y);
+						}
+						x = toXpx(polygons[a][0][0]);
+						y = toYpx(polygons[a][0][1]);
+						y = height - y - dh;
+						paper.ctx.lineTo(x,y);
+					}
+					paper.ctx.fill();
+					if(paper.ctx.lineWidth > 0) paper.ctx.stroke();
+
+				}else if(layers[l].type=="rule"){
+					
+					highlight = false;
+					for(j = 0; j < match.length; j++){
+						if(match[j]==l+':*' || match[j]==l+':0') highlight = true;
+					}
+
+					colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+					paper.ctx.strokeStyle = colour;
+					paper.ctx.beginPath();
+
+					if(typeof layers[l].mark[0].x==="number"){
+						xa = toXpx(layers[l].mark[0].x);
+						xb = xa;
+						ya = 0;
+						yb = height;
+					}else if(typeof layers[l].mark[0].y==="number"){
+						ya = h - toYpx(layers[l].mark[0].y);
+						yb = ya;
+						xa = 0;
+						xb = width;
+					}
+					paper.ctx.moveTo(xa,ya);
+					paper.ctx.lineTo(xb,yb);
+					if(paper.ctx.lineWidth > 0) paper.ctx.stroke();
+
+				}else{
+
+					iplus = (layers[l].mark.length > 100) ? Math.max(Math.round(layers[l].mark.length/100),1) : 1;
+
+					lw = (layers[l].props.format.strokeWidth||0);
+					paper.ctx.lineWidth = lw;
+					paper.ctx.beginPath();
+					for(i = 0; i < layers[l].mark.length; i+=iplus){
+
+						highlight = false;
+						for(j = 0; j < match.length; j++){
+							if(match[j]==l+':*' || match[j]==l+':'+i) highlight = true;
+						}
+					
+						colour = (highlight ? 'rgba(255,200,0,0.8)' : (layers[l].props.format && layers[l].props.format.color ? layers[l].props.format.color : 'rgba(0,200,0,0.5)'));
+
+						if(layers[l].type=="rect"){
+							paper.ctx.fillStyle = colour;
+							paper.ctx.strokeStyle = colour;
+							if(typeof layers[l].mark[i].x1!=="number"){
+								if(typeof layers[l].mark[i].x==="number"){
+									dw = layers[l].props.format.strokeWidth||2;
+									x = (layers[l].mark[i].x-xmin)*xconv - dw/2 + pad;
+								}else{
+									x = pad;
+									dw = w-pad*2;
+								}
+							}else{
+								x = (layers[l].mark[i].x1-xmin)*xconv + pad;
+								dw = Math.round(Math.abs(layers[l].mark[i].x2-layers[l].mark[i].x1)*xconv);
+							}
+
+							if(typeof layers[l].mark[i].y1!=="number"){
+								if(typeof layers[l].mark[i].y==="number"){
+									dh = layers[l].props.format.strokeWidth||2;
+									y = (layers[l].mark[i].y-ymin)*yconv + dh/2;
+								}else{
+									y = pad;
+									dh = h-pad*2;
+								}
+							}else{
+								y = pad + (layers[l].mark[i].y1-ymin)*yconv;
+								dh = Math.round((layers[l].mark[i].y2-layers[l].mark[i].y1)*yconv);
+							}
+							y = height - y - dh;
+							if(dh > 0 && dw > 0){
+								paper.ctx.fillRect(x,y,dw,dh);
+							}
+
+						}else if(layers[l].type=="line"){
+
+							paper.ctx.strokeStyle = colour;
+
+							if(typeof layers[l].mark[i].x==="number") x = (layers[l].mark[i].x-xmin)*xconv + pad;
+							if(typeof layers[l].mark[i].y==="number") y = h - ((layers[l].mark[i].y-ymin)*yconv + pad);
+
+							if(i==0) paper.ctx.moveTo(x,y);
+							else paper.ctx.lineTo(x,y);
+
+						}else if(layers[l].type=="symbol"){
+
+							paper.ctx.strokeStyle = colour;
+							paper.ctx.fillStyle = colour;
+							paper.ctx.beginPath();
+
+							x = toXpx(layers[l].mark[i].x);
+							y = height - toYpx(layers[l].mark[i].y);
+							s = layers[l].mark[i].size/2;
+
+							paper.ctx.moveTo(x,y+s);
+							paper.ctx.lineTo(x+s,y);
+							paper.ctx.lineTo(x,y-s);
+							paper.ctx.lineTo(x-s,y);
+							paper.ctx.lineTo(x,y+s);
+
+							paper.ctx.fill();
+							if(lw > 0) paper.ctx.stroke();
+						}
+					}
+
+					paper.ctx.stroke();
+				}
+			}
+			now = new Date();
+		}
+		
+		pt = { x: 1572969167352.5, y: 1 };
+		var tol = parseInt(S('#tolerance')[0].value);
+		
+		S('#tolerance').on('change',function(e){ tol = parseInt(e.currentTarget.value); getRects(); });
+		S('#n').on('change',function(e){
+			n = parseInt(e.currentTarget.value);
+			createLayers();
+			drawRects([]);
+		})
+		
+		function getRects(p){
+			var near = [];
+			if(p){
+				near = finder.getMatches(layers,p,tol);
+				drawRects(near);
+			}
+		}
+		drawRects([]);
+		
+	});
+
+	</script>
+	<style>
+	* { box-sizing: border-box; }
+	body { padding: 0px; margin: 0px; padding-bottom: 9em; font-size: 16px; font-family: Helvetica, Arial, sans-serif; }
+	#console { position: fixed; bottom: 0px; left: 0px; width: 100%; border-top: 1px solid black; padding: 0.5em; background: #fbfbfb; max-height: 150px; overflow-y: auto; }
+	#controls { top: 0px; left: 0px; width: 100%; padding: 0.5em; background: #fbfbfb; border-bottom: 1px solid black; }
+	#display { margin: 0.5em; width: 800px; height: 500px; border: 15px solid red; }
+	button { line-height: 1.5em; font-size: 1em; }
+	input { font-size: 1em; line-height: 1.2em; }
+	</style>
+</head>
+<body>
+
+	<div id="controls">
+		<label for="tolerance">Tolerance (px):</label><input type="number" value="0" id="tolerance" />
+		<br />Line segments/rects:
+		<select id="n">
+			<option value="1000" selected="selected">1e3</option>
+			<option value="10000">1e4</option>
+			<option value="100000">1e5</option>
+			<option value="1000000">1e6</option>
+			<option value="10000000">1e7</option>
+		</select>
+	</div>	
+	<div id="console"></div>
+	<div style="padding:50px;">
+		<div style="border:10px solid black;">
+			<canvas id="display"></canvas>
+		</div>
+	</div>
+
+</body>
+</html>
