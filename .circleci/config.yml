@@ -12,6 +12,25 @@ jobs:
       - run:
           name: Running jshint
           command: jshint resources/timeseries.js resources/stuquery.js resources/graph.js
+  webpack:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - run:
+          name: Installing webpack
+          command: |
+            cd webpack
+            npm init -y
+            npm install webpack --save-dev
+            npm install webpack-cli --save-dev
+            npm install style-loader --save
+            npm install css-loader --save
+      - run:
+          name: Running webpack
+          command: |
+            cd webpack
+            npx webpack
   tests:
     docker:
       - image: circleci/python:3.7.1-browsers
@@ -30,4 +49,5 @@ workflows:
   tests_and_docs:
     jobs:
       - jshint
+      - webpack
       - tests
