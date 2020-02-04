@@ -1,9 +1,36 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Getting Started</title>
-  </head>
-  <body>
-    <script src="main.js"></script>
-  </body>
+
+<head>
+  <title>Getting Started</title>
+  <script language="javascript" type="text/javascript" src="main.js"></script>
+</head>
+
+<body>
+
+  <div class="example">
+    <figure>
+      <div id="main_figure">
+      </div>
+    </figure>
+
+    <script>
+      var figure;
+      var figure_ready = false;
+
+      S(document).ready(function () {
+        figure = TimeSeries.create("lightcurve.json");
+        figure.initialize(document.getElementById('main_figure'), on_ready);
+      });
+
+      function on_ready() {
+        figure_ready = true;
+      }
+
+    </script>
+
+  </div>
+
+</body>
+
 </html>

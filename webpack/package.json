@@ -1,16 +1,12 @@
 {
-  "name": "webpack-demo",
-  "version": "1.0.0",
+  "name": "timeseries",
+  "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Stuart Lowe",
   "devDependencies": {
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0"
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
     "css-loader": "^0.28.11",
